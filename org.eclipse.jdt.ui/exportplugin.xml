@@ -1,0 +1,48 @@
+<!-- build script to create a plugin from org.eclipse.jdt.ui -->
+<project name="org.eclipse.jdt.ui" default="export" basedir=".">
+	<target name="init">
+		<tstamp/>
+		<property name="destdir" value="../../plugin-export" />
+		<property name="plugin"  value="org.eclipse.jdt.ui" />
+		<property name="dest"  value="${destdir}/${plugin}" />
+	</target>
+
+	<target name="build" depends="init">
+    	<incremental project="${plugin}" kind="incr"/>
+	</target>
+
+	<target name="export" depends="build">
+		<mkdir dir="${destdir}" />
+		<delete dir="${dest}" />
+		<mkdir dir="${dest}" />
+		<jar 
+			jarfile="${dest}/jdt.jar"
+			basedir="bin"
+		/>
+		<copy file="plugin.xml" todir="${dest}"/>
+		<copy file="plugin.properties" todir="${dest}"/>
+		<copy file="plugin.jars" todir="${dest}"/>
+		<copy file="snippetsupport.jar" todir="${dest}"/>
+		<copy todir="${dest}/icons">
+			<fileset dir="icons" />
+		</copy>
+		<mkdir dir="TMP" />
+		<copy todir="TMP">
+			<fileset dir="Eclipse Java UI" />
+		</copy>
+		<copy todir="TMP">
+			<fileset dir="Eclipse Java Core Refactoring" />
+		</copy>
+		<copy todir="TMP">
+			<fileset dir="Eclipse Java UI Debug" />
+		</copy>
+		<copy todir="TMP">
+			<fileset dir="Eclipse Java UI Refactoring" />
+		</copy>
+		<zip 
+			zipfile="${dest}/jdtsrc.zip"
+			basedir="TMP"
+		/>
+		<delete dir="TMP"/>
+	</target>
+</project>
