@@ -78,6 +78,7 @@ import org.eclipse.jdt.internal.corext.dom.ASTNodeFactory;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.dom.LinkedNodeFinder;
+import org.eclipse.jdt.internal.corext.dom.ModifierRewrite;
 import org.eclipse.jdt.internal.corext.dom.NodeFinder;
 import org.eclipse.jdt.internal.ui.JavaPluginImages;
 
@@ -292,7 +293,8 @@ public class QuickAssistProcessor implements IQuickAssistProcessor {
 			
 			VariableDeclarationStatement newVarDec= ast.newVariableDeclarationStatement(newFrag);
 			newVarDec.setType((Type) ASTNode.copySubtree(ast, oldVarDecl.getType()));
-			ASTNodeFactory.addModifiers(ast, oldVarDecl.getModifiers() & ~Modifier.FINAL, newVarDec.modifiers());
+			ModifierRewrite.create(rewrite, newVarDec).setModifiers(oldVarDecl.getModifiers() & ~Modifier.FINAL, null);
+
 			newStatement= newVarDec;
 		}
 		

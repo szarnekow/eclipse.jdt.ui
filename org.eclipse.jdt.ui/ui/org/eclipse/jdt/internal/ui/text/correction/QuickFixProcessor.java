@@ -191,7 +191,6 @@ public class QuickFixProcessor implements IQuickFixProcessor {
 		if (id == 0) { // no proposals for none-problem locations
 			return;
 		}
-		
 		switch (id) {
 			case IProblem.UnterminatedString:
 				String quoteLabel= CorrectionMessages.getString("JavaCorrectionProcessor.addquote.description"); //$NON-NLS-1$

@@ -44,6 +44,7 @@ import org.eclipse.jdt.ui.CodeGeneration;
 import org.eclipse.jdt.internal.corext.codemanipulation.CodeGenerationSettings;
 import org.eclipse.jdt.internal.corext.dom.ASTNodeFactory;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
+import org.eclipse.jdt.internal.corext.dom.ModifierRewrite;
 import org.eclipse.jdt.internal.ui.javaeditor.ASTProvider;
 import org.eclipse.jdt.internal.ui.preferences.JavaPreferencesSettings;
 
@@ -115,7 +116,7 @@ public abstract class AbstractMethodCompletionProposal extends LinkedCorrectionP
 		SimpleName newNameNode= getNewName(rewrite);
 		
 		decl.setConstructor(isConstructor());
-		ASTNodeFactory.addModifiers(ast, evaluateModifiers(targetTypeDecl), decl.modifiers());
+		ModifierRewrite.create(rewrite, decl).setModifiers(evaluateModifiers(targetTypeDecl), null);
 		
 		ArrayList takenNames= new ArrayList();
 		addNewTypeParameters(rewrite, takenNames, decl.typeParameters());

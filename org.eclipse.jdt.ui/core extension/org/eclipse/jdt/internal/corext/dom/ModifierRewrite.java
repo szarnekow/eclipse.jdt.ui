@@ -22,7 +22,6 @@ import org.eclipse.jdt.core.dom.Modifier;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
-import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
@@ -59,39 +58,50 @@ public class ModifierRewrite {
 	
 	private ModifierRewrite(ASTRewrite rewrite, ASTNode declNode) {
 		ListRewrite modifierRewrite= null;
-		if (declNode instanceof MethodDeclaration) {
-			modifierRewrite= rewrite.getListRewrite(declNode, MethodDeclaration.MODIFIERS2_PROPERTY);
-		} else if (declNode instanceof VariableDeclarationFragment) {
-			ASTNode parent= declNode.getParent();
-			if (parent instanceof FieldDeclaration) {
-				modifierRewrite= rewrite.getListRewrite(parent, FieldDeclaration.MODIFIERS2_PROPERTY);
-			} else if (parent instanceof VariableDeclarationStatement) {
-				modifierRewrite= rewrite.getListRewrite(parent, VariableDeclarationStatement.MODIFIERS2_PROPERTY);
-			} else if (parent instanceof VariableDeclarationExpression) {
-				modifierRewrite= rewrite.getListRewrite(parent, VariableDeclarationExpression.MODIFIERS2_PROPERTY);
-			}
-		} else if (declNode instanceof SingleVariableDeclaration) {
-			modifierRewrite= rewrite.getListRewrite(declNode, SingleVariableDeclaration.MODIFIERS2_PROPERTY);	
-		} else if (declNode instanceof TypeDeclaration) {
-			modifierRewrite= rewrite.getListRewrite(declNode, TypeDeclaration.MODIFIERS2_PROPERTY);	
+		switch (declNode.getNodeType()) {
+			case ASTNode.METHOD_DECLARATION:
+				modifierRewrite= rewrite.getListRewrite(declNode, MethodDeclaration.MODIFIERS2_PROPERTY);
+				break;
+			case ASTNode.FIELD_DECLARATION: 
+				modifierRewrite= rewrite.getListRewrite(declNode, FieldDeclaration.MODIFIERS2_PROPERTY);
+				break;
+			case ASTNode.VARIABLE_DECLARATION_EXPRESSION:
+				modifierRewrite= rewrite.getListRewrite(declNode, VariableDeclarationExpression.MODIFIERS2_PROPERTY);
+				break;
+			case ASTNode.VARIABLE_DECLARATION_STATEMENT:
+				modifierRewrite= rewrite.getListRewrite(declNode, VariableDeclarationStatement.MODIFIERS2_PROPERTY);
+				break;
+			case ASTNode.SINGLE_VARIABLE_DECLARATION:
+				modifierRewrite= rewrite.getListRewrite(declNode, SingleVariableDeclaration.MODIFIERS2_PROPERTY);	
+				break;
+			case ASTNode.TYPE_DECLARATION:
+				modifierRewrite= rewrite.getListRewrite(declNode, TypeDeclaration.MODIFIERS2_PROPERTY);	
+				break;
+			default:
+				Assert.isTrue(false, "node has no modfiers: " + declNode.getClass().getName()); //$NON-NLS-1$
 		}
-		Assert.isNotNull(modifierRewrite);
-		
 		fModifierRewrite= modifierRewrite;
 		fAst= declNode.getAST();
-
+	}
+	
+	public ListRewrite getModifierRewrite() {
+		return fModifierRewrite;
 	}
 	
 	public void setModifiers(int modfiers, TextEditGroup editGroup) {
-		setModifiers(modfiers, -1, editGroup);
+		internalSetModifiers(modfiers, -1, editGroup);
+	}
+	
+	public void setModifiers(int included, int excluded, TextEditGroup editGroup) {
+		internalSetModifiers(included, included | excluded, editGroup);
 	}
 	
 	public void setVisibility(int visibilityFlags, TextEditGroup editGroup) {
-		setModifiers(visibilityFlags, VISIBILITY_MODIFIERS, editGroup);
+		internalSetModifiers(visibilityFlags, VISIBILITY_MODIFIERS, editGroup);
 	}
 	
 	
-	private void setModifiers(int modfiers, int consideredFlags, TextEditGroup editGroup) {
+	private void internalSetModifiers(int modfiers, int consideredFlags, TextEditGroup editGroup) {
 		// remove modfiers
 		int newModifiers= modfiers & consideredFlags;
 		
