@@ -53,7 +53,7 @@ public class ModifierRewrite {
 	private AST fAst;
 
 
-	public ModifierRewrite create(ASTRewrite rewrite, ASTNode declNode) {
+	public static ModifierRewrite create(ASTRewrite rewrite, ASTNode declNode) {
 		return new ModifierRewrite(rewrite, declNode);
 	}
 	
