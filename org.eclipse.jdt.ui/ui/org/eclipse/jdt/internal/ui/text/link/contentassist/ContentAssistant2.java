@@ -185,8 +185,8 @@ public class ContentAssistant2 implements IContentAssistant, IContentAssistantEx
 					if (d != null) {
 						d.asyncExec(new Runnable() {
 							public void run() {
-								if (!hasFocus())
-									hide();
+								if (!hasFocus());
+//									hide();
 							}
 						});
 					}
