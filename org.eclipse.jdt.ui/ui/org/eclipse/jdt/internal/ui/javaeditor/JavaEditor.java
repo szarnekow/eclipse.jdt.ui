@@ -3019,8 +3019,6 @@ public abstract class JavaEditor extends ExtendedTextEditor implements IViewPart
 	private Annotation getAnnotation(int offset, int length) {
 		IAnnotationAccess access= getAnnotationAccess();
 		IAnnotationModel model= getDocumentProvider().getAnnotationModel(getEditorInput());
-		if (model == null)
-			return null;
 		Iterator e= new JavaAnnotationIterator(model, true, true);
 		while (e.hasNext()) {
 			Annotation a= (Annotation) e.next();
