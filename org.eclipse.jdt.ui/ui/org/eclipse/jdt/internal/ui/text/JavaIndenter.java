@@ -37,14 +37,14 @@ public class JavaIndenter {
 	 * (method defs, array initializers)
 	 */
 	private int fAlign;
-	/** Whether to add one space to the absolute indentation. */
-	private boolean fAlignPlusOne;
 	/** The stateful scanpositionf or the indentation methods. */
 	private int fPosition;
 	/** The previous position. */
 	private int fPreviousPos;
 	/** The most recent token. */
 	private int fToken;
+	/** The line of <code>fPosition</code>. */
+	private int fLine;
 	/** 
 	 * The scanner we will use to scan the document. It has to be installed on the same document
 	 * as the one we get.
@@ -79,6 +79,7 @@ public class JavaIndenter {
 			
 			boolean danglingElse= false;
 			boolean matchBrace= false;
+			boolean matchParen= false;
 			
 			if (position < fDocument.getLength()) {
 				IRegion line= fDocument.getLineInformationOfOffset(position);
@@ -96,7 +97,7 @@ public class JavaIndenter {
 			}
 			
 			// find the base position
-			int unit= findReferencePosition(position, danglingElse, matchBrace);
+			int unit= findReferencePosition(position, danglingElse, matchBrace, matchParen);
 			
 			// if we were unable to find anything, return null
 			if (unit == JavaHeuristicScanner.NOT_FOUND)
@@ -133,6 +134,7 @@ public class JavaIndenter {
 			boolean danglingElse= false;
 			boolean unindent= false;
 			boolean matchBrace= false;
+			boolean matchParen= false;
 			
 			if (position < fDocument.getLength()) {
 				IRegion line= fDocument.getLineInformationOfOffset(position);
@@ -158,13 +160,16 @@ public class JavaIndenter {
 						break;
 					case Symbols.TokenWHILE:
 						break;
+					case Symbols.TokenRPAREN:
+						matchParen= true;
+						break;
 				}
 			} else {
 				danglingElse= true; // assume an else could come - align with 'if' 
 			}
 			
 			// find the base position
-			int unit= findReferencePosition(position, danglingElse, matchBrace);
+			int unit= findReferencePosition(position, danglingElse, matchBrace, matchParen);
 			
 			// handle special alignment
 			if (fAlign != JavaHeuristicScanner.NOT_FOUND) {
@@ -247,9 +252,6 @@ public class JavaIndenter {
 				
 				start++;
 			}
-			if (fAlignPlusOne)
-				spaces++;
-			
 			if (spaces == tabLen)
 				ret.append('\t');
 			else
@@ -293,7 +295,7 @@ public class JavaIndenter {
 	 * @return the reference statement relative to which <code>position</code> should be indented, or {@link JavaHeuristicScanner#NOT_FOUND}
 	 */
 	public int findReferencePosition(int position) {
-		return findReferencePosition(position, false, false);
+		return findReferencePosition(position, false, false, false);
 	}
 	
 	/**
@@ -307,9 +309,10 @@ public class JavaIndenter {
 	 * @param position the position for which the reference is computed
 	 * @param danglingElse whether a dangling else should be assumed at <code>position</code>
 	 * @param matchBrace whether the position of the matching brace should be returned instead of doing code analysis
+	 * @param matchBrace whether the position of the matching parenthesis should be returned instead of doing code analysis
 	 * @return the reference statement relative to which <code>position</code> should be indented, or {@link JavaHeuristicScanner#NOT_FOUND}
 	 */
-	private int findReferencePosition(int position, boolean danglingElse, boolean matchBrace) {
+	private int findReferencePosition(int position, boolean danglingElse, boolean matchBrace, boolean matchParen) {
 		fIndent= 0; // the indentation modification
 		fAlign= JavaHeuristicScanner.NOT_FOUND;
 		fPosition= position;
@@ -317,17 +320,37 @@ public class JavaIndenter {
 		boolean indentBlockLess= true; // whether to indent after an if / while / for without block (set false by semicolons and braces)
 		boolean takeNextExit= true; // whether the next possible exit should be taken (instead of looking for the base; see blockless stuff)
 		boolean found= false; // whether we have found anything at all. If we have, we'll trace back to it once we have a hoist point
-		boolean hasBrace= false;
+		boolean hasBrace= false; // whether we have found a left brace
+		boolean longIndentSet= false; // whehter we have already added a deep indentation (to avoid multiple deep / double indents for multiple calls)
+		int listItemPos= JavaHeuristicScanner.NOT_FOUND; // position of the alignment element in a comma separated list
+		int listItemLine= -1; // line of listItemPos
 		
 		if (matchBrace) {
 			if (!skipScope(Symbols.TokenLBRACE, Symbols.TokenRBRACE)) {
 				fPosition= position;
-				fIndent= -1;
+				fIndent= -1; // handle alignment of closing braces
 			} else {
 				indentBlockLess= false;
 				hasBrace= true;
 			}
 		}
+		
+		if (matchParen) {
+			if (!skipScope(Symbols.TokenLPAREN, Symbols.TokenRPAREN)) {
+				fPosition= position;
+				fIndent= 0;
+			} else {
+				int pos= fPosition;
+				fPosition= position;
+				nextToken();
+				if (fToken != Symbols.TokenCOMMA)
+					return pos;
+				
+				fPosition= position;
+				fIndent= 0;
+			}
+		}
+		
 		
 		nextToken();
 		while (true) {
@@ -401,7 +424,7 @@ public class JavaIndenter {
 					break;
 					
 				case Symbols.TokenQUESTIONMARK: // ternary expressions
-					if (takeNextExit && prefTenaryDeepAlign())
+					if (fAlign == JavaHeuristicScanner.NOT_FOUND && takeNextExit && prefTenaryDeepAlign())
 						fAlign= fPosition;
 					nextToken();
 					break;
@@ -418,10 +441,21 @@ public class JavaIndenter {
 					if (fToken == Symbols.TokenEQUAL || skipBrackets()) {
 						int first= fScanner.findNonWhitespaceForwardInAnyPartition(searchPos, position);
 						// ... with a first element already defined - take its offset
-						if (prefArrayDeepIndent() && first != JavaHeuristicScanner.NOT_FOUND) {
+						if (fAlign == JavaHeuristicScanner.NOT_FOUND && listItemLine > fLine) {
+							// there are more list items later on - adjust to current usage
+							int lineOffset;
+							try {
+								lineOffset= fDocument.getLineOffset(listItemLine);
+								fAlign= fScanner.findNonWhitespaceForwardInAnyPartition(lineOffset, listItemPos + 1);
+							} catch (BadLocationException e) {
+							}
+						}
+						if (fAlign == JavaHeuristicScanner.NOT_FOUND && prefArrayDeepIndent() && first != JavaHeuristicScanner.NOT_FOUND) {
 							fAlign= first;
-						} else
+						} else if (!longIndentSet) {
 							fIndent += prefArrayIndent();
+							longIndentSet= true;
+						}
 					}
 					
 					hasBrace= true;
@@ -445,6 +479,14 @@ public class JavaIndenter {
 					takeNextExit= false; // search to the bottom of blockless statements
 					indentBlockLess= false; // don't indent at the next blockless introducer
 					
+					nextToken();
+					break;
+				
+				case Symbols.TokenNEW:
+					if (hasBrace && takeNextExit && found) {
+						// we're probably in an array or anonymous class 
+						return fScanner.findNonWhitespaceForward(fPreviousPos, position);
+					}
 					nextToken();
 					break;
 				
@@ -472,30 +514,51 @@ public class JavaIndenter {
 				// handle method definitions separately
 				case Symbols.TokenLPAREN:
 					// TODO differentiate between conditional continuation and calls
-					if (!hasBrace)
+					
+					// handle list items.
+					if (listItemLine > fLine && fAlign == JavaHeuristicScanner.NOT_FOUND) {
+						// there are more list items later on - adjust to current usage
+						int lineOffset;
+						try {
+							lineOffset= fDocument.getLineOffset(listItemLine);
+							fAlign= fScanner.findNonWhitespaceForwardInAnyPartition(lineOffset, listItemPos + 1);
+						} catch (BadLocationException e) {
+						}
+					}
+					
+					if (!hasBrace && !longIndentSet) {
 						fIndent += prefCallContinuationIndent();
+						longIndentSet= true;
+					}
 					
 					searchPos= fPreviousPos;
 					
-					if (prefMethodDeclDeepIndent() && looksLikeMethodDecl() && found) {
+					if (looksLikeMethodDecl() && found && fAlign == JavaHeuristicScanner.NOT_FOUND && prefMethodDeclDeepIndent()) {
 						fAlign= fScanner.findNonWhitespaceForward(searchPos, position);
 					}
-					
+				
 					break;
 
 				// array dimensions
 				case Symbols.TokenLBRACKET:
-					if (prefArrayDimensionsDeepIndent() && found)
+					if (fAlign == JavaHeuristicScanner.NOT_FOUND && prefArrayDimensionsDeepIndent() && found)
 						fAlign= fScanner.findNonWhitespaceForward(fPreviousPos, position);
 					
-					fIndent+= prefArrayDimensionIndent();
+					if (!longIndentSet) {
+						fIndent+= prefArrayDimensionIndent();
+						longIndentSet= true;
+					}
 						
 					nextToken();
 					break;
 				
 				case Symbols.TokenCOMMA:
-					if (found)
-						fScanner.findNonWhitespaceForward(fPreviousPos, position);
+					// align with comma list except for when in a method declaration
+					if (found && listItemPos == JavaHeuristicScanner.NOT_FOUND) {
+						listItemPos= fScanner.findNonWhitespaceForwardInAnyPartition(fPreviousPos, position);
+						listItemLine= fLine;
+					}
+					
 					nextToken();
 					break;
 
@@ -676,6 +739,11 @@ public class JavaIndenter {
 		fToken= fScanner.previousToken(start - 1, JavaHeuristicScanner.UNBOUND);
 		fPreviousPos= start;
 		fPosition= fScanner.getPosition() + 1;
+		try {
+			fLine= fDocument.getLineOfOffset(fPosition);
+		} catch (BadLocationException e) {
+			fLine= -1;
+		}
 	}
 
 	/**
