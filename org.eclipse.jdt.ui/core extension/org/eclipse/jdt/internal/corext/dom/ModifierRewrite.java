@@ -118,15 +118,15 @@ public class ModifierRewrite {
 				}
 			}
 		}
+		List newNodes= ASTNodeFactory.newModifiers(fAst, newModifiers);
+		
 		// add modifiers
-		for (int i= 0; i < ALL_KEYWORDS.length; i++) {
-			if ((newModifiers & ALL_KEYWORDS[i].toFlagValue()) != 0) {
-				Modifier curr= fAst.newModifier(ALL_KEYWORDS[i]);
-				if ((curr.getKeyword().toFlagValue() & VISIBILITY_MODIFIERS) != 0) {
-					fModifierRewrite.insertFirst(curr, editGroup);
-				} else {
-					fModifierRewrite.insertLast(curr, editGroup);
-				}
+		for (int i= 0; i < newNodes.size(); i++) {
+			Modifier curr= (Modifier) newNodes.get(i);
+			if ((curr.getKeyword().toFlagValue() & VISIBILITY_MODIFIERS) != 0) {
+				fModifierRewrite.insertFirst(curr, editGroup);
+			} else {
+				fModifierRewrite.insertLast(curr, editGroup);
 			}
 		}
 	}
