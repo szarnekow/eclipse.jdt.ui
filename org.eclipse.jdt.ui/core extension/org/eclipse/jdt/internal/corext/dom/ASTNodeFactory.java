@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.internal.corext.dom;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -159,6 +160,41 @@ public class ASTNodeFactory {
 			}
 		}
 		return ast.newNullLiteral();
+	}
+	
+	public static final Modifier.ModifierKeyword[] ALL_KEYWORDS= {
+			Modifier.ModifierKeyword.PUBLIC_KEYWORD,
+			Modifier.ModifierKeyword.PROTECTED_KEYWORD,
+			Modifier.ModifierKeyword.PRIVATE_KEYWORD,
+			Modifier.ModifierKeyword.STATIC_KEYWORD,
+			Modifier.ModifierKeyword.ABSTRACT_KEYWORD,
+			Modifier.ModifierKeyword.FINAL_KEYWORD,
+			Modifier.ModifierKeyword.SYNCHRONIZED_KEYWORD,
+			Modifier.ModifierKeyword.STRICTFP_KEYWORD,
+			Modifier.ModifierKeyword.VOLATILE_KEYWORD,
+			Modifier.ModifierKeyword.NATIVE_KEYWORD,
+			Modifier.ModifierKeyword.TRANSIENT_KEYWORD
+	};
+	
+	public static List newModifiers(AST ast, int modifiers) {
+		List res= new ArrayList(32);
+		for (int i= 0; i < ALL_KEYWORDS.length; i++) {
+			if ((modifiers & ALL_KEYWORDS[i].toFlagValue()) != 0) {
+				res.add(ast.newModifier(ALL_KEYWORDS[i]));
+			}
+		}
+		return res;
+	}
+	
+	public static List newModifiers(AST ast, List modifierNodes) {
+		List res= new ArrayList(modifierNodes.size());
+		for (int i= 0; i < modifierNodes.size(); i++) {
+			Object curr= modifierNodes.get(i);
+			if (curr instanceof Modifier) {
+				res.add(ast.newModifier(((Modifier) curr).getKeyword()));
+			}
+		}
+		return res;
 	}
 	
 }
