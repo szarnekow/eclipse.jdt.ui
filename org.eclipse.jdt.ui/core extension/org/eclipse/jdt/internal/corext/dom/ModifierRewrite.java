@@ -26,8 +26,6 @@ import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 import org.eclipse.jdt.core.dom.rewrite.ASTRewrite;
 import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
 
-import org.eclipse.jdt.internal.corext.Assert;
-
 /**
  *
  */
@@ -65,7 +63,7 @@ public class ModifierRewrite {
 				modifierRewrite= rewrite.getListRewrite(declNode, TypeDeclaration.MODIFIERS2_PROPERTY);	
 				break;
 			default:
-				Assert.isTrue(false, "node has no modfiers: " + declNode.getClass().getName()); //$NON-NLS-1$
+				throw new IllegalArgumentException("node has no modfiers: " + declNode.getClass().getName()); //$NON-NLS-1$
 		}
 		fModifierRewrite= modifierRewrite;
 		fAst= declNode.getAST();
