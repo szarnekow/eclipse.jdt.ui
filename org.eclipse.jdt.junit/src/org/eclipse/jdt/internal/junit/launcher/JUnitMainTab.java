@@ -35,6 +35,7 @@ import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -62,7 +63,15 @@ public class JUnitMainTab extends JUnitLaunchConfigurationTab {
 	private Label fTestLabel;
 	private Text fTestText;
 	private Button fSearchButton;
-	private final Image fTestIcon= createImage("obj16/test.gif"); //$NON-NLS-1$
+	private final Image fTestIcon= createImage("obj16/test.gif");
+
+	private Text fContainerText;
+
+	private Button fContainerSearchButton;
+
+	private Button fTestContainerRadioButton;
+
+	private Button fTestRadioButton; //$NON-NLS-1$
 				
 	/**
 	 * @see ILaunchConfigurationTab#createControl(TabItem)
@@ -74,10 +83,101 @@ public class JUnitMainTab extends JUnitLaunchConfigurationTab {
 		GridLayout topLayout = new GridLayout();
 		topLayout.numColumns= 2;
 		comp.setLayout(topLayout);		
-		GridData gd;
 		
 		new Label(comp, SWT.NONE);
 		
+		createProjectGroup(comp);
+		createTestSelectionGroup(comp);
+		createTestContainerSelectionGroup(comp);
+		createKeepAliveGroup(comp);
+	}
+
+	private void createTestContainerSelectionGroup(Composite comp) {
+		GridData gd;
+		fTestContainerRadioButton= new Button(comp, SWT.RADIO | SWT.LEFT);
+		fTestContainerRadioButton.setText("All Tests in Container:");
+		gd = new GridData();
+		gd.horizontalSpan = 2;
+		fTestContainerRadioButton.setLayoutData(gd);
+		fTestContainerRadioButton.addSelectionListener(new SelectionListener() {
+			public void widgetSelected(SelectionEvent e) {
+				testModeChanged();
+			}
+			public void widgetDefaultSelected(SelectionEvent e) {
+				testModeChanged();
+			}
+		});
+		fContainerText = new Text(comp, SWT.SINGLE | SWT.BORDER);
+		gd = new GridData(GridData.FILL_HORIZONTAL);
+		gd.horizontalIndent= 20;
+		fContainerText.setLayoutData(gd);
+		fContainerText.addModifyListener(new ModifyListener() {
+			public void modifyText(ModifyEvent evt) {
+				updateLaunchConfigurationDialog();
+			}
+		});
+		
+		fContainerSearchButton = new Button(comp, SWT.PUSH);
+		fContainerSearchButton.setText(JUnitMessages.getString("JUnitMainTab.label.search")); //$NON-NLS-1$
+		fContainerSearchButton.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent evt) {
+				handleContainerSearchButtonSelected();
+			}
+		});
+		setButtonGridData(fContainerSearchButton);	
+	}
+
+	private void handleContainerSearchButtonSelected() {
+	}
+
+	public void createKeepAliveGroup(Composite comp) {
+		GridData gd;
+		fKeepRunning = new Button(comp, SWT.CHECK);
+		fKeepRunning.setText(JUnitMessages.getString("JUnitMainTab.label.keeprunning")); //$NON-NLS-1$
+		gd= new GridData();
+		gd.horizontalAlignment= GridData.FILL;
+		gd.horizontalSpan= 2;
+		fKeepRunning.setLayoutData(gd);
+	}
+
+	public void createTestSelectionGroup(Composite comp) {
+		GridData gd;
+		fTestRadioButton= new Button(comp, SWT.RADIO | SWT.LEFT);
+		fTestRadioButton.setText(JUnitMessages.getString("JUnitMainTab.label.test"));
+		gd = new GridData();
+		gd.horizontalSpan = 2;
+		fTestRadioButton.setLayoutData(gd);
+		fTestRadioButton.addSelectionListener(new SelectionListener() {
+			public void widgetSelected(SelectionEvent e) {
+				testModeChanged();
+			}
+			public void widgetDefaultSelected(SelectionEvent e) {
+				testModeChanged();
+			}
+		});
+
+		fTestText = new Text(comp, SWT.SINGLE | SWT.BORDER);
+		gd = new GridData(GridData.FILL_HORIZONTAL);
+		gd.horizontalIndent= 20;
+		fTestText.setLayoutData(gd);
+		fTestText.addModifyListener(new ModifyListener() {
+			public void modifyText(ModifyEvent evt) {
+				updateLaunchConfigurationDialog();
+			}
+		});
+		
+		fSearchButton = new Button(comp, SWT.PUSH);
+		fSearchButton.setText(JUnitMessages.getString("JUnitMainTab.label.search")); //$NON-NLS-1$
+		fSearchButton.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent evt) {
+				handleSearchButtonSelected();
+			}
+		});
+		setButtonGridData(fSearchButton);
+	}
+
+	public void createProjectGroup(Composite comp) {
+		GridData gd;
 		fProjLabel = new Label(comp, SWT.NONE);
 		fProjLabel.setText(JUnitMessages.getString("JUnitMainTab.label.project")); //$NON-NLS-1$
 		gd= new GridData();
@@ -101,37 +201,6 @@ public class JUnitMainTab extends JUnitLaunchConfigurationTab {
 			}
 		});
 		setButtonGridData(fProjButton); 
-		
-		fTestLabel = new Label(comp, SWT.NONE);
-		fTestLabel.setText(JUnitMessages.getString("JUnitMainTab.label.test")); //$NON-NLS-1$
-		gd = new GridData();
-		gd.horizontalSpan = 2;
-		fTestLabel.setLayoutData(gd);
-
-		fTestText = new Text(comp, SWT.SINGLE | SWT.BORDER);
-		gd = new GridData(GridData.FILL_HORIZONTAL);
-		fTestText.setLayoutData(gd);
-		fTestText.addModifyListener(new ModifyListener() {
-			public void modifyText(ModifyEvent evt) {
-				updateLaunchConfigurationDialog();
-			}
-		});
-		
-		fSearchButton = new Button(comp, SWT.PUSH);
-		fSearchButton.setText(JUnitMessages.getString("JUnitMainTab.label.search")); //$NON-NLS-1$
-		fSearchButton.addSelectionListener(new SelectionAdapter() {
-			public void widgetSelected(SelectionEvent evt) {
-				handleSearchButtonSelected();
-			}
-		});
-		setButtonGridData(fSearchButton);
-		
-		fKeepRunning = new Button(comp, SWT.CHECK);
-		fKeepRunning.setText(JUnitMessages.getString("JUnitMainTab.label.keeprunning")); //$NON-NLS-1$
-		gd= new GridData();
-		gd.horizontalAlignment= GridData.FILL;
-		gd.horizontalSpan= 2;
-		fKeepRunning.setLayoutData(gd);
 	}
 	
 	protected static Image createImage(String path) {
@@ -151,6 +220,7 @@ public class JUnitMainTab extends JUnitLaunchConfigurationTab {
 	public void initializeFrom(ILaunchConfiguration config) {
 		updateProjectFromConfig(config);
 		updateTestTypeFromConfig(config);
+		updateTestContainerFromConfig(config);
 		updateKeepRunning(config);
 	}
 
@@ -174,13 +244,39 @@ public class JUnitMainTab extends JUnitLaunchConfigurationTab {
 	
 	protected void updateTestTypeFromConfig(ILaunchConfiguration config) {
 		String testTypeName= ""; //$NON-NLS-1$
+		String containerHandle= "";
 		try {
 			testTypeName = config.getAttribute(IJavaLaunchConfigurationConstants.ATTR_MAIN_TYPE_NAME, ""); //$NON-NLS-1$
+			containerHandle = config.getAttribute(JUnitBaseLaunchConfiguration.LAUNCH_CONTAINER_ATTR, ""); //$NON-NLS-1$
 		} catch (CoreException ce) {			
 		}
-		fTestText.setText(testTypeName);		
+		if (containerHandle.length() == 0) {
+			fTestRadioButton.setSelection(true);
+			fTestContainerRadioButton.setSelection(false);
+			fContainerText.setText("");	
+			fTestText.setText(testTypeName);
+			setEnableSingleTestGroup(true);
+			setEnableContainerTestGroup(false);
+		}		
 	}
 
+	protected void updateTestContainerFromConfig(ILaunchConfiguration config) {
+		String testTypeName= ""; //$NON-NLS-1$
+		String containerHandle= "";
+		try {
+			testTypeName = config.getAttribute(IJavaLaunchConfigurationConstants.ATTR_MAIN_TYPE_NAME, ""); //$NON-NLS-1$
+			containerHandle = config.getAttribute(JUnitBaseLaunchConfiguration.LAUNCH_CONTAINER_ATTR, ""); //$NON-NLS-1$
+		} catch (CoreException ce) {			
+		}
+		if (containerHandle.length() > 0) {
+			fTestContainerRadioButton.setSelection(true);
+			fTestRadioButton.setSelection(false);
+			fContainerText.setText(testTypeName);
+			fTestText.setText("");
+			setEnableSingleTestGroup(false);
+			setEnableContainerTestGroup(true);			
+		}	
+	}
 	/**
 	 * @see ILaunchConfigurationTab#performApply(ILaunchConfigurationWorkingCopy)
 	 */
@@ -309,16 +405,17 @@ public class JUnitMainTab extends JUnitLaunchConfigurationTab {
 		setErrorMessage(null);
 		setMessage(null);
 		
-		String name = fProjText.getText().trim();
-		if (name.length() > 0) {
-			if (!ResourcesPlugin.getWorkspace().getRoot().getProject(name).exists()) {
+		String projectName = fProjText.getText().trim();
+		if (projectName.length() > 0) {
+			if (!ResourcesPlugin.getWorkspace().getRoot().getProject(projectName).exists()) {
 				setErrorMessage(JUnitMessages.getString("JUnitMainTab.error.projectnotexists")); //$NON-NLS-1$
 				return false;
 			}
 		}
 
-		name = fTestText.getText().trim();
-		if (name.length() == 0) {
+		String testName = fTestText.getText().trim();
+		String containerName = fContainerText.getText().trim();
+		if (testName.length() == 0 && containerName.length() == 0) {
 			setErrorMessage(JUnitMessages.getString("JUnitMainTab.error.testnotdefined")); //$NON-NLS-1$
 			return false;
 		}
@@ -326,6 +423,23 @@ public class JUnitMainTab extends JUnitLaunchConfigurationTab {
 		return true;
 	}
 	
+	private void testModeChanged() {
+		boolean isSingleTestMode= fTestRadioButton.getSelection();
+		setEnableSingleTestGroup(isSingleTestMode);
+		setEnableContainerTestGroup(!isSingleTestMode);
+	}
+
+	private void setEnableContainerTestGroup(boolean enabled) {
+		fContainerSearchButton.setEnabled(enabled);
+		fContainerText.setEnabled(enabled);
+	}
+
+
+	private void setEnableSingleTestGroup(boolean enabled) {
+		fSearchButton.setEnabled(enabled);
+		fTestText.setEnabled(enabled);
+	}
+
 	/**
 	 * @see ILaunchConfigurationTab#setDefaults(ILaunchConfigurationWorkingCopy)
 	 */

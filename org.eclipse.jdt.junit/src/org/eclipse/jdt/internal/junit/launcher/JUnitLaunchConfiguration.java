@@ -33,18 +33,18 @@ public class JUnitLaunchConfiguration extends JUnitBaseLaunchConfiguration {
 	 * In addition it adds the port for the RemoteTestRunner as an argument
 	 */
 	protected VMRunnerConfiguration createVMRunner(ILaunchConfiguration configuration, IType[] testTypes, int port, String runMode) throws CoreException {
-		String[] classPath= createClassPath(configuration, testTypes[0]);	
+		String[] classPath= createClassPath(configuration);	
 		VMRunnerConfiguration vmConfig= new VMRunnerConfiguration("org.eclipse.jdt.internal.junit.runner.RemoteTestRunner", classPath); //$NON-NLS-1$
 	
 		Vector argv= new Vector(10);
 		argv.add("-port"); //$NON-NLS-1$
 		argv.add(Integer.toString(port));
 		//argv("-debugging");
-		argv.add("-classNames"); //$NON-NLS-1$
 				
 		if (keepAlive(configuration) && runMode.equals(ILaunchManager.DEBUG_MODE))
 			argv.add(0, "-keepalive"); //$NON-NLS-1$
 			
+		argv.add("-classNames"); //$NON-NLS-1$
 		for (int i= 0; i < testTypes.length; i++) 
 			argv.add(testTypes[i].getFullyQualifiedName());
 	
@@ -54,7 +54,7 @@ public class JUnitLaunchConfiguration extends JUnitBaseLaunchConfiguration {
 		return vmConfig;
 	}
 	
-	private String[] createClassPath(ILaunchConfiguration configuration, IType type) throws CoreException {
+	private String[] createClassPath(ILaunchConfiguration configuration) throws CoreException {
 		URL url= JUnitPlugin.getDefault().getDescriptor().getInstallURL();
 		String[] cp= getClasspath(configuration);
 		boolean inDevelopmentMode= BootLoader.inDevelopmentMode();

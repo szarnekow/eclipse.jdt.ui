@@ -118,6 +118,7 @@ public class JUnitLaunchShortcut implements ILaunchShortcut {
 		try { 
 			ILaunchConfiguration config = findLaunchConfiguration(type, mode);
 			if (config != null) {
+				DebugUITools.saveAndBuildBeforeLaunch();
 				config.launch(mode, null);
 			}			
 		} catch (CoreException e) {

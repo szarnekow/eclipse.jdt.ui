@@ -317,7 +317,10 @@ public class RemoteTestRunner implements TestListener {
 		long startTime= System.currentTimeMillis();
 		if (fDebugMode)
 			System.out.println("start send tree"); //$NON-NLS-1$
-		sendTree(suites[0]);
+		for (int i= 0; i < suites.length; i++) {
+			sendTree(suites[i]);
+		}
+		
 		if (fDebugMode)
 			System.out.println("done send tree"+(System.currentTimeMillis()-startTime)); //$NON-NLS-1$
 
