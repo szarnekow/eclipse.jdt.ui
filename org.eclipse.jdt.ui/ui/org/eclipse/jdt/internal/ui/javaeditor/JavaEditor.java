@@ -348,7 +348,7 @@ public abstract class JavaEditor extends ExtendedTextEditor implements IViewPart
 			updateKeyModifierMask();
 			
 			IPreferenceStore preferenceStore= getPreferenceStore();
-			preferenceStore.addPropertyChangeListener(this);			
+			preferenceStore.addPropertyChangeListener(this);
 		}
 		
 		private void updateKeyModifierMask() {
@@ -1724,7 +1724,7 @@ public abstract class JavaEditor extends ExtendedTextEditor implements IViewPart
 	private IMarker fLastMarkerTarget= null;
 	protected CompositeActionGroup fActionGroups;
 	private CompositeActionGroup fContextMenuGroup;
-	/**
+	private boolean fMarkOccurrenceAnnotations;	/**
 	 * Holds the current occurrence annotations.
 	 * @since 3.0
 	 */
@@ -1763,8 +1763,10 @@ public abstract class JavaEditor extends ExtendedTextEditor implements IViewPart
 		JavaTextTools textTools= JavaPlugin.getDefault().getJavaTextTools();
 		setSourceViewerConfiguration(new JavaSourceViewerConfiguration(textTools, this, IJavaPartitions.JAVA_PARTITIONING));
 		setRangeIndicator(new DefaultRangeIndicator());
-		setPreferenceStore(JavaPlugin.getDefault().getPreferenceStore());
+		IPreferenceStore store= JavaPlugin.getDefault().getPreferenceStore();
+		setPreferenceStore(store);
 		setKeyBindingScopes(new String[] { "org.eclipse.jdt.ui.javaEditorScope" });  //$NON-NLS-1$
+		fMarkOccurrenceAnnotations= store.getBoolean(PreferenceConstants.EDITOR_MARK_OCCURRENCES);
 	}
 	
 	/*
@@ -2169,6 +2171,7 @@ public abstract class JavaEditor extends ExtendedTextEditor implements IViewPart
 	 */
 	public void dispose() {
 		// cancel possiblle running computation
+		fMarkOccurrenceAnnotations= false;
 		fComputeCount++;
 		
 		if (isBrowserLikeLinks())
@@ -2341,6 +2344,15 @@ public abstract class JavaEditor extends ExtendedTextEditor implements IViewPart
 				if (event.getNewValue() instanceof Boolean) {
 					Boolean disable= (Boolean) event.getNewValue();
 					configureInsertMode(OVERWRITE, !disable.booleanValue());
+				}
+			}
+			
+			if (PreferenceConstants.EDITOR_MARK_OCCURRENCES.equals(property)) {
+				if (event.getNewValue() instanceof Boolean) {
+					fMarkOccurrenceAnnotations= ((Boolean)event.getNewValue()).booleanValue();
+					if (!fMarkOccurrenceAnnotations) {
+						fComputeCount++;
+					}
 				}
 			}
 			
@@ -2677,6 +2689,9 @@ public abstract class JavaEditor extends ExtendedTextEditor implements IViewPart
 	 */
 	protected void updateOccurrences() {
 
+		if (!fMarkOccurrenceAnnotations)
+			return;
+		
 		final int currentCount= ++fComputeCount;
 		final ITextSelection selection= (ITextSelection) getSelectionProvider().getSelection();
 		
