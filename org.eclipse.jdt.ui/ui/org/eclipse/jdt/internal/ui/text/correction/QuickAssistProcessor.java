@@ -398,7 +398,7 @@ public class QuickAssistProcessor implements IQuickAssistProcessor {
 		}
 		
 		BodyDeclaration bodyDeclaration= ASTResolving.findParentBodyDeclaration(catchClause);
-		if (!(bodyDeclaration instanceof MethodDeclaration)) {
+		if (!(bodyDeclaration instanceof MethodDeclaration) && !(bodyDeclaration instanceof Initializer)) {
 			return false;
 		}
 		
@@ -407,11 +407,13 @@ public class QuickAssistProcessor implements IQuickAssistProcessor {
 		}
 		
 		AST ast= bodyDeclaration.getAST();
-		MethodDeclaration methodDeclaration= (MethodDeclaration) bodyDeclaration;
-		{		
+		
+		if (bodyDeclaration instanceof MethodDeclaration) {		
+			MethodDeclaration methodDeclaration= (MethodDeclaration) bodyDeclaration;
+
 			ASTRewrite rewrite= ASTRewrite.create(ast);
 			
-			removeCatchBlock(rewrite, methodDeclaration, catchClause);
+			removeCatchBlock(rewrite, catchClause);
 	
 			ITypeBinding binding= type.resolveBinding();
 			if (binding == null || isNotYetThrown(binding, methodDeclaration.thrownExceptions())) {
@@ -427,10 +429,10 @@ public class QuickAssistProcessor implements IQuickAssistProcessor {
 			ASTRewriteCorrectionProposal proposal= new ASTRewriteCorrectionProposal(label, context.getCompilationUnit(), rewrite, 4, image);
 			resultingCollections.add(proposal);
 		}
-		{
+		{  // for initializers or method declarations
 			ASTRewrite rewrite= ASTRewrite.create(ast);
 			
-			removeCatchBlock(rewrite, methodDeclaration, catchClause);
+			removeCatchBlock(rewrite, catchClause);
 			String label= CorrectionMessages.getString("QuickAssistProcessor.removecatchclause.description"); //$NON-NLS-1$
 			Image image= JavaPluginImages.get(JavaPluginImages.IMG_OBJS_EXCEPTION);
 			ASTRewriteCorrectionProposal proposal= new ASTRewriteCorrectionProposal(label, context.getCompilationUnit(), rewrite, 5, image);
@@ -440,7 +442,7 @@ public class QuickAssistProcessor implements IQuickAssistProcessor {
 		return true;
 	}
 	
-	private static void removeCatchBlock(ASTRewrite rewrite, MethodDeclaration methodDeclaration, CatchClause catchClause) {
+	private static void removeCatchBlock(ASTRewrite rewrite, CatchClause catchClause) {
 		TryStatement tryStatement= (TryStatement) catchClause.getParent();
 		if (tryStatement.catchClauses().size() > 1 || tryStatement.getFinally() != null) {
 			rewrite.remove(catchClause, null);
