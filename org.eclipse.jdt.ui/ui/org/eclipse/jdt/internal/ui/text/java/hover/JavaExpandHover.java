@@ -129,6 +129,7 @@ public class JavaExpandHover extends AnnotationExpandHover {
 		}
 		
 		if (exact.size() <= 1)
+//		if (exact.size() < 1)
 			return null;
 		
 		AnnotationHoverInput input= new AnnotationHoverInput();
