@@ -299,18 +299,23 @@ public class JavaIndenter {
 	}
 	
 	/**
-	 * Returns the reference position regarding to indentation for <code>position</code>, or
-	 * <code>NOT_FOUND</code>. <code>fIndent</code> will contain the relative indentation (in 
-	 * indentation units, not characters) after the call. If there is a special alignment (e.g. for
-	 * a method declaration where parameters should be aligned), <code>fAlign</code> will contain the absolute
-	 * position of the alignment reference in <code>fDocument</code>, otherwise <code>fAlign</code>
+	 * Returns the reference position regarding to indentation for <code>position</code>,
+	 * or <code>NOT_FOUND</code>.<code>fIndent</code> is set to the
+	 * relative indentation (in indentation units, not characters) compared to
+	 * the line where the returned offset resides. If there is a special
+	 * alignment (e.g. for a method declaration where parameters should be
+	 * aligned), <code>fAlign</code> will contain the absolute position of
+	 * the alignment reference in <code>fDocument</code>, otherwise <code>fAlign</code>
 	 * is set to <code>JavaHeuristicScanner.NOT_FOUND</code>.
 	 * 
 	 * @param position the position for which the reference is computed
 	 * @param danglingElse whether a dangling else should be assumed at <code>position</code>
-	 * @param matchBrace whether the position of the matching brace should be returned instead of doing code analysis
-	 * @param matchBrace whether the position of the matching parenthesis should be returned instead of doing code analysis
-	 * @return the reference statement relative to which <code>position</code> should be indented, or {@link JavaHeuristicScanner#NOT_FOUND}
+	 * @param matchBrace whether the position of the matching brace should be
+	 *        returned instead of doing code analysis
+	 * @param matchBrace whether the position of the matching parenthesis
+	 *        should be returned instead of doing code analysis
+	 * @return the reference statement relative to which <code>position</code>
+	 *         should be indented, or {@link JavaHeuristicScanner#NOT_FOUND}
 	 */
 	private int findReferencePosition(int position, boolean danglingElse, boolean matchBrace, boolean matchParen) {
 		fIndent= 0; // the indentation modification
@@ -417,7 +422,7 @@ public class JavaIndenter {
 				
 				case Symbols.TokenCOLON: // switch statements and labels
 					if (searchCaseGotoDefault()) {
-						if (!hasBrace)
+						if (!hasBrace || matchBrace)
 							fIndent++;
 						return fPosition;
 					}
@@ -435,6 +440,7 @@ public class JavaIndenter {
 				case Symbols.TokenLBRACE:
 				
 					int searchPos= fPreviousPos;
+					int bracePos= fPosition;
 					
 					// special array handling
 					nextToken();
@@ -462,6 +468,7 @@ public class JavaIndenter {
 					
 					if (found)
 						return fScanner.findNonWhitespaceForward(searchPos, position);
+					
                     
 					// search start of code forward or continue
 					takeNextExit= true;
@@ -469,7 +476,7 @@ public class JavaIndenter {
 					
 					// indent when searching over an LBRACE
 					fIndent++;
-					break;
+					return bracePos;
 					
 				case Symbols.TokenSEMICOLON:
 					// search start of code forward or continue

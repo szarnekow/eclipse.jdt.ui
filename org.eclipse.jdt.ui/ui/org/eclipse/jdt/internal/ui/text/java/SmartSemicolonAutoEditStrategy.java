@@ -137,6 +137,7 @@ public class SmartSemicolonAutoEditStrategy implements IAutoEditStrategy {
 		command.caretOffset= position;
 		command.text= adjustSpacing(document, position, fCharacter);
 		command.doit= true;
+		command.owner= null;
 	}
 
 	/**
