@@ -30,7 +30,6 @@ import org.eclipse.jdt.core.dom.rewrite.ListRewrite;
 import org.eclipse.jdt.internal.corext.dom.ASTNodeFactory;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.LinkedNodeFinder;
-import org.eclipse.jdt.internal.corext.dom.ModifierRewrite;
 import org.eclipse.jdt.internal.ui.javaeditor.ASTProvider;
 
 public class NewVariableCompletionProposal extends LinkedCorrectionProposal {
@@ -307,7 +306,8 @@ public class NewVariableCompletionProposal extends LinkedCorrectionProposal {
 			
 			FieldDeclaration newDecl= ast.newFieldDeclaration(fragment);
 			newDecl.setType(type);
-			ModifierRewrite.create(rewrite, newDecl).setModifiers(evaluateFieldModifiers(newTypeDecl), null);
+			newDecl.modifiers().addAll(ASTNodeFactory.newModifiers(ast, evaluateFieldModifiers(newTypeDecl)));
+
 			if (fSenderBinding.isInterface() || fVariableKind == CONST_FIELD) {
 				fragment.setInitializer(ASTNodeFactory.newDefaultExpression(ast, type, 0));
 			}

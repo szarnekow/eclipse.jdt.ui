@@ -29,7 +29,6 @@ import org.eclipse.jdt.ui.PreferenceConstants;
 import org.eclipse.jdt.internal.corext.codemanipulation.StubUtility;
 import org.eclipse.jdt.internal.corext.dom.ASTNodeFactory;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
-import org.eclipse.jdt.internal.corext.dom.ModifierRewrite;
 import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
 import org.eclipse.jdt.internal.ui.JavaPluginImages;
 
@@ -162,7 +161,7 @@ public class AssignToVariableAssistProposal extends LinkedCorrectionProposal {
 		
 		Type type= evaluateType(ast);
 		newDecl.setType(type);
-		ModifierRewrite.create(rewrite, newDecl).setModifiers(modifiers, null);
+		newDecl.modifiers().addAll(ASTNodeFactory.newModifiers(ast, modifiers));
 		
 		Assignment assignment= ast.newAssignment();
 		assignment.setRightHandSide((Expression) rewrite.createCopyTarget(expression));

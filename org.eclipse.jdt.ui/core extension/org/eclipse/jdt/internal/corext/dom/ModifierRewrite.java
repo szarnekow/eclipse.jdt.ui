@@ -34,19 +34,6 @@ import org.eclipse.jdt.internal.corext.Assert;
 public class ModifierRewrite {
 	
 	private static final int VISIBILITY_MODIFIERS= Modifier.PUBLIC | Modifier.PRIVATE | Modifier.PROTECTED;
-	public static final Modifier.ModifierKeyword[] ALL_KEYWORDS= {
-			Modifier.ModifierKeyword.PUBLIC_KEYWORD,
-			Modifier.ModifierKeyword.PROTECTED_KEYWORD,
-			Modifier.ModifierKeyword.PRIVATE_KEYWORD,
-			Modifier.ModifierKeyword.STATIC_KEYWORD,
-			Modifier.ModifierKeyword.ABSTRACT_KEYWORD,
-			Modifier.ModifierKeyword.FINAL_KEYWORD,
-			Modifier.ModifierKeyword.SYNCHRONIZED_KEYWORD,
-			Modifier.ModifierKeyword.STRICTFP_KEYWORD,
-			Modifier.ModifierKeyword.VOLATILE_KEYWORD,
-			Modifier.ModifierKeyword.NATIVE_KEYWORD,
-			Modifier.ModifierKeyword.TRANSIENT_KEYWORD
-	};
 	
 	private ListRewrite fModifierRewrite;
 	private AST fAst;

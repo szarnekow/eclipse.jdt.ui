@@ -176,6 +176,12 @@ public class ASTNodeFactory {
 			Modifier.ModifierKeyword.TRANSIENT_KEYWORD
 	};
 	
+	/**
+	 * Returns a list of newly created Modifier nodes corresponding to the given modfier flags. 
+	 * @param ast The ast to create the nodes for.
+	 * @param modifiers The modifier flags describing the modifier nodes to create.
+	 * @return Returns a list of nodes of type {@link Modifier}.
+	 */
 	public static List newModifiers(AST ast, int modifiers) {
 		List res= new ArrayList(32);
 		for (int i= 0; i < ALL_KEYWORDS.length; i++) {
@@ -186,6 +192,14 @@ public class ASTNodeFactory {
 		return res;
 	}
 	
+	/**
+	 * Returns a list of newly created Modifier nodes corresponding to a given list of existing modifiers. 
+	 * @param ast The ast to create the nodes for.
+	 * @param modifierNodes The modifier nodes describing the modifier nodes to create. Only
+	 * nodes of type {@link Modifier} are looked at and cloned. To create a full copy of the list consider
+	 * to use {@link ASTNode#copySubtrees(AST, List)}.
+	 * @return Returns a list of nodes of type {@link Modifier}.
+	 */
 	public static List newModifiers(AST ast, List modifierNodes) {
 		List res= new ArrayList(modifierNodes.size());
 		for (int i= 0; i < modifierNodes.size(); i++) {
