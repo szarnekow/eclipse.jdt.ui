@@ -12,7 +12,6 @@
 package org.eclipse.jdt.internal.ui.javaeditor;
 
 
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -515,6 +514,13 @@ public class ClassFileEditor extends JavaEditor implements ClassFileDocumentProv
 				return element;
 		}
 		return null;
+	}
+
+	/*
+	 * @see org.eclipse.jdt.internal.ui.javaeditor.JavaEditor#getInputElement()
+	 */
+	protected IJavaElement getInputJavaElement() {
+		return ((IClassFileEditorInput)getEditorInput()).getClassFile();
 	}
 	
 	/*

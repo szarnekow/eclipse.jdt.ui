@@ -28,6 +28,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Preferences;
 
+import org.eclipse.search.ui.SearchUI;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.BidiSegmentEvent;
 import org.eclipse.swt.custom.BidiSegmentListener;
@@ -128,11 +129,13 @@ import org.eclipse.ui.part.IShowInTargetList;
 import org.eclipse.ui.texteditor.AddTaskAction;
 import org.eclipse.ui.texteditor.AnnotationEvent;
 import org.eclipse.ui.texteditor.AnnotationPreference;
+import org.eclipse.ui.texteditor.DefaultAnnotation;
 import org.eclipse.ui.texteditor.DefaultMarkerAnnotationAccess;
 import org.eclipse.ui.texteditor.DefaultRangeIndicator;
 import org.eclipse.ui.texteditor.ExtendedTextEditor;
 import org.eclipse.ui.texteditor.IAbstractTextEditorHelpContextIds;
 import org.eclipse.ui.texteditor.IAnnotationListener;
+import org.eclipse.ui.texteditor.IDocumentProvider;
 import org.eclipse.ui.texteditor.IEditorStatusLine;
 import org.eclipse.ui.texteditor.ITextEditorActionConstants;
 import org.eclipse.ui.texteditor.ITextEditorActionDefinitionIds;
@@ -159,6 +162,7 @@ import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.ISourceReference;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
+import org.eclipse.jdt.core.dom.ASTNode;
 
 import org.eclipse.jdt.ui.IContextMenuConstants;
 import org.eclipse.jdt.ui.JavaUI;
@@ -182,6 +186,7 @@ import org.eclipse.jdt.internal.ui.javaeditor.selectionactions.StructureSelectHi
 import org.eclipse.jdt.internal.ui.javaeditor.selectionactions.StructureSelectNextAction;
 import org.eclipse.jdt.internal.ui.javaeditor.selectionactions.StructureSelectPreviousAction;
 import org.eclipse.jdt.internal.ui.javaeditor.selectionactions.StructureSelectionAction;
+import org.eclipse.jdt.internal.ui.search.FindOccurrencesEngine;
 import org.eclipse.jdt.internal.ui.text.HTMLTextPresenter;
 import org.eclipse.jdt.internal.ui.text.IJavaPartitions;
 import org.eclipse.jdt.internal.ui.text.JavaChangeHover;
@@ -189,7 +194,6 @@ import org.eclipse.jdt.internal.ui.text.JavaPairMatcher;
 import org.eclipse.jdt.internal.ui.text.java.hover.JavaExpandHover;
 import org.eclipse.jdt.internal.ui.util.JavaUIHelp;
 import org.eclipse.jdt.internal.ui.viewsupport.IViewPartInputProvider;
-
 
 /**
  * Java specific text editor.
@@ -259,6 +263,7 @@ public abstract class JavaEditor extends ExtendedTextEditor implements IViewPart
 			synchronizeOutlinePage(element);
 			setSelection(element, false);
 			updateStatusLine();
+			updateOccurrences();
 		}
 	}
 		
@@ -292,6 +297,18 @@ public abstract class JavaEditor extends ExtendedTextEditor implements IViewPart
 		/** The key modifier mask. */
 		private int fKeyModifierMask;
 
+		/**
+		 * Style ranges before link mode.
+		 * @since 3.0
+		 */
+		private StyleRange[] fOldStyleRanges;
+		/**
+		 * Link mode style ranges region.
+		 * @since 3.0
+		 */
+		IRegion fOldStyleRangeRegion;
+
+		
 		public void deactivate() {
 			deactivate(false);
 		}
@@ -468,7 +485,6 @@ public abstract class JavaEditor extends ExtendedTextEditor implements IViewPart
 				else
 					viewer.invalidateTextPresentation();
 
-				// remove underline				
 				if (viewer instanceof ITextViewerExtension3) {
 					ITextViewerExtension3 extension= (ITextViewerExtension3) viewer;
 					offset= extension.modelOffset2WidgetOffset(offset);
@@ -476,9 +492,13 @@ public abstract class JavaEditor extends ExtendedTextEditor implements IViewPart
 					offset -= viewer.getVisibleRegion().getOffset();
 				}
 				
-				StyledText text= viewer.getTextWidget();
 				try {
-					text.redrawRange(offset, length, true);
+					StyledText text= viewer.getTextWidget();
+					// Removes style
+					text.replaceStyleRanges(fOldStyleRangeRegion.getOffset(), fOldStyleRangeRegion.getLength(), fOldStyleRanges);
+//					text.replaceStyleRanges(offset, length, fOldStyleRanges);
+					// Causes underline to disappear
+					text.redrawRange(offset, length, false);
 				} catch (IllegalArgumentException x) {
 					JavaPlugin.log(x);
 				}
@@ -580,7 +600,7 @@ public abstract class JavaEditor extends ExtendedTextEditor implements IViewPart
 				return;
 
 			repairRepresentation();
-
+			
 			StyledText text= viewer.getTextWidget();
 			if (text == null || text.isDisposed())
 				return;
@@ -603,19 +623,41 @@ public abstract class JavaEditor extends ExtendedTextEditor implements IViewPart
 				length= region.getLength();
 			}
 			
-			StyleRange oldStyleRange= text.getStyleRangeAtOffset(offset);
-			Color foregroundColor= fColor;
-			Color backgroundColor= oldStyleRange == null ? text.getBackground() : oldStyleRange.background;
-			int fontStyle= oldStyleRange== null ? SWT.NORMAL : oldStyleRange.fontStyle;
-			StyleRange styleRange= new StyleRange(offset, length, foregroundColor, backgroundColor, fontStyle);
-			text.setStyleRange(styleRange);
-
-			// underline
-			text.redrawRange(offset, length, true);
+			fOldStyleRanges = text.getStyleRanges(offset, length);
+			fOldStyleRangeRegion= new Region(offset, length);
+			
+			applyForgroundStyle(text, offset, length);
+			text.redrawRange(offset, length, false);
 
 			fActiveRegion= region;
 		}
-
+		
+		private void applyForgroundStyle(StyledText fTextWidget, int offset, int length) {
+			StyleRange[] styleRanges= fTextWidget.getStyleRanges(offset, length);
+			ArrayList newStyleRanges= new ArrayList(styleRanges.length + 10); 
+			int rangeOffset= offset;
+			for (int i= 0, max= styleRanges.length; i < max; i++) {
+				StyleRange sr= styleRanges[i]; 
+				if (rangeOffset < sr.start) {
+					// Unstyled range
+					StyleRange usr= new StyleRange(rangeOffset, sr.start - rangeOffset, fColor, null);
+					newStyleRanges.add(usr);
+				}
+				rangeOffset= sr.start + sr.length;
+				// Important: Must create a new one
+				sr= new StyleRange(sr.start, sr.length, fColor, sr.background, sr.fontStyle);
+				newStyleRanges.add(sr);
+			}
+			int endOffset= offset + length;
+			if (rangeOffset < endOffset) {
+				// Last unstyled range
+				StyleRange usr= new StyleRange(rangeOffset, endOffset - rangeOffset, fColor, null);
+				newStyleRanges.add(usr);
+			}
+			styleRanges= (StyleRange[])newStyleRanges.toArray(new StyleRange[newStyleRanges.size()]);
+			fTextWidget.replaceStyleRanges(offset, length, styleRanges);
+		}
+		
 		private void activateCursor(ISourceViewer viewer) {
 			StyledText text= viewer.getTextWidget();
 			if (text == null || text.isDisposed())
@@ -1682,6 +1724,16 @@ public abstract class JavaEditor extends ExtendedTextEditor implements IViewPart
 	private IMarker fLastMarkerTarget= null;
 	protected CompositeActionGroup fActionGroups;
 	private CompositeActionGroup fContextMenuGroup;
+	/**
+	 * Holds the current occurrence annotations.
+	 * @since 3.0
+	 */
+	private ArrayList fOccurrenceAnnotations= new ArrayList();
+	/**
+	 * Counts the number of background computation requests.
+	 * @since 3.0
+	 */
+	private volatile int fComputeCount;
 
 		
 	/**
@@ -2116,7 +2168,9 @@ public abstract class JavaEditor extends ExtendedTextEditor implements IViewPart
 	 * @see IWorkbenchPart#dispose()
 	 */
 	public void dispose() {
-
+		// cancel possiblle running computation
+		fComputeCount++;
+		
 		if (isBrowserLikeLinks())
 			disableBrowserLikeLinks();
 			
@@ -2615,6 +2669,100 @@ public abstract class JavaEditor extends ExtendedTextEditor implements IViewPart
 		}			
 	}
 	
+	/**
+	 * Updates the occurrences annotations based
+	 * on the current selection.
+	 *
+	 * @since 3.0
+	 */
+	protected void updateOccurrences() {
+
+		final int currentCount= ++fComputeCount;
+		final ITextSelection selection= (ITextSelection) getSelectionProvider().getSelection();
+		
+		Thread thread= new Thread("Occurrences Marker") { //$NON-NLS-1$
+			public void run() {
+				if (currentCount != fComputeCount)
+					return;
+			
+				// Find occurrences
+				FindOccurrencesEngine engine= FindOccurrencesEngine.create(getInputJavaElement());
+				List matches= new ArrayList();
+				try {
+					matches= engine.findOccurrences(selection.getOffset(), selection.getLength());
+					if (matches == null || matches.isEmpty()) {
+						return;
+					}
+				} catch (JavaModelException e) {
+					JavaPlugin.log(e);
+					return;
+				}
+				
+				if (currentCount != fComputeCount)
+					return;
+				
+				IDocumentProvider documentProvider= getDocumentProvider();
+				if (documentProvider == null)
+					return;
+				
+				IAnnotationModel annotationModel= documentProvider.getAnnotationModel(getEditorInput());
+				if (annotationModel == null)
+					return;
+				
+				// Remove existing occurrence annotations
+				for (int i= 0, size= fOccurrenceAnnotations.size(); i < size; i++)
+					annotationModel.removeAnnotation((Annotation)fOccurrenceAnnotations.get(i));
+				fOccurrenceAnnotations.clear();
+	
+				if (currentCount != fComputeCount)
+					return;
+
+				ITextViewer textViewer= getViewer(); 
+				if (textViewer == null)
+					return;
+				
+				IDocument document= textViewer.getDocument();
+				if (document == null)
+					return;
+				
+				// Add occurrence annotations
+				for (Iterator each= matches.iterator(); each.hasNext();) {
+					if (currentCount != fComputeCount)
+						return; 
+					
+					ASTNode node= (ASTNode)each.next();
+					if (node == null)
+						continue;
+					
+					String message;
+					// Create & add annotation
+					try {
+						message= document.get(node.getStartPosition(), node.getLength());
+					} catch (BadLocationException ex) {
+						// Skip this match
+						continue;
+					}
+					Annotation annotation= new DefaultAnnotation(SearchUI.SEARCH_MARKER, IMarker.SEVERITY_INFO, true, message);
+					Position pos= new Position(node.getStartPosition(), node.getLength());
+					annotationModel.addAnnotation(annotation, pos);
+					fOccurrenceAnnotations.add(annotation);
+				}
+			}
+		};
+		
+		thread.setDaemon(true);
+		thread.start();
+		
+	}
+
+	/**
+	 * Returns the Java element wrapped by this editors input.
+	 * 
+	 * @return the Java element wrapped by this editors input.
+	 * @since 3.0
+	 */
+	abstract protected IJavaElement getInputJavaElement();
+
 	protected void updateStatusLine() {
 		ITextSelection selection= (ITextSelection) getSelectionProvider().getSelection();
 		Annotation annotation= getAnnotation(selection.getOffset(), selection.getLength());

@@ -43,6 +43,7 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
@@ -136,6 +137,43 @@ public abstract class FindOccurrencesEngine {
 	protected abstract IResource getMarkerOwner() throws JavaModelException;
 	
 	protected abstract void addSpecialAttributes(Map attributes) throws JavaModelException;
+
+	/**
+	 * Finds occurrences in this engines input.
+	 * 
+	 * @param offset the offset of the current selection
+	 * @param length the lenght of the current selection
+	 * 
+	 * @return the matches as ASTNode list or <code>null</code> if there was an error
+	 * @throws JavaModelException
+	 */
+	public List findOccurrences(int offset, int length) throws JavaModelException {
+		ISourceReference sr= getSourceReference();
+		if (sr.getSourceRange() == null) {
+			return null; 
+		}
+		
+		final CompilationUnit root= createAST();
+		if (root == null) {
+			return null;
+		}
+		final Name name= getNameNode(root, offset, length);
+		if (name == null) 
+			return null;
+		
+		final IBinding target;
+		if (name.getParent() instanceof ClassInstanceCreation)
+			target= ((ClassInstanceCreation)name.getParent()).resolveConstructorBinding();
+		else
+			target= name.resolveBinding();
+		
+		if (target == null)
+			return null;
+		
+		OccurrencesFinder finder= new OccurrencesFinder(target);
+		root.accept(finder);
+		return finder.getUsages();
+	}
 	
 	public String run(int offset, int length) throws JavaModelException {
 		ISourceReference sr= getSourceReference();
