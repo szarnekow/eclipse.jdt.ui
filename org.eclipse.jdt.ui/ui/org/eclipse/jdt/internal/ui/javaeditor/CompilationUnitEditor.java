@@ -715,6 +715,9 @@ public class CompilationUnitEditor extends JavaEditor implements IReconcilingPar
 			setActionActivationCode("IndentOnTab", '\t', -1, SWT.NONE); //$NON-NLS-1$
 		}
 		
+		// add annotation actions
+		action= new JavaSelectMarkerRulerAction2(JavaEditorMessages.getResourceBundle(), "CorrectionAssistProposal.", this); //$NON-NLS-1$
+		
 		fGenerateActionGroup= new GenerateActionGroup(this, ITextEditorActionConstants.GROUP_EDIT);
 		ActionGroup rg= new RefactorActionGroup(this, ITextEditorActionConstants.GROUP_EDIT);
 		

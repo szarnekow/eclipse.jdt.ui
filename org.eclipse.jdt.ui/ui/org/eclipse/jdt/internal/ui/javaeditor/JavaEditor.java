@@ -52,6 +52,7 @@ import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.Shell;
 
 import org.eclipse.jface.action.Action;
@@ -64,6 +65,8 @@ import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.PreferenceConverter;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
+import org.eclipse.jface.viewers.DoubleClickEvent;
+import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.IPostSelectionProvider;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
@@ -96,6 +99,8 @@ import org.eclipse.jface.text.information.IInformationProvider;
 import org.eclipse.jface.text.information.IInformationProviderExtension2;
 import org.eclipse.jface.text.information.InformationPresenter;
 import org.eclipse.jface.text.source.Annotation;
+import org.eclipse.jface.text.source.AnnotationRulerColumn;
+import org.eclipse.jface.text.source.CompositeRuler;
 import org.eclipse.jface.text.source.IAnnotationAccess;
 import org.eclipse.jface.text.source.IAnnotationModel;
 import org.eclipse.jface.text.source.IOverviewRuler;
@@ -108,6 +113,7 @@ import org.eclipse.ui.IEditorActionBarContributor;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IPageLayout;
 import org.eclipse.ui.IPartService;
+import org.eclipse.ui.ISelectionListener;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPart;
@@ -120,14 +126,17 @@ import org.eclipse.ui.help.WorkbenchHelp;
 import org.eclipse.ui.part.EditorActionBarContributor;
 import org.eclipse.ui.part.IShowInTargetList;
 import org.eclipse.ui.texteditor.AddTaskAction;
+import org.eclipse.ui.texteditor.AnnotationEvent;
 import org.eclipse.ui.texteditor.AnnotationPreference;
 import org.eclipse.ui.texteditor.DefaultMarkerAnnotationAccess;
 import org.eclipse.ui.texteditor.DefaultRangeIndicator;
 import org.eclipse.ui.texteditor.ExtendedTextEditor;
 import org.eclipse.ui.texteditor.IAbstractTextEditorHelpContextIds;
+import org.eclipse.ui.texteditor.IAnnotationListener;
 import org.eclipse.ui.texteditor.IEditorStatusLine;
 import org.eclipse.ui.texteditor.ITextEditorActionConstants;
 import org.eclipse.ui.texteditor.ITextEditorActionDefinitionIds;
+import org.eclipse.ui.texteditor.IUpdate;
 import org.eclipse.ui.texteditor.MarkerAnnotation;
 import org.eclipse.ui.texteditor.MarkerAnnotationPreferences;
 import org.eclipse.ui.texteditor.ResourceAction;
@@ -177,6 +186,7 @@ import org.eclipse.jdt.internal.ui.text.HTMLTextPresenter;
 import org.eclipse.jdt.internal.ui.text.IJavaPartitions;
 import org.eclipse.jdt.internal.ui.text.JavaChangeHover;
 import org.eclipse.jdt.internal.ui.text.JavaPairMatcher;
+import org.eclipse.jdt.internal.ui.text.java.hover.JavaExpandHover;
 import org.eclipse.jdt.internal.ui.util.JavaUIHelp;
 import org.eclipse.jdt.internal.ui.viewsupport.IViewPartInputProvider;
 
@@ -2839,6 +2849,8 @@ public abstract class JavaEditor extends ExtendedTextEditor implements IViewPart
 	private Annotation getAnnotation(int offset, int length) {
 		IAnnotationAccess access= getAnnotationAccess();
 		IAnnotationModel model= getDocumentProvider().getAnnotationModel(getEditorInput());
+		if (model == null)
+			return null;
 		Iterator e= new JavaAnnotationIterator(model, true, true);
 		while (e.hasNext()) {
 			Annotation a= (Annotation) e.next();
@@ -3000,4 +3012,71 @@ public abstract class JavaEditor extends ExtendedTextEditor implements IViewPart
 		setAction(ITextEditorActionDefinitionIds.SELECT_WORD_NEXT, action);
 		textWidget.setKeyBinding(SWT.CTRL | SWT.SHIFT | SWT.ARROW_RIGHT, SWT.NULL);
 	}
+
+	/*
+	 * @see org.eclipse.ui.texteditor.ExtendedTextEditor#createCompositeRuler()
+	 */
+	protected CompositeRuler createCompositeRuler() {
+		CompositeRuler ruler= new CompositeRuler();
+		AnnotationRulerColumn column= new AnnotationRulerColumn(VERTICAL_RULER_WIDTH);
+		column.setHover(new JavaExpandHover(ruler, new IAnnotationListener() {
+
+			public void annotationSelected(AnnotationEvent event) {
+				// forward to any registered annotation listeners!
+				for (Iterator it= fAnnotationListeners.iterator(); it.hasNext(); ) {
+					IAnnotationListener listener= (IAnnotationListener) it.next();
+					listener.annotationSelected(event);
+				}
+			}
+
+			public void annotationDefaultSelected(AnnotationEvent event) {
+				// forward to any registered annotation listeners
+				for (Iterator it= fAnnotationListeners.iterator(); it.hasNext(); ) {
+					IAnnotationListener listener= (IAnnotationListener) it.next();
+					listener.annotationDefaultSelected(event);
+				}
+				// for now: just invoke ruler click action
+//				triggerAction(ITextEditorActionConstants.RULER_CLICK);
+			}
+
+			public void annotationContextMenuAboutToShow(AnnotationEvent event, Menu menu) {
+				// forward to any registered annotation listeners!
+				for (Iterator it= fAnnotationListeners.iterator(); it.hasNext(); ) {
+					IAnnotationListener listener= (IAnnotationListener) it.next();
+					listener.annotationContextMenuAboutToShow(event, menu);
+				}
+			}
+			
+		}, new IDoubleClickListener() {
+
+			public void doubleClick(DoubleClickEvent event) {
+				// for now: just invoke ruler double click action
+				triggerAction(ITextEditorActionConstants.RULER_DOUBLE_CLICK);
+			}
+
+			private void triggerAction(String actionID) {
+				IAction action= getAction(actionID);
+				if (action != null) {
+					if (action instanceof IUpdate)
+						((IUpdate) action).update();
+					// hack to propagate line change
+					if (action instanceof ISelectionListener) {
+						((ISelectionListener)action).selectionChanged(null, null);
+					}
+					if (action.isEnabled())
+						action.run();
+				}
+			}
+			
+		}));
+		ruler.addDecorator(0, column);
+		
+		if (isLineNumberRulerVisible())
+			ruler.addDecorator(1, createLineNumberRulerColumn());
+		else if (isPrefQuickDiffAlwaysOn())
+			ruler.addDecorator(1, createChangeRulerColumn());
+		
+		return ruler;
+	}
+	
 }
