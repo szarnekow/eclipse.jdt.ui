@@ -609,7 +609,7 @@ public class ChangeTypeRefactoring extends Refactoring {
 			case ASTNode.VARIABLE_DECLARATION_STATEMENT:
 				return ((VariableDeclarationStatement) node).getType();
 			case ASTNode.METHOD_DECLARATION:
-				return ((MethodDeclaration)node).getReturnType();
+				return ((MethodDeclaration)node).getReturnType2();
 			default:
 				Assert.isTrue(false);
 				return null;

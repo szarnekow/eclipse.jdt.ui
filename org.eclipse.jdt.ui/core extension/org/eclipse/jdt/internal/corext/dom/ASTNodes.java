@@ -27,11 +27,48 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.ToolFactory;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.core.compiler.IScanner;
-import org.eclipse.jdt.core.dom.*;
+import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.ASTVisitor;
+import org.eclipse.jdt.core.dom.AbstractTypeDeclaration;
+import org.eclipse.jdt.core.dom.AnonymousClassDeclaration;
+import org.eclipse.jdt.core.dom.ArrayType;
+import org.eclipse.jdt.core.dom.Assignment;
+import org.eclipse.jdt.core.dom.BodyDeclaration;
+import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.EnumConstantDeclaration;
+import org.eclipse.jdt.core.dom.Expression;
+import org.eclipse.jdt.core.dom.FieldDeclaration;
+import org.eclipse.jdt.core.dom.IBinding;
+import org.eclipse.jdt.core.dom.IMethodBinding;
+import org.eclipse.jdt.core.dom.ITypeBinding;
+import org.eclipse.jdt.core.dom.IVariableBinding;
+import org.eclipse.jdt.core.dom.InfixExpression;
+import org.eclipse.jdt.core.dom.Initializer;
+import org.eclipse.jdt.core.dom.Message;
+import org.eclipse.jdt.core.dom.MethodDeclaration;
+import org.eclipse.jdt.core.dom.MethodInvocation;
+import org.eclipse.jdt.core.dom.Modifier;
+import org.eclipse.jdt.core.dom.Name;
+import org.eclipse.jdt.core.dom.ParameterizedType;
+import org.eclipse.jdt.core.dom.PrimitiveType;
+import org.eclipse.jdt.core.dom.QualifiedName;
+import org.eclipse.jdt.core.dom.QualifiedType;
+import org.eclipse.jdt.core.dom.ReturnStatement;
+import org.eclipse.jdt.core.dom.SimpleName;
+import org.eclipse.jdt.core.dom.SimpleType;
+import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
+import org.eclipse.jdt.core.dom.StructuralPropertyDescriptor;
+import org.eclipse.jdt.core.dom.Type;
+import org.eclipse.jdt.core.dom.TypeDeclaration;
+import org.eclipse.jdt.core.dom.VariableDeclaration;
+import org.eclipse.jdt.core.dom.VariableDeclarationExpression;
+import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
+import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 
 import org.eclipse.jdt.internal.corext.Assert;
 import org.eclipse.jdt.internal.corext.textmanipulation.TextBuffer;
 import org.eclipse.jdt.internal.corext.util.CodeFormatterUtil;
+
 import org.eclipse.jdt.internal.ui.text.correction.ASTResolving;
 
 public class ASTNodes {
@@ -172,18 +209,18 @@ public class ASTNodes {
 		return 0;
 	}
 		
-	public static int getModifiers(VariableDeclaration declaration) {
+	public static List getModifiers(VariableDeclaration declaration) {
 		Assert.isNotNull(declaration);
 		if (declaration instanceof SingleVariableDeclaration) {
-			return ((SingleVariableDeclaration)declaration).getModifiers();
+			return ((SingleVariableDeclaration)declaration).modifiers();
 		} else if (declaration instanceof VariableDeclarationFragment) {
 			ASTNode parent= declaration.getParent();
 			if (parent instanceof VariableDeclarationExpression)
-				return ((VariableDeclarationExpression)parent).getModifiers();
+				return ((VariableDeclarationExpression)parent).modifiers();
 			else if (parent instanceof VariableDeclarationStatement)
-				return ((VariableDeclarationStatement)parent).getModifiers();
+				return ((VariableDeclarationStatement)parent).modifiers();
 		}
-		return 0;		
+		return new ArrayList(0);		
 	}
 	
 	public static boolean isSingleDeclaration(VariableDeclaration declaration) {
@@ -338,7 +375,42 @@ public class ASTNodes {
 			node= node.getParent();
 		} while (node != null && node.getNodeType() != nodeType);
 		return node;
-	}	
+	}
+	
+	public static ASTNode findParent(ASTNode node, StructuralPropertyDescriptor[][] pathes) {
+		for (int p= 0; p < pathes.length; p++) {
+			StructuralPropertyDescriptor[] path= pathes[p];
+			ASTNode current= node;
+			int d= path.length - 1;
+			for (; d >= 0 && current != null; d--) {
+				StructuralPropertyDescriptor descriptor= path[d];
+				if (!descriptor.equals(current.getLocationInParent()))
+					break;
+				current= current.getParent();
+			}
+			if (d < 0)
+				return current;
+		}
+		return null;
+	}
+	
+	public static ASTNode getNormalizedNode(ASTNode node) {
+		ASTNode current= node;
+		// normalize name
+		if (QualifiedName.NAME_PROPERTY.equals(current.getLocationInParent())) {
+			current= current.getParent();
+		}
+		// normalize type
+		if (QualifiedType.NAME_PROPERTY.equals(current.getLocationInParent()) || 
+			SimpleType.NAME_PROPERTY.equals(current.getLocationInParent())) {
+			current= current.getParent();
+		}
+		// normalize parameterized types
+		if (ParameterizedType.TYPE_PROPERTY.equals(current.getLocationInParent())) {
+			current= current.getParent();
+		}
+		return current;
+	}
 	
 	public static boolean isParent(ASTNode node, ASTNode parent) {
 		Assert.isNotNull(parent);
@@ -616,19 +688,39 @@ public class ASTNodes {
 		return defaultIndex;
 	}
 	
-	public static SimpleName getLeftMostSimpleName(QualifiedName name) {
-		final SimpleName[] result= new SimpleName[1];
+	public static SimpleName getLeftMostSimpleName(Name name) {
+		if (name instanceof SimpleName) {
+			return (SimpleName)name;
+		} else {
+			final SimpleName[] result= new SimpleName[1];
+			ASTVisitor visitor= new ASTVisitor() {
+				public boolean visit(QualifiedName qualifiedName) {
+					Name left= qualifiedName.getQualifier();
+					if (left instanceof SimpleName)
+						result[0]= (SimpleName)left;
+					else
+						left.accept(this);
+					return false;
+				}
+			};
+			name.accept(visitor);
+			return result[0];
+		}
+	}
+	
+	public static SimpleType getLeftMostSimpleType(QualifiedType type) {
+		final SimpleType[] result= new SimpleType[1];
 		ASTVisitor visitor= new ASTVisitor() {
-			public boolean visit(QualifiedName qualifiedName) {
-				Name left= qualifiedName.getQualifier();
-				if (left instanceof SimpleName)
-					result[0]= (SimpleName)left;
+			public boolean visit(QualifiedType qualifiedType) {
+				Type left= qualifiedType.getQualifier();
+				if (left instanceof SimpleType)
+					result[0]= (SimpleType)left;
 				else
 					left.accept(this);
 				return false;
 			}
 		};
-		name.accept(visitor);
+		type.accept(visitor);
 		return result[0];
 	}
 	

@@ -54,6 +54,10 @@ public class IntroduceFactoryTests extends RefactoringTest {
 		return new MySetup(new TestSuite(clazz));
 	}
 
+	public static Test setUpTest(Test someTest) {
+	    return new MySetup(someTest);
+	}
+	
 	/**
 	 * Produces a test file name based on the name of this JUnit testcase.
 	 * For input files, trims off the trailing part of the test name that

@@ -1588,7 +1588,7 @@ class InstanceMethodMover {
 		}
 		
 		public boolean hasVoidReturnType() {
-			Type returnType= fMethodNode.getReturnType();
+			Type returnType= fMethodNode.getReturnType2();
 			if(!(returnType instanceof PrimitiveType))
 				return false;
 			return PrimitiveType.VOID.equals(((PrimitiveType) returnType).getPrimitiveTypeCode());
