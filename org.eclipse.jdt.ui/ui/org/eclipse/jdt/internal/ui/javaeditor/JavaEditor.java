@@ -2681,39 +2681,33 @@ public abstract class JavaEditor extends ExtendedTextEditor implements IViewPart
 		}			
 	}
 	
-	/**
-	 * Updates the occurrences annotations based
-	 * on the current selection.
-	 *
-	 * @since 3.0
-	 */
-	protected void updateOccurrences() {
-
-		if (!fMarkOccurrenceAnnotations)
-			return;
+	
+	class OccurrencesFinder implements Runnable, IDocumentListener {
 		
-		final int currentCount= ++fComputeCount;
-		final ITextSelection selection= (ITextSelection) getSelectionProvider().getSelection();
+		private int fCount;
+		private IDocument fDocument;
+		private ITextSelection fSelection;
+		private boolean fCancelled= false;
 		
-		Thread thread= new Thread("Occurrences Marker") { //$NON-NLS-1$
-			public void run() {
-				if (currentCount != fComputeCount)
-					return;
+		public OccurrencesFinder(int count, IDocument document, ITextSelection selection) {
+			fCount= count;
+			fDocument= document;
+			fSelection= selection;
+			fDocument.addDocumentListener(this);
+		}
+		
+		private boolean isCancelled() {
+			return fCount != fComputeCount || fCancelled;
+		}
+		
+		/*
+		 * @see java.lang.Runnable#run()
+		 */
+		public void run() {
 			
-				// Find occurrences
-				FindOccurrencesEngine engine= FindOccurrencesEngine.create(getInputJavaElement());
-				List matches= new ArrayList();
-				try {
-					matches= engine.findOccurrences(selection.getOffset(), selection.getLength());
-					if (matches == null || matches.isEmpty()) {
-						return;
-					}
-				} catch (JavaModelException e) {
-					JavaPlugin.log(e);
-					return;
-				}
+			try {
 				
-				if (currentCount != fComputeCount)
+				if (isCancelled())
 					return;
 				
 				IDocumentProvider documentProvider= getDocumentProvider();
@@ -2725,13 +2719,30 @@ public abstract class JavaEditor extends ExtendedTextEditor implements IViewPart
 					return;
 				
 				// Remove existing occurrence annotations
-				for (int i= 0, size= fOccurrenceAnnotations.size(); i < size; i++)
-					annotationModel.removeAnnotation((Annotation)fOccurrenceAnnotations.get(i));
-				fOccurrenceAnnotations.clear();
-	
-				if (currentCount != fComputeCount)
+				synchronized (annotationModel) {
+					for (int i= 0, size= fOccurrenceAnnotations.size(); i < size; i++)
+						annotationModel.removeAnnotation((Annotation)fOccurrenceAnnotations.get(i));
+					fOccurrenceAnnotations.clear();
+				}
+				
+				if (isCancelled())
 					return;
-
+				
+				// Find occurrences
+				FindOccurrencesEngine engine= FindOccurrencesEngine.create(getInputJavaElement());
+				List matches= new ArrayList();
+				try {
+					matches= engine.findOccurrences(fSelection.getOffset(), fSelection.getLength());
+					if (matches == null || matches.isEmpty())
+						return;
+				} catch (JavaModelException e) {
+					JavaPlugin.log(e);
+					return;
+				}
+				
+				if (isCancelled())
+					return;
+				
 				ITextViewer textViewer= getViewer(); 
 				if (textViewer == null)
 					return;
@@ -2741,11 +2752,14 @@ public abstract class JavaEditor extends ExtendedTextEditor implements IViewPart
 					return;
 				
 				// Add occurrence annotations
+				ArrayList annotations= new ArrayList();
+				ArrayList positions= new ArrayList();
 				for (Iterator each= matches.iterator(); each.hasNext();) {
-					if (currentCount != fComputeCount)
+					
+					if (isCancelled())
 						return; 
 					
-					ASTNode node= (ASTNode)each.next();
+					ASTNode node= (ASTNode) each.next();
 					if (node == null)
 						continue;
 					
@@ -2757,14 +2771,55 @@ public abstract class JavaEditor extends ExtendedTextEditor implements IViewPart
 						// Skip this match
 						continue;
 					}
-					Annotation annotation= new DefaultAnnotation(SearchUI.SEARCH_MARKER, IMarker.SEVERITY_INFO, true, message);
-					Position pos= new Position(node.getStartPosition(), node.getLength());
-					annotationModel.addAnnotation(annotation, pos);
-					fOccurrenceAnnotations.add(annotation);
+					annotations.add(new DefaultAnnotation(SearchUI.SEARCH_MARKER, IMarker.SEVERITY_INFO, true, message));
+					positions.add(new Position(node.getStartPosition(), node.getLength()));
 				}
+				
+				if (isCancelled())
+					return;
+				
+				synchronized (annotationModel) {
+					fOccurrenceAnnotations= annotations;
+					for (int i= 0, size= annotations.size(); i < size; i++)
+						annotationModel.addAnnotation((Annotation) annotations.get(i), (Position) positions.get(i));
+				}
+				
+			} finally {
+				fDocument.removeDocumentListener(this);
 			}
-		};
+		}
+
+		/*
+		 * @see org.eclipse.jface.text.IDocumentListener#documentAboutToBeChanged(org.eclipse.jface.text.DocumentEvent)
+		 */
+		public void documentAboutToBeChanged(DocumentEvent event) {
+			fCancelled= true;
+		}
+
+		/*
+		 * @see org.eclipse.jface.text.IDocumentListener#documentChanged(org.eclipse.jface.text.DocumentEvent)
+		 */
+		public void documentChanged(DocumentEvent event) {
+		}
+	}
+	
+	/**
+	 * Updates the occurrences annotations based
+	 * on the current selection.
+	 *
+	 * @since 3.0
+	 */
+	protected void updateOccurrences() {
+
+		if (!fMarkOccurrenceAnnotations)
+			return;
 		
+		IDocument document= getSourceViewer().getDocument();
+		if (document == null)
+			return;
+		
+		OccurrencesFinder finder= new OccurrencesFinder(++fComputeCount, document, (ITextSelection) getSelectionProvider().getSelection());
+		Thread thread= new Thread(finder, "Occurrences Marker"); //$NON-NLS-1$
 		thread.setDaemon(true);
 		thread.start();
 		
