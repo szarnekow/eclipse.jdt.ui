@@ -18,7 +18,7 @@ import org.eclipse.core.runtime.CoreException;
 
 import org.eclipse.jdt.core.ICompilationUnit;
 
-import org.eclipse.jdt.internal.corext.refactoring.changes.CompilationUnitChange;
+import org.eclipse.jdt.internal.corext.textmanipulation.TextBuffer;
 
 public class ReplaceCorrectionProposal extends CUCorrectionProposal {
 	
@@ -34,13 +34,13 @@ public class ReplaceCorrectionProposal extends CUCorrectionProposal {
 	}	
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.jdt.internal.ui.text.correction.CUCorrectionProposal#createCompilationUnitChange(String, ICompilationUnit, TextEdit)
+	 * @see org.eclipse.jdt.internal.ui.text.correction.CUCorrectionProposal#addEdits(org.eclipse.jdt.internal.corext.textmanipulation.TextBuffer)
 	 */
-	protected CompilationUnitChange createCompilationUnitChange(String name, ICompilationUnit cu, TextEdit root) throws CoreException {
-		CompilationUnitChange change= super.createCompilationUnitChange(name, cu, root);
+	protected void addEdits(TextBuffer buffer) throws CoreException {
+		super.addEdits(buffer);
+
 		TextEdit edit= new ReplaceEdit(fOffset, fLength, fReplacementString);
-		root.addChild(edit);
-		return change;
+		getRootTextEdit().addChild(edit);
 	}
 	
 }

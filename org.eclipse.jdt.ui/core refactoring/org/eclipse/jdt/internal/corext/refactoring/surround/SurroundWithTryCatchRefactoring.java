@@ -40,6 +40,8 @@ import org.eclipse.jdt.core.dom.TryStatement;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
 
+import org.eclipse.jdt.ui.PreferenceConstants;
+
 import org.eclipse.jface.text.ITextSelection;
 
 import org.eclipse.jdt.internal.corext.codemanipulation.CodeGenerationSettings;
@@ -186,8 +188,12 @@ public class SurroundWithTryCatchRefactoring extends Refactoring {
 						container.add(++index, element);
 					}
 				} else {
-					fRewriter.markAsReplaced(fSelectedNode, container, 
-						(ASTNode[])newStatements.toArray(new ASTNode[newStatements.size()]));
+					if (newStatements.isEmpty()) {
+						fRewriter.markAsRemoved(fSelectedNode);
+					} else {
+						Statement[] collapsedTargetStatements= ((Statement[])newStatements.toArray(new Statement[newStatements.size()]));
+						fRewriter.markAsReplaced(fSelectedNode, fRewriter.getCollapseTargetPlaceholder(collapsedTargetStatements));
+					}
 				}
 			}
 			
@@ -279,7 +285,6 @@ public class SurroundWithTryCatchRefactoring extends Refactoring {
 		List result= new ArrayList();
 		List fragments= statement.fragments();
 		result.add(fRewriter.createCopy(statement));
-		List container= getStatementsOfSelectedNode();
 		AST ast= getAST();
 		List newAssignments= new ArrayList(2);
 		for (Iterator iter= fragments.iterator(); iter.hasNext();) {
@@ -298,7 +303,12 @@ public class SurroundWithTryCatchRefactoring extends Refactoring {
 				}
 			}
 		}
-		fRewriter.markAsReplaced(statement, container, (ASTNode[])newAssignments.toArray(new ASTNode[newAssignments.size()]));
+		if (newAssignments.isEmpty()) {
+			fRewriter.markAsRemoved(statement);
+		} else {
+			Statement[] collapsedTargetStatements= ((Statement[]) newAssignments.toArray(new Statement[newAssignments.size()]));
+			fRewriter.markAsReplaced(statement, fRewriter.getCollapseTargetPlaceholder(collapsedTargetStatements));
+		}
 		return result;
 	}
 	
@@ -311,7 +321,9 @@ public class SurroundWithTryCatchRefactoring extends Refactoring {
 			CatchClause catchClause= getAST().newCatchClause();
 			tryStatement.catchClauses().add(catchClause);
 			SingleVariableDeclaration decl= getAST().newSingleVariableDeclaration();
-			String name= fScope.createName("e", false); //$NON-NLS-1$
+			String varName= PreferenceConstants.getPreferenceStore().getString(PreferenceConstants.CODEGEN_EXCEPTION_VAR_NAME);
+			
+			String name= fScope.createName(varName, false);
 			decl.setName(getAST().newSimpleName(name));
 			decl.setType(ASTNodeFactory.newType(getAST(), type));
 			catchClause.setException(decl);

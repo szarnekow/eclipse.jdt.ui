@@ -14,6 +14,15 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.eclipse.core.resources.IContainer;
+import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IWorkspace;
+import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.core.runtime.IPath;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.dnd.FileTransfer;
@@ -30,12 +39,14 @@ import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IStatusLineManager;
 import org.eclipse.jface.action.MenuManager;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.IDoubleClickListener;
+import org.eclipse.jface.viewers.IElementComparer;
 import org.eclipse.jface.viewers.ILabelDecorator;
 import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.IOpenListener;
@@ -52,16 +63,6 @@ import org.eclipse.jface.viewers.TreeExpansionEvent;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.ViewerFilter;
 
-import org.eclipse.core.runtime.IAdaptable;
-import org.eclipse.core.runtime.IPath;
-
-import org.eclipse.core.resources.IContainer;
-import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IWorkspace;
-import org.eclipse.core.resources.ResourcesPlugin;
-
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
@@ -74,6 +75,7 @@ import org.eclipse.ui.IViewSite;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchPartSite;
+import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.actions.ActionContext;
 import org.eclipse.ui.part.ISetSelectionTarget;
@@ -83,6 +85,7 @@ import org.eclipse.ui.part.IShowInTargetList;
 import org.eclipse.ui.part.ResourceTransfer;
 import org.eclipse.ui.part.ShowInContext;
 import org.eclipse.ui.part.ViewPart;
+import org.eclipse.ui.views.framelist.FrameAction;
 
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -94,6 +97,15 @@ import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 
+import org.eclipse.jdt.ui.IPackagesViewPart;
+import org.eclipse.jdt.ui.JavaElementSorter;
+import org.eclipse.jdt.ui.JavaUI;
+import org.eclipse.jdt.ui.PreferenceConstants;
+import org.eclipse.jdt.ui.StandardJavaElementContentProvider;
+import org.eclipse.jdt.ui.actions.CustomFiltersActionGroup;
+
+import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
+
 import org.eclipse.jdt.internal.ui.IJavaHelpContextIds;
 import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.internal.ui.dnd.DelegatingDropAdapter;
@@ -102,6 +114,7 @@ import org.eclipse.jdt.internal.ui.dnd.LocalSelectionTransfer;
 import org.eclipse.jdt.internal.ui.dnd.ResourceTransferDragAdapter;
 import org.eclipse.jdt.internal.ui.dnd.TransferDragSourceListener;
 import org.eclipse.jdt.internal.ui.dnd.TransferDropTargetListener;
+import org.eclipse.jdt.internal.ui.filters.OutputFolderFilter;
 import org.eclipse.jdt.internal.ui.javaeditor.EditorUtility;
 import org.eclipse.jdt.internal.ui.javaeditor.IClassFileEditorInput;
 import org.eclipse.jdt.internal.ui.javaeditor.JarEntryEditorInput;
@@ -114,12 +127,7 @@ import org.eclipse.jdt.internal.ui.viewsupport.JavaElementImageProvider;
 import org.eclipse.jdt.internal.ui.viewsupport.JavaElementLabels;
 import org.eclipse.jdt.internal.ui.viewsupport.ProblemTreeViewer;
 import org.eclipse.jdt.internal.ui.viewsupport.StatusBarUpdater;
-
-import org.eclipse.jdt.ui.IPackagesViewPart;
-import org.eclipse.jdt.ui.JavaElementSorter;
-import org.eclipse.jdt.ui.JavaUI;
-import org.eclipse.jdt.ui.PreferenceConstants;
-import org.eclipse.jdt.ui.StandardJavaElementContentProvider;
+import org.eclipse.jdt.internal.ui.workingsets.WorkingSetFilterActionGroup;
  
 /**
  * The ViewPart for the ProjectExplorer. It listens to part activation events.
@@ -200,7 +208,7 @@ public class PackageExplorerPart extends ViewPart
 	 */
 	private boolean fLinkingEnabled;
 
-	public void init(IViewSite site, IMemento memento) throws PartInitException {
+    public void init(IViewSite site, IMemento memento) throws PartInitException {
 		super.init(site, memento);
 		fMemento= memento;
 		restoreLayoutState(memento);
@@ -746,8 +754,8 @@ public class PackageExplorerPart extends ViewPart
 			if (part != null) {
 				IWorkbenchPage page= getSite().getPage();
 				page.bringToTop(part);
-				if (obj instanceof IJavaElement) 
-					EditorUtility.revealInEditor(part, (IJavaElement) obj);
+				if (obj instanceof IJavaElement)
+					EditorUtility.revealInEditor(part, (IJavaElement)obj);
 			}
 		}
 	}
@@ -841,6 +849,7 @@ public class PackageExplorerPart extends ViewPart
 	}
 
 	private void restoreFilterAndSorter() {
+		fViewer.addFilter(new OutputFolderFilter());
 		fViewer.setSorter(new JavaElementSorter());
 		if (fMemento != null)	
 			fActionSet.restoreFilterAndSorterState(fMemento);
@@ -932,7 +941,24 @@ public class PackageExplorerPart extends ViewPart
 	void editorActivated(IEditorPart editor) {
 		if (!isLinkingEnabled())  
 			return;
-		showInput(getElementOfInput(editor.getEditorInput()));
+		Object input= getElementOfInput(editor.getEditorInput());
+		if (input == null) 
+			return;
+		if (!inputIsSelected(editor.getEditorInput()))
+			showInput(input);
+	}
+
+	private boolean inputIsSelected(IEditorInput input) {
+		IStructuredSelection selection= (IStructuredSelection)fViewer.getSelection();
+		if (selection.size() != 1) 
+			return false;
+		IEditorInput selectionAsInput= null;
+		try {
+			selectionAsInput= EditorUtility.getEditorInput(selection.getFirstElement());
+		} catch (JavaModelException e1) {
+			return false;
+		}
+		return input.equals(selectionAsInput);
 	}
 
 	boolean showInput(Object input) {
@@ -1142,7 +1168,7 @@ public class PackageExplorerPart extends ViewPart
 			Object elementOfInput= getElementOfInput((IEditorInput)context.getInput());
 			if (elementOfInput == null) 
 				return false; 
-			return showInput(elementOfInput);
+			return tryToReveal(elementOfInput);
 		}
 
 		ISelection selection= context.getSelection();
@@ -1203,4 +1229,97 @@ public class PackageExplorerPart extends ViewPart
 			fViewer.setSelection(fViewer.getSelection());
 		}
 	}
+
+    public boolean tryToReveal(Object element) {
+        if (revealElementOrParent(element))
+            return true;
+        
+        WorkingSetFilterActionGroup workingSetGroup = fActionSet.getWorkingSetActionGroup();
+        IWorkingSet workingSet = workingSetGroup.getWorkingSet();  	    
+        if (workingSetGroup.isFiltered(getVisibleParent(element), element)) {
+            String message= PackagesMessages.getFormattedString("PackageExplorer.notFound", workingSet.getName());  //$NON-NLS-1$
+            if (MessageDialog.openQuestion(getSite().getShell(), PackagesMessages.getString("PackageExplorer.filteredDialog.title"), message)) { //$NON-NLS-1$
+                workingSetGroup.setWorkingSet(null, true);		
+                if (revealElementOrParent(element))
+                    return true;
+            }
+        }
+        // try to remove filters
+        CustomFiltersActionGroup filterGroup = fActionSet.getCustomFilterActionGroup();
+        String[] filters= filterGroup.removeFiltersFor(getVisibleParent(element), element, getTreeViewer().getContentProvider()); 
+        if (filters.length > 0) {
+            String message= PackagesMessages.getString("PackageExplorer.removeFilters"); //$NON-NLS-1$
+            if (MessageDialog.openQuestion(getSite().getShell(), PackagesMessages.getString("PackageExplorer.filteredDialog.title"), message)) {
+                filterGroup.setFilters(filters);		
+                if (revealElementOrParent(element))
+                    return true;
+            }
+        }
+        FrameAction action = fActionSet.getUpAction();
+        while (action.getFrameList().getCurrentIndex() > 0) {
+            action.run();
+            if (revealElementOrParent(element))
+                return true;
+        }
+        return false;
+    }
+    
+    private boolean revealElementOrParent(Object element) {
+        if (this != null) { 
+            if (revealAndVerify(element))
+                return true;
+            element= getVisibleParent(element);
+            if (element != null) {
+                if (revealAndVerify(element))
+                    return true;
+                if (element instanceof IJavaElement) {
+                    IResource resource= ((IJavaElement)element).getResource();
+                    if (resource != null) {
+                        if (revealAndVerify(resource))
+                            return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private Object getVisibleParent(Object object) {
+    	// Fix for http://dev.eclipse.org/bugs/show_bug.cgi?id=19104
+    	if (object == null)
+    		return null;
+    	if (!(object instanceof IJavaElement))
+    	    return object;
+    	IJavaElement element2= (IJavaElement) object;
+    	switch (element2.getElementType()) {
+    		case IJavaElement.IMPORT_DECLARATION:
+    		case IJavaElement.PACKAGE_DECLARATION:
+    		case IJavaElement.IMPORT_CONTAINER:
+    		case IJavaElement.TYPE:
+    		case IJavaElement.METHOD:
+    		case IJavaElement.FIELD:
+    		case IJavaElement.INITIALIZER:
+    			// select parent cu/classfile
+    			element2= (IJavaElement)element2.getOpenable();
+    			break;
+    		case IJavaElement.JAVA_MODEL:
+    			element2= null;
+    			break;
+    	}
+    	if (element2.getElementType() == IJavaElement.COMPILATION_UNIT) {
+    		element2= JavaModelUtil.toOriginal((ICompilationUnit)element2);
+    	}
+    	return element2;
+    }
+
+    private boolean revealAndVerify(Object element) {
+    	if (element == null)
+    		return false;
+    	selectReveal(new StructuredSelection(element));
+    	IElementComparer comparer= getTreeViewer().getComparer();
+    	Object selected= ((IStructuredSelection)getSite().getSelectionProvider().getSelection()).getFirstElement();
+    	if (comparer != null ? comparer.equals(element, selected) : element.equals(selected))
+    		return true;
+    	return false;
+    }
 }

@@ -311,6 +311,14 @@ public class JdtActionConstants {
 	public static final String INTRODUCE_PARAMETER= "org.eclipse.jdt.ui.actions.IntroduceParameter"; //$NON-NLS-1$
 
 	/**
+	 * Refactor menu: name of standard Introduce Factory global action
+	 * (value <code>"org.eclipse.jdt.ui.actions.IntroduceFactory"</code>).
+	 * 
+	 * @since 3.0
+	 */
+	public static final String INTRODUCE_FACTORY= "org.eclipse.jdt.ui.actions.IntroduceFactory"; //$NON-NLS-1$
+
+	/**
 	 * Refactor menu: name of standard Extract Method global action
 	 * (value <code>"org.eclipse.jdt.ui.actions.ExtractMethod"</code>).
 	 */
@@ -331,6 +339,14 @@ public class JdtActionConstants {
 	 * @since 2.1
 	 */
 	public static final String EXTRACT_INTERFACE= "org.eclipse.jdt.ui.actions.ExtractInterface"; //$NON-NLS-1$
+
+	/**
+	 * Refactor menu: name of standard Generalize Type global action
+	 * (value <code>"org.eclipse.jdt.ui.actions.ChangeType"</code>).
+	 * 
+	 * @since 3.0
+	 */
+	public static final String CHANGE_TYPE= "org.eclipse.jdt.ui.actions.ChangeType"; //$NON-NLS-1$
 
 	/**
 	 * Refactor menu: name of standard global action to convert a nested type to a top level type

@@ -124,6 +124,10 @@ public class InlineMethodRefactoring extends Refactoring {
 		fDeleteSource= true;
 	}
 	
+	public static boolean isAvailable(IMethod method) throws JavaModelException {
+		return Checks.isAvailable(method);		
+	}
+	
 	public static InlineMethodRefactoring create(ICompilationUnit unit, int offset, int length, CodeGenerationSettings settings) {
 		ASTNode node= getTargetNode(unit, offset, length);
 		if (node == null)
@@ -291,7 +295,7 @@ public class InlineMethodRefactoring extends Refactoring {
 		if (method != null) {
 			ICompilationUnit source= method.getCompilationUnit();
 			if (source == null) {
-				status.addFatalError(RefactoringCoreMessages.getString("InlineMethodRefactoring.error.classFile")); //$NON-NLS-1$
+				status.addFatalError(RefactoringCoreMessages.getFormattedString("InlineMethodRefactoring.error.classFile", method.getElementName())); //$NON-NLS-1$
 				return null;
 			}
 			

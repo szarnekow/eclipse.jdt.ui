@@ -23,9 +23,24 @@ import org.eclipse.swt.graphics.RGB;
 
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.PreferenceConverter;
-import org.eclipse.jface.text.*;
+
+import org.eclipse.jface.text.Assert;
+import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.jface.text.BadPositionCategoryException;
+import org.eclipse.jface.text.DefaultPositionUpdater;
+import org.eclipse.jface.text.DocumentEvent;
+import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.IInformationControlCreator;
+import org.eclipse.jface.text.IPositionUpdater;
+import org.eclipse.jface.text.IRegion;
+import org.eclipse.jface.text.ITextViewer;
+import org.eclipse.jface.text.ITextViewerExtension2;
+import org.eclipse.jface.text.ITextViewerExtension3;
+import org.eclipse.jface.text.Position;
+import org.eclipse.jface.text.Region;
 import org.eclipse.jface.text.contentassist.ICompletionProposalExtension;
 import org.eclipse.jface.text.contentassist.ICompletionProposalExtension2;
+import org.eclipse.jface.text.contentassist.ICompletionProposalExtension3;
 import org.eclipse.jface.text.contentassist.IContextInformation;
 
 import org.eclipse.jdt.ui.PreferenceConstants;
@@ -33,12 +48,15 @@ import org.eclipse.jdt.ui.text.JavaTextTools;
 import org.eclipse.jdt.ui.text.java.IJavaCompletionProposal;
 
 import org.eclipse.jdt.internal.ui.JavaPlugin;
-import org.eclipse.jdt.internal.ui.text.link.LinkedPositionManager;
-import org.eclipse.jdt.internal.ui.text.link.LinkedPositionUI;
-import org.eclipse.jdt.internal.ui.text.link.LinkedPositionUI.ExitFlags;
+import org.eclipse.jdt.internal.ui.text.link.ILinkedListener;
+import org.eclipse.jdt.internal.ui.text.link.LinkedEnvironment;
+import org.eclipse.jdt.internal.ui.text.link.LinkedPositionGroup;
+import org.eclipse.jdt.internal.ui.text.link.LinkedUIControl;
+import org.eclipse.jdt.internal.ui.text.link.LinkedUIControl.ExitFlags;
+import org.eclipse.jdt.internal.ui.text.link.LinkedUIControl.IExitPolicy;
 
 
-public class JavaCompletionProposal implements IJavaCompletionProposal, ICompletionProposalExtension, ICompletionProposalExtension2 {
+public class JavaCompletionProposal implements IJavaCompletionProposal, ICompletionProposalExtension, ICompletionProposalExtension2, ICompletionProposalExtension3 {
 
 	private String fDisplayString;
 	private String fReplacementString;
@@ -180,13 +198,18 @@ public class JavaCompletionProposal implements IJavaCompletionProposal, IComplet
 					if (preferenceStore.getBoolean(PreferenceConstants.EDITOR_CLOSE_BRACKETS)) {
 						int newOffset= fReplacementOffset + fCursorPosition;
 						
-						LinkedPositionManager manager= new LinkedPositionManager(document);
-						manager.addPosition(newOffset, 0);
-		
-						LinkedPositionUI editor= new LinkedPositionUI(fTextViewer, manager);
-						editor.setExitPolicy(new ExitPolicy(')'));
-						editor.setFinalCaretOffset(newOffset + 1);
-						editor.enter();							
+						LinkedPositionGroup group= new LinkedPositionGroup();
+						group.createPosition(document, newOffset, 0);
+						
+						LinkedEnvironment env= new LinkedEnvironment();
+						env.addGroup(group);
+						env.forceInstall();
+						
+						LinkedUIControl ui= new LinkedUIControl(env, fTextViewer);
+						ui.setExitPolicy(new ExitPolicy(')'));
+						ui.setExitPosition(fTextViewer, newOffset + 1, 0, Integer.MAX_VALUE);
+						ui.setCyclingMode(LinkedUIControl.CYCLE_NEVER);
+						ui.enter();
 					}
 				}
 			}
@@ -246,7 +269,7 @@ public class JavaCompletionProposal implements IJavaCompletionProposal, IComplet
 		}
 	}	
 	
-	private static class ExitPolicy implements LinkedPositionUI.ExitPolicy {
+	private static class ExitPolicy implements IExitPolicy {
 		
 		final char fExitCharacter;
 		
@@ -257,26 +280,18 @@ public class JavaCompletionProposal implements IJavaCompletionProposal, IComplet
 		/*
 		 * @see org.eclipse.jdt.internal.ui.text.link.LinkedPositionUI.ExitPolicy#doExit(org.eclipse.jdt.internal.ui.text.link.LinkedPositionManager, org.eclipse.swt.events.VerifyEvent, int, int)
 		 */
-		public ExitFlags doExit(LinkedPositionManager manager, VerifyEvent event, int offset, int length) {
+		public ExitFlags doExit(LinkedEnvironment environment, VerifyEvent event, int offset, int length) {
 			
 			if (event.character == fExitCharacter) {
-				if (manager.anyPositionIncludes(offset, length))
-					return new ExitFlags(LinkedPositionUI.COMMIT| LinkedPositionUI.UPDATE_CARET, false);
+				if (environment.anyPositionContains(offset))
+					return new ExitFlags(ILinkedListener.UPDATE_CARET, false);
 				else
-					return new ExitFlags(LinkedPositionUI.COMMIT, true);
+					return new ExitFlags(ILinkedListener.UPDATE_CARET, true);
 			}	
 			
 			switch (event.character) {			
-			case '\b':
-				if (manager.getFirstPosition().length == 0)
-					return new ExitFlags(0, true);
-				else
-					return null;
-				
-			case '\n':
-			case '\r':
 			case ';':
-				return new ExitFlags(LinkedPositionUI.COMMIT, true);
+				return new ExitFlags(ILinkedListener.NONE, true);
 								
 			default:
 				return null;
@@ -357,6 +372,13 @@ public class JavaCompletionProposal implements IJavaCompletionProposal, IComplet
 	public int getReplacementOffset() {
 		return fReplacementOffset;
 	}
+	
+	/*
+	 * @see org.eclipse.jface.text.contentassist.ICompletionProposalExtension3#getCompletionOffset()
+	 */
+	public int getCompletionOffset() {
+		return getReplacementOffset();
+	}
 
 	/**
 	 * Sets the replacement offset.
@@ -390,6 +412,18 @@ public class JavaCompletionProposal implements IJavaCompletionProposal, IComplet
 	 */
 	public String getReplacementString() {
 		return fReplacementString;
+	}
+	
+	/*
+	 * @see org.eclipse.jface.text.contentassist.ICompletionProposalExtension3#getReplacementText()
+	 */
+	public CharSequence getCompletionText() {
+		String string= getReplacementString();
+		int pos= string.indexOf('(');
+		if (pos > 0)
+			return string.subSequence(0, pos);
+		else
+			return string;
 	}
 
 	/**
@@ -595,6 +629,13 @@ public class JavaCompletionProposal implements IJavaCompletionProposal, IComplet
 	public void unselected(ITextViewer viewer) {
 		repairPresentation(viewer);
 		fRememberedStyleRange= null;
+	}
+
+	/*
+	 * @see org.eclipse.jface.text.contentassist.ICompletionProposalExtension3#getInformationControlCreator()
+	 */
+	public IInformationControlCreator getInformationControlCreator() {
+		return null;
 	}
 
 }

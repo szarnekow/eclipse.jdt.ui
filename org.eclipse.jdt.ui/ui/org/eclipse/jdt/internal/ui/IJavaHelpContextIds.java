@@ -82,6 +82,7 @@ public interface IJavaHelpContextIds {
 
 	public static final String OPEN_TYPE_ACTION= 												PREFIX + "open_type_action"; //$NON-NLS-1$
 	public static final String OPEN_TYPE_IN_HIERARCHY_ACTION= 							PREFIX + "open_type_in_hierarchy_action"; //$NON-NLS-1$
+	
 	public static final String ADD_JAVADOC_STUB_ACTION= 									PREFIX + "add_javadoc_stub_action"; //$NON-NLS-1$
 	public static final String ADD_TASK_ACTION= 												PREFIX + "add_task_action"; //$NON-NLS-1$
 	public static final String EXTERNALIZE_STRINGS_ACTION= 								PREFIX + "externalize_strings_action"; //$NON-NLS-1$	
@@ -91,7 +92,9 @@ public interface IJavaHelpContextIds {
 	public static final String CONVERT_ANONYMOUS_TO_NESTED_ACTION= 								PREFIX + "convert_anonymous_to_nested_action"; //$NON-NLS-1$	
 	public static final String EXTRACT_CONSTANT_ACTION= 											PREFIX + "extract_constant_action"; //$NON-NLS-1$	
 	public static final String INTRODUCE_PARAMETER_ACTION=								PREFIX + "introduce_parameter_action"; //$NON-NLS-1$	
+	public static final String INTRODUCE_FACTORY_ACTION= 								PREFIX + "introduce_factory_action"; //$NON-NLS-1$
 	public static final String EXTRACT_INTERFACE_ACTION= 									PREFIX + "extract_interface_action"; //$NON-NLS-1$	
+	public static final String CHANGE_TYPE_ACTION= 											PREFIX + "change_type_action"; //$NON-NLS-1$
 	public static final String MOVE_INNER_TO_TOP_ACTION= 									PREFIX + "move_inner_to_top_level_action"; //$NON-NLS-1$
 	public static final String USE_SUPERTYPE_ACTION= 										PREFIX + "use_supertype_action"; //$NON-NLS-1$
 	public static final String FIND_DECLARATIONS_IN_WORKSPACE_ACTION= 						PREFIX + "find_declarations_in_workspace_action"; //$NON-NLS-1$	
@@ -180,6 +183,7 @@ public interface IJavaHelpContextIds {
 	// Dialogs
 	public static final String MAINTYPE_SELECTION_DIALOG= PREFIX + "maintype_selection_dialog_context"; //$NON-NLS-1$
 	public static final String OPEN_TYPE_DIALOG= PREFIX + "open_type_dialog_context"; //$NON-NLS-1$
+	public static final String OPEN_PACKAGE_DIALOG= PREFIX + "open_package_dialog_context"; //$NON-NLS-1$
 	public static final String SOURCE_ATTACHMENT_DIALOG= PREFIX + "source_attachment_dialog_context"; //$NON-NLS-1$
 	public static final String LIBRARIES_WORKBOOK_PAGE_ADVANCED_DIALOG= PREFIX + "advanced_dialog_context"; //$NON-NLS-1$
 	public static final String CONFIRM_SAVE_MODIFIED_RESOURCES_DIALOG= PREFIX + "confirm_save_modified_resources_dialog_context"; //$NON-NLS-1$
@@ -274,6 +278,7 @@ public interface IJavaHelpContextIds {
 	public static final String EXTRACT_TEMP_WIZARD_PAGE= 						PREFIX + "extract_temp_page_context"; //$NON-NLS-1$
 	public static final String EXTRACT_CONSTANT_WIZARD_PAGE= 						PREFIX + "extract_constant_page_context"; //$NON-NLS-1$
 	public static final String INTRODUCE_PARAMETER_WIZARD_PAGE= 						PREFIX + "introduce_parameter_page_context"; //$NON-NLS-1$
+	public static final String INTRODUCE_FACTORY_WIZARD_PAGE= 							PREFIX + "introduce_factory_wizard_page_context"; //$NON-NLS-1$
 	public static final String PROMOTE_TEMP_TO_FIELD_WIZARD_PAGE= 					PREFIX + "promote_temp_to_field_page_context"; //$NON-NLS-1$
 	public static final String CONVERT_ANONYMOUS_TO_NESTED_WIZARD_PAGE= 				PREFIX + "convert_anonymous_to_nested_page_context"; //$NON-NLS-1$
 	public static final String MODIFY_PARAMETERS_WIZARD_PAGE= 				PREFIX + "modify_parameters_wizard_page_context"; //$NON-NLS-1$

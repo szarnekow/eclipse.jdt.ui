@@ -47,7 +47,6 @@ import org.eclipse.jdt.core.IJavaProject;
 
 import org.eclipse.jdt.ui.PreferenceConstants;
 
-import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.internal.ui.util.PixelConverter;
 import org.eclipse.jdt.internal.ui.wizards.NewWizardMessages;
@@ -436,33 +435,32 @@ public class SourceContainerWorkbookPage extends BuildPathBasePage {
 	
 		
 	private void updateClasspathList() {
-		List cpelements= fClassPathList.getElements();
 		List srcelements= fFoldersList.getElements();
-
-		boolean changeDone= false;
-		CPListElement lastSourceFolder= null;
+		
+		List cpelements= fClassPathList.getElements();
+		int nEntries= cpelements.size();
 		// backwards, as entries will be deleted
-		for (int i= cpelements.size() - 1; i >= 0 ; i--) {
+		int lastRemovePos= nEntries;
+		int afterLastSourcePos= 0;
+		for (int i= nEntries - 1; i >= 0; i--) {
 			CPListElement cpe= (CPListElement)cpelements.get(i);
-			if (isEntryKind(cpe.getEntryKind())) {
-				// if it is a source folder, but not one of the accepted entries, remove it
-				// at the same time, for the entries seen, remove them from the accepted list
+			int kind= cpe.getEntryKind();
+			if (isEntryKind(kind)) {
 				if (!srcelements.remove(cpe)) {
 					cpelements.remove(i);
-					changeDone= true;
-				} else if (lastSourceFolder == null) {
-					lastSourceFolder= cpe;
+					lastRemovePos= i;
+				} else if (lastRemovePos == nEntries) {
+					afterLastSourcePos= i + 1;
 				}
 			}
 		}
 
 		if (!srcelements.isEmpty()) {
-			int insertIndex= (lastSourceFolder == null) ? 0 : cpelements.indexOf(lastSourceFolder) + 1;
-			cpelements.addAll(insertIndex, srcelements);
-			changeDone= true;
+			int insertPos= Math.min(afterLastSourcePos, lastRemovePos);
+			cpelements.addAll(insertPos, srcelements);
 		}
-
-		if (changeDone) {
+		
+		if (lastRemovePos != nEntries || !srcelements.isEmpty()) {
 			fClassPathList.setElements(cpelements);
 		}
 	}
@@ -507,10 +505,7 @@ public class SourceContainerWorkbookPage extends BuildPathBasePage {
 	}
 	
 	private void askForAddingExclusionPatternsDialog(List newEntries, Set modifiedEntries) {
-		for (int i= 0; i < newEntries.size(); i++) {
-			CPListElement curr= (CPListElement) newEntries.get(i);
-			addExclusionPatterns(curr, modifiedEntries);
-		}
+		fixNestingConflicts(newEntries, fFoldersList.getElements(), modifiedEntries);
 		if (!modifiedEntries.isEmpty()) {
 			String title= NewWizardMessages.getString("SourceContainerWorkbookPage.exclusion_added.title"); //$NON-NLS-1$
 			String message= NewWizardMessages.getString("SourceContainerWorkbookPage.exclusion_added.message"); //$NON-NLS-1$
@@ -518,27 +513,6 @@ public class SourceContainerWorkbookPage extends BuildPathBasePage {
 		}
 	}
 	
-	
-	private void addExclusionPatterns(CPListElement newEntry, Set modifiedEntries) {
-		IPath entryPath= newEntry.getPath();
-		List existing= fFoldersList.getElements();
-		for (int i= 0; i < existing.size(); i++) {
-			CPListElement curr= (CPListElement) existing.get(i);
-			IPath currPath= curr.getPath();
-			if (currPath.isPrefixOf(entryPath)) {
-				IPath[] exclusionFilters= (IPath[]) curr.getAttribute(CPListElement.EXCLUSION);
-				if (!JavaModelUtil.isExcludedPath(entryPath, exclusionFilters)) {
-					IPath pathToExclude= entryPath.removeFirstSegments(currPath.segmentCount()).addTrailingSeparator();
-					IPath[] newExclusionFilters= new IPath[exclusionFilters.length + 1];
-					System.arraycopy(exclusionFilters, 0, newExclusionFilters, 0, exclusionFilters.length);
-					newExclusionFilters[exclusionFilters.length]= pathToExclude;
-					curr.setAttribute(CPListElement.EXCLUSION, newExclusionFilters);
-					modifiedEntries.add(curr);
-				}
-			}
-		}
-	}
-			
 	private CPListElement[] openSourceContainerDialog(CPListElement existing) {
 		
 		Class[] acceptedClasses= new Class[] { IProject.class, IFolder.class };

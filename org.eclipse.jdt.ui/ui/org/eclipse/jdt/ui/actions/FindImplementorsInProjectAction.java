@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.jdt.ui.actions;
 
-import org.eclipse.core.resources.IResource;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.search.IJavaSearchScope;
@@ -63,7 +62,7 @@ public class FindImplementorsInProjectAction extends FindImplementorsAction {
 	}
 	
 	IJavaSearchScope getScope(IJavaElement element) throws JavaModelException {
-		return JavaSearchScopeFactory.getInstance().createJavaSearchScope(new IResource[] { element.getJavaProject().getProject() });
+		return JavaSearchScopeFactory.getInstance().createJavaProjectSearchScope(element);
 	}
 
 	String getScopeDescription(IJavaElement element) {

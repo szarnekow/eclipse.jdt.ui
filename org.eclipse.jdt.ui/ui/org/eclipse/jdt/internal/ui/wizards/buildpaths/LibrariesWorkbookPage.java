@@ -12,6 +12,7 @@ package org.eclipse.jdt.internal.ui.wizards.buildpaths;
 
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 import org.eclipse.core.resources.IContainer;
@@ -33,6 +34,7 @@ import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
 
 import org.eclipse.jface.dialogs.IDialogSettings;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.StructuredSelection;
@@ -253,11 +255,26 @@ public class LibrariesWorkbookPage extends BuildPathBasePage {
 				CPListElement curr= libentries[i];
 				if (!cplist.contains(curr) && !elementsToAdd.contains(curr)) {
 					elementsToAdd.add(curr);
-					addAttachmentsFromExistingLibs(curr);
+					curr.setAttribute(CPListElement.SOURCEATTACHMENT, guessAttachment(curr));
+					curr.setAttribute(CPListElement.JAVADOC, JavaUI.getLibraryJavadocLocation(curr.getPath()));
 				}
 			}
+			if (!elementsToAdd.isEmpty()) {
+				askForAddingExclusionPatternsDialog(elementsToAdd);
+			}
+			
 			fLibrariesList.addElements(elementsToAdd);
 			fLibrariesList.postSetSelection(new StructuredSelection(libentries));
+		}
+	}
+	
+	private void askForAddingExclusionPatternsDialog(List newEntries) {
+		HashSet modified= new HashSet();
+		fixNestingConflicts(newEntries, fClassPathList.getElements(), modified);
+		if (!modified.isEmpty()) {
+			String title= NewWizardMessages.getString("LibrariesWorkbookPage.exclusion_added.title"); //$NON-NLS-1$
+			String message= NewWizardMessages.getString("LibrariesWorkbookPage.exclusion_added.message"); //$NON-NLS-1$
+			MessageDialog.openInformation(getShell(), title, message);
 		}
 	}
 	
@@ -387,7 +404,9 @@ public class LibrariesWorkbookPage extends BuildPathBasePage {
 			break;
 		}
 		if (res != null && res.length > 0) {
-			fLibrariesList.replaceElement(elem, res[0]);
+			CPListElement curr= res[0];
+			curr.setExported(elem.isExported());
+			fLibrariesList.replaceElement(elem, curr);
 		}		
 			
 	}
@@ -422,23 +441,24 @@ public class LibrariesWorkbookPage extends BuildPathBasePage {
 	private void updateClasspathList() {
 		List projelements= fLibrariesList.getElements();
 		
-		boolean remove= false;
 		List cpelements= fClassPathList.getElements();
+		int nEntries= cpelements.size();
 		// backwards, as entries will be deleted
-		for (int i= cpelements.size() - 1; i >= 0; i--) {
+		int lastRemovePos= nEntries;
+		for (int i= nEntries - 1; i >= 0; i--) {
 			CPListElement cpe= (CPListElement)cpelements.get(i);
 			int kind= cpe.getEntryKind();
 			if (isEntryKind(kind)) {
 				if (!projelements.remove(cpe)) {
 					cpelements.remove(i);
-					remove= true;
+					lastRemovePos= i;
 				}	
 			}
 		}
-		for (int i= 0; i < projelements.size(); i++) {
-			cpelements.add(projelements.get(i));
-		}
-		if (remove || (projelements.size() > 0)) {
+		
+		cpelements.addAll(lastRemovePos, projelements);
+
+		if (lastRemovePos != nEntries || !projelements.isEmpty()) {
 			fClassPathList.setElements(cpelements);
 		}
 	}
@@ -461,10 +481,8 @@ public class LibrariesWorkbookPage extends BuildPathBasePage {
 			
 	private CPListElement[] openClassFolderDialog(CPListElement existing) {	
 
-		Class[] acceptedClasses= new Class[] { IFolder.class };
+		Class[] acceptedClasses= new Class[] { IProject.class, IFolder.class };
 		TypedElementSelectionValidator validator= new TypedElementSelectionValidator(acceptedClasses, existing == null);
-			
-		acceptedClasses= new Class[] { IProject.class, IFolder.class };
 
 		ViewerFilter filter= new TypedViewerFilter(acceptedClasses, getUsedContainers(existing));	
 			
@@ -694,12 +712,13 @@ public class LibrariesWorkbookPage extends BuildPathBasePage {
 	}	
 	
 	
-	private void addAttachmentsFromExistingLibs(CPListElement elem) {
+	private IPath guessAttachment(CPListElement elem) {
 		if (elem.getEntryKind() == IClasspathEntry.CPE_CONTAINER) {
-			return;
+			return null;
 		}
 		
 		try {
+			// try if the jar itself contains the source
 			IJavaModel jmodel= fCurrJProject.getJavaModel();
 			IJavaProject[] jprojects= jmodel.getJavaProjects();
 			for (int i= 0; i < jprojects.length; i++) {
@@ -712,17 +731,16 @@ public class LibrariesWorkbookPage extends BuildPathBasePage {
 							&& entry.getPath().equals(elem.getPath())) {
 							IPath attachPath= entry.getSourceAttachmentPath();
 							if (attachPath != null && !attachPath.isEmpty()) {
-								elem.setAttribute(CPListElement.SOURCEATTACHMENT, attachPath);
-								return;
+								return attachPath;
 							}
 						}
 					}
 				}
 			}
-			elem.setAttribute(CPListElement.JAVADOC, JavaUI.getLibraryJavadocLocation(elem.getPath()));
 		} catch (JavaModelException e) {
 			JavaPlugin.log(e.getStatus());
 		}
+		return null;
 	}
 	
 	private IClasspathEntry[] getRawClasspath() {

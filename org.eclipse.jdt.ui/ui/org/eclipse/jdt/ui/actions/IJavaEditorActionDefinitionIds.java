@@ -87,6 +87,14 @@ public interface IJavaEditorActionDefinitionIds extends ITextEditorActionDefinit
 	 */
 	public static final String CORRECTION_ASSIST_PROPOSALS= "org.eclipse.jdt.ui.edit.text.java.correction.assist.proposals"; //$NON-NLS-1$
 		
+
+	/**
+	 * Action definition ID of the edit -> content assist complete prefix action
+	 * Value: <code>"org.eclipse.jdt.ui.edit.text.java.complete.prefix"</code>).
+	 * @since 3.0
+	 */
+	public static final String CONTENT_ASSIST_COMPLETE_PREFIX= "org.eclipse.jdt.ui.edit.text.java.complete.prefix"; //$NON-NLS-1$
+
 	/**
 	 * Action definition ID of the edit -> show Javadoc action
 	 * (value <code>"org.eclipse.jdt.ui.edit.text.java.show.javadoc"</code>).
@@ -305,6 +313,14 @@ public interface IJavaEditorActionDefinitionIds extends ITextEditorActionDefinit
 	public static final String INTRODUCE_PARAMETER= "org.eclipse.jdt.ui.edit.text.java.introduce.parameter"; //$NON-NLS-1$
 
 	/**
+	 * Action definition ID of the refactor -> introduce factory action
+	 * (value <code>"org.eclipse.jdt.ui.edit.text.java.introduce.factory"</code>).
+	 * 
+	 * @since 3.0
+	 */
+	public static final String INTRODUCE_FACTORY= "org.eclipse.jdt.ui.edit.text.java.introduce.factory"; //$NON-NLS-1$
+
+	/**
 	 * Action definition ID of the refactor -> inline local variable action
 	 * (value <code>"org.eclipse.jdt.ui.edit.text.java.inline.local.variable"</code>).
 	 * @deprecated Use INLINE
@@ -338,6 +354,14 @@ public interface IJavaEditorActionDefinitionIds extends ITextEditorActionDefinit
 	 * @since 2.1
 	 */
 	public static final String EXTRACT_INTERFACE= "org.eclipse.jdt.ui.edit.text.java.extract.interface"; //$NON-NLS-1$
+
+	/**
+	 * Action definition ID of the refactor -> change type action
+	 * (value <code>"org.eclipse.jdt.ui.edit.text.java.change.type"</code>).
+	 * 
+	 * @since 3.0
+	 */
+	public static final String CHANGE_TYPE= "org.eclipse.jdt.ui.edit.text.java.change.type"; //$NON-NLS-1$
 
 	/**
 	 * Action definition ID of the refactor -> move inner type to top level action

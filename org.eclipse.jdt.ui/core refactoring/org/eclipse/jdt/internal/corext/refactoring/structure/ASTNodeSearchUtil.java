@@ -26,6 +26,7 @@ import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.Block;
+import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ConstructorInvocation;
 import org.eclipse.jdt.core.dom.FieldDeclaration;
@@ -123,6 +124,17 @@ public class ASTNodeSearchUtil {
 
 	public static TypeDeclaration getTypeDeclarationNode(IType iType, CompilationUnit cuNode) throws JavaModelException {
 		return (TypeDeclaration)ASTNodes.getParent(getNameNode(iType, cuNode), TypeDeclaration.class);
+	}
+	
+	public static ClassInstanceCreation getClassInstanceCreationNode(IType iType, CompilationUnit cuNode) throws JavaModelException {
+		return (ClassInstanceCreation)ASTNodes.getParent(getNameNode(iType, cuNode), ClassInstanceCreation.class);
+	}
+	
+	public static List getBodyDeclarationList(IType iType, CompilationUnit cuNode) throws JavaModelException {
+		if (iType.isAnonymous())
+			return getClassInstanceCreationNode(iType, cuNode).getAnonymousClassDeclaration().bodyDeclarations();
+		else
+			return getTypeDeclarationNode(iType, cuNode).bodyDeclarations();
 	}
 	
 	//returns an array becaus of the import container, which does not represent 1 node but many

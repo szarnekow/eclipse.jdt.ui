@@ -15,71 +15,30 @@ package org.eclipse.jdt.internal.ui.javaeditor;
 import java.util.Iterator;
 
 import org.eclipse.core.resources.IMarker;
-import org.eclipse.core.runtime.CoreException;
 
-import org.eclipse.debug.core.model.IBreakpoint;
-
-import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Display;
 
-import org.eclipse.jface.resource.ImageRegistry;
-
-import org.eclipse.jface.text.Assert;
-
-import org.eclipse.ui.texteditor.AnnotationPreference;
 import org.eclipse.ui.texteditor.MarkerAnnotation;
-import org.eclipse.ui.texteditor.MarkerAnnotationPreferences;
-import org.eclipse.ui.texteditor.MarkerUtilities;
-
-import org.eclipse.debug.ui.DebugUITools;
-import org.eclipse.debug.ui.IDebugModelPresentation;
 
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaModelMarker;
 import org.eclipse.jdt.core.JavaCore;
-import org.eclipse.jdt.core.compiler.IProblem;
 
-import org.eclipse.jdt.ui.PreferenceConstants;
-
-import org.eclipse.jdt.internal.core.Util;
-
-import org.eclipse.jdt.internal.ui.JavaPlugin;
-import org.eclipse.jdt.internal.ui.JavaPluginImages;
-import org.eclipse.jdt.internal.ui.text.correction.JavaCorrectionProcessor;
+import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 
 
 
 public class JavaMarkerAnnotation extends MarkerAnnotation implements IJavaAnnotation {
 
-	private static final String TASK_ANNOTATION_TYPE= "org.eclipse.ui.workbench.texteditor.task"; //$NON-NLS-1$
-	private static final String ERROR_ANNOTATION_TYPE= "org.eclipse.ui.workbench.texteditor.error"; //$NON-NLS-1$
-	private static final String WARNING_ANNOTATION_TYPE= "org.eclipse.ui.workbench.texteditor.warning"; //$NON-NLS-1$
-	
-	private static final int NO_IMAGE= 0;
-	private static final int ORIGINAL_MARKER_IMAGE= 1;
-	private static final int QUICKFIX_IMAGE= 2;
-	private static final int QUICKFIX_ERROR_IMAGE= 3;
-	private static final int OVERLAY_IMAGE= 4;
-	private static final int GRAY_IMAGE= 5;
-	private static final int BREAKPOINT_IMAGE= 6;
+	public static final String JAVA_MARKER_TYPE_PREFIX= "org.eclipse.jdt"; //$NON-NLS-1$
+	public static final String ERROR_ANNOTATION_TYPE= "org.eclipse.jdt.ui.error"; //$NON-NLS-1$
+	public static final String WARNING_ANNOTATION_TYPE= "org.eclipse.jdt.ui.warning"; //$NON-NLS-1$
+	public static final String INFO_ANNOTATION_TYPE= "org.eclipse.jdt.ui.info"; //$NON-NLS-1$
+	public static final String TASK_ANNOTATION_TYPE= "org.eclipse.ui.workbench.texteditor.task"; //$NON-NLS-1$
 
-	private static Image fgQuickFixImage;
-	private static Image fgQuickFixErrorImage;
-	private static ImageRegistry fgGrayMarkersImageRegistry;
-	
-	private IDebugModelPresentation fPresentation;
 	private IJavaAnnotation fOverlay;
-	private boolean fNotRelevant= false;
-	private String fType;
-	private int fImageType;
-	private boolean fQuickFixIconEnabled;
-	/**
-	 * The marker annotation preferences.
-	 * @since 3.0
-	 */
-	private MarkerAnnotationPreferences fMarkerAnnotationPreferences;
 	
 	
 	public JavaMarkerAnnotation(IMarker marker) {
@@ -87,69 +46,10 @@ public class JavaMarkerAnnotation extends MarkerAnnotation implements IJavaAnnot
 	}
 	
 	/*
-	 * @see MarkerAnnotation#getUnknownImageName(IMarker)
+	 * @see org.eclipse.jdt.internal.ui.javaeditor.IJavaAnnotation#getImage(org.eclipse.swt.widgets.Display)
 	 */
-	protected String getUnknownImageName(IMarker marker) {
-		return JavaPluginImages.IMG_OBJS_GHOST;
-	}
-	
-	/**
-	 * Initializes the annotation's icon representation and its drawing layer
-	 * based upon the properties of the underlying marker.
-	 */
-	protected void initialize() {
-		fQuickFixIconEnabled= PreferenceConstants.getPreferenceStore().getBoolean(PreferenceConstants.EDITOR_CORRECTION_INDICATION);
-		fMarkerAnnotationPreferences= new MarkerAnnotationPreferences();
-		fImageType= NO_IMAGE;
-		IMarker marker= getMarker();
-		fType= findAnnotationTypeForMarker(marker);
-		
-		if (MarkerUtilities.isMarkerType(marker, IBreakpoint.BREAKPOINT_MARKER)) {
-			
-			if (fPresentation == null) 
-				fPresentation= DebugUITools.newDebugModelPresentation();
-
-			setImage(null); // see bug 32469
-			setLayer(4);
-			fImageType= BREAKPOINT_IMAGE;					
-			
-		} else {
-			super.initialize();
-		}
-	}
-	
-	private boolean mustShowQuickFixIcon() {
-		return fQuickFixIconEnabled && JavaCorrectionProcessor.hasCorrections(this);
-	}
-	
-	private Image getQuickFixImage() {
-		if (fgQuickFixImage == null)
-			fgQuickFixImage= JavaPluginImages.get(JavaPluginImages.IMG_OBJS_FIXABLE_PROBLEM);
-		return fgQuickFixImage;
-	}
-
-	private Image getQuickFixErrorImage() {
-		if (fgQuickFixErrorImage == null)
-			fgQuickFixErrorImage= JavaPluginImages.get(JavaPluginImages.IMG_OBJS_FIXABLE_ERROR);
-		return fgQuickFixErrorImage;
-	}
-
-	/*
-	 * @see IJavaAnnotation#getMessage()
-	 */
-	public String getMessage() {
-		IMarker marker= getMarker();
-		if (marker == null || !marker.exists())
-			return ""; //$NON-NLS-1$
-		else
-			return marker.getAttribute(IMarker.MESSAGE, ""); //$NON-NLS-1$
-	}
-
-	/*
-	 * @see IJavaAnnotation#isTemporary()
-	 */
-	public boolean isTemporary() {
-		return false;
+	public Image getImage(Display display) {
+		return super.getImage(display);
 	}
 	
 	/*
@@ -158,7 +58,7 @@ public class JavaMarkerAnnotation extends MarkerAnnotation implements IJavaAnnot
 	public String[] getArguments() {
 		IMarker marker= getMarker();
 		if (marker != null && marker.exists() && isProblem())
-			return Util.getProblemArgumentsFromMarker(marker.getAttribute(IJavaModelMarker.ARGUMENTS, "")); //$NON-NLS-1$
+			return JavaModelUtil.getProblemArgumentsFromMarker(marker.getAttribute(IJavaModelMarker.ARGUMENTS, "")); //$NON-NLS-1$
 		return null;
 	}
 
@@ -173,15 +73,16 @@ public class JavaMarkerAnnotation extends MarkerAnnotation implements IJavaAnnot
 		if (isProblem())
 			return marker.getAttribute(IJavaModelMarker.ID, -1);
 			
-		if (TASK_ANNOTATION_TYPE.equals(fType)) {
-			try {
-				if (marker.isSubtypeOf(IJavaModelMarker.TASK_MARKER)) {
-					return IProblem.Task;
-				}
-			} catch (CoreException e) {
-				JavaPlugin.log(e); // should no happen, we test for marker.exists
-			}
-		}
+//		if (TASK_ANNOTATION_TYPE.equals(getAnnotationType())) {
+//			try {
+//				if (marker.isSubtypeOf(IJavaModelMarker.TASK_MARKER)) {
+//					return IProblem.Task;
+//				}
+//			} catch (CoreException e) {
+//				JavaPlugin.log(e); // should no happen, we test for marker.exists
+//			}
+//		}
+		
 		return -1;
 	}
 	
@@ -189,14 +90,8 @@ public class JavaMarkerAnnotation extends MarkerAnnotation implements IJavaAnnot
 	 * @see IJavaAnnotation#isProblem()
 	 */
 	public boolean isProblem() {
-		return WARNING_ANNOTATION_TYPE.equals(fType) || ERROR_ANNOTATION_TYPE.equals(fType);
-	}
-	
-	/*
-	 * @see IJavaAnnotation#isRelevant()
-	 */
-	public boolean isRelevant() {
-		return !fNotRelevant;
+		String type= getType();
+		return WARNING_ANNOTATION_TYPE.equals(type) || ERROR_ANNOTATION_TYPE.equals(type);
 	}
 
 	/**
@@ -209,10 +104,11 @@ public class JavaMarkerAnnotation extends MarkerAnnotation implements IJavaAnnot
 			fOverlay.removeOverlaid(this);
 			
 		fOverlay= javaAnnotation;
-		fNotRelevant= (fNotRelevant || fOverlay != null);
+		if (!isMarkedDeleted())
+			markDeleted(fOverlay != null);
 		
-		if (javaAnnotation != null)
-			javaAnnotation.addOverlaid(this);
+		if (fOverlay != null)
+			fOverlay.addOverlaid(this);
 	}
 	
 	/*
@@ -223,84 +119,10 @@ public class JavaMarkerAnnotation extends MarkerAnnotation implements IJavaAnnot
 	}
 	
 	/*
-	 * @see MarkerAnnotation#getImage(Display)
+	 * @see org.eclipse.jdt.internal.ui.javaeditor.IJavaAnnotation#getOverlay()
 	 */
-	public Image getImage(Display display) {
-		if (fImageType == BREAKPOINT_IMAGE) {
-			Image result= super.getImage(display);
-			if (result == null) {
-				IMarker marker= getMarker();
-				if (marker != null && marker.exists()) {
-					result= fPresentation.getImage(getMarker());
-					setImage(result);
-				}
-			}					
-			return result;
-		}
-
-		int newImageType= NO_IMAGE;
-
-		if (hasOverlay())
-			newImageType= OVERLAY_IMAGE;
-		else if (isRelevant()) {
-			if (isProblem() && mustShowQuickFixIcon()) { // no light bulb for tasks
-				if (ERROR_ANNOTATION_TYPE.equals(fType))
-					newImageType= QUICKFIX_ERROR_IMAGE;
-				else
-					newImageType= QUICKFIX_IMAGE; 
-			} else
-				newImageType= ORIGINAL_MARKER_IMAGE; 
-		} else
-			newImageType= GRAY_IMAGE;
-
-		if (fImageType == newImageType && newImageType != OVERLAY_IMAGE)
-			// Nothing changed - simply return the current image
-			return super.getImage(display);
-
-		Image newImage= null;
-		switch (newImageType) {
-			case ORIGINAL_MARKER_IMAGE:
-				newImage= null;
-				break;
-			case OVERLAY_IMAGE:
-				newImage= fOverlay.getImage(display);
-				break;
-			case QUICKFIX_IMAGE:
-				newImage= getQuickFixImage();
-				break;
-			case QUICKFIX_ERROR_IMAGE:
-				newImage= getQuickFixErrorImage();
-				break;
-			case GRAY_IMAGE:
-				if (fImageType != ORIGINAL_MARKER_IMAGE)
-					setImage(null);
-				Image originalImage= super.getImage(display);
-				if (originalImage != null) {
-					ImageRegistry imageRegistry= getGrayMarkerImageRegistry(display);
-					if (imageRegistry != null) {
-						String key= Integer.toString(originalImage.hashCode());
-						Image grayImage= imageRegistry.get(key);
-						if (grayImage == null) {
-							grayImage= new Image(display, originalImage, SWT.IMAGE_GRAY);
-							imageRegistry.put(key, grayImage);
-						}
-						newImage= grayImage;
-					}
-				}
-				break;
-			default:
-				Assert.isLegal(false);
-		}
-
-		fImageType= newImageType;
-		setImage(newImage);
-		return super.getImage(display);
-	}
-	
-	private ImageRegistry getGrayMarkerImageRegistry(Display display) {
-		if (fgGrayMarkersImageRegistry == null)
-			fgGrayMarkersImageRegistry= new ImageRegistry(display);
-		return fgGrayMarkersImageRegistry;
+	public IJavaAnnotation getOverlay() {
+		return fOverlay;
 	}
 	
 	/*
@@ -324,13 +146,6 @@ public class JavaMarkerAnnotation extends MarkerAnnotation implements IJavaAnnot
 		// not supported
 		return null;
 	}
-	
-	/*
-	 * @see org.eclipse.jdt.internal.ui.javaeditor.IJavaAnnotation#getAnnotationType()
-	 */
-	public String getAnnotationType() {
-		return fType;
-	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.jdt.internal.ui.javaeditor.IJavaAnnotation#getCompilationUnit()
@@ -344,32 +159,6 @@ public class JavaMarkerAnnotation extends MarkerAnnotation implements IJavaAnnot
 				return workingCopy;
 			}
 			return cu;
-		}
-		return null;
-	}
-
-	/**
-	 * Finds the annotation type for the given marker.
-	 * 
-	 * @param marker the marker
-	 * @return the annotation type or <code>null</code> if none was found
-	 * @since 3.0
-	 */
-	private String findAnnotationTypeForMarker(IMarker marker) {
-		Iterator e= fMarkerAnnotationPreferences.getAnnotationPreferences().iterator();
-		while (e.hasNext()) {
-			AnnotationPreference annotationPreference= (AnnotationPreference) e.next();
-			boolean isSubtype;
-			Integer severity;
-			try {
-				isSubtype= marker.isSubtypeOf(annotationPreference.getMarkerType());
-				severity= (Integer)marker.getAttribute(IMarker.SEVERITY);
-			} catch (CoreException ex) {
-				JavaPlugin.log(ex);
-				return null;
-			}
-			if (isSubtype && (severity == null || severity.intValue() == annotationPreference.getSeverity()))
-				return (String)annotationPreference.getAnnotationType();
 		}
 		return null;
 	}

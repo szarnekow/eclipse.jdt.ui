@@ -28,10 +28,12 @@ import org.eclipse.jdt.ui.CodeGeneration;
 
 import org.eclipse.jdt.internal.corext.codemanipulation.CodeGenerationSettings;
 import org.eclipse.jdt.internal.corext.codemanipulation.StubUtility;
+import org.eclipse.jdt.internal.corext.dom.ASTNodeConstants;
 import org.eclipse.jdt.internal.corext.dom.ASTNodeFactory;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.ASTRewrite;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
+import org.eclipse.jdt.internal.corext.dom.NewASTRewrite;
 import org.eclipse.jdt.internal.ui.preferences.JavaPreferencesSettings;
 
 public class NewMethodCompletionProposal extends LinkedCorrectionProposal {
@@ -76,14 +78,15 @@ public class NewMethodCompletionProposal extends LinkedCorrectionProposal {
 			}
 			MethodDeclaration newStub= getStub(rewrite, newTypeDecl);
 			
+			int insertIndex;
 			if (isConstructor()) {
-				members.add(findConstructorInsertIndex(members), newStub);
+				insertIndex= findConstructorInsertIndex(members);
 			} else if (!isInDifferentCU) {
-				members.add(findMethodInsertIndex(members, fNode.getStartPosition()), newStub);
+				insertIndex= findMethodInsertIndex(members, fNode.getStartPosition());
 			} else {
-				members.add(newStub);
+				insertIndex= members.size();
 			}
-			rewrite.markAsInserted(newStub);
+			rewrite.markAsInsertInOriginal(newTypeDecl, ASTNodeConstants.BODY_DECLARATIONS, newStub, insertIndex, null);
 
 			if (!isInDifferentCU) {
 				Name invocationName= getInvocationName();
@@ -91,9 +94,9 @@ public class NewMethodCompletionProposal extends LinkedCorrectionProposal {
 					markAsLinked(rewrite, invocationName, true, KEY_NAME);
 				}				
 			}
-			markAsLinked(rewrite, newStub.getName(), false, KEY_NAME);  //$NON-NLS-1$
+			markAsLinked(rewrite, newStub.getName(), false, KEY_NAME);
 			if (!newStub.isConstructor()) {
-				markAsLinked(rewrite, newStub.getReturnType(), false, KEY_TYPE);  //$NON-NLS-1$
+				markAsLinked(rewrite, newStub.getReturnType(), false, KEY_TYPE);
 			}			
 			
 			return rewrite;
@@ -163,7 +166,7 @@ public class NewMethodCompletionProposal extends LinkedCorrectionProposal {
 			body= ast.newBlock();
 			String placeHolder= CodeGeneration.getMethodBodyContent(getCompilationUnit(), fSenderBinding.getName(), getMethodName(), isConstructor(), bodyStatement, String.valueOf('\n')); 	
 			if (placeHolder != null) {
-				ASTNode todoNode= rewrite.createPlaceholder(placeHolder, ASTRewrite.STATEMENT);
+				ASTNode todoNode= rewrite.createPlaceholder(placeHolder, NewASTRewrite.STATEMENT);
 				body.statements().add(todoNode);
 			}
 		}
@@ -173,7 +176,7 @@ public class NewMethodCompletionProposal extends LinkedCorrectionProposal {
 		if (settings.createComments && !fSenderBinding.isAnonymous()) {
 			String string= CodeGeneration.getMethodComment(getCompilationUnit(), fSenderBinding.getName(), decl, null, String.valueOf('\n'));
 			if (string != null) {
-				Javadoc javadoc= (Javadoc) rewrite.createPlaceholder(string, ASTRewrite.JAVADOC);
+				Javadoc javadoc= (Javadoc) rewrite.createPlaceholder(string, NewASTRewrite.JAVADOC);
 				decl.setJavadoc(javadoc);
 			}
 		}
@@ -263,16 +266,19 @@ public class NewMethodCompletionProposal extends LinkedCorrectionProposal {
 	private Type evaluateMethodType(AST ast) throws CoreException {
 		ITypeBinding binding= ASTResolving.guessBindingForReference(fNode);
 		if (binding != null) {
-			String typeName= addImport(binding);
+			String typeName= getImportRewrite().addImport(binding);
 			return ASTNodeFactory.newType(ast, typeName);			
 		} else {
 			ASTNode parent= fNode.getParent();
-			if (!(parent instanceof ExpressionStatement)) {
-				return ast.newSimpleType(ast.newSimpleName("Object")); //$NON-NLS-1$
+			if (parent instanceof ExpressionStatement) {
+				return null;
 			}
-			
+			Type type= ASTResolving.guessTypeForReference(ast, fNode);
+			if (type != null) {
+				return type;
+			}
+			return ast.newSimpleType(ast.newSimpleName("Object")); //$NON-NLS-1$
 		}
-		return null;
 	}
 	
 	private Type evaluateParameterTypes(AST ast, Expression elem, String key) throws CoreException {
@@ -282,7 +288,7 @@ public class NewMethodCompletionProposal extends LinkedCorrectionProposal {
 			for (int i= 0; i < typeProposals.length; i++) {
 				addLinkedModeProposal(key, typeProposals[i]);
 			}		
-			String typeName= addImport(binding);
+			String typeName= getImportRewrite().addImport(binding);
 			return ASTNodeFactory.newType(ast, typeName);
 		}
 		return ast.newSimpleType(ast.newSimpleName("Object")); //$NON-NLS-1$

@@ -112,7 +112,7 @@ public class IndentAction extends TextEditorAction {
 				nLines= document.getLineOfOffset(offset + length - minusOne) - firstLine + 1;
 			} catch (BadLocationException e) {
 				// will only happen on concurrent modification
-				JavaPlugin.log(new Status(IStatus.ERROR, JavaPlugin.getPluginId(), IStatus.OK, null, e));
+				JavaPlugin.log(new Status(IStatus.ERROR, JavaPlugin.getPluginId(), IStatus.OK, "", e)); //$NON-NLS-1$
 				return;
 			}
 			
@@ -244,12 +244,13 @@ public class IndentAction extends TextEditorAction {
 		} 
 		
 		// standard java indentation
-		if (indent == null)
-			indent= indenter.computeIndentation(offset);
-		
-		// default is no indentation
-		if (indent == null)
-			indent= new String();
+		if (indent == null) {
+			StringBuffer computed= indenter.computeIndentation(offset);
+			if (computed != null)
+				indent= computed.toString();
+			else
+				indent= new String();
+		}
 		
 		// change document:
 		// get current white space

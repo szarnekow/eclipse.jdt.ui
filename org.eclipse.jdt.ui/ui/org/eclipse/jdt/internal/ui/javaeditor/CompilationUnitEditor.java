@@ -12,7 +12,6 @@
 package org.eclipse.jdt.internal.ui.javaeditor;
 
 
-import java.lang.reflect.InvocationTargetException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -20,7 +19,7 @@ import java.util.List;
 import java.util.Stack;
 
 import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IWorkspace;
+import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -39,17 +38,20 @@ import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.dialogs.IMessageProvider;
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.window.Window;
 
 import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.jface.text.BadPositionCategoryException;
 import org.eclipse.jface.text.DocumentCommand;
 import org.eclipse.jface.text.IAutoEditStrategy;
 import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.IDocumentExtension;
+import org.eclipse.jface.text.IDocumentListener;
 import org.eclipse.jface.text.ILineTracker;
+import org.eclipse.jface.text.IPositionUpdater;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.ITextOperationTarget;
 import org.eclipse.jface.text.ITextSelection;
@@ -60,18 +62,19 @@ import org.eclipse.jface.text.Position;
 import org.eclipse.jface.text.TextUtilities;
 import org.eclipse.jface.text.contentassist.ContentAssistant;
 import org.eclipse.jface.text.contentassist.IContentAssistant;
+import org.eclipse.jface.text.contentassist.IContentAssistantExtension;
 import org.eclipse.jface.text.source.IOverviewRuler;
 import org.eclipse.jface.text.source.ISourceViewer;
 import org.eclipse.jface.text.source.IVerticalRuler;
 import org.eclipse.jface.text.source.SourceViewerConfiguration;
 
+import org.eclipse.ui.editors.text.IStorageDocumentProvider;
+
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.actions.ActionContext;
 import org.eclipse.ui.actions.ActionGroup;
-import org.eclipse.ui.actions.WorkspaceModifyOperation;
 import org.eclipse.ui.dialogs.SaveAsDialog;
-import org.eclipse.ui.editors.text.IStorageDocumentProvider;
 import org.eclipse.ui.help.WorkbenchHelp;
 import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.ui.texteditor.ContentAssistAction;
@@ -105,9 +108,13 @@ import org.eclipse.jdt.internal.ui.text.IJavaPartitions;
 import org.eclipse.jdt.internal.ui.text.correction.JavaCorrectionAssistant;
 import org.eclipse.jdt.internal.ui.text.java.IReconcilingParticipant;
 import org.eclipse.jdt.internal.ui.text.java.SmartSemicolonAutoEditStrategy;
-import org.eclipse.jdt.internal.ui.text.link.LinkedPositionManager;
-import org.eclipse.jdt.internal.ui.text.link.LinkedPositionUI;
-import org.eclipse.jdt.internal.ui.text.link.LinkedPositionUI.ExitFlags;
+import org.eclipse.jdt.internal.ui.text.link.ExclusivePositionUpdater;
+import org.eclipse.jdt.internal.ui.text.link.ILinkedListener;
+import org.eclipse.jdt.internal.ui.text.link.LinkedEnvironment;
+import org.eclipse.jdt.internal.ui.text.link.LinkedPositionGroup;
+import org.eclipse.jdt.internal.ui.text.link.LinkedUIControl;
+import org.eclipse.jdt.internal.ui.text.link.LinkedUIControl.ExitFlags;
+import org.eclipse.jdt.internal.ui.text.link.LinkedUIControl.IExitPolicy;
 
 
 
@@ -121,6 +128,11 @@ public class CompilationUnitEditor extends JavaEditor implements IReconcilingPar
 	 * proposals for the current position. 
 	 */
 	public static final int CORRECTIONASSIST_PROPOSALS= 50;
+
+	/** 
+	 * Text operation code for requesting common prefix completion. 
+	 */
+	public static final int CONTENTASSIST_COMPLETE_PREFIX= 60;
 
 	
 	interface ITextConverter {
@@ -164,6 +176,13 @@ public class CompilationUnitEditor extends JavaEditor implements IReconcilingPar
 				case REDO:
 					fIgnoreTextConverters= true;
 					break;
+				case CONTENTASSIST_COMPLETE_PREFIX:
+					if (fContentAssistant instanceof IContentAssistantExtension) {
+						msg= ((IContentAssistantExtension) fContentAssistant).completePrefix();
+						setStatusLineErrorMessage(msg);
+						return;
+					} else
+						break;
 			}
 			
 			super.doOperation(operation);
@@ -175,6 +194,9 @@ public class CompilationUnitEditor extends JavaEditor implements IReconcilingPar
 		public boolean canDoOperation(int operation) {
 			if (operation == CORRECTIONASSIST_PROPOSALS)
 				return isEditable();
+			else if (operation == CONTENTASSIST_COMPLETE_PREFIX)
+				return isEditable();
+			
 			return super.canDoOperation(operation);
 		}
 		
@@ -339,7 +361,7 @@ public class CompilationUnitEditor extends JavaEditor implements IReconcilingPar
 		}
 	}
 	
-	private class ExitPolicy implements LinkedPositionUI.ExitPolicy {
+	private class ExitPolicy implements IExitPolicy {
 		
 		final char fExitCharacter;
 		final char fEscapeCharacter;
@@ -356,52 +378,23 @@ public class CompilationUnitEditor extends JavaEditor implements IReconcilingPar
 		/*
 		 * @see org.eclipse.jdt.internal.ui.text.link.LinkedPositionUI.ExitPolicy#doExit(org.eclipse.jdt.internal.ui.text.link.LinkedPositionManager, org.eclipse.swt.events.VerifyEvent, int, int)
 		 */
-		public ExitFlags doExit(LinkedPositionManager manager, VerifyEvent event, int offset, int length) {
+		public ExitFlags doExit(LinkedEnvironment environment, VerifyEvent event, int offset, int length) {
 			
 			if (event.character == fExitCharacter) {
 				
 				if (fSize == fStack.size() && !isMasked(offset)) {
-					if (manager.anyPositionIncludes(offset, length))
-						return new ExitFlags(LinkedPositionUI.COMMIT| LinkedPositionUI.UPDATE_CARET, false);
+					BracketLevel level= (BracketLevel) fStack.peek();
+					if (level.fSecondPosition.offset == offset && length == 0)
+						// don't enter the character if if its the closing peer
+						return new ExitFlags(ILinkedListener.UPDATE_CARET, false);
 					else
-						return new ExitFlags(LinkedPositionUI.COMMIT, true);
+						return new ExitFlags(ILinkedListener.UPDATE_CARET, true);
 				}
 			}
 			
-			Position p= manager.getFirstPosition();
-			int pEndOffset= p.offset + p.length;
-			
-			// if the bracket position gets deleted or replaced, take the linked UI down.
-			// 1: the event has to happen so that it occurs on or before the position end
-			if (pEndOffset >= offset) {
-				int endOffset= offset + length;
-				// 2: either it is a replace event (selection length > 0, selection extends over closing peer, character != 0)
-				// or it is a delete event right at the end of the position, with no selection
-				if (pEndOffset < endOffset && event.character != 0 || length == 0 && pEndOffset == endOffset && event.keyCode == 127)
-					return new ExitFlags(LinkedPositionUI.COMMIT, true);
-			}
-			
-			switch (event.character) {	
-			case '\b': {
-				if (p.offset == offset && p.length == length)
-					return new ExitFlags(0, false);
-				else
 					return null;
 			}
-			case '\n':
-			case '\r':
-				return new ExitFlags(LinkedPositionUI.COMMIT, true);
 			
-			case ';':
-				if (getInsertMode() == SMART_INSERT)
-					return new ExitFlags(LinkedPositionUI.COMMIT, true);
-				// else fall through
-				
-			default:
-				return null;
-			}						
-		}
-
 		private boolean isMasked(int offset) {
 			IDocument document= getSourceViewer().getDocument();
 			try {
@@ -415,14 +408,17 @@ public class CompilationUnitEditor extends JavaEditor implements IReconcilingPar
 	private static class BracketLevel {
 		int fOffset;
 		int fLength;
-		LinkedPositionManager fManager;
-		LinkedPositionUI fEditor;
+		LinkedUIControl fEditor;
+		Position fFirstPosition;
+		Position fSecondPosition;
 	}
 	
-	private class BracketInserter implements VerifyKeyListener, LinkedPositionUI.ExitListener {
+	private class BracketInserter implements VerifyKeyListener, ILinkedListener {
 		
 		private boolean fCloseBrackets= true;
 		private boolean fCloseStrings= true;
+		private final String CATEGORY= toString();
+		private IPositionUpdater fUpdater= new ExclusivePositionUpdater(CATEGORY);
 		private Stack fBracketLevelStack= new Stack();
 
 		public void setCloseBracketsEnabled(boolean enabled) {
@@ -549,16 +545,31 @@ public class CompilationUnitEditor extends JavaEditor implements IReconcilingPar
 					BracketLevel level= new BracketLevel();
 					fBracketLevelStack.push(level);
 					
-					level.fManager= new LinkedPositionManager(document, true); // bracket managers can always coexist
-					level.fManager.addPosition(offset + 1, 0);
+					LinkedPositionGroup group= new LinkedPositionGroup(); 
+					group.createPosition(document, offset + 1, 0);
 
+					LinkedEnvironment env= new LinkedEnvironment();
+					env.addLinkedListener(this);
+					env.addGroup(group);
+					env.forceInstall();
+					
 					level.fOffset= offset;
 					level.fLength= 2;
 			
-					level.fEditor= new LinkedPositionUI(sourceViewer, level.fManager);
-					level.fEditor.setCancelListener(this);
+					// set up position tracking for our magic peers
+					if (fBracketLevelStack.size() == 1) {
+						document.addPositionCategory(CATEGORY);
+						document.addPositionUpdater(fUpdater);
+					}
+					level.fFirstPosition= new Position(offset, 1);
+					level.fSecondPosition= new Position(offset + 1, 1);
+					document.addPosition(CATEGORY, level.fFirstPosition);
+					document.addPosition(CATEGORY, level.fSecondPosition);
+					
+					level.fEditor= new LinkedUIControl(env, sourceViewer);
 					level.fEditor.setExitPolicy(new ExitPolicy(closingCharacter, getEscapeCharacter(closingCharacter), fBracketLevelStack));
-					level.fEditor.setFinalCaretOffset(offset + 2);
+					level.fEditor.setExitPosition(sourceViewer, offset + 2, 0, Integer.MAX_VALUE);
+					level.fEditor.setCyclingMode(LinkedUIControl.CYCLE_NEVER);
 					level.fEditor.enter();
 					
 					
@@ -568,30 +579,63 @@ public class CompilationUnitEditor extends JavaEditor implements IReconcilingPar
 					event.doit= false;
 
 				} catch (BadLocationException e) {
+					JavaPlugin.log(e);
+				} catch (BadPositionCategoryException e) {
+					JavaPlugin.log(e);
 				}
 				break;	
 			}
 		}
 		
 		/*
-		 * @see org.eclipse.jdt.internal.ui.text.link.LinkedPositionUI.ExitListener#exit(boolean)
+		 * @see org.eclipse.jdt.internal.ui.text.link2.LinkedEnvironment.ILinkedListener#left(org.eclipse.jdt.internal.ui.text.link2.LinkedEnvironment, int)
 		 */
-		public void exit(boolean accept) {
+		public void left(LinkedEnvironment environment, int flags) {
 			
-			BracketLevel level= (BracketLevel) fBracketLevelStack.pop();
+			final BracketLevel level= (BracketLevel) fBracketLevelStack.pop();
 
-			if (accept)
+			if (flags != ILinkedListener.EXTERNAL_MODIFICATION)
 				return;
 
 			// remove brackets
-			try {
-								
 				final ISourceViewer sourceViewer= getSourceViewer();
-				IDocument document= sourceViewer.getDocument();	
-				document.replace(level.fOffset, level.fLength, null);
+			final IDocument document= sourceViewer.getDocument();
+			if (document instanceof IDocumentExtension) {
+				IDocumentExtension extension= (IDocumentExtension) document;
+				extension.registerPostNotificationReplace(null, new IDocumentExtension.IReplace() {
 				
+					public void perform(IDocument d, IDocumentListener owner) {
+						if ((level.fFirstPosition.isDeleted || level.fFirstPosition.length == 0) && !level.fSecondPosition.isDeleted && level.fSecondPosition.offset == level.fFirstPosition.offset) {
+							try {
+								document.replace(level.fSecondPosition.offset, level.fSecondPosition.length, null);
 			} catch (BadLocationException e) {
 			}
+		}
+						
+						if (fBracketLevelStack.size() == 0) {
+							document.removePositionUpdater(fUpdater);
+							try {
+								document.removePositionCategory(CATEGORY);
+							} catch (BadPositionCategoryException e) {
+	}
+						}
+					}
+	
+				});
+			}
+
+		}
+
+		/*
+		 * @see org.eclipse.jdt.internal.ui.text.link2.LinkedEnvironment.ILinkedListener#suspend(org.eclipse.jdt.internal.ui.text.link2.LinkedEnvironment)
+		 */
+		public void suspend(LinkedEnvironment environment) {
+		}
+
+		/*
+		 * @see org.eclipse.jdt.internal.ui.text.link2.LinkedEnvironment.ILinkedListener#resume(org.eclipse.jdt.internal.ui.text.link2.LinkedEnvironment, int)
+		 */
+		public void resume(LinkedEnvironment environment, int flags) {
 		}
 	}
 	
@@ -662,6 +706,12 @@ public class CompilationUnitEditor extends JavaEditor implements IReconcilingPar
 		action.setActionDefinitionId(IJavaEditorActionDefinitionIds.CONTENT_ASSIST_CONTEXT_INFORMATION);		
 		setAction("ContentAssistContextInformation", action); //$NON-NLS-1$
 		markAsStateDependentAction("ContentAssistContextInformation", true); //$NON-NLS-1$
+		WorkbenchHelp.setHelp(action, IJavaHelpContextIds.PARAMETER_HINTS_ACTION);
+
+		action= new TextOperationAction(JavaEditorMessages.getResourceBundle(), "ContentAssistCompletePrefix.", this, CONTENTASSIST_COMPLETE_PREFIX);	//$NON-NLS-1$
+		action.setActionDefinitionId(IJavaEditorActionDefinitionIds.CONTENT_ASSIST_COMPLETE_PREFIX);		
+		setAction("ContentAssistCompletePrefix", action); //$NON-NLS-1$
+		markAsStateDependentAction("ContentAssistCompletePrefix", true); //$NON-NLS-1$
 		WorkbenchHelp.setHelp(action, IJavaHelpContextIds.PARAMETER_HINTS_ACTION);
 
 		action= new TextOperationAction(JavaEditorMessages.getResourceBundle(), "Comment.", this, ITextOperationTarget.PREFIX); //$NON-NLS-1$
@@ -964,34 +1014,19 @@ public class CompilationUnitEditor extends JavaEditor implements IReconcilingPar
 			return;
 		}
 			
-		IWorkspace workspace= ResourcesPlugin.getWorkspace();
-		IFile file= workspace.getRoot().getFile(filePath);
+		IWorkspaceRoot workspaceRoot= ResourcesPlugin.getWorkspace().getRoot();
+		IFile file= workspaceRoot.getFile(filePath);
 		final IEditorInput newInput= new FileEditorInput(file);
-		
-		WorkspaceModifyOperation op= new WorkspaceModifyOperation() {
-			public void execute(final IProgressMonitor monitor) throws CoreException {
-				getDocumentProvider().saveDocument(monitor, newInput, getDocumentProvider().getDocument(getEditorInput()), true);
-			}
-		};
 		
 		boolean success= false;
 		try {
 			
 			provider.aboutToChange(newInput);
-			new ProgressMonitorDialog(shell).run(false, true, op);
+			getDocumentProvider().saveDocument(progressMonitor, newInput, getDocumentProvider().getDocument(getEditorInput()), true);
 			success= true;
 			
-		} catch (InterruptedException x) {
-		} catch (InvocationTargetException x) {
-			
-			Throwable t= x.getTargetException();
-			if (t instanceof CoreException) {
-				CoreException cx= (CoreException) t;
-				ErrorDialog.openError(shell, JavaEditorMessages.getString("CompilationUnitEditor.error.saving.title2"), JavaEditorMessages.getString("CompilationUnitEditor.error.saving.message2"), cx.getStatus()); //$NON-NLS-1$ //$NON-NLS-2$
-			} else {
-				MessageDialog.openError(shell, JavaEditorMessages.getString("CompilationUnitEditor.error.saving.title3"), JavaEditorMessages.getString("CompilationUnitEditor.error.saving.message3") + t.getMessage()); //$NON-NLS-1$ //$NON-NLS-2$
-			}
-						
+		} catch (CoreException x) {
+			ErrorDialog.openError(shell, JavaEditorMessages.getString("CompilationUnitEditor.error.saving.title2"), JavaEditorMessages.getString("CompilationUnitEditor.error.saving.message2"), x.getStatus()); //$NON-NLS-1$ //$NON-NLS-2$
 		} finally {
 			provider.changed(newInput);
 			if (success)

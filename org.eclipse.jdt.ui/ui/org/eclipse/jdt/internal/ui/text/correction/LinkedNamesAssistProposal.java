@@ -11,6 +11,9 @@
 package org.eclipse.jdt.internal.ui.text.correction;
 
 
+import java.util.Arrays;
+import java.util.Comparator;
+
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 
@@ -32,9 +35,11 @@ import org.eclipse.jdt.ui.text.java.IJavaCompletionProposal;
 
 import org.eclipse.jdt.internal.corext.dom.LinkedNodeFinder;
 import org.eclipse.jdt.internal.corext.dom.NodeFinder;
+import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.internal.ui.JavaPluginImages;
-import org.eclipse.jdt.internal.ui.text.link.LinkedPositionManager;
-import org.eclipse.jdt.internal.ui.text.link.LinkedPositionUI;
+import org.eclipse.jdt.internal.ui.text.link.LinkedEnvironment;
+import org.eclipse.jdt.internal.ui.text.link.LinkedPositionGroup;
+import org.eclipse.jdt.internal.ui.text.link.LinkedUIControl;
 
 /**
  * A template proposal.
@@ -53,29 +58,57 @@ public class LinkedNamesAssistProposal implements IJavaCompletionProposal, IComp
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.text.contentassist.ICompletionProposalExtension2#apply(org.eclipse.jface.text.ITextViewer, char, int, int)
 	 */
-	public void apply(ITextViewer viewer, char trigger, int stateMask, int offset) {
+	public void apply(ITextViewer viewer, char trigger, int stateMask, final int offset) {
 		try {
 			// create full ast
-			CompilationUnit root= AST.parseCompilationUnit(fCompilationUnit, true);
+			CompilationUnit root= AST.parseCompilationUnit(fCompilationUnit, true); // full AST needed
 			SimpleName nameNode= (SimpleName) NodeFinder.perform(root, fNode.getStartPosition(), fNode.getLength());
 
-			ASTNode[] sameNodes= LinkedNodeFinder.perform(root, nameNode.resolveBinding());
+			ASTNode[] sameNodes= LinkedNodeFinder.findByNode(root, nameNode);
+
+			// sort for iteration order, starting with the node @ offset
+			Arrays.sort(sameNodes, new Comparator() {
+				
+				public int compare(Object o1, Object o2) {
+					return rank((ASTNode) o1) - rank((ASTNode) o2);
+				}
+
+				/**
+				 * Returns the absolute rank of an <code>ASTNode</code>. Nodes 
+				 * preceding <code>offset</code> are ranked last.
+				 * 
+				 * @param node the node to compute the rank for
+				 * @return the rank of the node with respect to the invocation offset
+				 */
+				private int rank(ASTNode node) {
+					int relativeRank= node.getStartPosition() + node.getLength() - offset;
+					if (relativeRank < 0)
+						return Integer.MAX_VALUE + relativeRank;
+					else
+						return relativeRank;
+				}
+				
+			});
 			
 			IDocument document= viewer.getDocument();
-			LinkedPositionManager manager= new LinkedPositionManager(document);
-			
+			LinkedPositionGroup group= new LinkedPositionGroup();
 			for (int i= 0; i < sameNodes.length; i++) {
 				ASTNode elem= sameNodes[i];
-				manager.addPosition(elem.getStartPosition(), elem.getLength());
+				group.createPosition(document, elem.getStartPosition(), elem.getLength(), i);
 			}
 			
-			LinkedPositionUI editor= new LinkedPositionUI(viewer, manager);
-			editor.setInitialOffset(offset);
-			editor.setFinalCaretOffset(offset);
-			editor.enter();
+			LinkedEnvironment enviroment= new LinkedEnvironment();
+			enviroment.addGroup(group);
+			enviroment.forceInstall();
 			
-			fSelectedRegion= editor.getSelectedRegion();
+			LinkedUIControl ui= new LinkedUIControl(enviroment, viewer);
+//			ui.setInitialOffset(offset);
+			ui.setExitPosition(viewer, offset, 0, LinkedPositionGroup.NO_STOP);
+			ui.enter();
+			
+			fSelectedRegion= ui.getSelectedRegion();
 		} catch (BadLocationException e) {
+			JavaPlugin.log(e);
 		}
 	}	
 

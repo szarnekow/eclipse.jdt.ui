@@ -31,6 +31,7 @@
       <import plugin="org.eclipse.ui.ide"/>
       <import plugin="org.eclipse.ui.views"/>
       <import plugin="org.eclipse.ui.editors"/>
+      <import plugin="org.eclipse.core.runtime.compatibility" optional="true"/>
    </requires>
 
 
@@ -40,48 +41,7 @@
    <extension-point id="quickFixProcessors" name="%quickFixProcessorExtensionPoint" schema="schema/quickFixProcessors.exsd"/>
    <extension-point id="quickAssistProcessors" name="%quickAssistProcessorExtensionPoint" schema="schema/quickAssistProcessors.exsd"/>
    <extension-point id="classpathContainerPage" name="%classpathContainerPageExtensionPoint" schema="schema/classpathContainerPage.exsd"/>
-<!---
-<extension
-	point="org.eclipse.ui.decorators">
-	<decorator
-		label="%ProblemsLabelDecorator.label"
-		state="false"
-		lightweight="true"
-		quadrant="BOTTOM_LEFT"
-		class="org.eclipse.jdt.ui.ProblemsLabelDecorator"
-		id="org.eclipse.jdt.ui.problem.decorator">
-		<description>
-			%ProblemsLabelDecorator.description
-		</description>
-		<enablement>
-			<or>
-				<objectClass
-					name="org.eclipse.core.resources.IResource">
-				</objectClass>         
-				<objectClass
-					name="org.eclipse.jdt.core.IJavaElement">
-				</objectClass>
-			</or>                
-		</enablement>
-	</decorator>
-	<decorator
-		label="%OverrideIndicatorLabelDecorator.label"
-		lightweight="true"
-		quadrant="BOTTOM_RIGHT"		
-		state="false"
-		class="org.eclipse.jdt.ui.OverrideIndicatorLabelDecorator"
-		id="org.eclipse.jdt.ui.override.decorator">
-		<description>
-			%OverrideIndicatorLabelDecorator.description
-		</description>
-		<enablement>
-			<objectClass
-				name="org.eclipse.jdt.core.IMethod">
-			</objectClass>
-		</enablement>
-	</decorator>	
-</extension>
--->
+   <extension-point id="searchParticipants" name="Java Search Participants" schema="schema/searchParticipants.exsd"/>
    <extension-point id="typeExtenders" name="%typeExtenderExtensionPoint" schema="schema/typeExtenders.exsd"/>
    <extension-point id="renameProcessors" name="%renameProcessorExtensionPoint"/>
    <extension-point id="deleteProcessors" name="%deleteProcessorExtensionPoint"/>
@@ -94,6 +54,46 @@
    <extension-point id="changePreviewViewers" name="%changeViewerExtensionPoint"/>
    <extension-point id="refactoringUserInterfaces" name="%refactoringWizardExtensionPoint"/>
 
+   <extension
+         point="org.eclipse.ui.decorators">
+      <decorator
+            lightweight="true"
+            quadrant="BOTTOM_LEFT"
+            label="%ProblemsLabelDecorator.label"
+            state="false"
+            class="org.eclipse.jdt.ui.ProblemsLabelDecorator"
+            id="org.eclipse.jdt.ui.problem.decorator">
+         <description>
+            %ProblemsLabelDecorator.description
+         </description>
+         <enablement>
+            <or>
+               <objectClass
+                     name="org.eclipse.core.resources.IResource">
+               </objectClass>
+               <objectClass
+                     name="org.eclipse.jdt.core.IJavaElement">
+               </objectClass>
+            </or>
+         </enablement>
+      </decorator>
+      <decorator
+            lightweight="true"
+            quadrant="BOTTOM_RIGHT"
+            label="%OverrideIndicatorLabelDecorator.label"
+            state="false"
+            class="org.eclipse.jdt.ui.OverrideIndicatorLabelDecorator"
+            id="org.eclipse.jdt.ui.override.decorator">
+         <description>
+            %OverrideIndicatorLabelDecorator.description
+         </description>
+         <enablement>
+            <objectClass
+                  name="org.eclipse.jdt.core.IMethod">
+            </objectClass>
+         </enablement>
+      </decorator>
+   </extension>
    <extension
          point="org.eclipse.jdt.ui.classpathContainerPage">
       <classpathContainerPage
@@ -520,6 +520,47 @@
       </updater>
    </extension>
    <extension
+         point="org.eclipse.ui.editors.annotationTypes">
+      <type
+            super="org.eclipse.ui.workbench.texteditor.error"
+            markerType="org.eclipse.jdt.core.problem"
+            name="org.eclipse.jdt.ui.error"
+            markerSeverity="2">
+      </type>
+      <type
+            super="org.eclipse.ui.workbench.texteditor.warning"
+            markerType="org.eclipse.jdt.core.problem"
+            name="org.eclipse.jdt.ui.warning"
+            markerSeverity="1">
+      </type>
+      <type
+            super="org.eclipse.ui.workbench.texteditor.info"
+            markerType="org.eclipse.jdt.core.problem"
+            name="org.eclipse.jdt.ui.info"
+            markerSeverity="0">
+      </type>
+   </extension>
+   <extension
+         point="org.eclipse.ui.editors.markerAnnotationSpecification">
+      <specification
+            annotationImageProvider="org.eclipse.jdt.internal.ui.javaeditor.JavaAnnotationImageProvider"
+            annotationType="org.eclipse.jdt.ui.error">
+      </specification>
+      <specification
+            annotationImageProvider="org.eclipse.jdt.internal.ui.javaeditor.JavaAnnotationImageProvider"
+            annotationType="org.eclipse.jdt.ui.warning">
+      </specification>
+      <specification
+            annotationImageProvider="org.eclipse.jdt.internal.ui.javaeditor.JavaAnnotationImageProvider"
+            annotationType="org.eclipse.jdt.ui.info">
+      </specification>
+      <specification
+            annotationImageProvider="org.eclipse.jdt.internal.ui.javaeditor.BreakpointImageProvider"
+            icon="icons/full/obj16/brkp_obj.gif"
+            annotationType="org.eclipse.debug.core.breakpoint">
+      </specification>
+   </extension>
+   <extension
          id="org.eclipse.jdt.ui.JavaDocumentSetupParticipant"
          name="%javaDocumentSetupParticipant"
          point="org.eclipse.core.filebuffers.documentSetup">
@@ -555,6 +596,12 @@
             category="org.eclipse.jdt.ui.preferences.JavaBasePreferencePage"
             class="org.eclipse.jdt.internal.ui.preferences.ImportOrganizePreferencePage"
             id="org.eclipse.jdt.ui.preferences.ImportOrganizePreferencePage">
+      </page>
+      <page
+            name="%typeFilterPrefName"
+            category="org.eclipse.jdt.ui.preferences.JavaBasePreferencePage"
+            class="org.eclipse.jdt.internal.ui.preferences.TypeFilterPreferencePage"
+            id="org.eclipse.jdt.ui.preferences.TypeFilterPreferencePage">
       </page>
       <page
             name="%codeFormatterPrefName"
@@ -1300,6 +1347,13 @@
                id="org.eclipse.jdt.ui.actions.UseSupertype">
          </action>
          <action
+               definitionId="org.eclipse.jdt.ui.edit.text.java.change.type"
+               label="%Refactoring.changeTypeAction.label"
+               retarget="true"
+               menubarPath="org.eclipse.jdt.ui.refactoring.menu/typeGroup"
+               id="org.eclipse.jdt.ui.actions.ChangeType">
+         </action>
+         <action
                definitionId="org.eclipse.jdt.ui.edit.text.java.extract.interface"
                label="%Refactoring.extractInterfaceAction.label"
                retarget="true"
@@ -1334,6 +1388,13 @@
                retarget="true"
                menubarPath="org.eclipse.jdt.ui.refactoring.menu/codingGroup"
                id="org.eclipse.jdt.ui.actions.ConvertLocalToField">
+         </action>
+         <action
+               definitionId="org.eclipse.jdt.ui.edit.text.java.introduce.factory"
+               label="%Refactoring.introduceFactoryAction.label"
+               retarget="true"
+               menubarPath="org.eclipse.jdt.ui.refactoring.menu/codingGroup"
+               id="org.eclipse.jdt.ui.actions.IntroduceFactory">
          </action>
          <action
                definitionId="org.eclipse.jdt.ui.edit.text.java.introduce.parameter"
@@ -2055,6 +2116,18 @@
             configuration="org.eclipse.ui.defaultAcceleratorConfiguration">
       </keyBinding>
       <command
+            name="%ActionDefinition.completePrefix.name"
+            description="%ActionDefinition.completePrefix.description"
+            category="org.eclipse.ui.category.edit"
+            id="org.eclipse.jdt.ui.edit.text.java.complete.prefix">
+      </command>
+      <keyBinding
+            string="Shift+SPACE"
+            scope="org.eclipse.jdt.ui.javaEditorScope"
+            command="org.eclipse.jdt.ui.edit.text.java.complete.prefix"
+            configuration="org.eclipse.ui.defaultAcceleratorConfiguration">
+      </keyBinding>
+      <command
             name="%ActionDefinition.showJavadoc.name"
             description="%ActionDefinition.showJavadoc.description"
             category="org.eclipse.ui.category.edit"
@@ -2577,6 +2650,18 @@
             configuration="org.eclipse.ui.defaultAcceleratorConfiguration">
       </keyBinding>
       <command
+            name="%ActionDefinition.changeType.name"
+            description="%ActionDefinition.changeType.description"
+            category="org.eclipse.jdt.ui.category.refactoring"
+            id="org.eclipse.jdt.ui.edit.text.java.change.type">
+      </command>
+      <keyBinding
+            string=""
+            scope="org.eclipse.ui.globalScope"
+            command="org.eclipse.jdt.ui.edit.text.java.generalize.type"
+            configuration="org.eclipse.ui.defaultAcceleratorConfiguration">
+      </keyBinding>
+      <command
             name="%ActionDefinition.useSupertype.name"
             description="%ActionDefinition.useSupertype.description"
             category="org.eclipse.jdt.ui.category.refactoring"
@@ -2688,6 +2773,18 @@
             string=""
             scope="org.eclipse.ui.globalScope"
             command="org.eclipse.jdt.ui.edit.text.java.introduce.parameter"
+            configuration="org.eclipse.ui.defaultAcceleratorConfiguration">
+      </keyBinding>
+      <command
+            name="%ActionDefinition.introduceFactory.name"
+            description="%ActionDefinition.introduceFactory.description"
+            category="org.eclipse.jdt.ui.category.refactoring"
+            id="org.eclipse.jdt.ui.edit.text.java.introduce.factory">
+      </command>
+      <keyBinding
+            string=""
+            scope="org.eclipse.ui.globalScope"
+            command="org.eclipse.jdt.ui.edit.text.java.introduce.factory"
             configuration="org.eclipse.ui.defaultAcceleratorConfiguration">
       </keyBinding>
       <command
@@ -3591,6 +3688,12 @@
             id="org.eclipse.jdt.IJavaElementExtender">
       </typeExtender>
       <typeExtender
+            methods="isDefaultPackage"
+            type="org.eclipse.jdt.core.IPackageFragment"
+            class="org.eclipse.jdt.internal.corext.refactoring.participants.xml.PackageFragmentExtender"
+            id="org.eclipse.jdt.IPackageFragmentExtender">
+      </typeExtender>
+      <typeExtender
             methods="isStatic, isPrivate"
             type="org.eclipse.jdt.core.IMember"
             class="org.eclipse.jdt.internal.corext.refactoring.participants.xml.JavaMemberExtender"
@@ -3681,6 +3784,11 @@
                <test
                      property="isAvailable">
                </test>
+               <not>
+                  <test
+                        property="isDefaultPackage">
+                  </test>
+               </not>
             </iterate>
          </enablement>
       </renameProcessor>

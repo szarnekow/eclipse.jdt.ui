@@ -28,6 +28,7 @@ import org.eclipse.jdt.internal.ui.actions.ActionMessages;
 import org.eclipse.jdt.internal.ui.actions.ActionUtil;
 import org.eclipse.jdt.internal.ui.actions.SelectionConverter;
 import org.eclipse.jdt.internal.ui.javaeditor.CompilationUnitEditor;
+import org.eclipse.jdt.internal.ui.javaeditor.JavaTextSelection;
 import org.eclipse.jdt.internal.ui.preferences.JavaPreferencesSettings;
 import org.eclipse.jdt.internal.ui.refactoring.ChangeSignatureWizard;
 import org.eclipse.jdt.internal.ui.refactoring.RefactoringMessages;
@@ -96,7 +97,30 @@ public class ModifyParametersAction extends SelectionDispatchAction {
      * @see SelectionDispatchAction#selectionChanged(ITextSelection)
      */
 	public void selectionChanged(ITextSelection selection) {
-		//do nothing, this happens too often
+		setEnabled(true);
+	}
+	
+	/**
+	 * Note: This method is for internal use only. Clients should not call this method.
+	 */
+	public void selectionChanged(JavaTextSelection selection) {
+		try {
+			setEnabled(canEnable(selection));
+		} catch (JavaModelException e) {
+			setEnabled(false);
+		}
+	}
+	
+	private boolean canEnable(JavaTextSelection selection) throws JavaModelException {
+		//see getSingleSelectedMethod(ITextSelection)
+		IJavaElement[] elements= selection.resolveElementAtOffset(); 
+		if (elements.length > 1)
+			return false;
+		if (elements.length == 1 && (elements[0] instanceof IMethod))
+			return ChangeSignatureRefactoring.isAvailable((IMethod)elements[0]);
+		
+		IJavaElement elementAt= selection.resolveEnclosingElement();
+		return (elementAt instanceof IMethod) && ChangeSignatureRefactoring.isAvailable((IMethod)elementAt);
 	}
 	
 	/*
@@ -144,10 +168,15 @@ public class ModifyParametersAction extends SelectionDispatchAction {
 	}
 	
 	private IMethod getSingleSelectedMethod(ITextSelection selection) throws JavaModelException{
+		//- when caret/selection on method name (call or declaration) -> that method
+		//- otherwise: caret position's enclosing method declaration
+		//  - when caret inside argument list of method declaration -> enclosing method declaration
+		//  - when caret inside argument list of method call -> enclosing method declaration (and NOT method call)
+
 		IJavaElement[] elements= resolveElements();
-		if (elements.length != 1)
+		if (elements.length > 1)
 			return null;
-		if (elements[0] instanceof IMethod)
+		if (elements.length == 1 && elements[0] instanceof IMethod)
 			return (IMethod)elements[0];
 		IJavaElement elementAt= SelectionConverter.getInputAsCompilationUnit(fEditor).getElementAt(selection.getOffset());
 		if (elementAt instanceof IMethod)

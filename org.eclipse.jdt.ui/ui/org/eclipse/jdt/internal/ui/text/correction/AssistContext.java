@@ -26,7 +26,7 @@ public class AssistContext implements IInvocationContext {
 		
 	private CompilationUnit fASTRoot;
 	
-	/**
+	/*
 	 * Constructor for CorrectionContext.
 	 */
 	public AssistContext(ICompilationUnit cu, int offset, int length) {
@@ -69,4 +69,11 @@ public class AssistContext implements IInvocationContext {
 	}
 
 		
+	/**
+	 * @param root The ASTRoot to set.
+	 */
+	public void setASTRoot(CompilationUnit root) {
+		fASTRoot= root;
+	}
+
 }

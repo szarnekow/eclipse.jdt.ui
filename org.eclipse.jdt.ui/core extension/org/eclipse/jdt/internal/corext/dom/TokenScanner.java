@@ -59,7 +59,7 @@ public class TokenScanner {
 	
 	/**
 	 * Creates a TokenScanner
-	 * @param textBuffer The textbuffer to create the scanner on
+	 * @param document The textbuffer to create the scanner on
 	 */
 	public TokenScanner(IDocument document) {
 		fScanner= ToolFactory.createScanner(true, false, false, false);
@@ -86,27 +86,28 @@ public class TokenScanner {
 	
 	/**
 	 * Sets the scanner offset to the given offset.
+	 * @param offset The offset to set
 	 */
 	public void setOffset(int offset) {
 		fScanner.resetTo(offset, fEndPosition);
 	}
 	
 	/**
-	 * Returns the offset after the current token
+	 * @return Returns the offset after the current token
 	 */	
 	public int getCurrentEndOffset() {
 		return fScanner.getCurrentTokenEndPosition() + 1;
 	}
 
 	/**
-	 * Returns the start offset of the current token
+	 * @return Returns the start offset of the current token
 	 */		
 	public int getCurrentStartOffset() {
 		return fScanner.getCurrentTokenStartPosition();
 	}
 	
 	/**
-	 * Returns the length of the current token
+	 * @return Returns the length of the current token
 	 */	
 	public int getCurrentLength() {
 		return getCurrentEndOffset() - getCurrentStartOffset();
@@ -115,6 +116,7 @@ public class TokenScanner {
 	/**
 	 * Reads the next token.
 	 * @param ignoreComments If set, comments will be overread
+	 * @return Return the token id.
 	 * @exception CoreException Thrown when the end of the file has been reached (code END_OF_FILE)
 	 * or a lexical error was detected while scanning (code LEXICAL_ERROR)
 	 */
@@ -135,7 +137,8 @@ public class TokenScanner {
 	
 	/**
 	 * Reads the next token.
-	 * @param ignoreComments If set, comments will be overread
+	 * @param ignoreComments If set, comments will be overread.
+	 * @return Return the token id.
 	 * @exception CoreException Thrown when the end of the file has been reached (code END_OF_FILE)
 	 * or a lexical error was detected while scanning (code LEXICAL_ERROR)
 	 */
@@ -153,7 +156,9 @@ public class TokenScanner {
 	
 	/**
 	 * Reads the next token from the given offset.
-	 * @param ignoreComments If set, comments will be overread
+	 * @param offset The offset to start reading from.
+	 * @param ignoreComments If set, comments will be overread.
+	 * @return Returns the token id.
 	 * @exception CoreException Thrown when the end of the file has been reached (code END_OF_FILE)
 	 * or a lexical error was detected while scanning (code LEXICAL_ERROR)
 	 */		
@@ -164,7 +169,9 @@ public class TokenScanner {
 	
 	/**
 	 * Reads the next token from the given offset and returns the start offset of the token.
+	 * @param offset The offset to start reading from.
 	 * @param ignoreComments If set, comments will be overread
+	 * @return Returns the start position of the next token. 
 	 * @exception CoreException Thrown when the end of the file has been reached (code END_OF_FILE)
 	 * or a lexical error was detected while scanning (code LEXICAL_ERROR)
 	 */	
@@ -175,7 +182,9 @@ public class TokenScanner {
 	
 	/**
 	 * Reads the next token from the given offset and returns the offset after the token.
+	 * @param offset The offset to start reading from.
 	 * @param ignoreComments If set, comments will be overread
+	 * @return Returns the start position of the next token. 
 	 * @exception CoreException Thrown when the end of the file has been reached (code END_OF_FILE)
 	 * or a lexical error was detected while scanning (code LEXICAL_ERROR)
 	 */		
@@ -186,6 +195,7 @@ public class TokenScanner {
 
 	/**
 	 * Reads until a token is reached.
+	 * @param tok The token to read to.
 	 * @exception CoreException Thrown when the end of the file has been reached (code END_OF_FILE)
 	 * or a lexical error was detected while scanning (code LEXICAL_ERROR)
 	 */
@@ -198,6 +208,8 @@ public class TokenScanner {
 
 	/**
 	 * Reads until a token is reached, starting from the given offset.
+	 * @param tok The token to read to.
+	 * @param offset The offset to start reading from.
 	 * @exception CoreException Thrown when the end of the file has been reached (code END_OF_FILE)
 	 * or a lexical error was detected while scanning (code LEXICAL_ERROR)
 	 */			
@@ -209,6 +221,8 @@ public class TokenScanner {
 	/**
 	 * Reads from the given offset until a token is reached and returns the start offset of the token.
 	 * @param token The token to be found.
+	 * @param startOffset The offset to start reading from.
+	 * @return Returns the start position of the found token. 
 	 * @exception CoreException Thrown when the end of the file has been reached (code END_OF_FILE)
 	 * or a lexical error was detected while scanning (code LEXICAL_ERROR)
 	 */	
@@ -221,7 +235,7 @@ public class TokenScanner {
 	 * Reads from the given offset until a token is reached and returns the offset after the token.
 	 * @param token The token to be found.
 	 * @param startOffset Offset to start reading from
-	 * @return Returns the
+	 * @return Returns the end position of the found token. 
 	 * @exception CoreException Thrown when the end of the file has been reached (code END_OF_FILE)
 	 * or a lexical error was detected while scanning (code LEXICAL_ERROR)
 	 */		
@@ -255,8 +269,7 @@ public class TokenScanner {
 	 * @param lastPos An offset to before the node start offset. Can be 0 but better is the end location of the previous node. 
 	 * @param nodeStart Start offset of the node to find the comments for.
 	 * @return Returns the start offset of comments directly ahead of a token.
-	 * @exception CoreException Thrown when the end of the file has been reached (code END_OF_FILE)
-	 * or a lexical error was detected while scanning (code LEXICAL_ERROR)
+	 * @exception CoreException Thrown when a lexical error was detected while scanning (code LEXICAL_ERROR)
 	 */		
 	public int getTokenCommentStart(int lastPos, int nodeStart) throws CoreException {
 		setOffset(lastPos);
@@ -267,10 +280,10 @@ public class TokenScanner {
 		
 		int res= -1;
 
-		int curr= readNext(false);
+		int curr= readNextWithEOF(false);
 		int currStartPos= getCurrentStartOffset();
 		int currStartLine= getLineOfOffset(currStartPos);
-		while (nodeStart > currStartPos) {
+		while (curr != ITerminalSymbols.TokenNameEOF && nodeStart > currStartPos) {
 			if (TokenScanner.isComment(curr)) {
 				int linesDifference= currStartLine - prevEndLine;
 				if ((linesDifference > 1) || (res == -1 && (linesDifference != 0 || nodeLine == currStartLine))) {
@@ -285,11 +298,11 @@ public class TokenScanner {
 			} else {
 				prevEndLine= getLineOfOffset(getCurrentEndOffset() - 1);
 			}					
-			curr= readNext(false);
+			curr= readNextWithEOF(false);
 			currStartPos= getCurrentStartOffset();
 			currStartLine= getLineOfOffset(currStartPos);
 		}
-		if (res == -1) {
+		if (res == -1 || curr == ITerminalSymbols.TokenNameEOF) {
 			return nodeStart;
 		}
 		if (currStartLine - prevEndLine > 1) {

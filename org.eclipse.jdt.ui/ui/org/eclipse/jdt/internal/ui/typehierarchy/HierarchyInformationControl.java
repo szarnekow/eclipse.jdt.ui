@@ -11,11 +11,18 @@
 package org.eclipse.jdt.internal.ui.typehierarchy;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.KeyAdapter;
+import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
@@ -26,6 +33,15 @@ import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerFilter;
+
+import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.commands.ICommand;
+import org.eclipse.ui.commands.ICommandManager;
+import org.eclipse.ui.commands.IKeySequenceBinding;
+import org.eclipse.ui.keys.KeySequence;
+import org.eclipse.ui.keys.KeyStroke;
+import org.eclipse.ui.keys.SWTKeySupport;
+import org.eclipse.ui.keys.SpecialKey;
 
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -38,9 +54,12 @@ import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.Signature;
 
+import org.eclipse.jdt.ui.actions.IJavaEditorActionDefinitionIds;
+
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.internal.ui.text.AbstractInformationControl;
+import org.eclipse.jdt.internal.ui.typehierarchy.SuperTypeHierarchyViewer.SuperTypeHierarchyContentProvider;
 import org.eclipse.jdt.internal.ui.typehierarchy.TraditionalHierarchyViewer.TraditionalHierarchyContentProvider;
 import org.eclipse.jdt.internal.ui.viewsupport.DecoratingJavaLabelProvider;
 import org.eclipse.jdt.internal.ui.viewsupport.JavaElementLabels;
@@ -50,54 +69,81 @@ import org.eclipse.jdt.internal.ui.viewsupport.JavaElementLabels;
  */
 public class HierarchyInformationControl extends AbstractInformationControl {
 	
-	private class HierarchyInformationControlLabelProvider extends HierarchyLabelProvider {
-
-		public HierarchyInformationControlLabelProvider(TypeHierarchyLifeCycle lifeCycle) {
-			super(lifeCycle);
-		}
-				
-		protected boolean isDifferentScope(IType type) {
-			if (fFocus == null) {
-				return super.isDifferentScope(type);
-			}
-			IMethod[] methods= type.findMethods(fFocus);
-			if (methods != null && methods.length > 0) {
-				try {
-					// check visibility
-					IPackageFragment pack= (IPackageFragment) fFocus.getAncestor(IJavaElement.PACKAGE_FRAGMENT);
-					for (int i= 0; i < methods.length; i++) {
-						IMethod curr= methods[i];
-						if (JavaModelUtil.isVisibleInHierarchy(curr, pack)) {
-							return false;
-						}
-					}
-				} catch (JavaModelException e) {
-					// ignore
-					JavaPlugin.log(e);
-				}
-			}
-			return true;			
-		}	
-	}
-	
-
 	private TypeHierarchyLifeCycle fLifeCycle;
-	private HierarchyInformationControlLabelProvider fLabelProvider;
-	private Label fLabel;
+	private HierarchyLabelProvider fLabelProvider;
+	private Label fHeaderLabel;
+	private Label fStatusTextLabel;
+	private Font fStatusTextFont;
+	private KeyAdapter fKeyAdapter;
+	
+	private Object[] fOtherExpandedElements;
+	private TypeHierarchyContentProvider fOtherContentProvider;
 	
 	private IMethod fFocus; // method to filter for or null if type hierarchy
-	private boolean fDoFilter= true;
+	private boolean fDoFilter;
+	
+	private KeySequence[] fKeySequences;
 
 	public HierarchyInformationControl(Shell parent, int shellStyle, int treeStyle) {
 		super(parent, shellStyle, treeStyle);
+		fOtherExpandedElements= null;
+		fKeySequences= null;
+		fDoFilter= true;
 	}
 	
+	private KeySequence[] getKeySequences() {
+		if (fKeySequences == null) {
+			ICommandManager commandManager = PlatformUI.getWorkbench().getCommandSupport().getCommandManager();
+			ICommand command = commandManager.getCommand(IJavaEditorActionDefinitionIds.OPEN_HIERARCHY);
+			if (command.isDefined()) {
+				List list= command.getKeySequenceBindings();
+				if (!list.isEmpty()) {
+					fKeySequences= new KeySequence[list.size()];
+					for (int i= 0; i < fKeySequences.length; i++) {
+						fKeySequences[i]= ((IKeySequenceBinding) list.get(i)).getKeySequence();
+					}
+					return fKeySequences;
+				}		
+			}
+			// default key is F12
+			fKeySequences= new KeySequence[] { 
+				KeySequence.getInstance(KeyStroke.getInstance(SpecialKey.F12))
+			};
+		}
+		return fKeySequences;
+	}
+	
+	private KeyAdapter getKeyAdapter() {
+		if (fKeyAdapter == null) {
+			fKeyAdapter= new KeyAdapter() {
+				public void keyPressed(KeyEvent e) {
+					int accelerator = SWTKeySupport.convertEventToUnmodifiedAccelerator(e);
+					KeySequence keySequence = KeySequence.getInstance(SWTKeySupport.convertAcceleratorToKeyStroke(accelerator));
+					KeySequence[] sequences= getKeySequences();
+					
+					for (int i= 0; i < sequences.length; i++) {
+						if (sequences[i].equals(keySequence)) {
+							toggleHierarchy();
+							return;
+						}
+					}
+				}
+			};			
+		}
+		return fKeyAdapter;		
+	}
+	
+
+
 	protected Text createFilterText(Composite parent) {
-		fLabel= new Label(parent, SWT.NONE);
+		fHeaderLabel= new Label(parent, SWT.NONE);
 		// text set later
-		fLabel.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-		fLabel.setFont(JFaceResources.getBannerFont());
-		return super.createFilterText(parent);
+		fHeaderLabel.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		fHeaderLabel.setFont(JFaceResources.getBannerFont());
+		Text text= super.createFilterText(parent);
+		
+		text.addKeyListener(getKeyAdapter());
+		return text;
 	}	
 		
 	
@@ -120,20 +166,78 @@ public class HierarchyInformationControl extends AbstractInformationControl {
 		treeViewer.setSorter(new HierarchyViewerSorter(fLifeCycle));
 		treeViewer.setAutoExpandLevel(AbstractTreeViewer.ALL_LEVELS);
 
-		fLabelProvider= new HierarchyInformationControlLabelProvider(fLifeCycle);
+		fLabelProvider= new HierarchyLabelProvider(fLifeCycle);
+		fLabelProvider.setFilter(new ViewerFilter() {
+			public boolean select(Viewer viewer, Object parentElement, Object element) {
+				return hasFocusMethod((IType) element);
+			}
+		});	
 
 		fLabelProvider.setTextFlags(JavaElementLabels.ALL_DEFAULT | JavaElementLabels.T_POST_QUALIFIED);
-		treeViewer.setLabelProvider(new DecoratingJavaLabelProvider(fLabelProvider, true, false));	
+		treeViewer.setLabelProvider(new DecoratingJavaLabelProvider(fLabelProvider, true, false));
+		
+		treeViewer.getTree().addKeyListener(getKeyAdapter());	
+		
+		Composite composite= new Composite(parent, SWT.NONE);
+		GridLayout layout= new GridLayout(1, false);
+		layout.marginHeight= 0;
+		layout.marginWidth= 0;
+		composite.setLayout(layout);
+		composite.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		
+		// Horizontal separator line
+		Label separator= new Label(composite, SWT.SEPARATOR | SWT.HORIZONTAL | SWT.LINE_DOT);
+		separator.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+
+		// Status field label
+		fStatusTextLabel= new Label(parent, SWT.RIGHT);
+		fStatusTextLabel.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		fStatusTextLabel.setText(getInfoLabel());
+		Font font= fStatusTextLabel.getFont();
+		Display display= parent.getDisplay();
+		FontData[] fontDatas= font.getFontData();
+		for (int i= 0; i < fontDatas.length; i++)
+			fontDatas[i].setHeight(fontDatas[i].getHeight() * 9 / 10);
+		fStatusTextFont= new Font(display, fontDatas);
+		fStatusTextLabel.setFont(fStatusTextFont);
+
+		// Regarding the color see bug 41128
+		fStatusTextLabel.setForeground(display.getSystemColor(SWT.COLOR_WIDGET_DARK_SHADOW));
 		
 		return treeViewer;
 	}
 	
+	protected boolean hasFocusMethod(IType type) {
+		if (fFocus == null) {
+			return true;
+		}
+		IMethod[] methods= type.findMethods(fFocus);
+		if (methods != null && methods.length > 0) {
+			try {
+				// check visibility
+				IPackageFragment pack= (IPackageFragment) fFocus.getAncestor(IJavaElement.PACKAGE_FRAGMENT);
+				for (int i= 0; i < methods.length; i++) {
+					IMethod curr= methods[i];
+					if (JavaModelUtil.isVisibleInHierarchy(curr, pack)) {
+						return true;
+					}
+				}
+			} catch (JavaModelException e) {
+				// ignore
+				JavaPlugin.log(e);
+			}
+		}
+		return false;			
+		
+	}
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.jdt.internal.ui.text.AbstractInformationControl#setForegroundColor(org.eclipse.swt.graphics.Color)
 	 */
 	public void setForegroundColor(Color foreground) {
 		super.setForegroundColor(foreground);
-		fLabel.setForeground(foreground);
+		fHeaderLabel.setForeground(foreground);
+		fStatusTextLabel.getParent().setForeground(foreground);
 	}
 
 	/* (non-Javadoc)
@@ -141,7 +245,19 @@ public class HierarchyInformationControl extends AbstractInformationControl {
 	 */
 	public void setBackgroundColor(Color background) {
 		super.setBackgroundColor(background);
-		fLabel.setBackground(background);
+		fHeaderLabel.setBackground(background);
+		fStatusTextLabel.setBackground(background);
+		fStatusTextLabel.getParent().setBackground(background);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.jdt.internal.ui.text.AbstractInformationControl#dispose()
+	 */
+	public void dispose() {
+		if (fStatusTextFont != null && !fStatusTextFont.isDisposed())
+			fStatusTextFont.dispose();
+		
+		super.dispose();
 	}
 	
 
@@ -157,6 +273,10 @@ public class HierarchyInformationControl extends AbstractInformationControl {
 		IMethod locked= null;
 		try {
 			IJavaElement elem= (IJavaElement) information;
+			if (elem.getElementType() == IJavaElement.LOCAL_VARIABLE) {
+				elem= elem.getParent();
+			}
+			
 			switch (elem.getElementType()) {
 				case IJavaElement.JAVA_PROJECT :
 				case IJavaElement.PACKAGE_FRAGMENT_ROOT :
@@ -193,13 +313,14 @@ public class HierarchyInformationControl extends AbstractInformationControl {
 					}
 					break;
 				default :
+					JavaPlugin.logErrorMessage("Element unsupported by the hierarchy: " + elem.getClass()); //$NON-NLS-1$
 					input= null;
 			}
 		} catch (JavaModelException e) {
 			JavaPlugin.log(e);
 		}
 		
-		fLabel.setText(getHeaderLabel(locked == null ? input : locked));
+		fHeaderLabel.setText(getHeaderLabel(locked == null ? input : locked));
 		try {
 			fLifeCycle.ensureRefreshedTypeHierarchy(input, JavaPlugin.getActiveWorkbenchWindow());
 		} catch (InvocationTargetException e1) {
@@ -208,9 +329,14 @@ public class HierarchyInformationControl extends AbstractInformationControl {
 			dispose();
 			return;
 		}
+		IMember[] memberFilter= locked != null ? new IMember[] { locked } : null;
+		
 		TraditionalHierarchyContentProvider contentProvider= new TraditionalHierarchyContentProvider(fLifeCycle);
-		contentProvider.setMemberFilter(locked != null ? new IMember[] { locked } : null);
+		contentProvider.setMemberFilter(memberFilter);
 		getTreeViewer().setContentProvider(contentProvider);		
+		
+		fOtherContentProvider= new SuperTypeHierarchyContentProvider(fLifeCycle);
+		fOtherContentProvider.setMemberFilter(memberFilter);
 		
 		fFocus= locked;
 		
@@ -236,15 +362,49 @@ public class HierarchyInformationControl extends AbstractInformationControl {
 		} else {
 			selectFirstMatch();
 		}
-	}	
+	}
+	
+	protected void toggleHierarchy() {
+		TreeViewer treeViewer= getTreeViewer();
+		
+		Object[] expandedElements= treeViewer.getExpandedElements();
+		TypeHierarchyContentProvider contentProvider= (TypeHierarchyContentProvider) treeViewer.getContentProvider();
+		treeViewer.setContentProvider(fOtherContentProvider);
+
+		treeViewer.refresh();
+		if (fOtherExpandedElements != null) {
+			treeViewer.setExpandedElements(fOtherExpandedElements);
+		} else {
+			treeViewer.expandAll();
+		}
+		
+		fOtherContentProvider= contentProvider;
+		fOtherExpandedElements= expandedElements;
+		
+		fStatusTextLabel.setText(getInfoLabel());
+	}
+	
 	
 	private String getHeaderLabel(IJavaElement input) {
 		if (input instanceof IMethod) {
 			String[] args= { input.getParent().getElementName(), JavaElementLabels.getElementLabel(input, JavaElementLabels.ALL_DEFAULT) };
 			return TypeHierarchyMessages.getFormattedString("HierarchyInformationControl.methodhierarchy.label", args); //$NON-NLS-1$
-		} else {
+		} else if (input != null) {
 			String arg= JavaElementLabels.getElementLabel(input, JavaElementLabels.DEFAULT_QUALIFIED);
 			return TypeHierarchyMessages.getFormattedString("HierarchyInformationControl.hierarchy.label", arg);	 //$NON-NLS-1$
+		} else {
+			return ""; //$NON-NLS-1$
+		}
+	}
+	
+	private String getInfoLabel() {
+		KeySequence[] sequences= getKeySequences();
+		String keyName= sequences[0].format();
+		
+		if (fOtherContentProvider instanceof TraditionalHierarchyContentProvider) {
+			return TypeHierarchyMessages.getFormattedString("HierarchyInformationControl.toggle.traditionalhierarchy.label", keyName); //$NON-NLS-1$
+		} else {
+			return TypeHierarchyMessages.getFormattedString("HierarchyInformationControl.toggle.superhierarchy.label", keyName); //$NON-NLS-1$
 		}
 	}
 

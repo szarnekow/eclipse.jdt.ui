@@ -18,9 +18,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import org.eclipse.core.filebuffers.FileBuffers;
-import org.eclipse.core.filebuffers.ITextFileBuffer;
-import org.eclipse.core.filebuffers.ITextFileBufferManager;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
@@ -30,6 +27,10 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 
 import org.eclipse.swt.widgets.Display;
+
+import org.eclipse.core.filebuffers.FileBuffers;
+import org.eclipse.core.filebuffers.ITextFileBuffer;
+import org.eclipse.core.filebuffers.ITextFileBufferManager;
 
 import org.eclipse.jface.text.Assert;
 import org.eclipse.jface.text.BadLocationException;
@@ -157,7 +158,7 @@ public class DocumentAdapter2 implements IBuffer, IDocumentListener {
 	
 	private void initialize() {
 		ITextFileBufferManager manager= FileBuffers.getTextFileBufferManager();
-		IPath location= fFile.getLocation();
+		IPath location= fFile.getFullPath();
 		try {
 			manager.connect(location, new NullProgressMonitor());
 			fTextFileBuffer= manager.getTextFileBuffer(location);

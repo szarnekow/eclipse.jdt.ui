@@ -38,11 +38,13 @@ import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jdt.ui.CodeGeneration;
 
 import org.eclipse.jdt.internal.corext.codemanipulation.CodeGenerationSettings;
+import org.eclipse.jdt.internal.corext.codemanipulation.ImportRewrite;
 import org.eclipse.jdt.internal.corext.codemanipulation.StubUtility;
 import org.eclipse.jdt.internal.corext.dom.ASTNodeFactory;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.ASTRewrite;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
+import org.eclipse.jdt.internal.corext.dom.NewASTRewrite;
 import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.internal.ui.JavaPluginImages;
 import org.eclipse.jdt.internal.ui.preferences.JavaPreferencesSettings;
@@ -50,6 +52,7 @@ import org.eclipse.jdt.internal.ui.preferences.JavaPreferencesSettings;
 public class UnimplementedMethodsCompletionProposal extends ASTRewriteCorrectionProposal {
 
 	private ASTNode fTypeNode;
+	private IMethodBinding[] fMethodsToOverride;
 
 	public UnimplementedMethodsCompletionProposal(ICompilationUnit cu, ASTNode typeNode, int relevance) {
 		super(null, cu, null, relevance, null);
@@ -57,6 +60,7 @@ public class UnimplementedMethodsCompletionProposal extends ASTRewriteCorrection
 		setImage(JavaPluginImages.get(JavaPluginImages.IMG_CORRECTION_CHANGE));
 		
 		fTypeNode= typeNode;
+		fMethodsToOverride= null;
 	}
 	
 	/* (non-Javadoc)
@@ -75,6 +79,7 @@ public class UnimplementedMethodsCompletionProposal extends ASTRewriteCorrection
 			bodyDecls= decl.bodyDeclarations();
 		}
 		IMethodBinding[] methods= evalUnimplementedMethods(binding);
+		fMethodsToOverride= methods;
 		
 		ASTRewrite rewrite= new ASTRewrite(fTypeNode);
 		AST ast= fTypeNode.getAST();
@@ -92,19 +97,21 @@ public class UnimplementedMethodsCompletionProposal extends ASTRewriteCorrection
 	}
 	
 	private MethodDeclaration createNewMethodDeclaration(AST ast, IMethodBinding binding, ASTRewrite rewrite, String typeName, CodeGenerationSettings commentSettings) throws CoreException {
+		ImportRewrite imports= getImportRewrite();
+		
 		MethodDeclaration decl= ast.newMethodDeclaration();
 		decl.setModifiers(binding.getModifiers() & ~Modifier.ABSTRACT);
 		decl.setName(ast.newSimpleName(binding.getName()));
 		decl.setConstructor(false);
 		
-		String returnTypeName= addImport(binding.getReturnType());
+		String returnTypeName= imports.addImport(binding.getReturnType());
 		decl.setReturnType(ASTNodeFactory.newType(ast, returnTypeName));
 		
 		List parameters= decl.parameters();
 		ITypeBinding[] params= binding.getParameterTypes();
 		String[] paramNames= getArgumentNames(binding);
 		for (int i= 0; i < params.length; i++) {
-			String paramTypeName= addImport(params[i]);
+			String paramTypeName= imports.addImport(params[i]);
 			SingleVariableDeclaration var= ast.newSingleVariableDeclaration();
 			var.setType(ASTNodeFactory.newType(ast, paramTypeName));
 			var.setName(ast.newSimpleName(paramNames[i]));
@@ -114,7 +121,7 @@ public class UnimplementedMethodsCompletionProposal extends ASTRewriteCorrection
 		List thrownExceptions= decl.thrownExceptions();
 		ITypeBinding[] excTypes= binding.getExceptionTypes();
 		for (int i= 0; i < excTypes.length; i++) {
-			String excTypeName= addImport(excTypes[i]);
+			String excTypeName= imports.addImport(excTypes[i]);
 			thrownExceptions.add(ASTNodeFactory.newName(ast, excTypeName));
 		}
 		
@@ -131,14 +138,14 @@ public class UnimplementedMethodsCompletionProposal extends ASTRewriteCorrection
 
 		String placeHolder= CodeGeneration.getMethodBodyContent(getCompilationUnit(), typeName, binding.getName(), false, bodyStatement, String.valueOf('\n')); 	
 		if (placeHolder != null) {
-			ASTNode todoNode= rewrite.createPlaceholder(placeHolder, ASTRewrite.STATEMENT);
+			ASTNode todoNode= rewrite.createPlaceholder(placeHolder, NewASTRewrite.STATEMENT);
 			body.statements().add(todoNode);
 		}
 		
 		if (commentSettings != null) {
 			String string= CodeGeneration.getMethodComment(getCompilationUnit(), typeName, decl, binding, String.valueOf('\n'));
 			if (string != null) {
-				Javadoc javadoc= (Javadoc) rewrite.createPlaceholder(string, ASTRewrite.JAVADOC);
+				Javadoc javadoc= (Javadoc) rewrite.createPlaceholder(string, NewASTRewrite.JAVADOC);
 				decl.setJavadoc(javadoc);
 			}
 		}
@@ -247,6 +254,30 @@ public class UnimplementedMethodsCompletionProposal extends ASTRewriteCorrection
 		}
 		return null;
 	}
+	
+	/* (non-Javadoc)
+	 * @see org.eclipse.jdt.internal.ui.text.correction.CUCorrectionProposal#getAdditionalProposalInfo()
+	 */
+	public String getAdditionalProposalInfo() {
+		try {
+			getCompilationUnitChange(); // force the creation of the rewrite
+			StringBuffer buf= new StringBuffer();
+			buf.append("<b>"); //$NON-NLS-1$
+			buf.append(CorrectionMessages.getFormattedString("UnimplementedMethodsCompletionProposal.info", String.valueOf(fMethodsToOverride.length))); //$NON-NLS-1$
+			buf.append("</b><ul>"); //$NON-NLS-1$
+			for (int i= 0; i < fMethodsToOverride.length; i++) {
+				buf.append("<li>"); //$NON-NLS-1$
+				buf.append(Bindings.asString(fMethodsToOverride[i]));
+				buf.append("</li>"); //$NON-NLS-1$
+			}
+			buf.append("</ul>"); //$NON-NLS-1$
+			return buf.toString();
+		} catch (CoreException e) {
+			JavaPlugin.log(e);
+		}
+		return null;
+	}
+	
 	
 
 }

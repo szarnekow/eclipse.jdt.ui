@@ -82,6 +82,7 @@ import org.eclipse.jdt.internal.corext.Assert;
 import org.eclipse.jdt.internal.corext.SourceRange;
 import org.eclipse.jdt.internal.corext.codemanipulation.CodeGenerationSettings;
 import org.eclipse.jdt.internal.corext.codemanipulation.StubUtility;
+import org.eclipse.jdt.internal.corext.dom.ASTNodeConstants;
 import org.eclipse.jdt.internal.corext.dom.ASTNodeFactory;
 import org.eclipse.jdt.internal.corext.dom.ASTRewrite;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
@@ -1040,7 +1041,7 @@ public class PullUpRefactoring extends Refactoring {
 			if (! JdtFlags.isPackageVisible(member))
 				return false;
 			
-			return ((IType)member).getPackageFragment().equals(newHome.getPackageFragment());		
+			return JavaModelUtil.isSamePackage(((IType)member).getPackageFragment(), newHome.getPackageFragment());		
 		} else {
 			IType enclosingType= member.getDeclaringType();
 			
@@ -1054,7 +1055,7 @@ public class PullUpRefactoring extends Refactoring {
 				return true;
 		 
 			//FIX ME: protected and default treated the same
-			return (enclosingType.getPackageFragment().equals(newHome.getPackageFragment()));		
+			return JavaModelUtil.isSamePackage(enclosingType.getPackageFragment(), newHome.getPackageFragment());		
 		}
 	}
 	
@@ -1346,17 +1347,14 @@ public class PullUpRefactoring extends Refactoring {
 	}
 
 	private void increaseVisibilityOfMethodsDeclaredAbstract(ASTRewrite rewrite, CompilationUnit cuNode, IProgressMonitor pm) throws JavaModelException {
-		AST ast= getAST(rewrite);
 		for (int i= 0; i < fMethodsToDeclareAbstract.length; i++) {
 			IMethod method= fMethodsToDeclareAbstract[i];
 			if (! needsToChangeVisibility(method, pm, false))
 				continue;
 			MethodDeclaration methodDeclaration= ASTNodeSearchUtil.getMethodDeclarationNode(method, cuNode);//getMethodDeclarationNode(method);
-			MethodDeclaration newMethod= ast.newMethodDeclaration();
-			newMethod.setExtraDimensions(methodDeclaration.getExtraDimensions());
-			newMethod.setConstructor(methodDeclaration.isConstructor());
-			newMethod.setModifiers(getModifiersWithUpdatedVisibility(method, methodDeclaration.getModifiers(), pm, false));
-			rewrite.markAsModified(methodDeclaration, newMethod);
+		
+			int newModifiers= getModifiersWithUpdatedVisibility(method, methodDeclaration.getModifiers(), pm, false);
+			rewrite.markAsReplaced(methodDeclaration, ASTNodeConstants.MODIFIERS, new Integer(newModifiers), null);
 		}
 	}
 
@@ -1514,10 +1512,9 @@ public class PullUpRefactoring extends Refactoring {
 
 	private void makeTargetClassAbstract(ASTRewrite rewrite, CompilationUnit cuNode) throws JavaModelException {
 		TypeDeclaration targetClass= ASTNodeSearchUtil.getTypeDeclarationNode(getTargetClass(), cuNode);
-		TypeDeclaration modifiedNode= targetClass.getAST().newTypeDeclaration();
-		modifiedNode.setInterface(targetClass.isInterface());
-		modifiedNode.setModifiers(targetClass.getModifiers() | Modifier.ABSTRACT);
-		rewrite.markAsModified(targetClass, modifiedNode);
+	
+		int newModifiers= targetClass.getModifiers() | Modifier.ABSTRACT;
+		rewrite.markAsReplaced(targetClass, ASTNodeConstants.MODIFIERS, new Integer(newModifiers), null);
 	}
 
 	private boolean shouldMakeTargetClassAbstract() throws JavaModelException {
@@ -1821,7 +1818,7 @@ public class PullUpRefactoring extends Refactoring {
 	}
 
 	private static AST getAST(ASTRewrite rewrite){
-		return rewrite.getRootNode().getAST();
+		return rewrite.getAST();
 	}
 	
 	private static String getBufferText(ASTNode node, ICompilationUnit cu) throws JavaModelException{

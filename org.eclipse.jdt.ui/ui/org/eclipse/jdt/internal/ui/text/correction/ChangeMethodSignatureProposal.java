@@ -32,6 +32,7 @@ import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.Type;
 
+import org.eclipse.jdt.internal.corext.codemanipulation.ImportRewrite;
 import org.eclipse.jdt.internal.corext.codemanipulation.StubUtility;
 import org.eclipse.jdt.internal.corext.dom.ASTNodeFactory;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
@@ -76,20 +77,20 @@ public class ChangeMethodSignatureProposal extends LinkedCorrectionProposal {
 		}
 	}	
 		
-	private ASTNode fNameNode;
+	private ASTNode fInvocationNode;
 	private IMethodBinding fSenderBinding;
 	private ChangeDescription[] fParameterChanges;
 		
-	public ChangeMethodSignatureProposal(String label, ICompilationUnit targetCU, ASTNode nameNode, IMethodBinding binding, ChangeDescription[] changes, int relevance, Image image) {
+	public ChangeMethodSignatureProposal(String label, ICompilationUnit targetCU, ASTNode invocationNode, IMethodBinding binding, ChangeDescription[] changes, int relevance, Image image) {
 		super(label, targetCU, null, relevance, image);
 		
-		fNameNode= nameNode;
+		fInvocationNode= invocationNode;
 		fSenderBinding= binding;
 		fParameterChanges= changes;
 	}
 	
 	protected ASTRewrite getRewrite() throws CoreException {
-		CompilationUnit astRoot= (CompilationUnit) fNameNode.getRoot();
+		CompilationUnit astRoot= (CompilationUnit) fInvocationNode.getRoot();
 		ASTNode methodDecl= astRoot.findDeclaringNode(fSenderBinding);
 		ASTNode newMethodDecl= null;
 		boolean isInDifferentCU;
@@ -121,7 +122,9 @@ public class ChangeMethodSignatureProposal extends LinkedCorrectionProposal {
 		IVariableBinding[] declaredFields= fSenderBinding.getDeclaringClass().getDeclaredFields();
 		for (int i= 0; i < declaredFields.length; i++) { // avoid to take parameter names that are equal to field names
 			usedNames.add(declaredFields[i].getName());
-		}		
+		}
+		
+		ImportRewrite imports= getImportRewrite();
 		
 		for (int i= 0; i < fParameterChanges.length; i++) {
 			ChangeDescription curr= fParameterChanges[i];
@@ -131,7 +134,7 @@ public class ChangeMethodSignatureProposal extends LinkedCorrectionProposal {
 			} else if (curr instanceof InsertDescription) {
 				InsertDescription desc= (InsertDescription) curr;
 				SingleVariableDeclaration newNode= ast.newSingleVariableDeclaration();
-				String type= addImport(desc.type);
+				String type= imports.addImport(desc.type);
 				newNode.setType(ASTNodeFactory.newType(ast, type));
 				
 				// remember to set name later
@@ -148,7 +151,7 @@ public class ChangeMethodSignatureProposal extends LinkedCorrectionProposal {
 				EditDescription desc= (EditDescription) curr;
 
 				SingleVariableDeclaration newNode= ast.newSingleVariableDeclaration();
-				String type= addImport(desc.type);
+				String type= imports.addImport(desc.type);
 				newNode.setType(ASTNodeFactory.newType(ast, type));
 				
 				// remember to set name later
@@ -186,7 +189,7 @@ public class ChangeMethodSignatureProposal extends LinkedCorrectionProposal {
 	}
 
 	private void fixupNames(ASTRewrite rewrite, ArrayList usedNames, boolean isInDifferentCU) {
-		AST ast= rewrite.getRootNode().getAST();
+		AST ast= rewrite.getAST();
 		// set names for new parameters
 		for (int i= 0; i < fParameterChanges.length; i++) {
 			ChangeDescription curr= fParameterChanges[i];

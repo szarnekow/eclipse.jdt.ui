@@ -52,8 +52,11 @@ public class ASTNodeDeleteUtil {
 		if (element.getElementType() == IJavaElement.FIELD)
 			return new ASTNode[] {ASTNodeSearchUtil.getFieldDeclarationFragmentNode((IField) element, cuNode)};
 		if (element.getElementType() == IJavaElement.TYPE && ((IType)element).isLocal()) {
-			ASTNode[] nodes= ASTNodeSearchUtil.getDeclarationNodes(element, cuNode);
-			if (!((IType)element).isAnonymous()) {
+			IType type= (IType)element;
+			if (type.isAnonymous()) {
+				return new ASTNode[] {ASTNodeSearchUtil.getClassInstanceCreationNode(type, cuNode)};
+			} else {
+				ASTNode[] nodes= ASTNodeSearchUtil.getDeclarationNodes(element, cuNode);
 				// we have to delete the TypeDeclarationStatement
 				nodes[0]= nodes[0].getParent();
 				return nodes;
@@ -82,13 +85,16 @@ public class ASTNodeDeleteUtil {
 	 */
 	private static Set getRemovedNodes(final ASTRewrite rewrite) {
 		final Set result= new HashSet();
-		rewrite.getRootNode().accept(new GenericVisitor(){
-			protected boolean visitNode(ASTNode node) {
-				if (rewrite.isRemoved(node))
-					result.add(node);
-				return true;
-			}
-		});
+		ASTNode rootNode= rewrite.getRootNode();
+		if (rootNode != null) {
+			rootNode.accept(new GenericVisitor(){
+				protected boolean visitNode(ASTNode node) {
+					if (rewrite.isRemoved(node))
+						result.add(node);
+					return true;
+				}
+			});
+		}
 		return result;
 	}
 }

@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.jdt.ui.actions;
 
-import org.eclipse.core.resources.IResource;
-
 import org.eclipse.ui.IWorkbenchSite;
 import org.eclipse.ui.help.WorkbenchHelp;
 
@@ -64,7 +62,7 @@ public class FindReadReferencesInProjectAction extends FindReadReferencesAction 
 	}
 	
 	IJavaSearchScope getScope(IType element) throws JavaModelException {
-		return JavaSearchScopeFactory.getInstance().createJavaSearchScope(new IResource[] { element.getJavaProject().getProject() });
+		return JavaSearchScopeFactory.getInstance().createJavaProjectSearchScope(element);
 	}
 
 	String getScopeDescription(IType type) {

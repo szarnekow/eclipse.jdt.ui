@@ -20,8 +20,10 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IMarkerDelta;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.jobs.ISchedulingRule;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.GC;
@@ -46,14 +48,14 @@ import org.eclipse.jface.text.source.AnnotationModelEvent;
 import org.eclipse.jface.text.source.IAnnotationModel;
 import org.eclipse.jface.text.source.IAnnotationModelListener;
 import org.eclipse.jface.text.source.IAnnotationModelListenerExtension;
-
-import org.eclipse.ui.editors.text.TextFileDocumentProvider;
+import org.eclipse.jface.text.source.IAnnotationPresentation;
 
 import org.eclipse.ui.IFileEditorInput;
+import org.eclipse.ui.editors.text.TextFileDocumentProvider;
 import org.eclipse.ui.texteditor.AbstractMarkerAnnotationModel;
 import org.eclipse.ui.texteditor.DefaultAnnotation;
-import org.eclipse.ui.texteditor.IAnnotationExtension;
 import org.eclipse.ui.texteditor.MarkerAnnotation;
+import org.eclipse.ui.texteditor.MarkerUtilities;
 import org.eclipse.ui.texteditor.ResourceMarkerAnnotationModel;
 
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -87,13 +89,8 @@ public class CompilationUnitDocumentProvider2 extends TextFileDocumentProvider i
 		/**
 		 * Annotation representating an <code>IProblem</code>.
 		 */
-		static protected class ProblemAnnotation extends Annotation implements IJavaAnnotation, IAnnotationExtension {
-
-			private static final String TASK_ANNOTATION_TYPE= "org.eclipse.ui.workbench.texteditor.task"; //$NON-NLS-1$
-			private static final String ERROR_ANNOTATION_TYPE= "org.eclipse.ui.workbench.texteditor.error"; //$NON-NLS-1$
-			private static final String WARNING_ANNOTATION_TYPE= "org.eclipse.ui.workbench.texteditor.warning"; //$NON-NLS-1$
-			private static final String INFO_ANNOTATION_TYPE= "org.eclipse.ui.workbench.texteditor.info"; //$NON-NLS-1$
-
+		static protected class ProblemAnnotation extends Annotation implements IJavaAnnotation, IAnnotationPresentation {
+		
 			private static Image fgQuickFixImage;
 			private static Image fgQuickFixErrorImage;
 			private static boolean fgQuickFixImagesInitialized= false;
@@ -103,7 +100,6 @@ public class CompilationUnitDocumentProvider2 extends TextFileDocumentProvider i
 			private IProblem fProblem;
 			private Image fImage;
 			private boolean fQuickFixImagesInitialized= false;
-			private String fType;
 			
 			
 			public ProblemAnnotation(IProblem problem, ICompilationUnit cu) {
@@ -112,16 +108,16 @@ public class CompilationUnitDocumentProvider2 extends TextFileDocumentProvider i
 				fCompilationUnit= cu;
 				
 				if (IProblem.Task == fProblem.getID()) {
-					fType= TASK_ANNOTATION_TYPE;
+					setType(JavaMarkerAnnotation.TASK_ANNOTATION_TYPE);
 					setLayer(DefaultAnnotation.TASK_LAYER + 1);
 				} else if (fProblem.isWarning()) {
-					fType= WARNING_ANNOTATION_TYPE;
+					setType(JavaMarkerAnnotation.WARNING_ANNOTATION_TYPE);
 					setLayer(DefaultAnnotation.WARNING_LAYER + 1);
 				} else if (fProblem.isError()) {
-					fType= ERROR_ANNOTATION_TYPE;
+					setType(JavaMarkerAnnotation.ERROR_ANNOTATION_TYPE);
 					setLayer(DefaultAnnotation.ERROR_LAYER + 1);
 				} else {
-					fType= INFO_ANNOTATION_TYPE;
+					setType(JavaMarkerAnnotation.INFO_ANNOTATION_TYPE);
 					setLayer(DefaultAnnotation.INFO_LAYER + 1);
 				}
 			}
@@ -135,7 +131,7 @@ public class CompilationUnitDocumentProvider2 extends TextFileDocumentProvider i
 							fgQuickFixErrorImage= JavaPluginImages.get(JavaPluginImages.IMG_OBJS_FIXABLE_ERROR);
 							fgQuickFixImagesInitialized= true;
 						}
-						if (ERROR_ANNOTATION_TYPE.equals(fType))
+						if (JavaMarkerAnnotation.ERROR_ANNOTATION_TYPE.equals(getType()))
 							fImage= fgQuickFixErrorImage;
 						else
 							fImage= fgQuickFixImage;
@@ -143,7 +139,7 @@ public class CompilationUnitDocumentProvider2 extends TextFileDocumentProvider i
 					fQuickFixImagesInitialized= true;
 				}
 			}
-
+		
 			private boolean indicateQuixFixableProblems() {
 				return PreferenceConstants.getPreferenceStore().getBoolean(PreferenceConstants.EDITOR_CORRECTION_INDICATION);
 			}
@@ -168,15 +164,8 @@ public class CompilationUnitDocumentProvider2 extends TextFileDocumentProvider i
 			/*
 			 * @see IJavaAnnotation#getMessage()
 			 */
-			public String getMessage() {
+			public String getText() {
 				return fProblem.getMessage();
-			}
-
-			/*
-			 * @see IJavaAnnotation#isTemporary()
-			 */
-			public boolean isTemporary() {
-				return true;
 			}
 			
 			/*
@@ -185,26 +174,20 @@ public class CompilationUnitDocumentProvider2 extends TextFileDocumentProvider i
 			public String[] getArguments() {
 				return isProblem() ? fProblem.getArguments() : null;
 			}
-
+		
 			/*
 			 * @see IJavaAnnotation#getId()
 			 */
 			public int getId() {
 				return fProblem.getID();
 			}
-
+		
 			/*
 			 * @see IJavaAnnotation#isProblem()
 			 */
 			public boolean isProblem() {
-				return  WARNING_ANNOTATION_TYPE.equals(fType) || ERROR_ANNOTATION_TYPE.equals(fType);
-			}
-			
-			/*
-			 * @see IJavaAnnotation#isRelevant()
-			 */
-			public boolean isRelevant() {
-				return true;
+				String type= getType();
+				return  JavaMarkerAnnotation.WARNING_ANNOTATION_TYPE.equals(type) || JavaMarkerAnnotation.ERROR_ANNOTATION_TYPE.equals(type);
 			}
 			
 			/*
@@ -215,6 +198,13 @@ public class CompilationUnitDocumentProvider2 extends TextFileDocumentProvider i
 			}
 			
 			/*
+			 * @see org.eclipse.jdt.internal.ui.javaeditor.IJavaAnnotation#getOverlay()
+			 */
+			public IJavaAnnotation getOverlay() {
+				return null;
+			}
+			
+			/*
 			 * @see IJavaAnnotation#addOverlaid(IJavaAnnotation)
 			 */
 			public void addOverlaid(IJavaAnnotation annotation) {
@@ -222,7 +212,7 @@ public class CompilationUnitDocumentProvider2 extends TextFileDocumentProvider i
 					fOverlaids= new ArrayList(1);
 				fOverlaids.add(annotation);
 			}
-
+		
 			/*
 			 * @see IJavaAnnotation#removeOverlaid(IJavaAnnotation)
 			 */
@@ -242,32 +232,7 @@ public class CompilationUnitDocumentProvider2 extends TextFileDocumentProvider i
 					return fOverlaids.iterator();
 				return null;
 			}
-			
-			public String getAnnotationType() {
-				return fType;
-			}
-
-			/*
-			 * @see IAnnotationExtension#getMarkerType()
-			 */
-			public String getMarkerType() {
-				if (isProblem() || INFO_ANNOTATION_TYPE.equals(fType))
-					return IMarker.PROBLEM;
-				else
-					return IMarker.TASK;
-			}
-
-			/*
-			 * @see IAnnotationExtension#getSeverity()
-			 */
-			public int getSeverity() {
-				if (ERROR_ANNOTATION_TYPE.equals(fType))
-					return IMarker.SEVERITY_ERROR;
-				if (WARNING_ANNOTATION_TYPE.equals(fType))
-					return IMarker.SEVERITY_WARNING;
-				return IMarker.SEVERITY_INFO;
-			}
-
+					
 			/*
 			 * @see org.eclipse.jdt.internal.ui.javaeditor.IJavaAnnotation#getCompilationUnit()
 			 */
@@ -372,12 +337,10 @@ public class CompilationUnitDocumentProvider2 extends TextFileDocumentProvider i
 			private ReverseMap fReverseMap= new ReverseMap();
 			private List fPreviouslyOverlaid= null; 
 			private List fCurrentlyOverlaid= new ArrayList();
-			private CompilationUnitAnnotationModelEvent fCurrentEvent;
 			private boolean fIncludesProblemAnnotationChanges= false;
 
 			public CompilationUnitAnnotationModel(IResource resource) {
 				super(resource);
-				fCurrentEvent= new CompilationUnitAnnotationModelEvent(this, getResource());
 			}
 			
 			public void setCompilationUnit(ICompilationUnit unit)  {
@@ -385,7 +348,17 @@ public class CompilationUnitDocumentProvider2 extends TextFileDocumentProvider i
 			}
 			
 			protected MarkerAnnotation createMarkerAnnotation(IMarker marker) {
-				return new JavaMarkerAnnotation(marker);
+				String markerType= MarkerUtilities.getMarkerType(marker);
+				if (markerType != null && markerType.startsWith(JavaMarkerAnnotation.JAVA_MARKER_TYPE_PREFIX))
+					return new JavaMarkerAnnotation(marker);
+				return super.createMarkerAnnotation(marker);
+			}
+			
+			/*
+			 * @see org.eclipse.jface.text.source.AnnotationModel#createAnnotationModelEvent()
+			 */
+			protected AnnotationModelEvent createAnnotationModelEvent() {
+				return new CompilationUnitAnnotationModelEvent(this, getResource());
 			}
 			
 			protected Position createPositionFromProblem(IProblem problem) {
@@ -475,8 +448,8 @@ public class CompilationUnitDocumentProvider2 extends TextFileDocumentProvider i
 								
 								try {
 									ProblemAnnotation annotation= new ProblemAnnotation(problem, fCompilationUnit);
-									addAnnotation(annotation, position, false);
 									overlayMarkers(position, annotation);								
+									addAnnotation(annotation, position, false);
 									fGeneratedAnnotations.add(annotation);
 								
 									temporaryProblemsChanged= true;
@@ -522,6 +495,7 @@ public class CompilationUnitDocumentProvider2 extends TextFileDocumentProvider i
 						fPreviouslyOverlaid.remove(annotation);
 						fCurrentlyOverlaid.add(annotation);
 					}
+				} else {
 				}
 			}
 			
@@ -557,12 +531,14 @@ public class CompilationUnitDocumentProvider2 extends TextFileDocumentProvider i
 			}
 			
 			/*
-			 * @see AnnotationModel#fireModelChanged()
+			 * @see org.eclipse.jface.text.source.AnnotationModel#fireModelChanged(org.eclipse.jface.text.source.AnnotationModelEvent)
 			 */
-			protected void fireModelChanged() {
-				fireModelChanged(fCurrentEvent);
-				fIncludesProblemAnnotationChanges= fCurrentEvent.includesProblemMarkerAnnotationChanges();
-				fCurrentEvent= new CompilationUnitAnnotationModelEvent(this, getResource());
+			protected void fireModelChanged(AnnotationModelEvent event) {
+				if (event instanceof CompilationUnitAnnotationModelEvent) {
+					CompilationUnitAnnotationModelEvent e= (CompilationUnitAnnotationModelEvent) event;
+					fIncludesProblemAnnotationChanges= e.includesProblemMarkerAnnotationChanges();
+				}
+				super.fireModelChanged(event);
 			}
 			
 			/*
@@ -602,8 +578,6 @@ public class CompilationUnitDocumentProvider2 extends TextFileDocumentProvider i
 			protected void addAnnotation(Annotation annotation, Position position, boolean fireModelChanged) throws BadLocationException {
 				super.addAnnotation(annotation, position, fireModelChanged);
 
-				fCurrentEvent.annotationAdded(annotation);
-				
 				Object cached= fReverseMap.get(position);
 				if (cached == null)
 					fReverseMap.put(position, annotation);
@@ -622,9 +596,6 @@ public class CompilationUnitDocumentProvider2 extends TextFileDocumentProvider i
 			 * @see AnnotationModel#removeAllAnnotations(boolean)
 			 */
 			protected void removeAllAnnotations(boolean fireModelChanged) {
-				for (Iterator iter= getAnnotationIterator(); iter.hasNext();) {
-					fCurrentEvent.annotationRemoved((Annotation) iter.next());
-				}
 				super.removeAllAnnotations(fireModelChanged);
 				fReverseMap.clear();
 			}
@@ -633,8 +604,6 @@ public class CompilationUnitDocumentProvider2 extends TextFileDocumentProvider i
 			 * @see AnnotationModel#removeAnnotation(Annotation, boolean)
 			 */
 			protected void removeAnnotation(Annotation annotation, boolean fireModelChanged) {
-				fCurrentEvent.annotationRemoved(annotation);
-				
 				Position position= getPosition(annotation);
 				Object cached= fReverseMap.get(position);
 				if (cached instanceof List) {
@@ -884,11 +853,22 @@ public class CompilationUnitDocumentProvider2 extends TextFileDocumentProvider i
 	 * @see org.eclipse.ui.editors.text.TextFileDocumentProvider#createSaveOperation(java.lang.Object, org.eclipse.jface.text.IDocument, boolean)
 	 */
 	protected DocumentProviderOperation createSaveOperation(final Object element, final IDocument document, final boolean overwrite) throws CoreException {
-		final FileInfo info= (FileInfo) getFileInfo(element);
+		final FileInfo info= getFileInfo(element);
 		if (info instanceof CompilationUnitInfo) {
 			return new DocumentProviderOperation() {
 				protected void execute(IProgressMonitor monitor) throws CoreException {
 					commitWorkingCopy(monitor, element, (CompilationUnitInfo) info, overwrite);
+				}
+				/*
+				 * @see org.eclipse.ui.editors.text.TextFileDocumentProvider.DocumentProviderOperation#getSchedulingRule()
+				 */
+				public ISchedulingRule getSchedulingRule() {
+					if (info.fElement instanceof IFileEditorInput)
+						// FIXME: waiting for J Core to support scheduling rules (see bug 46332)
+//						return ((IFileEditorInput)info.fElement).getFile().getParent();
+						return ResourcesPlugin.getWorkspace().getRoot();
+					else
+						return null;
 				}
 			};
 		}

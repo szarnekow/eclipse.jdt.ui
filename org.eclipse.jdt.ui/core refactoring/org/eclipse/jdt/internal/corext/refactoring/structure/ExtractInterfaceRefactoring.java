@@ -113,8 +113,8 @@ public class ExtractInterfaceRefactoring extends Refactoring {
 		return new ExtractInterfaceRefactoring(type, codeGenerationSettings);
 	}
 	
-	public static boolean isAvailable(IType type) throws JavaModelException{
-		if (! Checks.isAvailable(type) || type.isLocal() || type.isAnonymous())
+	public static boolean isAvailable(IType type) throws JavaModelException {
+		if (! Checks.isAvailable(type))
 			return false;
 
 		//for now
@@ -309,7 +309,8 @@ public class ExtractInterfaceRefactoring extends Refactoring {
 			setContent(newCuWC, createExtractedInterfaceCUSource(newCuWC, new SubProgressMonitor(pm, 1)));
 			IType theInterface= newCuWC.getType(fNewInterfaceName);
 			
-			CompilationUnitRange[] updatedRanges= ExtractInterfaceUtil.updateReferences(manager, theType, theInterface, fWorkingCopyOwner, false, new SubProgressMonitor(pm, 9), status);
+			CompilationUnitRange[] updatedRanges= ExtractInterfaceUtil.updateReferences(manager, theType, theInterface, fWorkingCopyOwner, 
+			        false, new SubProgressMonitor(pm, 9), status, fCodeGenerationSettings);
 			if (status.hasFatalError())
 				return manager;
 			TextEdit[] edits= description.getTextEdits();
@@ -324,7 +325,9 @@ public class ExtractInterfaceRefactoring extends Refactoring {
 				String typeName= fInputType.getElementName();
 				int offset= oldRange.getOffset() + oldRange.getLength() - typeName.length();
 				TextEdit edit= new ReplaceEdit(offset, typeName.length(), fNewInterfaceName);
-				ExtractInterfaceUtil.getTextChange(manager, cu).addTextEdit(RefactoringCoreMessages.getString("ExtractInterfaceRefactoring.update"), edit); //$NON-NLS-1$
+				ExtractInterfaceUtil.getTextChange(manager, cu).addTextEdit(
+						RefactoringCoreMessages.getString("ExtractInterfaceRefactoring.update_reference"), //$NON-NLS-1$ 
+						edit); 
 			}
 			fSource= ExtractInterfaceUtil.getTextChange(manager, newCuWC).getPreviewContent();
 			manager.remove(newCuWC);
@@ -350,7 +353,9 @@ public class ExtractInterfaceRefactoring extends Refactoring {
 
 	private static void setContent(ICompilationUnit cu, String newContent) throws JavaModelException {
 		cu.getBuffer().setContents(newContent);
-		cu.reconcile();
+		synchronized (cu) {
+			cu.reconcile();
+		}
 	}
 
 	private GroupDescription trackReferenceNodes(CompilationUnit typeCuNode, ASTRewrite typeCuRewrite, TypeDeclaration td) {
@@ -390,9 +395,9 @@ public class ExtractInterfaceRefactoring extends Refactoring {
 		rewrite.rewriteNode(textBuffer, resultingEdits);
 
 		TextChange textChange= manager.get(cu);
-		//TODO fix the descriptions
-		String message= "update";
-		textChange.addTextEdit(message, resultingEdits);
+		textChange.addTextEdit(
+			RefactoringCoreMessages.getString("ExtractInterfaceRefactoring.update_type_declaration"), //$NON-NLS-1$
+			resultingEdits);
 		rewrite.removeModifications();
 		return textChange;
 	}

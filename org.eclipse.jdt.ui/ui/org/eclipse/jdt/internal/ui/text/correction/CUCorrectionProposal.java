@@ -11,17 +11,17 @@
 
 package org.eclipse.jdt.internal.ui.text.correction;
 
-import org.eclipse.text.edits.MultiTextEdit;
-import org.eclipse.text.edits.TextEdit;
+import java.util.HashMap;
+import java.util.Iterator;
 
 import org.eclipse.compare.contentmergeviewer.ITokenComparator;
 import org.eclipse.compare.rangedifferencer.RangeDifference;
 import org.eclipse.compare.rangedifferencer.RangeDifferencer;
+import org.eclipse.text.edits.MultiTextEdit;
+import org.eclipse.text.edits.TextEdit;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
-
-import org.eclipse.jdt.core.ICompilationUnit;
 
 import org.eclipse.swt.graphics.Image;
 
@@ -36,6 +36,9 @@ import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.texteditor.ITextEditor;
 
+import org.eclipse.jdt.core.ICompilationUnit;
+
+import org.eclipse.jdt.internal.corext.codemanipulation.ImportRewrite;
 import org.eclipse.jdt.internal.corext.refactoring.base.Change;
 import org.eclipse.jdt.internal.corext.refactoring.changes.CompilationUnitChange;
 import org.eclipse.jdt.internal.corext.textmanipulation.GroupDescription;
@@ -44,20 +47,22 @@ import org.eclipse.jdt.internal.corext.textmanipulation.TextRegion;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.Resources;
 import org.eclipse.jdt.internal.corext.util.Strings;
-
 import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.internal.ui.JavaPluginImages;
 import org.eclipse.jdt.internal.ui.compare.JavaTokenComparator;
 import org.eclipse.jdt.internal.ui.javaeditor.EditorUtility;
 import org.eclipse.jdt.internal.ui.javaeditor.JavaEditor;
-import org.eclipse.jdt.internal.ui.text.link.LinkedPositionManager;
-import org.eclipse.jdt.internal.ui.text.link.LinkedPositionUI;
+import org.eclipse.jdt.internal.ui.preferences.JavaPreferencesSettings;
+import org.eclipse.jdt.internal.ui.text.link.LinkedEnvironment;
+import org.eclipse.jdt.internal.ui.text.link.LinkedPositionGroup;
+import org.eclipse.jdt.internal.ui.text.link.LinkedUIControl;
 
 
 public class CUCorrectionProposal extends ChangeCorrectionProposal  {
 
 	private ICompilationUnit fCompilationUnit;
 	private TextEdit fRootEdit;
+	private ImportRewrite fImportRewrite;
 	
 	public CUCorrectionProposal(String name, ICompilationUnit cu, int relevance) {
 		this(name, cu, relevance, JavaPluginImages.get(JavaPluginImages.IMG_CORRECTION_CHANGE));
@@ -67,6 +72,7 @@ public class CUCorrectionProposal extends ChangeCorrectionProposal  {
 		super(name, null, relevance, image);
 		fRootEdit= new MultiTextEdit();
 		fCompilationUnit= cu;
+		fImportRewrite= null;
 	}
 	
 	public CUCorrectionProposal(String name, CompilationUnitChange change, int relevance, Image image) {
@@ -74,12 +80,41 @@ public class CUCorrectionProposal extends ChangeCorrectionProposal  {
 		fCompilationUnit= change.getCompilationUnit();
 	}	
 	
-	protected CompilationUnitChange createCompilationUnitChange(String name, ICompilationUnit cu, TextEdit rootEdit) throws CoreException {
-		CompilationUnitChange change= new CompilationUnitChange(name, cu);
-		change.setEdit(rootEdit);
+	/**
+	 * @deprecated Override addEdits instead.
+	 */
+	protected final CompilationUnitChange createCompilationUnitChange(String name, ICompilationUnit cu, TextEdit rootEdit) {
+		return null;
+	}
+	
+	private CompilationUnitChange createCompilationUnitChange(String name) throws CoreException {
+		CompilationUnitChange change= new CompilationUnitChange(name, getCompilationUnit());
+		change.setEdit(getRootTextEdit());
 		change.setSave(false);
 		setChange(change);
+		
+		TextBuffer buffer= null;
+		try {
+			buffer= TextBuffer.acquire(change.getFile());
+			addEdits(buffer);
+			if (fImportRewrite != null && !fImportRewrite.isEmpty()) {
+				getRootTextEdit().addChild(fImportRewrite.createEdit(buffer));
+			}
+		} finally {
+			if (buffer != null) {
+				TextBuffer.release(buffer);
+			}
+		}
 		return change;
+	}
+	
+	/**
+	 * Called when the <code>CompilationUnitChange</code> is created. Subclasses can override to
+	 * add text edits to the change.
+	 * @param buffer Buffer of the underlying compilation unit. To be accessed read only.
+	 * @throws CoreException
+	 */
+	protected void addEdits(TextBuffer buffer) throws CoreException {
 	}
 
 	/*
@@ -88,14 +123,24 @@ public class CUCorrectionProposal extends ChangeCorrectionProposal  {
 	protected Change getChange() throws CoreException {
 		Change change= super.getChange();
 		if (change == null) {
-			return createCompilationUnitChange(getDisplayString(), fCompilationUnit, fRootEdit);
+			return createCompilationUnitChange(getDisplayString());
 		}
 		return change;
 	}
 	
-	protected final void addEdits(CompilationUnitChange change) throws CoreException {
+	// import management
+	
+	public ImportRewrite getImportRewrite() throws CoreException {
+		if (fImportRewrite == null) {
+			fImportRewrite= new ImportRewrite(getCompilationUnit(), JavaPreferencesSettings.getCodeGenerationSettings());
+		}
+		return fImportRewrite;
 	}
 	
+	public void setImportRewrite(ImportRewrite rewrite) {
+		fImportRewrite= rewrite;
+	}
+		
 	protected GroupDescription[] getLinkedRanges() {
 		return null;
 	}
@@ -235,8 +280,8 @@ public class CUCorrectionProposal extends ChangeCorrectionProposal  {
 			} else if (selection != null && part instanceof ITextEditor) {
 				// select a result
 				IRegion range= change.getNewTextRange(selection.getTextEdits());
-				((ITextEditor) part).selectAndReveal(range.getOffset(), range.getLength());
-
+				int pos= range.getOffset() + range.getLength();
+				((ITextEditor) part).selectAndReveal(pos, 0);
 			}
 		} catch (CoreException e) {
 			JavaPlugin.log(e);
@@ -246,47 +291,66 @@ public class CUCorrectionProposal extends ChangeCorrectionProposal  {
 	}
 					
 	private void enterLinkedMode(CompilationUnitChange change, ITextViewer viewer, GroupDescription[] linked, GroupDescription selection) throws BadLocationException {
-		LinkedPositionManager manager= new LinkedPositionManager(viewer.getDocument());
-		LinkedPositionUI editor= new LinkedPositionUI(viewer, manager);
+		IDocument document= viewer.getDocument();
+		
+		HashMap map= new HashMap();
 		
 		for (int i= 0; i < linked.length; i++) {
 			GroupDescription curr= linked[i];
 			String name= curr.getName(); // name used as key for link mode proposals & as kind for linked mode
+			LinkedPositionGroup group= (LinkedPositionGroup) map.get(name);
+			if (group == null) {
+				group= new LinkedPositionGroup();
+				map.put(name, group);
+			}
+				
 			TextEdit[] textEdits= curr.getTextEdits();
 			if (name != null && textEdits.length > 0) {
 				IRegion range= change.getNewTextRange(textEdits);
 				if (range != null) {	// all edits could be deleted
 					ICompletionProposal[] linkedModeProposals= getLinkedModeProposals(name);
 					if (linkedModeProposals != null && linkedModeProposals.length > 1) {
-						manager.addPosition(range.getOffset(), range.getLength(), name, linkedModeProposals);
+						group.createPosition(document, range.getOffset(), range.getLength(), i, linkedModeProposals);
 					} else {
-						manager.addPosition(range.getOffset(), range.getLength(), name);
-					}
-					if (i == 0) {
-						editor.setInitialOffset(range.getOffset());
+						group.createPosition(document, range.getOffset(), range.getLength(), i);
 					}
 				}
 			}
 		}
-			
-		if (selection != null) {
-			TextEdit[] textEdits= selection.getTextEdits();
-			if (textEdits.length > 0) {
-				IRegion range= change.getNewTextRange(textEdits);
-				if (range != null)
-					editor.setFinalCaretOffset(range.getOffset() + range.getLength());
-			}					
-		} else {
-			int cursorPosition= viewer.getSelectedRange().x;
-			if (cursorPosition != 0) {
-				editor.setFinalCaretOffset(cursorPosition);
-			}
-		}	
-		editor.enter();
 		
-		IRegion region= editor.getSelectedRegion();
-		viewer.setSelectedRange(region.getOffset(), region.getLength());	
-		viewer.revealRange(region.getOffset(), region.getLength());
+		LinkedEnvironment environment= new LinkedEnvironment();
+		boolean added= false;
+		for (Iterator it= map.values().iterator(); it.hasNext(); ) {
+			LinkedPositionGroup group= (LinkedPositionGroup) it.next();
+			if (!group.isEmtpy()) {
+				environment.addGroup(group);
+				added= true;
+			}
+		}
+		
+		environment.forceInstall();
+		
+		if (added) { // only set up UI if there are any positions set
+			LinkedUIControl ui= new LinkedUIControl(environment, viewer);
+			if (selection != null) {
+				TextEdit[] textEdits= selection.getTextEdits();
+				if (textEdits.length > 0) {
+					IRegion range= change.getNewTextRange(textEdits);
+					if (range != null)
+						ui.setExitPosition(viewer, range.getOffset() + range.getLength(), 0, Integer.MAX_VALUE);
+				}					
+			} else {
+				int cursorPosition= viewer.getSelectedRange().x;
+				if (cursorPosition != 0) {
+					ui.setExitPosition(viewer, cursorPosition, 0, Integer.MAX_VALUE);
+				}
+			}	
+			ui.enter();
+			
+			IRegion region= ui.getSelectedRegion();
+			viewer.setSelectedRange(region.getOffset(), region.getLength());	
+			viewer.revealRange(region.getOffset(), region.getLength());
+		}
 	}
 
 	/**
@@ -311,5 +375,19 @@ public class CUCorrectionProposal extends ChangeCorrectionProposal  {
 	public ICompilationUnit getCompilationUnit() {
 		return fCompilationUnit;
 	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	public String toString() {
+		try {
+			CompilationUnitChange change= getCompilationUnitChange();
+			return change.getPreviewContent();
+		} catch (CoreException e) {
+		}
+		return super.toString();
+	}
+
+
 
 }

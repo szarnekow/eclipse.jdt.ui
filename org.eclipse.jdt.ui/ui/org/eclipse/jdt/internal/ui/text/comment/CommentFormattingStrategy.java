@@ -30,6 +30,8 @@ import org.eclipse.jface.text.formatter.FormattingContextProperties;
 import org.eclipse.jface.text.formatter.IFormattingContext;
 import org.eclipse.jface.text.source.ISourceViewer;
 
+import org.eclipse.jdt.core.JavaCore;
+
 import org.eclipse.jdt.ui.PreferenceConstants;
 
 import org.eclipse.jdt.internal.ui.text.IJavaPartitions;
@@ -67,10 +69,11 @@ public class CommentFormattingStrategy extends ContextBasedFormattingStrategy {
 			final int begin= line.getOffset();
 			final int end= Math.min(offset, line.getOffset() + line.getLength());
 
-			result= region.stringToIndent(document.get(begin, end - begin), true);
+			boolean useTab= JavaCore.TAB.equals(JavaCore.getOption(JavaCore.FORMATTER_TAB_CHAR));
+			result= region.stringToIndent(document.get(begin, end - begin), useTab);
 
 		} catch (BadLocationException exception) {
-			// Should not happen
+			// Ignore and return empty
 		}
 		return result;
 	}
@@ -119,10 +122,10 @@ public class CommentFormattingStrategy extends ContextBasedFormattingStrategy {
 			position.length= partition.getLength();
 
 			final Map preferences= getPreferences();
-			final boolean format= preferences.get(PreferenceConstants.FORMATTER_COMMENT_FORMAT) == IPreferenceStore.TRUE;
-			final boolean header= preferences.get(PreferenceConstants.FORMATTER_COMMENT_FORMATHEADER) == IPreferenceStore.TRUE;
+			final boolean format= IPreferenceStore.TRUE.equals(preferences.get(PreferenceConstants.FORMATTER_COMMENT_FORMAT));
+			final boolean header= IPreferenceStore.TRUE.equals(preferences.get(PreferenceConstants.FORMATTER_COMMENT_FORMATHEADER));
 
-			if (format && (header || position.getOffset() != 0 || !type.equals(IJavaPartitions.JAVA_DOC))) {
+			if (format && (header || position.getOffset() != 0 || !type.equals(IJavaPartitions.JAVA_DOC) && !type.equals(IJavaPartitions.JAVA_MULTI_LINE_COMMENT))) {
 
 				final CommentRegion region= CommentObjectFactory.createRegion(this, position, TextUtilities.getDefaultLineDelimiter(document));
 				final String indentation= getLineIndentation(document, region, position.getOffset());

@@ -28,6 +28,7 @@ import org.eclipse.jdt.ui.text.IJavaColorConstants;
 import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.internal.ui.preferences.NewJavaProjectPreferencePage;
 import org.eclipse.jdt.internal.ui.preferences.WorkInProgressPreferencePage;
+import org.eclipse.jdt.internal.ui.preferences.formatter.ProfileManager;
 
 /**
  * Preference constants used in the JDT-UI preference store. Clients should only read the
@@ -67,6 +68,8 @@ public class PreferenceConstants {
 	 * </p>
 	 */
 	public static final String APPEARANCE_QUICKASSIST_LIGHTBULB="org.eclipse.jdt.quickassist.lightbulb"; //$NON-NLS-1$
+
+
 
 	/**
 	 * A named preference that defines the pattern used for package name compression.
@@ -183,6 +186,17 @@ public class PreferenceConstants {
 	 */
 	public static final String CODEGEN_IS_FOR_GETTERS= "org.eclipse.jdt.ui.gettersetter.use.is"; //$NON-NLS-1$
 	
+	
+	/**
+	 * A named preference that defines the preferred variable names for exceptions in
+	 * catch clauses.
+	 * <p>
+	 * Value is of type <code>String</code>.
+	 * </p>
+	 * @since 3.0
+	 */	
+	public static final String CODEGEN_EXCEPTION_VAR_NAME= "org.eclipse.jdt.ui.exception.name"; //$NON-NLS-1$
+	
 	/**
 	 * A named preference that controls if comment stubs will be added
 	 * automatically to newly created types and methods.
@@ -225,7 +239,7 @@ public class PreferenceConstants {
 	public static final String CODEGEN__FILE_COMMENTS= "org.eclipse.jdt.ui.filecomments"; //$NON-NLS-1$
 	
 	/**
-	 * A named preference that holds a list of comma separated package names. The list specifies the import order used by
+	 * A named preference that holds a list of semicolon separated package names. The list specifies the import order used by
 	 * the "Organize Imports" opeation.
 	 * <p>
 	 * Value is of type <code>String</code>: semicolon separated list of package
@@ -233,6 +247,19 @@ public class PreferenceConstants {
 	 * </p>
 	 */
 	public static final String ORGIMPORTS_IMPORTORDER= "org.eclipse.jdt.ui.importorder"; //$NON-NLS-1$
+	
+	/** work in progress 
+	 * A named preference that holds a list of semicolon separated fully qualified type names with wild card characters.
+	 * @since 3.0
+	 */	
+	public static final String TYPEFILTER_ENABLED= "org.eclipse.jdt.ui.typefilter.enabled"; //$NON-NLS-1$
+	
+	/** work in progress
+	 * A named preference that holds a list of semicolon separated fully qualified type names with wild card characters.
+	 * @since 3.0
+	 */	
+	public static final String TYPEFILTER_DISABLED= "org.eclipse.jdt.ui.typefilter.disabled"; //$NON-NLS-1$
+	
 	
 	/**
 	 * A named preference that specifies the number of imports added before a star-import declaration is used.
@@ -294,6 +321,8 @@ public class PreferenceConstants {
 	 * @since 2.1
 	 */
 	public static final String LINK_BROWSING_PACKAGES_TO_EDITOR= "org.eclipse.jdt.ui.browsing.packagestoeditor"; //$NON-NLS-1$
+
+
 
 	/**
 	 * A named preference that controls whether the types view's selection is
@@ -1971,6 +2000,18 @@ public class PreferenceConstants {
 	public static final String TEMPLATES_USE_CODEFORMATTER= "org.eclipse.jdt.ui.template.format"; //$NON-NLS-1$
 	
 	/**
+	 * A named preference that controls which profile is used by the code formatter.
+	 * <p>
+	 * Value is of type <code>String</code>.
+	 * </p>
+	 *
+	 * @since 2.1
+	 */	
+	public static final String FORMATTER_PROFILE = "formatter_profile"; //$NON-NLS-1$
+	
+	
+	
+	/**
 	 * Initializes the given preference store with the default values.
 	 * 
 	 * @param store the preference store to be initialized
@@ -2009,6 +2050,10 @@ public class PreferenceConstants {
 		store.setDefault(PreferenceConstants.ORGIMPORTS_ONDEMANDTHRESHOLD, 99);
 		store.setDefault(PreferenceConstants.ORGIMPORTS_IGNORELOWERCASE, true);
 
+		// TypeFilterPreferencePage
+		store.setDefault(PreferenceConstants.TYPEFILTER_ENABLED, ""); //$NON-NLS-1$
+		store.setDefault(PreferenceConstants.TYPEFILTER_DISABLED, "java.awt*;COM*"); //$NON-NLS-1$
+		
 		// ClasspathVariablesPreferencePage
 		// CodeFormatterPreferencePage
 		// CompilerPreferencePage
@@ -2041,12 +2086,14 @@ public class PreferenceConstants {
 		}
 		store.setDefault(PreferenceConstants.CODEGEN_KEYWORD_THIS, false);
 		store.setDefault(PreferenceConstants.CODEGEN_IS_FOR_GETTERS, true);
+		store.setDefault(PreferenceConstants.CODEGEN_EXCEPTION_VAR_NAME, "e"); //$NON-NLS-1$
 		store.setDefault(PreferenceConstants.CODEGEN_ADD_COMMENTS, true);
 
 		// MembersOrderPreferencePage
 		store.setDefault(PreferenceConstants.APPEARANCE_MEMBER_SORT_ORDER, "T,SI,SF,SM,I,F,C,M"); //$NON-NLS-1$
 		// must add here to guarantee that it is the first in the listener list
 		store.addPropertyChangeListener(JavaPlugin.getDefault().getMemberOrderPreferenceCache());
+
 
 		// JavaEditorPreferencePage
 		store.setDefault(PreferenceConstants.EDITOR_MATCHING_BRACKETS, true);
@@ -2171,6 +2218,8 @@ public class PreferenceConstants {
 		store.setDefault(PreferenceConstants.FORMATTER_COMMENT_CLEARBLANKLINES, false);
 		store.setDefault(PreferenceConstants.FORMATTER_COMMENT_FORMATHTML, true);
 		store.setDefault(PreferenceConstants.FORMATTER_COMMENT_LINELENGTH, 80);
+		
+		store.setDefault(PreferenceConstants.FORMATTER_PROFILE, ProfileManager.DEFAULT_PROFILE);
 
 		// work in progress
 		WorkInProgressPreferencePage.initDefaults(store);	

@@ -126,7 +126,13 @@ public class ReorgQueries implements IReorgQueries{
 						getButtonLabels(),
 						0);
 					dialog.open();
-					result[0]= resultId[dialog.getReturnCode()];
+					
+					if (dialog.getReturnCode() == -1) { //MessageDialog closed without choice => cancel | no
+						//see also https://bugs.eclipse.org/bugs/show_bug.cgi?id=48400
+						result[0]= fAllowCancel ? IDialogConstants.CANCEL_ID : IDialogConstants.NO_ID;
+					} else {
+						result[0]= resultId[dialog.getReturnCode()];
+					}
 				}
 
 				private String[] getButtonLabels() {
@@ -235,8 +241,6 @@ public class ReorgQueries implements IReorgQueries{
 		private Runnable createQueryRunnable(final String question, final int[] result){
 			return new Runnable() {
 				public void run() {
-					int[] resultId= getResultIDs();
- 
 					MessageDialog dialog= new MessageDialog(
 						fShell, 
 						fDialogTitle, 
@@ -246,7 +250,28 @@ public class ReorgQueries implements IReorgQueries{
 						getButtonLabels(),
 						0);
 					dialog.open();
-					result[0]= resultId[dialog.getReturnCode()];
+					
+					switch (dialog.getReturnCode()) {
+						case -1 : //MessageDialog closed without choice => cancel | no
+							//see also https://bugs.eclipse.org/bugs/show_bug.cgi?id=48400
+							result[0]= fAllowCancel ? IDialogConstants.CANCEL_ID : IDialogConstants.NO_ID;
+							break;
+						case 0 :
+							result[0]= IDialogConstants.YES_ID;
+							break;
+						case 1 :
+							result[0]= IDialogConstants.NO_ID;
+							break;
+						case 2 :
+							if (fAllowCancel)
+								result[0]= IDialogConstants.CANCEL_ID;
+							else
+								Assert.isTrue(false);
+							break;
+						default :
+							Assert.isTrue(false);
+							break;
+					}
 				}
 
 				private String[] getButtonLabels() {
@@ -254,13 +279,6 @@ public class ReorgQueries implements IReorgQueries{
 						return new String[] {IDialogConstants.YES_LABEL, IDialogConstants.NO_LABEL, IDialogConstants.CANCEL_LABEL };
 					else
 						return new String[] {IDialogConstants.YES_LABEL, IDialogConstants.NO_LABEL};
-				}
-
-				private int[] getResultIDs() {
-					if (fAllowCancel)
-						return new int[] { IDialogConstants.YES_ID, IDialogConstants.NO_ID, IDialogConstants.CANCEL_ID};
-					else
-						return new int[] { IDialogConstants.YES_ID, IDialogConstants.NO_ID};
 				}
 			};
 		}

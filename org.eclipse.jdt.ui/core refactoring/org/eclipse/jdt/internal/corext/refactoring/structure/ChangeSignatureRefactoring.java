@@ -27,6 +27,7 @@ import org.eclipse.core.runtime.SubProgressMonitor;
 
 import org.eclipse.core.resources.IFile;
 
+import org.eclipse.jdt.core.Flags;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMethod;
@@ -65,6 +66,7 @@ import org.eclipse.jdt.core.search.SearchEngine;
 
 import org.eclipse.jdt.internal.corext.Assert;
 import org.eclipse.jdt.internal.corext.codemanipulation.CodeGenerationSettings;
+import org.eclipse.jdt.internal.corext.dom.ASTNodeConstants;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.ASTRewrite;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
@@ -141,9 +143,6 @@ public class ChangeSignatureRefactoring extends Refactoring {
 	
 	public static boolean isAvailable(IMethod method) throws JavaModelException {
 		if (method == null)
-			return false;
-		IType declaringType= method.getDeclaringType();
-		if (declaringType != null && declaringType.isLocal())
 			return false;
 		return Checks.isAvailable(method);
 	}	
@@ -695,6 +694,8 @@ public class ChangeSignatureRefactoring extends Refactoring {
 		StringBuffer buff= new StringBuffer();
 		
 		buff.append(getPreviewOfVisibityString());
+		if (Flags.isStatic(getMethod().getFlags()))
+			buff.append("static "); //$NON-NLS-1$
 		if (! getMethod().isConstructor())
 			buff.append(getReturnTypeString())
 				.append(' ');
@@ -1101,10 +1102,12 @@ public class ChangeSignatureRefactoring extends Refactoring {
 		TextEdit resultingEdits= new MultiTextEdit();
 		rewrite.rewriteNode(textBuffer, resultingEdits);
 
-		TextChange textChange= manager.get(cu);
 		if (fImportManager.hasImportEditFor(cu))
 			resultingEdits.addChild(fImportManager.getImportRewrite(cu).createEdit(textBuffer));
-		textChange.addTextEdit(RefactoringCoreMessages.getString("ChangeSignatureRefactoring.modify_parameters"), resultingEdits); //$NON-NLS-1$
+		if (resultingEdits.hasChildren() || manager.containsChangesIn(cu)) {
+		    TextChange textChange= manager.get(cu);
+		    textChange.addTextEdit(RefactoringCoreMessages.getString("ChangeSignatureRefactoring.modify_parameters"), resultingEdits); //$NON-NLS-1$
+		}
 		rewrite.removeModifications();
 	}
 	
@@ -1135,11 +1138,8 @@ public class ChangeSignatureRefactoring extends Refactoring {
 	}
 
 	private void removeExtraDimensions(SingleVariableDeclaration oldParam, ASTRewrite rewrite) {
-		if (oldParam.getExtraDimensions() != 0) {
-			SingleVariableDeclaration newParam= oldParam.getAST().newSingleVariableDeclaration();
-			newParam.setModifiers(oldParam.getModifiers());
-			newParam.setExtraDimensions(0);
-			rewrite.markAsModified(oldParam, newParam);
+		if (oldParam.getExtraDimensions() != 0) {		
+			rewrite.markAsReplaced(oldParam, ASTNodeConstants.EXTRA_DIMENSIONS, new Integer(0), null);
 		}
 	}
 
@@ -1148,15 +1148,14 @@ public class ChangeSignatureRefactoring extends Refactoring {
 		rewrite.markAsReplaced(typeNode, newParamType);
 	}
 
-	private void changeReturnType(MethodDeclaration methodDeclaration, ASTRewrite rewrite) {
-		replaceTypeNode(methodDeclaration.getReturnType(), fReturnTypeName, rewrite);
+	private void changeReturnType(MethodDeclaration methodDeclaration, ASTRewrite rewrite) throws JavaModelException {
+	    if (! isReturnTypeSameAsInitial())
+	        replaceTypeNode(methodDeclaration.getReturnType(), fReturnTypeName, rewrite);
 	}
 
-	private void changeVisibility(MethodDeclaration methodDeclaration, ASTRewrite rewrite) throws JavaModelException {
-		MethodDeclaration modifierMethodDeclaration= methodDeclaration.getAST().newMethodDeclaration();
-		modifierMethodDeclaration.setModifiers(getNewModifiers(methodDeclaration));
-		modifierMethodDeclaration.setExtraDimensions(methodDeclaration.getExtraDimensions());
-		rewrite.markAsModified(methodDeclaration, modifierMethodDeclaration);
+	private void changeVisibility(MethodDeclaration methodDeclaration, ASTRewrite rewrite) {
+		int newModifiers= getNewModifiers(methodDeclaration);
+		rewrite.markAsReplaced(methodDeclaration, ASTNodeConstants.MODIFIERS, new Integer(newModifiers), null);
 	}
 
 	private void updateReferenceNode(ASTNode methodOccurrence, ASTRewrite rewrite) {
@@ -1325,7 +1324,7 @@ public class ChangeSignatureRefactoring extends Refactoring {
 		String simple= exceptionInfo.getType().getElementName();
 		ASTNode exNode= rewrite.createPlaceholder(simple, ASTRewrite.NAME);
 		exceptionsNodeList.add(exNode);
-		rewrite.markAsInserted(exNode, true);
+		rewrite.markAsInserted(exNode);
 	}
 	
 	private static ASTNode[] getSubNodesOfMethodOccurrenceNode(ASTNode occurrenceNode) {
@@ -1405,35 +1404,39 @@ public class ChangeSignatureRefactoring extends Refactoring {
 	}
 
 	private static boolean isRecursiveReference(ASTNode node) {
-		IMethodBinding enclosing= getMethodDeclaration(node).resolveBinding();
+		MethodDeclaration enclosingMethodDeclaration= getMethodDeclaration(node);
+		if (enclosingMethodDeclaration == null)
+			return false;
+		
+		IMethodBinding enclosingMethodBinding= enclosingMethodDeclaration.resolveBinding();
 
 		if (node instanceof SimpleName && node.getParent() instanceof MethodInvocation)
-			return enclosing == ((MethodInvocation)node.getParent()).resolveMethodBinding();
+			return enclosingMethodBinding == ((MethodInvocation)node.getParent()).resolveMethodBinding();
 
 		if (node instanceof SimpleName && node.getParent() instanceof SuperMethodInvocation) {
 			IMethodBinding methodBinding= ((SuperMethodInvocation)node.getParent()).resolveMethodBinding();
-			return isSameMethod(methodBinding, enclosing);
+			return isSameMethod(methodBinding, enclosingMethodBinding);
 		}
 			
 		if (node instanceof SimpleName && node.getParent() instanceof ClassInstanceCreation)
-			return enclosing == ((ClassInstanceCreation)node.getParent()).resolveConstructorBinding();
+			return enclosingMethodBinding == ((ClassInstanceCreation)node.getParent()).resolveConstructorBinding();
 			
 		if (node instanceof ExpressionStatement && isReferenceNode(((ExpressionStatement)node).getExpression()))
 			return isRecursiveReference(((ExpressionStatement)node).getExpression());
 			
 		if (node instanceof MethodInvocation)	
-			return enclosing == ((MethodInvocation)node).resolveMethodBinding();
+			return enclosingMethodBinding == ((MethodInvocation)node).resolveMethodBinding();
 			
 		if (node instanceof SuperMethodInvocation) {
 			IMethodBinding methodBinding= ((SuperMethodInvocation)node).resolveMethodBinding();
-			return isSameMethod(methodBinding, enclosing);
+			return isSameMethod(methodBinding, enclosingMethodBinding);
 		}
 			
 		if (node instanceof ClassInstanceCreation)	
-			return enclosing == ((ClassInstanceCreation)node).resolveConstructorBinding();
+			return enclosingMethodBinding == ((ClassInstanceCreation)node).resolveConstructorBinding();
 			
 		if (node instanceof ConstructorInvocation)	
-			return enclosing == ((ConstructorInvocation)node).resolveConstructorBinding();
+			return enclosingMethodBinding == ((ConstructorInvocation)node).resolveConstructorBinding();
 			
 		if (node instanceof SuperConstructorInvocation) {
 			return false; //Constructors don't override -> enclosing has not been changed -> no recursion

@@ -107,6 +107,8 @@ public class SmartSemicolonAutoEditStrategy implements IAutoEditStrategy {
 		ITextEditorExtension2 extension= (ITextEditorExtension2)editor.getAdapter(ITextEditorExtension2.class);
 		if (extension != null && !extension.validateEditorInputState())
 			return;
+		if (isMultilineSelection(document, command))
+			return;
 
 		// 1: find concerned line / position in java code, location in statement
 		int pos= command.offset;
@@ -137,6 +139,24 @@ public class SmartSemicolonAutoEditStrategy implements IAutoEditStrategy {
 		command.caretOffset= position;
 		command.text= adjustSpacing(document, position, fCharacter);
 		command.doit= true;
+		command.owner= null;
+	}
+
+	/**
+	 * Returns <code>true</code> if the document command is applied on a multi
+	 * line selection, <code>false</code> otherwise.
+	 * 
+	 * @param document the document
+	 * @param command the command
+	 * @return <code>true</code> if <code>command</code> is a multiline command
+	 */
+	private boolean isMultilineSelection(IDocument document, DocumentCommand command) {
+		try {
+			return document.getNumberOfLines(command.offset, command.length) > 1;
+		} catch (BadLocationException e) {
+			// ignore
+			return false;
+		}
 	}
 
 	/**
@@ -219,12 +239,13 @@ public class SmartSemicolonAutoEditStrategy implements IAutoEditStrategy {
 		} else if (character == SEMICHAR) {
 
 			if (isForStatement(text, offset)) {
-				insertPos= offset;
+				insertPos= -1; // don't do anything in for statements, as semis are vital part of these
 			} else {
 				int nextPartitionPos= nextPartitionOrLineEnd(document, line, offset, partitioning);
 				insertPos= startOfWhitespaceBeforeOffset(text, nextPartitionPos);
+				// if there is a semi present, return its location as alreadyPresent() will take it out this way.
 				if (insertPos > 0 && text.charAt(insertPos - 1) == character)
-					insertPos= offset;
+					insertPos= insertPos - 1;
 			}
 			
 		} else {
@@ -580,10 +601,10 @@ public class SmartSemicolonAutoEditStrategy implements IAutoEditStrategy {
 			if (pos < 0)
 				return false;
 
-			if (pos != 0 && Character.isJavaIdentifierPart(document.getChar(pos - 1)))
+			if (pos != 0 && Character.isJavaIdentifierPart(text.charAt(pos - 1)))
 				return false;
 
-			if (pos + 3 < length && Character.isJavaIdentifierPart(document.getChar(pos + 3)))
+			if (pos + 3 < length && Character.isJavaIdentifierPart(text.charAt(pos + 3)))
 				return false;
 			
 			return true;

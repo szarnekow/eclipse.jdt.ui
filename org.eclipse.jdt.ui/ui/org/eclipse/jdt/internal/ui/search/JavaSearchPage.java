@@ -15,11 +15,20 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspace;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.core.runtime.IConfigurationElement;
+import org.eclipse.core.runtime.Platform;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
@@ -57,7 +66,11 @@ import org.eclipse.ui.model.IWorkbenchAdapter;
 import org.eclipse.search.ui.ISearchPage;
 import org.eclipse.search.ui.ISearchPageContainer;
 import org.eclipse.search.ui.ISearchResultViewEntry;
-import org.eclipse.search.ui.SearchUI;
+
+import org.eclipse.search.ui.ISearchJob;
+import org.eclipse.search.ui.NewSearchUI;
+import org.eclipse.search.ui.text.ITextSearchResult;
+import org.eclipse.search.ui.text.TextSearchResultFactory;
 
 import org.eclipse.jdt.core.IClassFile;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -77,20 +90,23 @@ import org.eclipse.jdt.internal.ui.IJavaHelpContextIds;
 import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.internal.ui.actions.SelectionConverter;
 import org.eclipse.jdt.internal.ui.browsing.LogicalPackage;
+import org.eclipse.jdt.internal.ui.preferences.WorkInProgressPreferencePage;
 import org.eclipse.jdt.internal.ui.util.ExceptionHandler;
 import org.eclipse.jdt.internal.ui.util.RowLayouter;
 
 public class JavaSearchPage extends DialogPage implements ISearchPage, IJavaSearchConstants {
+	
+	static final String PARTICIPANT_EXTENSION_POINT= "org.eclipse.jdt.ui.searchParticipants"; //$NON-NLS-1$
 
 	public static final String EXTENSION_POINT_ID= "org.eclipse.jdt.ui.JavaSearchPage"; //$NON-NLS-1$
 
 	// Dialog store id constants
 	private final static String PAGE_NAME= "JavaSearchPage"; //$NON-NLS-1$
 	private final static String STORE_CASE_SENSITIVE= PAGE_NAME + "CASE_SENSITIVE"; //$NON-NLS-1$
-
+	private final static String STORE_ACTIVE_PARTICIPANTS= PAGE_NAME + "ACTIVE_PARTICIPANTS"; //$NON-NLS-1$
 
 	private static List fgPreviousSearchPatterns= new ArrayList(20);
-
+	
 	private SearchPatternData fInitialData;
 	private IStructuredSelection fStructuredSelection;
 	private IJavaElement fJavaElement;
@@ -98,9 +114,13 @@ public class JavaSearchPage extends DialogPage implements ISearchPage, IJavaSear
 	private IDialogSettings fDialogSettings;
 	private boolean fIsCaseSensitive;
 	
+	private Map fActiveParticipants= new HashMap();
+	
 	private Combo fPattern;
 	private ISearchPageContainer fContainer;
 	private Button fCaseSensitive;
+	
+	private Button fSelectParticipants;
 	
 	private Button[] fSearchFor;
 	private String[] fSearchForText= {
@@ -120,34 +140,18 @@ public class JavaSearchPage extends DialogPage implements ISearchPage, IJavaSear
 		SearchMessages.getString("SearchPage.limitTo.writeReferences")}; //$NON-NLS-1$
 
 
-	private static class SearchPatternData {
-		int			searchFor;
-		int			limitTo;
-		String			pattern;
-		boolean		isCaseSensitive;
-		IJavaElement	javaElement;
-		int			scope;
-		IWorkingSet[]	 	workingSets;
-		
-		public SearchPatternData(int s, int l, boolean i, String p, IJavaElement element) {
-			this(s, l, p, i, element, ISearchPageContainer.WORKSPACE_SCOPE, null);
-		}
-		
-		public SearchPatternData(int s, int l, String p, boolean i, IJavaElement element, int scope, IWorkingSet[] workingSets) {
-			searchFor= s;
-			limitTo= l;
-			pattern= p;
-			isCaseSensitive= i;
-			javaElement= element;
-			this.scope= scope;
-			this.workingSets= workingSets;
-		}
-	}
-
 	//---- Action Handling ------------------------------------------------
 	
 	public boolean performAction() {
-		SearchUI.activateSearchResultView();
+		if (JavaPlugin.getDefault().getPreferenceStore().getBoolean(WorkInProgressPreferencePage.PREF_BGSEARCH)) {
+			return performNewSearch();
+		} else {
+			return performOldSearch();
+		}
+	}
+	
+	private boolean performOldSearch() {
+		org.eclipse.search.ui.SearchUI.activateSearchResultView();
 
 		SearchPatternData data= getPatternData();
 		IWorkspace workspace= JavaPlugin.getWorkspace();
@@ -182,17 +186,17 @@ public class JavaSearchPage extends DialogPage implements ISearchPage, IJavaSear
 				scopeDescription= SearchMessages.getFormattedString("WorkingSetScope", SearchUtil.toString(workingSets)); //$NON-NLS-1$
 				scope= JavaSearchScopeFactory.getInstance().createJavaSearchScope(getContainer().getSelectedWorkingSets());
 				SearchUtil.updateLRUWorkingSets(getContainer().getSelectedWorkingSets());
-		}		
+	}
 		
 		JavaSearchResultCollector collector= new JavaSearchResultCollector();
 		JavaSearchOperation op= null;
-		if (data.javaElement != null && getPattern().equals(fInitialData.pattern)) {
-			op= new JavaSearchOperation(workspace, data.javaElement, data.limitTo, scope, scopeDescription, collector);
-			if (data.limitTo == IJavaSearchConstants.REFERENCES)
-				SearchUtil.warnIfBinaryConstant(data.javaElement, getShell());
+		if (data.getJavaElement() != null && getPattern().equals(fInitialData.getPattern())) {
+			op= new JavaSearchOperation(workspace, data.getJavaElement(), data.getLimitTo(), scope, scopeDescription, collector);
+			if (data.getLimitTo() == IJavaSearchConstants.REFERENCES)
+				SearchUtil.warnIfBinaryConstant(data.getJavaElement(), getShell());
 		} else {
-			data.javaElement= null;
-			op= new JavaSearchOperation(workspace, data.pattern, data.isCaseSensitive, data.searchFor, data.limitTo, scope, scopeDescription, collector);
+			data.setJavaElement(null);
+			op= new JavaSearchOperation(workspace, data.getPattern(), data.isCaseSensitive(), data.getSearchFor(), data.getLimitTo(), scope, scopeDescription, collector);
 		}
 		Shell shell= getControl().getShell();
 		try {
@@ -205,7 +209,105 @@ public class JavaSearchPage extends DialogPage implements ISearchPage, IJavaSear
 		}
 		return true;
 	}
+
+	private IJavaSearchScope getProjectScope() {
+		return JavaSearchScopeFactory.getInstance().createJavaProjectSearchScope(fStructuredSelection);
+	}	
 	
+	private boolean performNewSearch() {
+		org.eclipse.search.ui.NewSearchUI.activateSearchResultView();
+
+		SearchPatternData data= getPatternData();
+		IWorkspace workspace= JavaPlugin.getWorkspace();
+
+		// Setup search scope
+		IJavaSearchScope scope= null;
+		String scopeDescription= ""; //$NON-NLS-1$
+		HashSet concernedProjects= new HashSet();
+		
+		switch (getContainer().getSelectedScope()) {
+			case ISearchPageContainer.WORKSPACE_SCOPE:
+				collectConcernedProjects(concernedProjects, JavaPlugin.getWorkspace());
+				scopeDescription= SearchMessages.getString("WorkspaceScope"); //$NON-NLS-1$
+				scope= SearchEngine.createWorkspaceScope();
+				break;
+			case ISearchPageContainer.SELECTION_SCOPE:
+				collectConcernedProjects(concernedProjects, fStructuredSelection);
+				scopeDescription= SearchMessages.getString("SelectionScope"); //$NON-NLS-1$
+				scope= JavaSearchScopeFactory.getInstance().createJavaSearchScope(fStructuredSelection);
+				break;
+			case ISearchPageContainer.SELECTED_PROJECTS_SCOPE:
+				collectConcernedProjects(concernedProjects, fStructuredSelection);
+				scope= JavaSearchScopeFactory.getInstance().createJavaProjectSearchScope(fStructuredSelection);
+				if (concernedProjects.size() >= 1) {
+					IProject firstProject= (IProject) concernedProjects.iterator().next();
+					if (concernedProjects.size() == 1)
+						scopeDescription= SearchMessages.getFormattedString("EnclosingProjectScope", firstProject.getName()); //$NON-NLS-1$
+					else
+						scopeDescription= SearchMessages.getFormattedString("EnclosingProjectsScope", firstProject.getName()); //$NON-NLS-1$
+				} else 
+					scopeDescription= SearchMessages.getFormattedString("EnclosingProjectScope", ""); //$NON-NLS-1$ //$NON-NLS-2$
+				break;
+			case ISearchPageContainer.WORKING_SET_SCOPE:
+				IWorkingSet[] workingSets= getContainer().getSelectedWorkingSets();
+				// should not happen - just to be sure
+				if (workingSets == null || workingSets.length < 1)
+					return false;
+				collectConcernedProjects(concernedProjects, getContainer().getSelectedWorkingSets());
+				scopeDescription= SearchMessages.getFormattedString("WorkingSetScope", SearchUtil.toString(workingSets)); //$NON-NLS-1$
+				scope= JavaSearchScopeFactory.getInstance().createJavaSearchScope(getContainer().getSelectedWorkingSets());
+				SearchUtil.updateLRUWorkingSets(getContainer().getSelectedWorkingSets());
+		
+		}
+		
+		ISearchJob textSearchJob= null;
+		ITextSearchResult search= null;
+		try {
+			ISearchParticipant[] participants= getSearchParticipants(concernedProjects);
+			if (data.getJavaElement() != null && getPattern().equals(fInitialData.getPattern())) {
+				JavaSearchDescription desc= new JavaSearchDescription(data.getLimitTo(), data.getJavaElement(), data.getPattern(), scopeDescription);
+				search= TextSearchResultFactory.createTextSearchResult(new JavaStructureProvider(), new JavaSearchPresentationFactory(), desc);
+				TextSearchResultFactory.createTextSearchResult(new JavaStructureProvider(), new JavaSearchPresentationFactory(), desc);
+				textSearchJob=
+					new JavaSearchJob(
+						workspace,
+						participants,
+						data,
+						scope,
+						scopeDescription,
+						search);
+				if (data.getLimitTo() == IJavaSearchConstants.REFERENCES)
+					SearchUtil.warnIfBinaryConstant(data.getJavaElement(), getShell());
+			} else {
+				data.setJavaElement(null);
+				JavaSearchDescription desc= new JavaSearchDescription(data.getLimitTo(), data.getJavaElement(), data.getPattern(), scopeDescription);
+				search= TextSearchResultFactory.createTextSearchResult(new JavaStructureProvider(), new JavaSearchPresentationFactory(), desc);
+				textSearchJob=
+					new JavaSearchJob(
+						workspace,
+						participants,
+						data,
+						scope,
+						scopeDescription,
+						search);
+			}
+		} catch (CoreException e) {
+			ExceptionHandler.handle(e, getShell(), SearchMessages.getString("Search.Error.search.title"), SearchMessages.getString("Search.Error.search.message")); //$NON-NLS-2$ //$NON-NLS-1$
+			return false;
+		} 
+		new SearchResultUpdater(search);
+		NewSearchUI.getSearchManager().addSearchResult(search);
+		NewSearchUI.runSearchInBackground(search, textSearchJob);	
+		return true;
+	}
+
+	private ISearchParticipant[] getSearchParticipants(HashSet concernedProjects) throws CoreException {
+		Map participantMap= new HashMap();
+		collectParticipants(participantMap, concernedProjects);
+		ISearchParticipant[] participants= new ISearchParticipant[participantMap.size()];
+		return (ISearchParticipant[]) participantMap.values().toArray(participants);
+	}
+
 	private int getLimitTo() {
 		for (int i= 0; i < fLimitTo.length; i++) {
 			if (fLimitTo[i].getSelection())
@@ -251,7 +353,7 @@ public class JavaSearchPage extends DialogPage implements ISearchPage, IJavaSear
 		int patternCount= fgPreviousSearchPatterns.size();
 		String [] patterns= new String[patternCount];
 		for (int i= 0; i < patternCount; i++)
-			patterns[i]= ((SearchPatternData) fgPreviousSearchPatterns.get(patternCount - 1 - i)).pattern;
+			patterns[i]= ((SearchPatternData) fgPreviousSearchPatterns.get(patternCount - 1 - i)).getPattern();
 		return patterns;
 	}
 	
@@ -280,7 +382,7 @@ public class JavaSearchPage extends DialogPage implements ISearchPage, IJavaSear
 		while (match == null && i < size) {
 			match= (SearchPatternData) fgPreviousSearchPatterns.get(i);
 			i++;
-			if (!pattern.equals(match.pattern))
+			if (!pattern.equals(match.getPattern()))
 				match= null;
 		}
 		if (match == null) {
@@ -295,12 +397,12 @@ public class JavaSearchPage extends DialogPage implements ISearchPage, IJavaSear
 			fgPreviousSearchPatterns.add(match);
 		}
 		else {
-			match.searchFor= getSearchFor();
-			match.limitTo= getLimitTo();
-			match.isCaseSensitive= fCaseSensitive.getSelection();
-			match.javaElement= fJavaElement;
-			match.scope= getContainer().getSelectedScope();
-			match.workingSets= getContainer().getSelectedWorkingSets();
+			match.setSearchFor(getSearchFor());
+			match.setLimitTo(getLimitTo());
+			match.setCaseSensitive(fCaseSensitive.getSelection());
+			match.setJavaElement(fJavaElement);
+			match.setScope(getContainer().getSelectedScope());
+			match.setWorkingSets(getContainer().getSelectedWorkingSets());
 		}
 		return match;
 	}
@@ -353,11 +455,12 @@ public class JavaSearchPage extends DialogPage implements ISearchPage, IJavaSear
 
 		layouter.perform(createExpression(result));
 		layouter.perform(createSearchFor(result), createLimitTo(result), -1);
+		createParticipants(result);
 		
 		SelectionAdapter javaElementInitializer= new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent event) {
-				if (getSearchFor() == fInitialData.searchFor)
-					fJavaElement= fInitialData.javaElement;
+				if (getSearchFor() == fInitialData.getSearchFor())
+					fJavaElement= fInitialData.getJavaElement();
 				else
 					fJavaElement= null;
 				setLimitTo(getSearchFor());
@@ -375,6 +478,41 @@ public class JavaSearchPage extends DialogPage implements ISearchPage, IJavaSear
 
 		Dialog.applyDialogFont(result);
 		WorkbenchHelp.setHelp(result, IJavaHelpContextIds.JAVA_SEARCH_PAGE);	
+		initSelections();
+	}
+
+	/**
+	 * @param result
+	 * @return
+	 */
+	private Control createParticipants(Composite result) {
+		fSelectParticipants= new Button(result, SWT.PUSH);
+		fSelectParticipants.setText("Extended...");
+		GridData gd= new GridData();
+		gd.verticalAlignment= GridData.VERTICAL_ALIGN_BEGINNING;
+		gd.horizontalAlignment= GridData.HORIZONTAL_ALIGN_END;
+		gd.grabExcessHorizontalSpace= false;
+		gd.horizontalAlignment= GridData.END;
+		gd.horizontalSpan= 2;
+		fSelectParticipants.setLayoutData(gd);
+		fSelectParticipants.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent e) {
+				ParticipantSelectionDialog dialog= new ParticipantSelectionDialog(getShell());
+				dialog.setInitialSelections(fActiveParticipants.values().toArray());
+				if (dialog.open() == Dialog.OK) {
+					Object[] elements= dialog.getResult();
+					if (elements != null) {
+						fActiveParticipants.clear();
+						for (int i= 0; i < elements.length; i++) {
+							IConfigurationElement participant= (IConfigurationElement) elements[i];
+							fActiveParticipants.put(participant.getAttribute("id"), participant);
+						}
+						writeConfiguration();
+					}
+				}
+			}
+		});
+		return fSelectParticipants;
 	}
 
 	private Control createExpression(Composite parent) {
@@ -408,6 +546,8 @@ public class JavaSearchPage extends DialogPage implements ISearchPage, IJavaSear
 			}
 		});
 		gd= new GridData(GridData.FILL_HORIZONTAL | GridData.GRAB_HORIZONTAL);
+		// limit preferred size 
+		gd.widthHint= convertWidthInCharsToPixels(50);
 		gd.horizontalIndent= -gd.horizontalIndent;
 		fPattern.setLayoutData(gd);
 
@@ -428,7 +568,7 @@ public class JavaSearchPage extends DialogPage implements ISearchPage, IJavaSear
 	}
 
 	private void updateCaseSensitiveCheckbox() {
-		if (fInitialData != null && getPattern().equals(fInitialData.pattern) && fJavaElement != null) {
+		if (fInitialData != null && getPattern().equals(fInitialData.getPattern()) && fJavaElement != null) {
 			fCaseSensitive.setEnabled(false);
 			fCaseSensitive.setSelection(true);
 		}
@@ -447,20 +587,20 @@ public class JavaSearchPage extends DialogPage implements ISearchPage, IJavaSear
 			fSearchFor[i].setSelection(false);
 		for (int i= 0; i < fLimitTo.length; i++)
 			fLimitTo[i].setSelection(false);
-		fSearchFor[fInitialData.searchFor].setSelection(true);
-		setLimitTo(fInitialData.searchFor);
-		fLimitTo[fInitialData.limitTo].setSelection(true);
+		fSearchFor[fInitialData.getSearchFor()].setSelection(true);
+		setLimitTo(fInitialData.getSearchFor());
+		fLimitTo[fInitialData.getLimitTo()].setSelection(true);
 
-		fPattern.setText(fInitialData.pattern);
-		fIsCaseSensitive= fInitialData.isCaseSensitive;
-		fJavaElement= fInitialData.javaElement;
+		fPattern.setText(fInitialData.getPattern());
+		fIsCaseSensitive= fInitialData.isCaseSensitive();
+		fJavaElement= fInitialData.getJavaElement();
 		fCaseSensitive.setEnabled(fJavaElement == null);
-		fCaseSensitive.setSelection(fInitialData.isCaseSensitive);
+		fCaseSensitive.setSelection(fInitialData.isCaseSensitive());
 
-		if (fInitialData.workingSets != null)
-			getContainer().setSelectedWorkingSets(fInitialData.workingSets);
+		if (fInitialData.getWorkingSets() != null)
+			getContainer().setSelectedWorkingSets(fInitialData.getWorkingSets());
 		else
-			getContainer().setSelectedScope(fInitialData.scope);
+			getContainer().setSelectedScope(fInitialData.getScope());
 	}
 
 	private Control createSearchFor(Composite parent) {
@@ -510,13 +650,13 @@ public class JavaSearchPage extends DialogPage implements ISearchPage, IJavaSear
 		if (fInitialData == null)
 			fInitialData= getDefaultInitValues();
 
-		fJavaElement= fInitialData.javaElement;
-		fCaseSensitive.setSelection(fInitialData.isCaseSensitive);
-		fCaseSensitive.setEnabled(fInitialData.javaElement == null);
-		fSearchFor[fInitialData.searchFor].setSelection(true);
-		setLimitTo(fInitialData.searchFor);
-		fLimitTo[fInitialData.limitTo].setSelection(true);		
-		fPattern.setText(fInitialData.pattern);
+		fJavaElement= fInitialData.getJavaElement();
+		fCaseSensitive.setSelection(fInitialData.isCaseSensitive());
+		fCaseSensitive.setEnabled(fInitialData.getJavaElement() == null);
+		fSearchFor[fInitialData.getSearchFor()].setSelection(true);
+		setLimitTo(fInitialData.getSearchFor());
+		fLimitTo[fInitialData.getLimitTo()].setSelection(true);		
+		fPattern.setText(fInitialData.getPattern());
 	}
 
 	private SearchPatternData tryStructuredSelection(IStructuredSelection selection) {
@@ -728,13 +868,107 @@ public class JavaSearchPage extends DialogPage implements ISearchPage, IJavaSear
 	private void readConfiguration() {
 		IDialogSettings s= getDialogSettings();
 		fIsCaseSensitive= s.getBoolean(STORE_CASE_SENSITIVE);
+		
+		readActiveParticipants(s);
 	}
 	
+	private void readActiveParticipants(IDialogSettings s) {
+		String[] ids= s.getArray(STORE_ACTIVE_PARTICIPANTS);
+		fActiveParticipants= new HashMap();
+		if (ids != null) {
+			IConfigurationElement[] allParticipants= Platform.getPluginRegistry().getConfigurationElementsFor(PARTICIPANT_EXTENSION_POINT);
+			for (int i= 0; i < allParticipants.length; i++) {
+				for (int j= 0; j < ids.length; j++) {
+					if (ids[j].equals(allParticipants[i].getAttribute("id")))
+						fActiveParticipants.put(ids[j], allParticipants[i]);
+				}
+			}
+		}
+	}
+
 	/**
 	 * Stores it current configuration in the dialog store.
 	 */
 	private void writeConfiguration() {
 		IDialogSettings s= getDialogSettings();
 		s.put(STORE_CASE_SENSITIVE, fIsCaseSensitive);
+		
+		writeActiveParticpants(s);
+	}
+	
+	private void writeActiveParticpants(IDialogSettings s) {
+		String[] ids= new String[fActiveParticipants.size()];
+		Iterator participants= fActiveParticipants.keySet().iterator();
+		int i= 0;
+		while (participants.hasNext()) {
+			ids[i++]=  (String) participants.next();
+		}
+		s.put(STORE_ACTIVE_PARTICIPANTS, ids);
+	}
+
+	private void collectConcernedProjects(Set projects, ISelection selection) {
+		if (!(selection instanceof IStructuredSelection))
+			return;
+		IStructuredSelection structuredSelection= (IStructuredSelection)selection;
+		Iterator elements= structuredSelection.iterator();
+		while (elements.hasNext()) {
+			IProject project= getProject(elements.next());
+			if (project != null)
+				projects.add(project);
+		}
+	}
+
+	private void collectConcernedProjects(Set projects, IWorkingSet[] workingSets) {
+		for (int i= 0; i < workingSets.length; i++)
+			collectConcernedProjects(projects, workingSets[i]);
+	}
+	private void collectConcernedProjects(Set projects, IWorkingSet workingSet) {
+		IAdaptable[] adaptables= workingSet.getElements();
+		for (int i= 0; i < adaptables.length; i++) {
+			IProject project= getProject(adaptables[i]);
+			if (project != null)
+				projects.add(project);
+		}
+	}
+
+	private void collectConcernedProjects(Set projects, IWorkspace workspace) {
+		IProject[] allProjects= workspace.getRoot().getProjects();
+		for (int i= 0; i < allProjects.length; i++) {
+			if (allProjects[i].isAccessible())
+				projects.add(allProjects[i]);
+		}
+	}
+
+	private IProject getProject(Object element) {
+		if (element instanceof ISearchResultViewEntry)
+			element= ((ISearchResultViewEntry)element).getGroupByKey();
+		if (element instanceof IAdaptable) {
+			IAdaptable adaptable= (IAdaptable)element;
+			IProject project= (IProject) adaptable.getAdapter(IProject.class);
+			if (project != null)
+				return project;
+			IResource resource= (IResource) adaptable.getAdapter(IResource.class);
+			if (resource != null)
+				project= resource.getProject();
+			if (project != null)
+				return project;
+		}
+		return null;
+	}
+	
+	private void collectParticipants(Map participants, Set projects) throws CoreException {
+		Iterator activeParticipants= fActiveParticipants.values().iterator();
+		while (activeParticipants.hasNext()) {
+			IConfigurationElement participant= (IConfigurationElement) activeParticipants.next();
+			String id= participant.getAttribute("id"); //$NON-NLS-1$
+			Iterator projectElemnents= projects.iterator();
+			while (projectElemnents.hasNext()) {
+				IProject project= (IProject) projectElemnents.next();
+				if (participants.containsKey(id))
+					break;
+				if (project.hasNature(participant.getAttribute("nature")))
+					participants.put(id, participant.createExecutableExtension("class"));
+			}
+		}
 	}
 }

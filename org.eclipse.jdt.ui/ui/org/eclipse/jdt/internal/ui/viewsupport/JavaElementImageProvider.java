@@ -188,6 +188,9 @@ public class JavaElementImageProvider {
 					IField field= (IField) element;
 					return getFieldImageDescriptor(field.getDeclaringType().isInterface(), field.getFlags());				
 					
+				case IJavaElement.LOCAL_VARIABLE:
+					return JavaPluginImages.DESC_OBJS_LOCAL_VARIABLE;				
+
 				case IJavaElement.PACKAGE_DECLARATION:
 					return JavaPluginImages.DESC_OBJS_PACKDECL;
 				

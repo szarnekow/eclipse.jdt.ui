@@ -35,13 +35,13 @@ import org.eclipse.jdt.internal.ui.JavaPlugin;
 
 public class ASTNodes {
 
-	public static final int NODE_ONLY=					0;
+	public static final int NODE_ONLY=				0;
 	public static final int INCLUDE_FIRST_PARENT= 	1;
 	public static final int INCLUDE_ALL_PARENTS= 	2;
 	
-	public static final int WARINING=						1 << 0;
-	public static final int ERROR=							1 << 1;
-	public static final int PROBLEMS=						WARINING | ERROR;
+	public static final int WARINING=				1 << 0;
+	public static final int ERROR=					1 << 1;
+	public static final int PROBLEMS=				WARINING | ERROR;
 
 	private static final Message[] EMPTY_MESSAGES= new Message[0];
 	private static final IProblem[] EMPTY_PROBLEMS= new IProblem[0];
@@ -191,6 +191,8 @@ public class ASTNodes {
     
 	/**
 	 * Returns a list of the direct chidrens of a node. The siblings are ordered by start offset.
+	 * @param node
+	 * @return
 	 */    
 	public static List getChildren(ASTNode node) {
 		ChildrenCollector visitor= new ChildrenCollector();
@@ -201,8 +203,10 @@ public class ASTNodes {
 	/**
 	 * Returns the element type. This is a convenience method that returns its 
 	 * argument if it is a simple type and the element type if the parameter is an array type.
+	 * @param type The type to get the element type from.
+	 * @return The element type of the type or the type itself.
 	 */
-	public static Type getElementType(Type type){
+	public static Type getElementType(Type type) {
 		if (! type.isArrayType()) 
 			return type;
 		return ((ArrayType)type).getElementType();
@@ -230,9 +234,11 @@ public class ASTNodes {
 	 * Returns the type node for the given declaration. The returned node
 	 * is a copy and is owned by a different AST. The returned node contains
 	 * any extra dimensions.
+	 * @param ast The AST to create the resulting type with.
+	 * @param declaration The variable declaration to get the type from
+	 * @return A new type node created with the given AST.
 	 */
-	public static Type getType(VariableDeclaration declaration) {
-		AST ast= new AST();
+	public static Type getType(AST ast, VariableDeclaration declaration) {
 		Type type= null;
 		if (declaration instanceof SingleVariableDeclaration) {
 			type= ((SingleVariableDeclaration)declaration).getType();
@@ -245,7 +251,7 @@ public class ASTNodes {
 		}
 		if (type == null)
 			return null;
-		type= (Type)ASTNode.copySubtree(ast, type);
+		type= (Type) ASTNode.copySubtree(ast, type);
 		int extraDim= 0;
 		if (declaration.getNodeType() == ASTNode.VARIABLE_DECLARATION_FRAGMENT) {
 			extraDim= ((VariableDeclarationFragment)declaration).getExtraDimensions();
@@ -296,6 +302,20 @@ public class ASTNodes {
 		int parentType= name.getParent().getNodeType();
 		return parentType == ASTNode.LABELED_STATEMENT || 
 			parentType == ASTNode.BREAK_STATEMENT || parentType != ASTNode.CONTINUE_STATEMENT;
+	}
+	
+	public static boolean isStatic(BodyDeclaration declaration) {
+		switch(declaration.getNodeType()) {
+			case ASTNode.FIELD_DECLARATION:
+				return Modifier.isStatic(((FieldDeclaration)declaration).getModifiers());
+			case ASTNode.METHOD_DECLARATION:
+				return Modifier.isStatic(((MethodDeclaration)declaration).getModifiers());
+			case ASTNode.TYPE_DECLARATION:
+				return Modifier.isStatic(((TypeDeclaration)declaration).getModifiers());
+			case ASTNode.INITIALIZER:
+				return Modifier.isStatic(((Initializer)declaration).getModifiers());
+			}
+		return false;
 	}
 	
 	public static String getTypeName(Type type) {
@@ -473,10 +493,29 @@ public class ASTNodes {
 		}
 		return result;
 	}
+	
+	public static ITypeBinding getDeclaringType(BodyDeclaration declaration) {
+		ASTNode node= declaration;
+		while(node != null) {
+			switch(node.getNodeType()) {
+				case ASTNode.TYPE_DECLARATION:
+					return ((TypeDeclaration)node).resolveBinding();
+				case ASTNode.ANONYMOUS_CLASS_DECLARATION:
+					return ((AnonymousClassDeclaration)node).resolveBinding();
+			}
+			node= node.getParent();
+		}
+		return null;
+	}
 
 	/**
 	 * Expands the range of the node passed in <code>nodes</code> to cover all comments
 	 * determined by <code>start</code> and <code>length</code> in the given text buffer. 
+	 * @param nodes
+	 * @param buffer
+	 * @param start
+	 * @param length
+	 * @throws CoreException
 	 */
 	public static void expandRange(ASTNode[] nodes, TextBuffer buffer, int start, int length) throws CoreException {
 		IScanner scanner= ToolFactory.createScanner(true, false, false, false);
@@ -604,7 +643,11 @@ public class ASTNodes {
 	}
 	
 	/**
-	 * Annotates all node that have extended ranges.
+	 * Annotates all node that have extended ranges with a ISourceRange in
+	 * the NODE_RANGE_PROPERTY property 
+	 * @param node A node from the tree. The root compilation unit mist be reachable
+	 * through this node.
+	 * @param scanner The scanner initialized to the source corresponding to the node.
 	 */
 	public static void annotateExtraRanges(ASTNode node, TokenScanner scanner) {
 		ASTNode astRoot= node.getRoot();
@@ -636,7 +679,7 @@ public class ASTNodes {
 		}
 	}
 	
-	/** workaround, deals with finding positions in modified ASTs. */
+	/* workaround, deals with finding positions in modified ASTs. */
 	private static int getNextExistingOffset(List children, int idx, int def) {
 		for (int i= idx + 1; i < children.size(); i++) {
 			ASTNode curr= (ASTNode) children.get(i);
@@ -660,16 +703,34 @@ public class ASTNodes {
 			return start + length;
 		} catch (CoreException e) {
 			JavaPlugin.log(e);
-			// just log, no extra range annotated
+			// log, no extra range annotated
 		}
 		return tokenStart + tokenLength;
 	}		
 	
-	/*
-	 * @param List<BodyDeclaration> container
+	/**
+	 * Computes the insertion index to be used to add the given member to the
+	 * the list <code>container</code>.
+	 * @param member the member to add
+	 * @param container a list containing objects of type <code>BodyDeclaration</code>
+	 * @return the insertion index to be used
 	 */
 	public static int getInsertionIndex(BodyDeclaration member, List container) {
-		int memberType= member.getNodeType();
+		return getInsertionIndex(container, member.getNodeType(), isStatic(member));
+	}
+	
+	/**
+	 * Computes the insertion index to be used to add a member of type <code>
+	 * memberType</code> to the the list <code>container</code>.
+	 * 
+	 * @param memberType the type of the member to be added. Valid values are: <code>
+	 *  ASTNode.TYPE_DECLARATION</code>, <code>ASTNode.INITIALIZER</code>, <code>
+	 *  ASTNode.FIELD_DECLARATION<code> and <code>ASTNode.METHOD_DECLARATION</code>.
+	 * @param container a list containing objects of type <code>BodyDeclaration</code>
+	 * @param isStatic
+	 * @return the insertion index to be used
+	 */
+	private static int getInsertionIndex(List container, int memberType, boolean isStatic) {
 		if (memberType == ASTNode.TYPE_DECLARATION || memberType == ASTNode.INITIALIZER)
 			return 0;
 		int defaultIndex= container.size();
@@ -696,17 +757,32 @@ public class ASTNodes {
 			return defaultIndex;
 		}
 		if (memberType == ASTNode.METHOD_DECLARATION) {
-			int last= -1;
+			int lastMethod= -1;
+			int lastStaticMethod= -1;
+			int firstMethod= -1;
 			int i= 0;
 			for (Iterator iter= container.iterator(); iter.hasNext(); i++) {
-				int nodeType= ((BodyDeclaration)iter.next()).getNodeType();
+				ASTNode node= (ASTNode)iter.next();
+				int nodeType= node.getNodeType();
 				switch (nodeType) {
 					case ASTNode.METHOD_DECLARATION:
-						last= i;
+						MethodDeclaration declaration= (MethodDeclaration)node;
+						if (firstMethod == -1)
+							firstMethod= i;
+						if (isStatic && Modifier.isStatic(declaration.getModifiers()))
+							lastStaticMethod= i;
+						lastMethod= i;
 				}
 			}
-			if (last != -1)
-				return ++last;
+			if (isStatic) {
+				if (lastStaticMethod != -1)
+					return ++lastStaticMethod;
+				else if (firstMethod != 1)
+					return firstMethod;
+			} else {
+				if (lastMethod != -1)
+					return ++lastMethod;
+			}
 			return defaultIndex;
 		}
 		return defaultIndex;

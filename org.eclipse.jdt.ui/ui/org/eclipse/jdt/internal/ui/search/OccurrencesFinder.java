@@ -11,16 +11,15 @@
 package org.eclipse.jdt.internal.ui.search;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
-import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.Assignment;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.FieldAccess;
 import org.eclipse.jdt.core.dom.IBinding;
+import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.Name;
 import org.eclipse.jdt.core.dom.PostfixExpression;
 import org.eclipse.jdt.core.dom.PrefixExpression;
@@ -29,6 +28,8 @@ import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 import org.eclipse.jdt.core.dom.PrefixExpression.Operator;
+
+import org.eclipse.jdt.internal.corext.dom.Bindings;
 
 public class OccurrencesFinder extends ASTVisitor {
 	
@@ -50,29 +51,28 @@ public class OccurrencesFinder extends ASTVisitor {
 	}
 	
 	public boolean visit(QualifiedName node) {
-		match(node, fUsages, node.resolveBinding());
-		return super.visit(node);
+		IBinding binding= node.resolveBinding();
+		if (binding instanceof IVariableBinding && ((IVariableBinding)binding).isField()) {
+			SimpleName name= node.getName();
+			return !match(name, fUsages, name.resolveBinding());
+		}
+		return !match(node, fUsages, node.resolveBinding());
 	}
 
 	public boolean visit(SimpleName node) {
-		match(node, fUsages, node.resolveBinding());
-		return super.visit(node);
+		return !match(node, fUsages, node.resolveBinding());
 	}
 
 	/*
 	 * @see org.eclipse.jdt.core.dom.ASTVisitor#visit(org.eclipse.jdt.core.dom.ConstructorInvocation)
 	 */
 	public boolean visit(ClassInstanceCreation node) {
-		match(node.getName(), fUsages, node.resolveConstructorBinding());
-		Expression expression = node.getExpression();
-		if (expression != null)
-			expression.accept(this);
-		
-		List list = node.arguments();
-		for (Iterator iter= list.iterator(); iter.hasNext();)
-			((ASTNode)iter.next()).accept(this);
-
-		return false;
+		// match with the constructor and the type.
+		Name name= node.getName();
+		if (name instanceof QualifiedName)
+			name= ((QualifiedName)name).getName();
+		match(name, fUsages, node.resolveConstructorBinding());
+		return super.visit(node);
 	}
 	public boolean visit(Assignment node) {
 		Expression lhs= node.getLeftHandSide();
@@ -115,23 +115,12 @@ public class OccurrencesFinder extends ASTVisitor {
 		return super.visit(node);
 	}
 
-	private void match(Name node, List result, IBinding binding) {
-		
-		if (binding == null)
-			return;
-			
-		if (binding.equals(fTarget)) {
+	private boolean match(Name node, List result, IBinding binding) {
+		if (binding != null && Bindings.equals(binding, fTarget)) {
 			result.add(node);
-			return;
+			return true;
 		}
-		
-		String otherKey= binding.getKey();
-		String targetKey= fTarget.getKey();
-					
-		if (targetKey != null && otherKey != null) {
-			if (targetKey.equals(otherKey))
-				result.add(node);
-		}
+		return false;
 	}
 
 	private Name getName(Expression expression) {
