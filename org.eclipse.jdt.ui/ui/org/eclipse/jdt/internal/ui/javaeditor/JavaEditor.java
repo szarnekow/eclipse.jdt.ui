@@ -2281,6 +2281,10 @@ public abstract class JavaEditor extends ExtendedTextEditor implements IViewPart
 		action= new QuickFormatAction();
 		action.setActionDefinitionId(IJavaEditorActionDefinitionIds.QUICK_FORMAT);
 		setAction(IJavaEditorActionDefinitionIds.QUICK_FORMAT, action);
+
+		action= new RemoveOccurrenceAnnotations(this);
+		action.setActionDefinitionId(IJavaEditorActionDefinitionIds.REMOVE_OCCURRENCE_ANNOTATIONS);
+		setAction("RemoveOccurrenceAnnotations", action); //$NON-NLS-1$
 		
 		// add annotation actions
 		IAction annAction= getAction("AnnotationAction"); //$NON-NLS-1$
@@ -2352,6 +2356,7 @@ public abstract class JavaEditor extends ExtendedTextEditor implements IViewPart
 					fMarkOccurrenceAnnotations= ((Boolean)event.getNewValue()).booleanValue();
 					if (!fMarkOccurrenceAnnotations) {
 						fComputeCount++;
+						removeOccurrenceAnnotations();
 					}
 				}
 			}
@@ -2681,7 +2686,21 @@ public abstract class JavaEditor extends ExtendedTextEditor implements IViewPart
 		}			
 	}
 	
-	
+	void removeOccurrenceAnnotations() {
+		IDocumentProvider documentProvider= getDocumentProvider();
+		if (documentProvider == null)
+			return;
+		
+		IAnnotationModel annotationModel= documentProvider.getAnnotationModel(getEditorInput());
+		if (annotationModel == null)
+			return;
+
+		synchronized (annotationModel) {
+			for (int i= 0, size= fOccurrenceAnnotations.size(); i < size; i++)
+				annotationModel.removeAnnotation((Annotation)fOccurrenceAnnotations.get(i));
+			fOccurrenceAnnotations.clear();
+		}
+	}	
 	class OccurrencesFinder implements Runnable, IDocumentListener {
 		
 		private int fCount;
@@ -2710,35 +2729,23 @@ public abstract class JavaEditor extends ExtendedTextEditor implements IViewPart
 				if (isCancelled())
 					return;
 				
-				IDocumentProvider documentProvider= getDocumentProvider();
-				if (documentProvider == null)
-					return;
-				
-				IAnnotationModel annotationModel= documentProvider.getAnnotationModel(getEditorInput());
-				if (annotationModel == null)
-					return;
-				
-				// Remove existing occurrence annotations
-				synchronized (annotationModel) {
-					for (int i= 0, size= fOccurrenceAnnotations.size(); i < size; i++)
-						annotationModel.removeAnnotation((Annotation)fOccurrenceAnnotations.get(i));
-					fOccurrenceAnnotations.clear();
-				}
-				
-				if (isCancelled())
-					return;
-				
 				// Find occurrences
 				FindOccurrencesEngine engine= FindOccurrencesEngine.create(getInputJavaElement());
 				List matches= new ArrayList();
 				try {
 					matches= engine.findOccurrences(fSelection.getOffset(), fSelection.getLength());
-					if (matches == null || matches.isEmpty())
-						return;
 				} catch (JavaModelException e) {
 					JavaPlugin.log(e);
 					return;
 				}
+
+				if (matches == null || matches.isEmpty())
+					return;
+				
+				if (isCancelled())
+					return;
+				
+				removeOccurrenceAnnotations();
 				
 				if (isCancelled())
 					return;
@@ -2749,6 +2756,14 @@ public abstract class JavaEditor extends ExtendedTextEditor implements IViewPart
 				
 				IDocument document= textViewer.getDocument();
 				if (document == null)
+					return;
+				
+				IDocumentProvider documentProvider= getDocumentProvider();
+				if (documentProvider == null)
+					return;
+				
+				IAnnotationModel annotationModel= documentProvider.getAnnotationModel(getEditorInput());
+				if (annotationModel == null)
 					return;
 				
 				// Add occurrence annotations
@@ -3241,7 +3256,7 @@ public abstract class JavaEditor extends ExtendedTextEditor implements IViewPart
 	 */
 	protected CompositeRuler createCompositeRuler() {
 		CompositeRuler ruler= new CompositeRuler();
-		AnnotationRulerColumn column= new AnnotationRulerColumn(VERTICAL_RULER_WIDTH);
+		AnnotationRulerColumn column= new AnnotationRulerColumn(VERTICAL_RULER_WIDTH, getAnnotationAccess());
 		column.setHover(new JavaExpandHover(ruler, new IAnnotationListener() {
 
 			public void annotationSelected(AnnotationEvent event) {
