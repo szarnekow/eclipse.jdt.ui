@@ -677,7 +677,11 @@ public class StubUtility {
 		for (int i= 0; i < exceptions.size(); i++) {
 			exceptionNames[i]= ASTNodes.getSimpleNameIdentifier((Name) exceptions.get(i));
 		}
-		String returnType= !decl.isConstructor() ? ASTNodes.asString(decl.getReturnType()) : null;
+		
+		String returnType= null;
+		if (!decl.isConstructor()) {
+			returnType= ASTNodes.asString((decl.getAST().apiLevel() == AST.JLS2) ? decl.getReturnType() : decl.getReturnType2());
+		}
 		int[] tagOffsets= position.getOffsets();
 		for (int i= tagOffsets.length - 1; i >= 0; i--) { // from last to first
 			try {
