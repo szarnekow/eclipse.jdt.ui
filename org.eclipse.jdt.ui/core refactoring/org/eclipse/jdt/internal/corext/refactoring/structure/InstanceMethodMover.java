@@ -76,6 +76,7 @@ import org.eclipse.jdt.internal.corext.Assert;
 import org.eclipse.jdt.internal.corext.Corext;
 import org.eclipse.jdt.internal.corext.codemanipulation.CodeGenerationSettings;
 import org.eclipse.jdt.internal.corext.codemanipulation.ImportRewrite;
+import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.OldASTRewrite;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.dom.HierarchicalASTVisitor;
@@ -736,7 +737,8 @@ class InstanceMethodMover {
 			}
 	
 			private boolean isNonInstanceMemberReference(SimpleName name) {
-				if (name.getParent() instanceof ClassInstanceCreation)
+				ASTNode normalized= ASTNodes.getNormalizedNode(name);
+				if (normalized.getLocationInParent() == ClassInstanceCreation.TYPE_PROPERTY)
 					return false;
 				
 				IBinding binding= name.resolveBinding();

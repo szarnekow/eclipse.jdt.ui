@@ -1182,9 +1182,10 @@ public class MoveTest extends RefactoringTest {
 					new MoveArguments(project.getProject(), ref.getUpdateReferences()),
 					new MoveArguments(project.getProject(), ref.getUpdateReferences()),
 					new MoveArguments(project.getResource(), ref.getUpdateReferences())});
-		}finally{
+		} finally {
 			performDummySearch();
-			newFile.delete(true, false, null);
+			if (newFile != null)
+				newFile.delete(true, false, null);
 		}
 	}
 
@@ -1307,9 +1308,10 @@ public class MoveTest extends RefactoringTest {
 					new MoveArguments(destination, ref.getUpdateReferences()),
 					new MoveArguments(destination, ref.getUpdateReferences()),
 					new MoveArguments(folder, ref.getUpdateReferences())});
-		}finally{
+		} finally {
 			performDummySearch();
-			newFile.delete(true, false, null);
+			if (newFile != null)
+				newFile.delete(true, false, null);
 			folder.delete(true, false, null);
 		}
 	}
@@ -1385,9 +1387,10 @@ public class MoveTest extends RefactoringTest {
 				handles,
 				new MoveArguments[] {
 					new MoveArguments(getPackageP().getResource(), ref.getUpdateReferences())});
-		}finally{
+		} finally {
 			performDummySearch();
-			newFile.delete(true, new NullProgressMonitor());
+			if (newFile != null)
+				newFile.delete(true, new NullProgressMonitor());
 			cu1.delete(true, new NullProgressMonitor());
 		}
 	}		
@@ -1422,9 +1425,10 @@ public class MoveTest extends RefactoringTest {
 				handles,
 				new MoveArguments[] {
 					new MoveArguments(getPackageP().getResource(), ref.getUpdateReferences())});
-		}finally{
+		} finally {
 			performDummySearch();
-			newFile.delete(true, new NullProgressMonitor());
+			if (newFile != null)
+				newFile.delete(true, new NullProgressMonitor());
 		}
 	}
 
@@ -1459,7 +1463,7 @@ public class MoveTest extends RefactoringTest {
 				handles,
 				new MoveArguments[] {
 					new MoveArguments(getPackageP().getResource(), ref.getUpdateReferences())});
-		} finally{
+		} finally {
 			performDummySearch();
 			file.delete(true, false, null);
 			cu.delete(true, null);
@@ -1497,7 +1501,8 @@ public class MoveTest extends RefactoringTest {
 					new MoveArguments(getRoot().getResource(), ref.getUpdateReferences())});
 		}finally{
 			performDummySearch();
-			newFile.delete(true, new NullProgressMonitor());
+			if (newFile != null)
+				newFile.delete(true, new NullProgressMonitor());
 		}
 	}		
 
@@ -1550,7 +1555,8 @@ public class MoveTest extends RefactoringTest {
 					new MoveArguments(destination, ref.getUpdateReferences())});
 		} finally{
 			performDummySearch();
-			newFolder.delete(true, new NullProgressMonitor());			
+			if (newFolder != null)
+				newFolder.delete(true, new NullProgressMonitor());			
 			otherFolder.delete(true, new NullProgressMonitor());			
 		}
 	}
@@ -1601,7 +1607,8 @@ public class MoveTest extends RefactoringTest {
 					new MoveArguments(getRoot().getResource(), ref.getUpdateReferences())});
 		} finally{
 			performDummySearch();
-			newPackage.delete(true, new NullProgressMonitor());
+			if (newPackage != null)
+				newPackage.delete(true, new NullProgressMonitor());
 		}
 	}
 
