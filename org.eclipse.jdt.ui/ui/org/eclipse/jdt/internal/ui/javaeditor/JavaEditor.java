@@ -2224,6 +2224,13 @@ public abstract class JavaEditor extends ExtendedTextEditor implements IViewPart
 		action= new QuickFormatAction();
 		action.setActionDefinitionId(IJavaEditorActionDefinitionIds.QUICK_FORMAT);
 		setAction(IJavaEditorActionDefinitionIds.QUICK_FORMAT, action);
+		
+		// add annotation actions
+		IAction annAction= getAction("AnnotationAction"); //$NON-NLS-1$
+		if (annAction instanceof TextEditorAction)
+			((TextEditorAction)annAction).setEditor(null);
+		action= new JavaSelectMarkerRulerAction2(JavaEditorMessages.getResourceBundle(), "CorrectionAssistProposal.", this); //$NON-NLS-1$
+		setAction("AnnotationAction", action); //$NON-NLS-1$
 	}
 	
 	public void updatedTitleImage(Image image) {

@@ -54,7 +54,6 @@ public class JavaSelectMarkerRulerAction extends SelectMarkerRulerAction {
 	}
 	
 	public void run() {
-		if (true) return;
 		if (fPosition != null) {
 			ITextOperationTarget operation= (ITextOperationTarget) fTextEditor.getAdapter(ITextOperationTarget.class);
 			final int opCode= CompilationUnitEditor.CORRECTIONASSIST_PROPOSALS;
@@ -69,7 +68,6 @@ public class JavaSelectMarkerRulerAction extends SelectMarkerRulerAction {
 	}
 	
 	public void update() {
-		if (true) return;
 		// Begin Fix for http://dev.eclipse.org/bugs/show_bug.cgi?id=20114
 		if (!(fTextEditor instanceof ITextEditorExtension) || ((ITextEditorExtension) fTextEditor).isEditorInputReadOnly()) {
 			fPosition= null;

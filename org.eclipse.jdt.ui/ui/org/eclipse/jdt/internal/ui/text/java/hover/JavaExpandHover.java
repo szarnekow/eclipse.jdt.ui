@@ -24,6 +24,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.jface.viewers.IDoubleClickListener;
 
 import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.IInformationControlExtension2;
 import org.eclipse.jface.text.Position;
 import org.eclipse.jface.text.source.Annotation;
 import org.eclipse.jface.text.source.IAnnotationModel;
@@ -33,6 +34,7 @@ import org.eclipse.jface.text.source.IVerticalRulerInfo;
 import org.eclipse.ui.texteditor.IAnnotationListener;
 
 import org.eclipse.ui.internal.texteditor.AnnotationExpandHover;
+import org.eclipse.ui.internal.texteditor.AnnotationExpansionControl;
 import org.eclipse.ui.internal.texteditor.AnnotationExpansionControl.AnnotationHoverInput;
 
 import org.eclipse.jdt.internal.ui.javaeditor.IJavaAnnotation;
@@ -54,15 +56,12 @@ public class JavaExpandHover extends AnnotationExpandHover {
 		}
 	}
 	
-	private IDoubleClickListener fDblClickListener;
-	
 	/**
 	 * @param ruler
 	 * @param listener
 	 */
 	public JavaExpandHover(IVerticalRulerInfo ruler, IAnnotationListener listener, IDoubleClickListener doubleClickListener) {
-		super(ruler, listener);
-		fDblClickListener= doubleClickListener;
+		super(ruler, listener, doubleClickListener);
 	}
 
 	/**
@@ -75,7 +74,7 @@ public class JavaExpandHover extends AnnotationExpandHover {
 	/*
 	 * @see org.eclipse.ui.internal.texteditor.AnnotationExpandHover#getHoverInfo2(org.eclipse.jface.text.source.ISourceViewer, int)
 	 */
-	public Object getHoverInfo2(ISourceViewer viewer, int line) {
+	public Object getHoverInfo2(final ISourceViewer viewer, final int line) {
 		IAnnotationModel model= viewer.getAnnotationModel();
 		IDocument document= viewer.getDocument();
 		
@@ -129,12 +128,23 @@ public class JavaExpandHover extends AnnotationExpandHover {
 				exact.add(0, new EmptyAnnotation());
 		}
 		
+		if (exact.size() <= 1)
+			return null;
+		
 		AnnotationHoverInput input= new AnnotationHoverInput();
 		input.fAnnotations= (Annotation[]) exact.toArray(new Annotation[0]);
 		input.fViewer= viewer;
 		input.fRulerInfo= fVerticalRulerInfo;
 		input.fAnnotationListener= fAnnotationListener;
 		input.fDoubleClickListener= fDblClickListener;
+		input.redoAction= new AnnotationExpansionControl.ICallback() {
+
+			public void run(IInformationControlExtension2 control) {
+				control.setInput(getHoverInfo2(viewer, line));
+			}
+			
+		};
+		input.model= model;
 		
 		return input;
 	}
