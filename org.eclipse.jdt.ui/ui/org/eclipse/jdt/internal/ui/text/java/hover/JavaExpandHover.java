@@ -15,8 +15,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.graphics.GC;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Display;
@@ -31,12 +33,14 @@ import org.eclipse.jface.text.source.IAnnotationModel;
 import org.eclipse.jface.text.source.ISourceViewer;
 import org.eclipse.jface.text.source.IVerticalRulerInfo;
 
+import org.eclipse.ui.texteditor.IAnnotationExtension;
 import org.eclipse.ui.texteditor.IAnnotationListener;
 
 import org.eclipse.ui.internal.texteditor.AnnotationExpandHover;
 import org.eclipse.ui.internal.texteditor.AnnotationExpansionControl;
 import org.eclipse.ui.internal.texteditor.AnnotationExpansionControl.AnnotationHoverInput;
 
+import org.eclipse.jdt.internal.ui.JavaPluginImages;
 import org.eclipse.jdt.internal.ui.javaeditor.IJavaAnnotation;
 import org.eclipse.jdt.internal.ui.javaeditor.JavaMarkerAnnotation;
 
@@ -47,12 +51,42 @@ import org.eclipse.jdt.internal.ui.javaeditor.JavaMarkerAnnotation;
  */
 public class JavaExpandHover extends AnnotationExpandHover {
 
-	public static class EmptyAnnotation extends Annotation {
+	public static class NoBreakpointAnnotation extends Annotation implements IAnnotationExtension {
 		/*
 		 * @see org.eclipse.jface.text.source.Annotation#paint(org.eclipse.swt.graphics.GC, org.eclipse.swt.widgets.Canvas, org.eclipse.swt.graphics.Rectangle)
 		 */
 		public void paint(GC gc, Canvas canvas, Rectangle bounds) {
-			// nothing to paint
+			// draw affordance so the user know she can click here to get a breakpoint
+			Image fImage= JavaPluginImages.get(JavaPluginImages.IMG_FIELD_PUBLIC);
+			drawImage(fImage, gc, canvas, bounds, SWT.CENTER);
+		}
+
+		/*
+		 * @see org.eclipse.ui.texteditor.IAnnotationExtension#getMarkerType()
+		 */
+		public String getMarkerType() {
+			return null;
+		}
+
+		/*
+		 * @see org.eclipse.ui.texteditor.IAnnotationExtension#getSeverity()
+		 */
+		public int getSeverity() {
+			return 0;
+		}
+
+		/*
+		 * @see org.eclipse.ui.texteditor.IAnnotationExtension#isTemporary()
+		 */
+		public boolean isTemporary() {
+			return false;
+		}
+
+		/*
+		 * @see org.eclipse.ui.texteditor.IAnnotationExtension#getMessage()
+		 */
+		public String getMessage() {
+			return "Double click to add a breakpoint";
 		}
 	}
 	
@@ -125,7 +159,7 @@ public class JavaExpandHover extends AnnotationExpandHover {
 		if (exact.size() > 0) {
 			Annotation first= (Annotation) exact.get(0);
 			if (!isBreakpointAnnotation(first))
-				exact.add(0, new EmptyAnnotation());
+				exact.add(0, new NoBreakpointAnnotation());
 		}
 		
 		if (exact.size() <= 1)
