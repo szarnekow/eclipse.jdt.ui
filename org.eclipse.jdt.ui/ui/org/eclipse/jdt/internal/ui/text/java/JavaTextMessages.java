@@ -38,4 +38,11 @@ final class JavaTextMessages extends NLS {
 	static {
 		NLS.initializeMessages(BUNDLE_NAME, JavaTextMessages.class);
 	}
+
+	public static String ContentAssistProcessor_computing_proposals;
+	public static String ContentAssistProcessor_collecting_proposals;
+	public static String ContentAssistProcessor_sorting_proposals;
+	public static String ContentAssistProcessor_computing_contexts;
+	public static String ContentAssistProcessor_collecting_contexts;
+	public static String ContentAssistProcessor_sorting_contexts;
 }

@@ -10,6 +10,7 @@
    <extension-point id="classpathContainerPage" name="%classpathContainerPageExtensionPoint" schema="schema/classpathContainerPage.exsd"/>
    <extension-point id="foldingStructureProviders" name="%foldingStructureProvidersExtensionPoint" schema="schema/foldingStructureProviders.exsd"/>
    <extension-point id="queryParticipants" name="%queryParticipantsExtensionPoint" schema="schema/queryParticipants.exsd"/>
+   <extension-point id="javaCompletionProposalComputer" name="%javaCompletionProposalComputer" schema="schema/javaCompletionProposalComputer.exsd"/>
    
 
 <extension
@@ -137,11 +138,6 @@
             class="org.eclipse.jdt.internal.ui.text.javadoc.JavaDocCompletionEvaluator"
             id="org.eclipse.jdt.ui.text.javadoc.JavaDocCompletionEvaluator">
       </javadocCompletionProcessor>
-      <javadocCompletionProcessor
-            name="%spellingJavadocCompletionProcessor"
-            class="org.eclipse.jdt.internal.ui.text.spelling.WordCompletionProcessor"
-            id= "org.eclipse.jdt.ui.text.javadoc.spelling.WordCompletionProcessor">
-      </javadocCompletionProcessor>
    </extension>
    <extension
          point="org.eclipse.jdt.ui.quickFixProcessors">
@@ -174,7 +170,58 @@
             id="org.eclipse.jdt.ui.text.correction.AdvancedQuickAssistProcessor">
       </quickAssistProcessor>
    </extension>
-   
+
+	<!-- content assist processors -->   
+	<!-- hippie word completions (in all partitions) -->   
+	<extension
+		point="org.eclipse.jdt.ui.javaCompletionProposalComputer"
+		id="HippieCompletionProposalComputer"
+		name="%HippieCompletionComputer">
+		<javaCompletionProposalComputer class="org.eclipse.ui.texteditor.HippieProposalComputer"/>
+	</extension>
+	<!-- java completions -->   
+	<extension
+		point="org.eclipse.jdt.ui.javaCompletionProposalComputer"
+		id="JavaCompletionProposalComputer"
+		name="%JavaCompletionProposalComputer">
+		<javaCompletionProposalComputer class="org.eclipse.jdt.internal.ui.text.java.JavaCompletionProposalComputer">
+			<partition type="__dftl_partition_content_type"/>
+		</javaCompletionProposalComputer>
+	</extension>
+	<!-- spelling proposals -->
+	<extension
+		point="org.eclipse.jdt.ui.javaCompletionProposalComputer"
+		id="SpellingProposalComputer"
+		name="%SpellingProposalComputer">
+		<javaCompletionProposalComputer class="org.eclipse.jdt.internal.ui.text.spelling.WordCompletionProposalComputer">
+			<partition type="__java_singleline_comment"/>
+			<partition type="__java_multiline_comment"/>
+			<partition type="__java_string"/>
+			<partition type="__java_javadoc"/>
+		</javaCompletionProposalComputer>
+	</extension>
+	<!-- javadoc proposals -->
+	<extension
+		point="org.eclipse.jdt.ui.javaCompletionProposalComputer"
+		id="JavadocCompletionProposalComputer"
+		name="%JavadocCompletionProposalComputer">
+		<javaCompletionProposalComputer class="org.eclipse.jdt.internal.ui.text.javadoc.JavadocCompletionProposalComputer">
+			<partition type="__java_javadoc"/>
+		</javaCompletionProposalComputer>
+	</extension>
+	<!-- template proposals -->
+	<extension
+		point="org.eclipse.jdt.ui.javaCompletionProposalComputer"
+		id="TemplateProposalComputer"
+		name="%TemplateProposalComputer">
+		<javaCompletionProposalComputer class="org.eclipse.jdt.internal.ui.text.java.TemplateCompletionProposalComputer">
+			<partition type="__dftl_partition_content_type"/>
+			<partition type="__java_singleline_comment"/> <!-- to get NLS templates -->
+			<partition type="__java_javadoc"/>
+		</javaCompletionProposalComputer>
+	</extension>
+	
+	
    <!-- Note: Do not change the sequence of those hover contributions -->
    <extension
          point="org.eclipse.jdt.ui.javaEditorTextHovers">
