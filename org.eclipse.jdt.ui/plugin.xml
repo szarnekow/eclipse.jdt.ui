@@ -172,32 +172,15 @@
    </extension>
 
 	<!-- content assist processors -->   
-	<!-- hippie word completions (in all partitions) -->   
-	<extension
-		point="org.eclipse.jdt.ui.javaCompletionProposalComputer"
-		id="HippieCompletionProposalComputer"
-		name="%HippieCompletionComputer">
-		<javaCompletionProposalComputer class="org.eclipse.ui.texteditor.HippieProposalComputer"/>
-	</extension>
 	<!-- java completions -->   
 	<extension
 		point="org.eclipse.jdt.ui.javaCompletionProposalComputer"
 		id="JavaCompletionProposalComputer"
 		name="%JavaCompletionProposalComputer">
-		<javaCompletionProposalComputer class="org.eclipse.jdt.internal.ui.text.java.JavaCompletionProposalComputer">
+		<javaCompletionProposalComputer 
+			class="org.eclipse.jdt.internal.ui.text.java.JavaCompletionProposalComputer"
+			icon="$nl$/icons/full/obj16/java_assist.png">
 			<partition type="__dftl_partition_content_type"/>
-		</javaCompletionProposalComputer>
-	</extension>
-	<!-- spelling proposals -->
-	<extension
-		point="org.eclipse.jdt.ui.javaCompletionProposalComputer"
-		id="SpellingProposalComputer"
-		name="%SpellingProposalComputer">
-		<javaCompletionProposalComputer class="org.eclipse.jdt.internal.ui.text.spelling.WordCompletionProposalComputer">
-			<partition type="__java_singleline_comment"/>
-			<partition type="__java_multiline_comment"/>
-			<partition type="__java_string"/>
-			<partition type="__java_javadoc"/>
 		</javaCompletionProposalComputer>
 	</extension>
 	<!-- javadoc proposals -->
@@ -205,7 +188,9 @@
 		point="org.eclipse.jdt.ui.javaCompletionProposalComputer"
 		id="JavadocCompletionProposalComputer"
 		name="%JavadocCompletionProposalComputer">
-		<javaCompletionProposalComputer class="org.eclipse.jdt.internal.ui.text.javadoc.JavadocCompletionProposalComputer">
+		<javaCompletionProposalComputer
+			class="org.eclipse.jdt.internal.ui.text.javadoc.JavadocCompletionProposalComputer"
+			icon="$nl$/icons/full/obj16/javadoc_assist.png">
 			<partition type="__java_javadoc"/>
 		</javaCompletionProposalComputer>
 	</extension>
@@ -214,11 +199,36 @@
 		point="org.eclipse.jdt.ui.javaCompletionProposalComputer"
 		id="TemplateProposalComputer"
 		name="%TemplateProposalComputer">
-		<javaCompletionProposalComputer class="org.eclipse.jdt.internal.ui.text.java.TemplateCompletionProposalComputer">
+		<javaCompletionProposalComputer
+			class="org.eclipse.jdt.internal.ui.text.java.TemplateCompletionProposalComputer"
+			icon="$nl$/icons/full/obj16/templates_assist.png">
 			<partition type="__dftl_partition_content_type"/>
 			<partition type="__java_singleline_comment"/> <!-- to get NLS templates -->
 			<partition type="__java_javadoc"/>
 		</javaCompletionProposalComputer>
+	</extension>
+	<!-- spelling proposals -->
+	<extension
+		point="org.eclipse.jdt.ui.javaCompletionProposalComputer"
+		id="SpellingProposalComputer"
+		name="%SpellingProposalComputer">
+		<javaCompletionProposalComputer
+			class="org.eclipse.jdt.internal.ui.text.spelling.WordCompletionProposalComputer"
+			icon="$nl$/icons/full/obj16/spelling_assist.png">
+			<partition type="__java_singleline_comment"/>
+			<partition type="__java_multiline_comment"/>
+			<partition type="__java_string"/>
+			<partition type="__java_javadoc"/>
+		</javaCompletionProposalComputer>
+	</extension>
+	<!-- hippie word completions (in all partitions) -->   
+	<extension
+		point="org.eclipse.jdt.ui.javaCompletionProposalComputer"
+		id="HippieCompletionProposalComputer"
+		name="%HippieCompletionComputer">
+		<javaCompletionProposalComputer
+			class="org.eclipse.ui.texteditor.HippieProposalComputer"
+			icon="$nl$/icons/full/obj16/hippie_assist.png"/>
 	</extension>
 	
 	
@@ -1216,6 +1226,13 @@
             category="org.eclipse.jdt.ui.preferences.JavaEditorPreferencePage"
             class="org.eclipse.jdt.internal.ui.preferences.CodeAssistPreferencePage"
             id="org.eclipse.jdt.ui.preferences.CodeAssistPreferencePage">
+            <keywordReference id="org.eclipse.jdt.ui.codeassist"/>
+      </page>
+      <page
+            name="Work in Progress"
+            category="org.eclipse.jdt.ui.preferences.CodeAssistPreferencePage"
+            class="org.eclipse.jdt.internal.ui.preferences.CodeAssistPreferencePageInProgress"
+            id="org.eclipse.jdt.ui.preferences.CodeAssistPreferencePageInProgress">
             <keywordReference id="org.eclipse.jdt.ui.codeassist"/>
       </page>
       <page

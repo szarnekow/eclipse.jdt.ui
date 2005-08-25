@@ -2915,6 +2915,17 @@ public class PreferenceConstants {
 	public final static String CODEASSIST_PREFIX_COMPLETION= "content_assist_prefix_completion"; //$NON-NLS-1$
 
 	/**
+	 * A named preference that controls which completion proposals
+	 * contributors have been disabled.
+	 * <p>
+	 * Value is of type <code>String</code>, a "\0"-separated list of identifiers.
+	 * </p>
+	 * 
+	 * @since 3.2
+	 */
+	public static final String CODEASSIST_DISABLED_COMPUTERS= "content_assist_disabled_computers"; //$NON-NLS-1$
+
+	/**
 	 * A named preference that controls whether folding is enabled in the Java editor.
 	 * <p>
 	 * Value is of type <code>Boolean</code>.
@@ -3440,6 +3451,7 @@ public class PreferenceConstants {
 		store.setDefault(PreferenceConstants.CODEASSIST_FILL_ARGUMENT_NAMES, true);
 		store.setDefault(PreferenceConstants.CODEASSIST_GUESS_METHOD_ARGUMENTS, false);
 		store.setDefault(PreferenceConstants.CODEASSIST_PREFIX_COMPLETION, false);
+		store.setDefault(PreferenceConstants.CODEASSIST_DISABLED_COMPUTERS, ""); //$NON-NLS-1$
 
 		store.setDefault(PreferenceConstants.EDITOR_SMART_HOME_END, true);
 		store.setDefault(PreferenceConstants.EDITOR_SUB_WORD_NAVIGATION, true);

@@ -77,10 +77,25 @@ and must have a public 0-argument constructor.
                </documentation>
             </annotation>
          </attribute>
+         <attribute name="icon" type="string">
+            <annotation>
+               <documentation>
+                  The optional name of the computer, which can be displayed in the user preferences.
+               </documentation>
+               <appInfo>
+                  <meta.attribute kind="resource"/>
+               </appInfo>
+            </annotation>
+         </attribute>
       </complexType>
    </element>
 
    <element name="partition">
+      <annotation>
+         <appInfo>
+            <meta.element labelAttribute="type"/>
+         </appInfo>
+      </annotation>
       <complexType>
          <attribute name="type" use="required">
             <annotation>

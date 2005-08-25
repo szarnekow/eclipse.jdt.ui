@@ -11,16 +11,15 @@
 package org.eclipse.jdt.internal.ui.text.java;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.StringTokenizer;
 import java.util.TreeSet;
 
 import org.eclipse.core.commands.AbstractHandler;
@@ -33,31 +32,16 @@ import org.eclipse.core.commands.ParameterizedCommand;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtensionRegistry;
 import org.eclipse.core.runtime.InvalidRegistryObjectException;
-import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Platform;
 
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.widgets.Shell;
 
+import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.bindings.Binding;
 import org.eclipse.jface.bindings.keys.KeyBinding;
 import org.eclipse.jface.bindings.keys.KeySequence;
 import org.eclipse.jface.bindings.keys.KeyStroke;
-import org.eclipse.jface.dialogs.IDialogSettings;
-
-import org.eclipse.jface.text.BadLocationException;
-import org.eclipse.jface.text.DefaultInformationControl;
-import org.eclipse.jface.text.IInformationControl;
-import org.eclipse.jface.text.IInformationControlCreator;
-import org.eclipse.jface.text.ITextViewer;
-import org.eclipse.jface.text.TextUtilities;
-import org.eclipse.jface.text.contentassist.ContentAssistant;
-import org.eclipse.jface.text.contentassist.ICompletionProposal;
-import org.eclipse.jface.text.contentassist.IContentAssistProcessor;
-import org.eclipse.jface.text.contentassist.IContentAssistant;
-import org.eclipse.jface.text.contentassist.IContextInformation;
-import org.eclipse.jface.text.contentassist.IContextInformationValidator;
-import org.eclipse.jface.text.source.ISourceViewer;
+import org.eclipse.jface.preference.IPreferenceStore;
 
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IWorkbench;
@@ -67,14 +51,10 @@ import org.eclipse.ui.keys.IBindingService;
 
 import org.eclipse.jdt.internal.corext.Assert;
 
-import org.eclipse.jdt.ui.text.IJavaPartitions;
-import org.eclipse.jdt.ui.text.java.CompletionProposalComparator;
+import org.eclipse.jdt.ui.PreferenceConstants;
 
 import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.internal.ui.javaeditor.JavaEditor;
-import org.eclipse.jdt.internal.ui.text.ContentAssistPreference;
-import org.eclipse.jdt.internal.ui.text.HTMLTextPresenter;
-import org.eclipse.jdt.internal.ui.text.javadoc.JavadocContentAssistInvocationContext;
 
 /**
  * A registry for all extensions to the
@@ -86,7 +66,6 @@ import org.eclipse.jdt.internal.ui.text.javadoc.JavadocContentAssistInvocationCo
 public class CompletionProposalComputerRegistry {
 
 	private static final String EXTENSION_POINT= "javaCompletionProposalComputer"; //$NON-NLS-1$
-	private static final SortedSet EMPTY_SET= Collections.unmodifiableSortedSet(new TreeSet());
 	private static final Comparator COMPARATOR= new Comparator() {
 		/*
 		 * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
@@ -97,6 +76,7 @@ public class CompletionProposalComputerRegistry {
 			return d1.ordinal() - d2.ordinal();
 		}
 	};
+	private static final SortedSet EMPTY_SORTED_SET= Collections.unmodifiableSortedSet(new TreeSet(COMPARATOR));
 	
 	/** The singleton instance. */
 	private static CompletionProposalComputerRegistry fgSingleton= null;
@@ -126,13 +106,7 @@ public class CompletionProposalComputerRegistry {
 		IBindingService bindingSvc= (IBindingService) workbench.getAdapter(IBindingService.class);
 		Category category= commandSvc.getCategory("org.eclipse.ui.category.edit"); //$NON-NLS-1$
 		
-		Set computers= new TreeSet(COMPARATOR);
-		fgSingleton.ensureExtensionPointRead();
-		Collection lists= fgSingleton.fPublicDescriptors.values();
-		for (Iterator it= lists.iterator(); it.hasNext();) {
-			Set set= (Set) it.next();
-			computers.addAll(set);
-		}
+		final Set computers= getDefault().getProposalComputerDescriptors();
 		
 		Set characters= new HashSet();
 		KeyStroke[] strokes= {KeyStroke.getInstance(SWT.SHIFT, ' '), null};
@@ -166,90 +140,39 @@ public class CompletionProposalComputerRegistry {
 				}
 			}
 			
-			
 			AbstractHandler handler= new AbstractHandler() {
 				
+				/*
+				 * @see org.eclipse.core.commands.IHandler#execute(org.eclipse.core.commands.ExecutionEvent)
+				 */
 				public Object execute(ExecutionEvent event) throws ExecutionException {
 					final JavaEditor editor= getActiveEditor();
 					if (editor == null)
 						return null;
 					
-					final ISourceViewer viewer= editor.getViewer();
-					ContentAssistant assistant= createAssistant(viewer);
-					
-					String partition;
-					try {
-						partition= TextUtilities.getContentType(viewer.getDocument(), IJavaPartitions.JAVA_PARTITIONING, viewer.getSelectedRange().x, true);
-					} catch (BadLocationException x) {
-						x.printStackTrace();
+					IAction action= editor.getAction("ContentAssistProposal"); //$NON-NLS-1$
+					if (action == null || !action.isEnabled())
 						return null;
+					
+					boolean[] oldstates= new boolean[computers.size()];
+					int i= 0;
+					for (Iterator it1= computers.iterator(); it1.hasNext();) {
+						CompletionProposalComputerDescriptor d= (CompletionProposalComputerDescriptor) it1.next();
+						oldstates[i++]= d.isEnabled();
+						d.setEnabled(d == desc);
 					}
-					if (!desc.getPartitions().contains(partition))
-						return null;
 					
-					IContentAssistProcessor processor= new IContentAssistProcessor() {
-						
-						public IContextInformationValidator getContextInformationValidator() { return null; }
-						
-						public String getErrorMessage() { return null; }
-						
-						public char[] getContextInformationAutoActivationCharacters() { return null; }
-						
-						public char[] getCompletionProposalAutoActivationCharacters() { return null; }
-						
-						public IContextInformation[] computeContextInformation(ITextViewer v, int offset) { return null; }
-						
-						public ICompletionProposal[] computeCompletionProposals(ITextViewer v, int offset) {
-							
-							JavaContentAssistInvocationContext context= new JavadocContentAssistInvocationContext(viewer, offset, editor, 0);
-							List list= desc.computeCompletionProposals(context, new NullProgressMonitor());
-							Collections.sort(list, new CompletionProposalComparator());
-							return (ICompletionProposal[]) list.toArray(new ICompletionProposal[list.size()]); 
+					try {
+						action.run();
+					} finally {
+						i= 0;
+						for (Iterator it1= computers.iterator(); it1.hasNext();) {
+							CompletionProposalComputerDescriptor d= (CompletionProposalComputerDescriptor) it1.next();
+							d.setEnabled(oldstates[i++]);
 						}
-					};
-					
-					assistant.setContentAssistProcessor(processor, partition);
-					assistant.install(viewer);
-					assistant.showPossibleCompletions();
+					}
 					
 					return null;
-				}
-				
-				private ContentAssistant createAssistant(ISourceViewer sourceViewer) {
-					ContentAssistant assistant= new ContentAssistant() {
-						/*
-						 * @see org.eclipse.jface.text.contentassist.ContentAssistant#hide()
-						 */
-						protected void hide() {
-							super.hide();
-//							uninstall();
-						}
-					};
-					assistant.setDocumentPartitioning(IJavaPartitions.JAVA_PARTITIONING);
-					
-					assistant.setRestoreCompletionProposalSize(getSettings("completion_proposal_size")); //$NON-NLS-1$
-					
-					ContentAssistPreference.configure(assistant, JavaPlugin.getDefault().getCombinedPreferenceStore());
-					
-					assistant.setContextInformationPopupOrientation(IContentAssistant.CONTEXT_INFO_ABOVE);
-					assistant.setInformationControlCreator(getInformationControlCreator(sourceViewer));
-					return assistant;
-				}
-				
-				private IDialogSettings getSettings(String sectionName) {
-					IDialogSettings settings= JavaPlugin.getDefault().getDialogSettings().getSection(sectionName);
-					if (settings == null)
-						settings= JavaPlugin.getDefault().getDialogSettings().addNewSection(sectionName);
-					
-					return settings;
-				}
-				
-				private  IInformationControlCreator getInformationControlCreator(ISourceViewer sourceViewer) {
-					return new IInformationControlCreator() {
-						public IInformationControl createInformationControl(Shell parent) {
-							return new DefaultInformationControl(parent, SWT.NONE, new HTMLTextPresenter(true));
-						}
-					};
 				}
 				
 				private JavaEditor getActiveEditor() {
@@ -285,8 +208,26 @@ public class CompletionProposalComputerRegistry {
 	 * {@link String}, value type:
 	 * {@linkplain SortedSet SortedSet&lt;CompletionProposalComputerDescriptor&gt;}).
 	 */
-	private final Map fDescriptors= new HashMap();
-	private final Map fPublicDescriptors= new HashMap();
+	private final Map fDescriptorsByPartition= new HashMap();
+	/**
+	 * Unmodifiable versions of the sets stored in
+	 * <code>fDescriptorsByPartition</code> (key type: {@link String},
+	 * value type:
+	 * {@linkplain SortedSet SortedSet&lt;CompletionProposalComputerDescriptor&gt;}).
+	 */
+	private final Map fPublicDescriptorsByPartition= new HashMap();
+	/**
+	 * All descriptors (element type:
+	 * {@link CompletionProposalComputerDescriptor}).
+	 */
+	private final SortedSet fDescriptors= new TreeSet(COMPARATOR);
+	/**
+	 * Unmodifiable view of <code>fDescriptors</code>
+	 */
+	private final SortedSet fPublicDescriptors= Collections.unmodifiableSortedSet(fDescriptors);
+	/**
+	 * <code>true</code> if this registry has been loaded.
+	 */
 	private boolean fLoaded= false;
 
 	/**
@@ -299,7 +240,7 @@ public class CompletionProposalComputerRegistry {
 	 * Returns the set of
 	 * {@link CompletionProposalComputerDescriptor}s describing all
 	 * extensions to the <code>javaCompletionProposalComputer</code>
-	 * extension point.
+	 * extension point for the given partition type.
 	 * <p>
 	 * A valid partition is either one of the constants defined in
 	 * {@link org.eclipse.jdt.ui.text.IJavaPartitions} or
@@ -322,13 +263,33 @@ public class CompletionProposalComputerRegistry {
 	 */
 	public SortedSet getProposalComputerDescriptors(String partition) {
 		ensureExtensionPointRead();
-		SortedSet result= (SortedSet) fPublicDescriptors.get(partition);
-		return result != null ? result : EMPTY_SET;
+		SortedSet result= (SortedSet) fPublicDescriptorsByPartition.get(partition);
+		return result != null ? result : EMPTY_SORTED_SET;
+	}
+
+	/**
+	 * Returns the set of {@link CompletionProposalComputerDescriptor}s
+	 * describing all extensions to the
+	 * <code>javaCompletionProposalComputer</code> extension point.
+	 * <p>
+	 * The returned set is read-only and is sorted in the order that the
+	 * extensions were read in. The returned set may change if plug-ins
+	 * are loaded or unloaded while the application is running.
+	 * </p>
+	 * 
+	 * @return the set of extensions to the
+	 *         <code>javaCompletionProposalComputer</code> extension
+	 *         point (element type:
+	 *         {@link CompletionProposalComputerDescriptor})
+	 */
+	public SortedSet getProposalComputerDescriptors() {
+		ensureExtensionPointRead();
+		return fPublicDescriptors;
 	}
 
 	/**
 	 * Ensures that the extensions are read and stored in
-	 * <code>fDescriptors</code>.
+	 * <code>fDescriptorsByPartition</code>.
 	 */
 	private void ensureExtensionPointRead() {
 		boolean reload;
@@ -350,6 +311,14 @@ public class CompletionProposalComputerRegistry {
 	public void reload() {
 		IExtensionRegistry registry= Platform.getExtensionRegistry();
 		Map map= new HashMap();
+		Set all= new HashSet();
+		
+		IPreferenceStore store= JavaPlugin.getDefault().getPreferenceStore();
+		String preference= store.getString(PreferenceConstants.CODEASSIST_DISABLED_COMPUTERS);
+		Set disabled= new HashSet();
+		StringTokenizer tok= new StringTokenizer(preference, "\0");  //$NON-NLS-1$
+		while (tok.hasMoreTokens())
+			disabled.add(tok.nextToken());
 		
 		IConfigurationElement[] elements= registry.getConfigurationElementsFor(JavaPlugin.getPluginId(), EXTENSION_POINT);
 		for (int i= 0; i < elements.length; i++) {
@@ -365,6 +334,9 @@ public class CompletionProposalComputerRegistry {
 					}
 					set.add(desc);
 				}
+				all.add(desc);
+				desc.setEnabled(!disabled.contains(desc.getId()));
+				
 			} catch (InvalidRegistryObjectException x) {
 				/*
 				 * Element is not valid any longer as the contributing
@@ -377,20 +349,23 @@ public class CompletionProposalComputerRegistry {
 		
 		synchronized (this) {
 			Set partitions= map.keySet();
-			fDescriptors.keySet().retainAll(partitions);
-			fPublicDescriptors.keySet().retainAll(partitions);
+			fDescriptorsByPartition.keySet().retainAll(partitions);
+			fPublicDescriptorsByPartition.keySet().retainAll(partitions);
 			for (Iterator it= partitions.iterator(); it.hasNext();) {
 				String partition= (String) it.next();
-				SortedSet old= (SortedSet) fDescriptors.get(partition);
+				SortedSet old= (SortedSet) fDescriptorsByPartition.get(partition);
 				SortedSet current= (SortedSet) map.get(partition);
 				if (old != null) {
 					old.clear();
 					old.addAll(current);
 				} else {
-					fDescriptors.put(partition, current);
-					fPublicDescriptors.put(partition, Collections.unmodifiableSortedSet(current));
+					fDescriptorsByPartition.put(partition, current);
+					fPublicDescriptorsByPartition.put(partition, Collections.unmodifiableSortedSet(current));
 				}
 			}
+			
+			fDescriptors.clear();
+			fDescriptors.addAll(all);
 		}
 	}
 
@@ -405,7 +380,7 @@ public class CompletionProposalComputerRegistry {
 		Set partitions= descriptor.getPartitions();
 		for (Iterator it= partitions.iterator(); it.hasNext();) {
 			String partition= (String) it.next();
-			SortedSet descriptors= (SortedSet) fDescriptors.get(partition);
+			SortedSet descriptors= (SortedSet) fDescriptorsByPartition.get(partition);
 			if (descriptors != null) {
 				// use identity since TreeSet does not check equality
 				for (Iterator it2= descriptors.iterator(); it2.hasNext();) {

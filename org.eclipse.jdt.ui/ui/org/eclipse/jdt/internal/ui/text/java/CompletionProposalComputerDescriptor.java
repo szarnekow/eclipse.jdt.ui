@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.internal.ui.text.java;
 
+import java.net.URL;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -21,8 +22,11 @@ import org.eclipse.core.runtime.IExtension;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.InvalidRegistryObjectException;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
+
+import org.eclipse.jface.resource.ImageDescriptor;
 
 import org.eclipse.jface.text.Assert;
 import org.eclipse.jface.text.IDocument;
@@ -48,6 +52,8 @@ public final class CompletionProposalComputerDescriptor {
 	private static final String TYPE= "type"; //$NON-NLS-1$
 	/** The extension point name of the class attribute. */
 	private static final String CLASS= "class"; //$NON-NLS-1$
+	/** The extension point name of the icon attribute. */
+	private static final String ICON= "icon"; //$NON-NLS-1$
 	/** The extension point name of the activate attribute. */
 	private static final String ACTIVATE= "activate"; //$NON-NLS-1$
 	/** The extension point name of the partition child elements. */
@@ -85,6 +91,10 @@ public final class CompletionProposalComputerDescriptor {
 	private final CompletionProposalComputerRegistry fRegistry;
 	/** The computer, if instantiated, <code>null</code> otherwise. */
 	ICompletionProposalComputer fComputer;
+	/** The enablement state (internal). */
+	private boolean fEnabled;
+	/** The image descriptor for this computer, or <code>null</code> if none specified. */
+	private final ImageDescriptor fImage;
 
 	/**
 	 * Creates a new descriptor.
@@ -128,7 +138,20 @@ public final class CompletionProposalComputerDescriptor {
 		fClass= element.getAttributeAsIs(CLASS);
 		checkNotNull(fClass, CLASS);
 		
+		String icon= element.getAttributeAsIs(ICON);
+		ImageDescriptor img= null;
+		if (icon != null) {
+			Bundle bundle= getBundle();
+			if (bundle != null) {
+				Path path= new Path(icon);
+				URL url= Platform.find(bundle, path);
+				img= ImageDescriptor.createFromURL(url);
+			}
+		}
+		fImage= img;
+		
 		fOrdinal= ordinal;
+		fEnabled= true;
 	}
 
 	/**
@@ -191,9 +214,14 @@ public final class CompletionProposalComputerDescriptor {
 	}
 
 	private boolean isPluginLoaded() {
+		Bundle bundle= getBundle();
+		return bundle != null && bundle.getState() == Bundle.ACTIVE;
+	}
+
+	private Bundle getBundle() {
 		String namespace= fElement.getDeclaringExtension().getNamespace();
 		Bundle bundle= Platform.getBundle(namespace);
-		return bundle != null && bundle.getState() == Bundle.ACTIVE;
+		return bundle;
 	}
 
 	/**
@@ -217,6 +245,9 @@ public final class CompletionProposalComputerDescriptor {
 	}
 	
 	public List computeCompletionProposals(TextContentAssistInvocationContext context, IProgressMonitor monitor) {
+		if (!fEnabled)
+			return Collections.EMPTY_LIST;
+		
 		IStatus status;
 		try {
 			List proposals= getComputer().computeCompletionProposals(context, monitor);
@@ -245,6 +276,9 @@ public final class CompletionProposalComputerDescriptor {
 	}
 
 	public List computeContextInformation(TextContentAssistInvocationContext context, IProgressMonitor monitor) {
+		if (!fEnabled)
+			return Collections.EMPTY_LIST;
+		
 		IStatus status;
 		try {
 			List proposals= getComputer().computeContextInformation(context, monitor);
@@ -280,5 +314,17 @@ public final class CompletionProposalComputerDescriptor {
 	 */
 	int ordinal() {
 		return fOrdinal;
+	}
+
+	public void setEnabled(boolean enable) {
+		fEnabled= enable;
+	}
+
+	public boolean isEnabled() {
+		return fEnabled;
+	}
+	
+	public ImageDescriptor getImageDescriptor() {
+		return fImage;
 	}
 }
