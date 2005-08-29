@@ -138,4 +138,6 @@ final class JavaEditorMessages extends NLS {
 	static {
 		NLS.initializeMessages(BUNDLE_NAME, JavaEditorMessages.class);
 	}
+
+	public static String BasicEditorActionContributor_specific_content_assist_menu;
 }

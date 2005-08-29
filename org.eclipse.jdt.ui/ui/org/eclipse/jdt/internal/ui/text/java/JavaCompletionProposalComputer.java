@@ -26,8 +26,10 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 
+import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.ITextViewer;
+import org.eclipse.jface.text.TextUtilities;
 import org.eclipse.jface.text.contentassist.ICompletionProposal;
 import org.eclipse.jface.text.contentassist.ICompletionProposalComputer;
 import org.eclipse.jface.text.contentassist.IContextInformation;
@@ -38,9 +40,11 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaModelException;
 
 import org.eclipse.jdt.ui.PreferenceConstants;
+import org.eclipse.jdt.ui.text.IJavaPartitions;
 import org.eclipse.jdt.ui.text.java.CompletionProposalCollector;
 
 import org.eclipse.jdt.internal.ui.text.JavaCodeReader;
+import org.eclipse.jdt.internal.ui.text.javadoc.JavadocCompletionProposalComputer;
 
 /**
  * Computes Java completion proposals and context infos.
@@ -101,7 +105,10 @@ public final class JavaCompletionProposalComputer implements ICompletionProposal
 		}
 	}
 
+	private final ICompletionProposalComputer fJavadocComputer;
+	
 	public JavaCompletionProposalComputer() {
+		fJavadocComputer= new JavadocCompletionProposalComputer();
 	}
 
 	private boolean looksLikeMethod(JavaCodeReader reader) throws IOException {
@@ -171,6 +178,13 @@ public final class JavaCompletionProposalComputer implements ICompletionProposal
 	 * @see org.eclipse.jface.text.contentassist.ICompletionProposalComputer#computeContextInformation(org.eclipse.jface.text.contentassist.TextContentAssistInvocationContext, org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	public List computeContextInformation(TextContentAssistInvocationContext context, IProgressMonitor monitor) {
+		try {
+			String partition= TextUtilities.getContentType(context.getDocument(), IJavaPartitions.JAVA_PARTITIONING, context.getInvocationOffset(), true);
+			if (partition.equals(IJavaPartitions.JAVA_DOC))
+				return fJavadocComputer.computeContextInformation(context, monitor);
+		} catch (BadLocationException x) {
+			return Collections.EMPTY_LIST;
+		}
 		if (context instanceof JavaContentAssistInvocationContext) {
 			JavaContentAssistInvocationContext javaContext= (JavaContentAssistInvocationContext) context;
 			
@@ -185,6 +199,13 @@ public final class JavaCompletionProposalComputer implements ICompletionProposal
 	 * @see org.eclipse.jface.text.contentassist.ICompletionProposalComputer#computeCompletionProposals(org.eclipse.jface.text.contentassist.TextContentAssistInvocationContext, org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	public List computeCompletionProposals(TextContentAssistInvocationContext context, IProgressMonitor monitor) {
+		try {
+			String partition= TextUtilities.getContentType(context.getDocument(), IJavaPartitions.JAVA_PARTITIONING, context.getInvocationOffset(), true);
+			if (partition.equals(IJavaPartitions.JAVA_DOC))
+				return fJavadocComputer.computeCompletionProposals(context, monitor);
+		} catch (BadLocationException x) {
+			return Collections.EMPTY_LIST;
+		}
 		if (context instanceof JavaContentAssistInvocationContext) {
 			JavaContentAssistInvocationContext javaContext= (JavaContentAssistInvocationContext) context;
 			return internalComputeCompletionProposals(context.getInvocationOffset(), javaContext, monitor);

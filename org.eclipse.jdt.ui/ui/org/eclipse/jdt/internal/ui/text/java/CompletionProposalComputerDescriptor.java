@@ -11,6 +11,7 @@
 package org.eclipse.jdt.internal.ui.text.java;
 
 import java.net.URL;
+import java.text.MessageFormat;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -23,6 +24,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.InvalidRegistryObjectException;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.PerformanceStats;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 
@@ -58,8 +60,18 @@ public final class CompletionProposalComputerDescriptor {
 	private static final String ACTIVATE= "activate"; //$NON-NLS-1$
 	/** The extension point name of the partition child elements. */
 	private static final String PARTITION= "partition"; //$NON-NLS-1$
-	/** Maps xml partition labels to JDT partition types. */
+	/** Set of Java partition types. */
 	private static final Set PARTITION_SET;
+	/** The name of the performance event used to trace extensions. */
+	private static final String PERFORMANCE_EVENT= JavaPlugin.getPluginId() + "/perf/content_assist/extensions"; //$NON-NLS-1$
+	/**
+	 * If <code>true</code>, execution time of extensions is measured and extensions may be
+	 * disabled if execution takes too long.
+	 */
+	private static final boolean MEASURE_PERFORMANCE= PerformanceStats.isEnabled(PERFORMANCE_EVENT);
+	/* log constants */
+	private static final String COMPUTE_COMPLETION_PROPOSALS= "computeCompletionProposals()"; //$NON-NLS-1$
+	private static final String COMPUTE_CONTEXT_INFORMATION= "computeContextInformation()"; //$NON-NLS-1$
 	
 	static {
 		Set partitions= new HashSet();
@@ -162,7 +174,9 @@ public final class CompletionProposalComputerDescriptor {
 	 */
 	private void checkNotNull(Object obj, String attribute) throws InvalidRegistryObjectException {
 		if (obj == null) {
-			IStatus status= new Status(IStatus.WARNING, JavaPlugin.getPluginId(), IStatus.OK, "Content Assist: The extension \"" + getId() + "\" from plug-in \"" + fElement.getNamespace() + "\" did not specify a value for the required \"" + attribute + "\" attribute. Disabling the extension.", null);
+			Object[] args= { getId(), fElement.getNamespace(), attribute };
+			String message= MessageFormat.format(JavaTextMessages.CompletionProposalComputerDescriptor_illegal_attribute_message, args);
+			IStatus status= new Status(IStatus.WARNING, JavaPlugin.getPluginId(), IStatus.OK, message, null);
 			JavaPlugin.log(status);
 			throw new InvalidRegistryObjectException();
 		}
@@ -244,68 +258,149 @@ public final class CompletionProposalComputerDescriptor {
 		return (ICompletionProposalComputer) fElement.createExecutableExtension(CLASS);
 	}
 	
+	/**
+	 * Safely computes completion proposals through the described extension. If the extension
+	 * is disabled, throws an exception or otherwise does not adhere to the contract described in
+	 * {@link ICompletionProposalComputer}, an empty list is returned.
+	 * 
+	 * @param context the invocation context passed on to the extension
+	 * @param monitor the progress monitor passed on to the extension
+	 * @return the list of computed completion proposals (element type: {@link org.eclipse.jface.text.contentassist.ICompletionProposal})
+	 */
 	public List computeCompletionProposals(TextContentAssistInvocationContext context, IProgressMonitor monitor) {
 		if (!fEnabled)
 			return Collections.EMPTY_LIST;
 		
 		IStatus status;
 		try {
-			List proposals= getComputer().computeCompletionProposals(context, monitor);
+			ICompletionProposalComputer computer= getComputer();
+			
+			PerformanceStats stats= startMeter(context, computer);
+			List proposals= computer.computeCompletionProposals(context, monitor);
+			stopMeter(stats, COMPUTE_COMPLETION_PROPOSALS);
+			
 			if (proposals != null)
 				return proposals;
-			// API violation - log & disable
-			status= new Status(IStatus.WARNING, JavaPlugin.getPluginId(), IStatus.OK, "Content Assist: The extension \"" + getId() + "\" returned null to \"computeCompletionProposals()\". Disabling the extension.", null);
+			
+			status= createAPIViolationStatus(COMPUTE_COMPLETION_PROPOSALS);
 		} catch (InvalidRegistryObjectException x) {
-			// extension has become invalid - ignore & disable
-			status= new Status(IStatus.WARNING, JavaPlugin.getPluginId(), IStatus.OK, "Content Assist: The extension \"" + getId() + "\" has become invalid. Disabling the extension.", x);
+			status= createExceptionStatus(x);
 		} catch (CoreException x) {
-			// unable to instantiate the extension - log & disable
-			status= new Status(IStatus.ERROR, JavaPlugin.getPluginId(), IStatus.OK, "Content Assist: Unable to instantiate the extension \"" + getId() + "\". Disabling the extension.", x);
+			status= createExceptionStatus(x);
 		} catch (RuntimeException x) {
-			// misbehaving extension - log & disable
-			status= new Status(IStatus.ERROR, JavaPlugin.getPluginId(), IStatus.OK, "Content Assist: The extension \"" + getId() + "\" has thrown an exception. Disabling the extension.", x);
+			status= createExceptionStatus(x);
 		} finally {
 			monitor.done();
 		}
 		
-		JavaPlugin.log(status);
-		
-		fRegistry.remove(this);
+		fRegistry.remove(this, status);
 
 		return Collections.EMPTY_LIST;
 	}
 
+	/**
+	 * Safely computes context information objects through the described extension. If the extension
+	 * is disabled, throws an exception or otherwise does not adhere to the contract described in
+	 * {@link ICompletionProposalComputer}, an empty list is returned.
+	 * 
+	 * @param context the invocation context passed on to the extension
+	 * @param monitor the progress monitor passed on to the extension
+	 * @return the list of computed context information objects (element type: {@link org.eclipse.jface.text.contentassist.IContextInformation})
+	 */
 	public List computeContextInformation(TextContentAssistInvocationContext context, IProgressMonitor monitor) {
 		if (!fEnabled)
 			return Collections.EMPTY_LIST;
 		
 		IStatus status;
 		try {
-			List proposals= getComputer().computeContextInformation(context, monitor);
+			ICompletionProposalComputer computer= getComputer();
+			
+			PerformanceStats stats= startMeter(context, computer);
+			List proposals= computer.computeContextInformation(context, monitor);
+			stopMeter(stats, COMPUTE_CONTEXT_INFORMATION);
+			
 			if (proposals != null)
 				return proposals;
-			// API violation - log & disable
-			status= new Status(IStatus.WARNING, JavaPlugin.getPluginId(), IStatus.OK, "Content Assist: The extension \"" + getId() + "\" returned null to \"computeContextInformation()\". Disabling the extension.", null);
+			
+			status= createAPIViolationStatus(COMPUTE_CONTEXT_INFORMATION);
 		} catch (InvalidRegistryObjectException x) {
-			// extension has become invalid - ignore & disable
-			status= new Status(IStatus.WARNING, JavaPlugin.getPluginId(), IStatus.OK, "Content Assist: The extension \"" + getId() + "\" has become invalid. Disabling the extension.", x);
+			status= createExceptionStatus(x);
 		} catch (CoreException x) {
-			// unable to instantiate the extension - log & disable
-			status= new Status(IStatus.ERROR, JavaPlugin.getPluginId(), IStatus.OK, "Content Assist: Unable to instantiate the extension \"" + getId() + "\". Disabling the extension.", x);
+			status= createExceptionStatus(x);
 		} catch (RuntimeException x) {
-			// misbehaving extension - log & disable
-			status= new Status(IStatus.ERROR, JavaPlugin.getPluginId(), IStatus.OK, "Content Assist: The extension \"" + getId() + "\" has thrown an exception. Disabling the extension.", x);
+			status= createExceptionStatus(x);
 		} finally {
 			monitor.done();
 		}
 		
-		JavaPlugin.log(status);
-		
-		fRegistry.remove(this);
+		fRegistry.remove(this, status);
 		
 		return Collections.EMPTY_LIST;
 	}
+	
+	private void stopMeter(final PerformanceStats stats, String operation) {
+		IStatus status;
+		if (MEASURE_PERFORMANCE) {
+			stats.endRun();
+			if (stats.isFailure()) {
+				status= createPerformanceStatus(operation);
+				fRegistry.remove(this, status);
+			}
+		}
+	}
 
+	private PerformanceStats startMeter(TextContentAssistInvocationContext context, ICompletionProposalComputer computer) {
+		final PerformanceStats stats;
+		if (MEASURE_PERFORMANCE) {
+			stats= PerformanceStats.getStats(PERFORMANCE_EVENT, computer);
+			stats.startRun(context.toString());
+		} else {
+			stats= null;
+		}
+		return stats;
+	}
+
+	private Status createExceptionStatus(InvalidRegistryObjectException x) {
+		// extension has become invalid - log & disable
+		String disable= createDisableMessage();
+		String reason= JavaTextMessages.CompletionProposalComputerDescriptor_reason_invalid;
+		return new Status(IStatus.INFO, JavaPlugin.getPluginId(), IStatus.OK, disable + " " + reason, x); //$NON-NLS-1$
+	}
+
+	private Status createExceptionStatus(CoreException x) {
+		// unable to instantiate the extension - log & disable
+		String disable= createDisableMessage();
+		String reason= JavaTextMessages.CompletionProposalComputerDescriptor_reason_instantiation;
+		return new Status(IStatus.ERROR, JavaPlugin.getPluginId(), IStatus.OK, disable + " " + reason, x); //$NON-NLS-1$
+	}
+	
+	private Status createExceptionStatus(RuntimeException x) {
+		// misbehaving extension - log & disable
+		String disable= createDisableMessage();
+		String reason= JavaTextMessages.CompletionProposalComputerDescriptor_reason_runime_ex;
+		return new Status(IStatus.WARNING, JavaPlugin.getPluginId(), IStatus.OK, disable + " " + reason, x); //$NON-NLS-1$
+	}
+
+	private Status createAPIViolationStatus(String operation) {
+		String disable= createDisableMessage();
+		Object[] args= {operation};
+		String reason= MessageFormat.format(JavaTextMessages.CompletionProposalComputerDescriptor_reason_API, args);
+		return new Status(IStatus.WARNING, JavaPlugin.getPluginId(), IStatus.OK, disable + " " + reason, null); //$NON-NLS-1$
+	}
+
+	private Status createPerformanceStatus(String operation) {
+		String disable= createDisableMessage();
+		Object[] args= {operation};
+		String reason= MessageFormat.format(JavaTextMessages.CompletionProposalComputerDescriptor_reason_performance, args);
+		return new Status(IStatus.WARNING, JavaPlugin.getPluginId(), IStatus.OK, disable + " " + reason, null); //$NON-NLS-1$
+	}
+
+	private String createDisableMessage() {
+		Object[] args= { getName(), getId() };
+		String disable= MessageFormat.format( JavaTextMessages.CompletionProposalComputerDescriptor_disabling_message, args);
+		return disable;
+	}
+	
 	/**
 	 * Returns the ordinal of this descriptor (used to keep the
 	 * iteration order of created descriptors constant.
@@ -316,14 +411,29 @@ public final class CompletionProposalComputerDescriptor {
 		return fOrdinal;
 	}
 
+	/**
+	 * Sets the enablement of the described extension.
+	 * 
+	 * @param enable <code>true</code> to enable, <code>false</code> to disable the extension
+	 */
 	public void setEnabled(boolean enable) {
 		fEnabled= enable;
 	}
 
+	/**
+	 * Returns the enablement state of the described extension.
+	 * 
+	 * @return the enablement state of the described extension
+	 */
 	public boolean isEnabled() {
 		return fEnabled;
 	}
 	
+	/**
+	 * Returns the image descriptor of the described extension.
+	 * 
+	 * @return the image descriptor of the described extension
+	 */
 	public ImageDescriptor getImageDescriptor() {
 		return fImage;
 	}

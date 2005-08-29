@@ -171,8 +171,8 @@
       </quickAssistProcessor>
    </extension>
 
-	<!-- content assist processors -->   
-	<!-- java completions -->   
+	<!-- content assist processors - do not change their order -->   
+	<!-- java(doc) completions -->   
 	<extension
 		point="org.eclipse.jdt.ui.javaCompletionProposalComputer"
 		id="JavaCompletionProposalComputer"
@@ -181,16 +181,6 @@
 			class="org.eclipse.jdt.internal.ui.text.java.JavaCompletionProposalComputer"
 			icon="$nl$/icons/full/obj16/java_assist.png">
 			<partition type="__dftl_partition_content_type"/>
-		</javaCompletionProposalComputer>
-	</extension>
-	<!-- javadoc proposals -->
-	<extension
-		point="org.eclipse.jdt.ui.javaCompletionProposalComputer"
-		id="JavadocCompletionProposalComputer"
-		name="%JavadocCompletionProposalComputer">
-		<javaCompletionProposalComputer
-			class="org.eclipse.jdt.internal.ui.text.javadoc.JavadocCompletionProposalComputer"
-			icon="$nl$/icons/full/obj16/javadoc_assist.png">
 			<partition type="__java_javadoc"/>
 		</javaCompletionProposalComputer>
 	</extension>
@@ -231,6 +221,34 @@
 			icon="$nl$/icons/full/obj16/hippie_assist.png"/>
 	</extension>
 	
+	<!-- the parameterized content assist action and keybindings for our contributed computers -->
+	<extension
+		point="org.eclipse.ui.commands">
+		<command
+			categoryId="org.eclipse.ui.category.edit"
+			description="A parameterizable command that invokes content assist with a single completion proposal computer"
+			id="org.eclipse.jdt.ui.specific_content_assist.command"
+			name="Specific Content Assist"
+			defaultHandler="org.eclipse.jdt.internal.ui.text.java.JavaContentAssistHandler">
+			<commandParameter
+				id="org.eclipse.jdt.ui.specific_content_assist.computer_id"
+				name="type"
+				optional="false"
+				values="org.eclipse.jdt.internal.ui.text.java.ContentAssistComputerParameter"/>
+		</command>
+	</extension>
+	<extension
+		point="org.eclipse.ui.bindings">
+		<key
+			commandId="org.eclipse.jdt.ui.specific_content_assist.command"
+			contextId="org.eclipse.jdt.ui.javaEditorScope"
+			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+			sequence="Alt+/">
+			<parameter
+				id="org.eclipse.jdt.ui.specific_content_assist.computer_id"
+				value="org.eclipse.jdt.ui.HippieCompletionProposalComputer"/>
+		</key>
+	</extension>
 	
    <!-- Note: Do not change the sequence of those hover contributions -->
    <extension

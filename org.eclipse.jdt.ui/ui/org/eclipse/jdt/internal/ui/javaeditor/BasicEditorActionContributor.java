@@ -11,24 +11,32 @@
 package org.eclipse.jdt.internal.ui.javaeditor;
 
 
+import java.util.Iterator;
+import java.util.Set;
+
+import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.action.MenuManager;
 
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.actions.RetargetAction;
-import org.eclipse.ui.ide.IDEActionFactory;
 import org.eclipse.ui.texteditor.ITextEditor;
 import org.eclipse.ui.texteditor.ITextEditorActionConstants;
 import org.eclipse.ui.texteditor.ITextEditorActionDefinitionIds;
 import org.eclipse.ui.texteditor.RetargetTextEditorAction;
+
+import org.eclipse.ui.ide.IDEActionFactory;
 
 import org.eclipse.jdt.ui.IContextMenuConstants;
 import org.eclipse.jdt.ui.actions.IJavaEditorActionDefinitionIds;
 import org.eclipse.jdt.ui.actions.JdtActionConstants;
 
 import org.eclipse.jdt.internal.ui.JavaPluginImages;
+import org.eclipse.jdt.internal.ui.text.java.CompletionProposalComputerDescriptor;
+import org.eclipse.jdt.internal.ui.text.java.CompletionProposalComputerRegistry;
 
 
 public class BasicEditorActionContributor extends BasicJavaEditorActionContributor {
@@ -74,6 +82,16 @@ public class BasicEditorActionContributor extends BasicJavaEditorActionContribut
 			editMenu.appendToGroup(IContextMenuConstants.GROUP_GENERATE, fRetargetContentAssist);
 			editMenu.appendToGroup(IContextMenuConstants.GROUP_GENERATE, fCorrectionAssist);
 			editMenu.appendToGroup(IContextMenuConstants.GROUP_GENERATE, fContextInformation);
+			
+			IMenuManager caMenu= new MenuManager(JavaEditorMessages.BasicEditorActionContributor_specific_content_assist_menu, "specific_content_assist"); //$NON-NLS-1$
+			editMenu.insertAfter(fRetargetContentAssist.getId(), caMenu);
+			
+			Set descriptors= CompletionProposalComputerRegistry.getDefault().getProposalComputerDescriptors();
+			for (Iterator it= descriptors.iterator(); it.hasNext();) {
+				final CompletionProposalComputerDescriptor desc= (CompletionProposalComputerDescriptor) it.next();
+				IAction caAction= new SpecificContentAssistAction(desc);
+				caMenu.add(caAction);
+			}
 		}
 	}
 

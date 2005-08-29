@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.internal.ui.text.java;
 
-import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -22,39 +22,19 @@ import java.util.SortedSet;
 import java.util.StringTokenizer;
 import java.util.TreeSet;
 
-import org.eclipse.core.commands.AbstractHandler;
-import org.eclipse.core.commands.Category;
-import org.eclipse.core.commands.Command;
-import org.eclipse.core.commands.ExecutionEvent;
-import org.eclipse.core.commands.ExecutionException;
-import org.eclipse.core.commands.ParameterizedCommand;
-
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtensionRegistry;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.InvalidRegistryObjectException;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.Status;
 
-import org.eclipse.swt.SWT;
-
-import org.eclipse.jface.action.IAction;
-import org.eclipse.jface.bindings.Binding;
-import org.eclipse.jface.bindings.keys.KeyBinding;
-import org.eclipse.jface.bindings.keys.KeySequence;
-import org.eclipse.jface.bindings.keys.KeyStroke;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.preference.IPreferenceStore;
-
-import org.eclipse.ui.IEditorPart;
-import org.eclipse.ui.IWorkbench;
-import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.commands.ICommandService;
-import org.eclipse.ui.keys.IBindingService;
-
-import org.eclipse.jdt.internal.corext.Assert;
 
 import org.eclipse.jdt.ui.PreferenceConstants;
 
 import org.eclipse.jdt.internal.ui.JavaPlugin;
-import org.eclipse.jdt.internal.ui.javaeditor.JavaEditor;
 
 /**
  * A registry for all extensions to the
@@ -92,117 +72,11 @@ public class CompletionProposalComputerRegistry {
 	public static synchronized CompletionProposalComputerRegistry getDefault() {
 		if (fgSingleton == null) {
 			fgSingleton= new CompletionProposalComputerRegistry();
-			
-			// TODO move somewhere else
-			createCommands();
 		}
 		
 		return fgSingleton;
 	}
 	
-	private static void createCommands() {
-		final IWorkbench workbench= PlatformUI.getWorkbench();
-		ICommandService commandSvc= (ICommandService) workbench.getAdapter(ICommandService.class);
-		IBindingService bindingSvc= (IBindingService) workbench.getAdapter(IBindingService.class);
-		Category category= commandSvc.getCategory("org.eclipse.ui.category.edit"); //$NON-NLS-1$
-		
-		final Set computers= getDefault().getProposalComputerDescriptors();
-		
-		Set characters= new HashSet();
-		KeyStroke[] strokes= {KeyStroke.getInstance(SWT.SHIFT, ' '), null};
-		
-		for (Iterator it= computers.iterator(); it.hasNext();) {
-			final CompletionProposalComputerDescriptor desc= (CompletionProposalComputerDescriptor) it.next();
-			
-			Command command= commandSvc.getCommand(desc.getId() + ".direct_command"); //$NON-NLS-1$
-			Assert.isTrue(!command.isDefined());
-			command.define(desc.getName(), "Shows " + desc.getName() + " content assist proposals", category, null);
-			char key= getUniqueKey(characters, desc.getName());
-			if (key != 0) {
-				strokes[1]= KeyStroke.getInstance(key);
-				KeySequence sequence= KeySequence.getInstance(strokes);
-				ParameterizedCommand pCommand= new ParameterizedCommand(command, null);
-				String scheme= bindingSvc.getDefaultSchemeId();
-				String context= "org.eclipse.jdt.ui.javaEditorScope"; //$NON-NLS-1$
-				String locale= null;
-				String platform= null;
-				String wm= null;
-				int type= Binding.SYSTEM;
-				KeyBinding binding= new KeyBinding(sequence, pCommand, scheme, context, locale, platform, wm, type);
-				Binding[] oldBindings= bindingSvc.getBindings();
-				Binding[] newBindings= new Binding[oldBindings.length + 1];
-				System.arraycopy(oldBindings, 0, newBindings, 0, oldBindings.length);
-				newBindings[oldBindings.length]= binding;
-				try {
-					bindingSvc.savePreferences(bindingSvc.getActiveScheme(), newBindings);
-				} catch (IOException x) {
-					x.printStackTrace();
-				}
-			}
-			
-			AbstractHandler handler= new AbstractHandler() {
-				
-				/*
-				 * @see org.eclipse.core.commands.IHandler#execute(org.eclipse.core.commands.ExecutionEvent)
-				 */
-				public Object execute(ExecutionEvent event) throws ExecutionException {
-					final JavaEditor editor= getActiveEditor();
-					if (editor == null)
-						return null;
-					
-					IAction action= editor.getAction("ContentAssistProposal"); //$NON-NLS-1$
-					if (action == null || !action.isEnabled())
-						return null;
-					
-					boolean[] oldstates= new boolean[computers.size()];
-					int i= 0;
-					for (Iterator it1= computers.iterator(); it1.hasNext();) {
-						CompletionProposalComputerDescriptor d= (CompletionProposalComputerDescriptor) it1.next();
-						oldstates[i++]= d.isEnabled();
-						d.setEnabled(d == desc);
-					}
-					
-					try {
-						action.run();
-					} finally {
-						i= 0;
-						for (Iterator it1= computers.iterator(); it1.hasNext();) {
-							CompletionProposalComputerDescriptor d= (CompletionProposalComputerDescriptor) it1.next();
-							d.setEnabled(oldstates[i++]);
-						}
-					}
-					
-					return null;
-				}
-				
-				private JavaEditor getActiveEditor() {
-					IEditorPart editor= workbench.getActiveWorkbenchWindow().getActivePage().getActiveEditor();
-					if (editor instanceof JavaEditor)
-						return (JavaEditor) editor;
-					return null;
-				}
-				
-			};
-			command.setHandler(handler);
-			
-		}
-
-	}
-
-	private static char getUniqueKey(Set characters, String name) {
-		String alphabet= "ABCDEFGHIJKLMNOPQRSTUVWXYZ"; //$NON-NLS-1$
-		int len= name.length();
-		for (int i= 0; i < len; i++) {
-			char c= Character.toUpperCase(name.charAt(i));
-			if (alphabet.indexOf(c) != -1 && !characters.contains(new Character(c))) {
-				characters.add(new Character(c));
-				return c;
-			}
-		}
-		
-		return 0;
-	}
-
 	/**
 	 * The sets of descriptors, grouped by partition type (key type:
 	 * {@link String}, value type:
@@ -339,11 +213,14 @@ public class CompletionProposalComputerRegistry {
 				
 			} catch (InvalidRegistryObjectException x) {
 				/*
-				 * Element is not valid any longer as the contributing
-				 * plug-in was unloaded or for some other reason. Ignore
-				 * this fact but do not include the extension in the
-				 * list.
+				 * Element is not valid any longer as the contributing plug-in was unloaded or for
+				 * some other reason. Do not include the extension in the list and inform the user
+				 * about it.
 				 */
+				Object[] args= {elements[i].toString()};
+				String message= MessageFormat.format(JavaTextMessages.CompletionProposalComputerRegistry_invalid_message, args);
+				IStatus status= new Status(IStatus.WARNING, JavaPlugin.getPluginId(), IStatus.OK, message, x);
+				informUser(status);
 			}
 		}
 		
@@ -375,8 +252,9 @@ public class CompletionProposalComputerRegistry {
 	 * the receiver.
 	 * 
 	 * @param descriptor the descriptor to be removed
+	 * @param status a status object that will be logged
 	 */
-	void remove(CompletionProposalComputerDescriptor descriptor) {
+	void remove(CompletionProposalComputerDescriptor descriptor, IStatus status) {
 		Set partitions= descriptor.getPartitions();
 		for (Iterator it= partitions.iterator(); it.hasNext();) {
 			String partition= (String) it.next();
@@ -392,5 +270,13 @@ public class CompletionProposalComputerRegistry {
 				}
 			}
 		}
+		informUser(status);
+	}
+
+	private void informUser(IStatus status) {
+		JavaPlugin.log(status);
+		String title= JavaTextMessages.CompletionProposalComputerRegistry_error_dialog_title;
+		String message= status.getMessage();
+		MessageDialog.openError(JavaPlugin.getActiveWorkbenchShell(), title, message);
 	}
 }

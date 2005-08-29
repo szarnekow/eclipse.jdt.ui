@@ -45,4 +45,13 @@ final class JavaTextMessages extends NLS {
 	public static String ContentAssistProcessor_computing_contexts;
 	public static String ContentAssistProcessor_collecting_contexts;
 	public static String ContentAssistProcessor_sorting_contexts;
+	public static String CompletionProposalComputerDescriptor_illegal_attribute_message;
+	public static String CompletionProposalComputerDescriptor_reason_invalid;
+	public static String CompletionProposalComputerDescriptor_reason_instantiation;
+	public static String CompletionProposalComputerDescriptor_reason_runime_ex;
+	public static String CompletionProposalComputerDescriptor_reason_API;
+	public static String CompletionProposalComputerDescriptor_reason_performance;
+	public static String CompletionProposalComputerDescriptor_disabling_message;
+	public static String CompletionProposalComputerRegistry_invalid_message;
+	public static String CompletionProposalComputerRegistry_error_dialog_title;
 }

@@ -10,28 +10,52 @@
  *******************************************************************************/
 package org.eclipse.jdt.internal.ui.preferences;
 
+import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.SortedSet;
 
+import org.eclipse.core.commands.Command;
+import org.eclipse.core.commands.IParameter;
+import org.eclipse.core.commands.Parameterization;
+import org.eclipse.core.commands.ParameterizedCommand;
+import org.eclipse.core.commands.common.NotDefinedException;
+
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.layout.RowData;
 import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Link;
+import org.eclipse.swt.widgets.Table;
+import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.Widget;
 
+import org.eclipse.jface.bindings.Binding;
+import org.eclipse.jface.bindings.TriggerSequence;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.viewers.CheckboxTableViewer;
 import org.eclipse.jface.viewers.IContentProvider;
-import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
+import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.Viewer;
 
+import org.eclipse.jface.text.Assert;
+
+import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.commands.ICommandService;
+import org.eclipse.ui.dialogs.PreferencesUtil;
+import org.eclipse.ui.keys.IBindingService;
 import org.eclipse.ui.preferences.IWorkbenchPreferenceContainer;
+import org.eclipse.ui.texteditor.ITextEditorActionDefinitionIds;
 
 import org.eclipse.jdt.ui.PreferenceConstants;
 
@@ -43,7 +67,51 @@ import org.eclipse.jdt.internal.ui.wizards.IStatusChangeListener;
  * 	
  * @since 3.2
  */
-public final class CodeAssistConfigurationBlockInProgress extends OptionsConfigurationBlock {
+final class CodeAssistConfigurationBlockInProgress extends OptionsConfigurationBlock {
+	private final class ComputerLabelProvider extends LabelProvider implements ITableLabelProvider {
+		private final Command fCommand;
+		private final IParameter fParam;
+
+		private ComputerLabelProvider() {
+			ICommandService commandSvc= (ICommandService) PlatformUI.getWorkbench().getAdapter(ICommandService.class);
+			fCommand= commandSvc.getCommand("org.eclipse.jdt.ui.specific_content_assist.command"); //$NON-NLS-1$
+			IParameter type;
+			try {
+				type= fCommand.getParameters()[0];
+			} catch (NotDefinedException x) {
+				Assert.isTrue(false);
+				type= null;
+			}
+			fParam= type;
+		}
+
+		/*
+		 * @see org.eclipse.jface.viewers.ITableLabelProvider#getColumnImage(java.lang.Object, int)
+		 */
+		public Image getColumnImage(Object element, int columnIndex) {
+			if (columnIndex == 0)
+				return CodeAssistConfigurationBlockInProgress.this.getImage(((CompletionProposalComputerDescriptor) element).getImageDescriptor());
+			return null;
+		}
+
+		/*
+		 * @see org.eclipse.jface.viewers.ITableLabelProvider#getColumnText(java.lang.Object, int)
+		 */
+		public String getColumnText(Object element, int columnIndex) {
+			CompletionProposalComputerDescriptor desc= (CompletionProposalComputerDescriptor) element;
+			switch (columnIndex) {
+				case 0:
+					return desc.getName().replaceAll("&", ""); //$NON-NLS-1$ //$NON-NLS-2$
+				case 1:
+					final Parameterization[] params= { new Parameterization(fParam, desc.getId()) };
+					final ParameterizedCommand pCmd= new ParameterizedCommand(fCommand, params);
+					String key= getKeyboardShortcut(pCmd);
+					return key;
+			}
+			return null;
+		}
+	}
+
 	private static final String SEPARATOR= "\0"; //$NON-NLS-1$
 	private static final Key PREF_DISABLED_COMPUTERS= getJDTUIKey(PreferenceConstants.CODEASSIST_DISABLED_COMPUTERS);
 	private CheckboxTableViewer fViewer;
@@ -64,17 +132,43 @@ public final class CodeAssistConfigurationBlockInProgress extends OptionsConfigu
 	 */
 	protected Control createContents(Composite parent) {
 		Composite composite= new Composite(parent, SWT.NONE);
-		composite.setLayout(new RowLayout(SWT.VERTICAL));
+		RowLayout layout= new RowLayout(SWT.VERTICAL);
+		layout.spacing= 10;
+		composite.setLayout(layout);
 		
-		new Label(composite, SWT.NONE | SWT.WRAP).setText("Check the &proposal types that should be included in the default content assist command:");
+		final ICommandService commandSvc= (ICommandService) PlatformUI.getWorkbench().getAdapter(ICommandService.class);
+		final Command command= commandSvc.getCommand(ITextEditorActionDefinitionIds.CONTENT_ASSIST_PROPOSALS);
+		ParameterizedCommand pCmd= new ParameterizedCommand(command, null);
+		String key= getKeyboardShortcut(pCmd);
+		if (key == null)
+			key= PreferencesMessages.CodeAssistConfigurationBlock_no_shortcut;
+
+		new Label(composite, SWT.NONE | SWT.WRAP).setText(MessageFormat.format(PreferencesMessages.CodeAssistConfigurationBlock_computer_description, new Object[] { key }));
 		
 		createViewer(composite);
+		
+		Link link= new Link(composite, SWT.NONE | SWT.WRAP);
+		link.setText(PreferencesMessages.CodeAssistConfigurationBlock_computer_link);
+		link.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent e) {
+				PreferencesUtil.createPreferenceDialogOn(getShell(), e.text, null, null);
+			}
+		});
+		link.setLayoutData(new RowData(300, 100));
+		
 		
 		return composite;
 	}
 
 	private void createViewer(Composite composite) {
 		fViewer= CheckboxTableViewer.newCheckList(composite, SWT.FULL_SELECTION | SWT.BORDER);
+		Table table= fViewer.getTable();
+		table.setHeaderVisible(false);
+		table.setLinesVisible(false);
+		
+		TableColumn nameColumn= new TableColumn(table, SWT.NONE);
+		TableColumn keyColumn= new TableColumn(table, SWT.NONE);
+		
 		IContentProvider contentProvider= new IStructuredContentProvider() {
 			private CompletionProposalComputerRegistry fInput;
 
@@ -104,21 +198,8 @@ public final class CodeAssistConfigurationBlockInProgress extends OptionsConfigu
 			}
 		};
 		fViewer.setContentProvider(contentProvider);
-		ILabelProvider labelProvider= new LabelProvider() {
-			/*
-			 * @see org.eclipse.jface.viewers.LabelProvider#getText(java.lang.Object)
-			 */
-			public String getText(Object element) {
-				return ((CompletionProposalComputerDescriptor) element).getName();
-			}
-			
-			/*
-			 * @see org.eclipse.jface.viewers.LabelProvider#getImage(java.lang.Object)
-			 */
-			public Image getImage(Object element) {
-				return CodeAssistConfigurationBlockInProgress.this.getImage(((CompletionProposalComputerDescriptor) element).getImageDescriptor());
-			}
-		};
+		
+		ComputerLabelProvider labelProvider= new ComputerLabelProvider();
 		fViewer.setLabelProvider(labelProvider);
 		fViewer.setSorter(null);
 		CompletionProposalComputerRegistry registry= CompletionProposalComputerRegistry.getDefault();
@@ -126,10 +207,43 @@ public final class CodeAssistConfigurationBlockInProgress extends OptionsConfigu
 		
 		SortedSet descriptors= registry.getProposalComputerDescriptors();
 		// assume descriptors are up2date with the preferences
+		// compute widths along the way
+		final int ICON_AND_CHECKBOX_WITH= 40;
+		int minNameWidth= 100;
+		int minKeyWidth= 50;
 		for (Iterator iter= descriptors.iterator(); iter.hasNext();) {
 			CompletionProposalComputerDescriptor descriptor= (CompletionProposalComputerDescriptor) iter.next();
 			fViewer.setChecked(descriptor, descriptor.isEnabled());
+			
+			minNameWidth= Math.max(minNameWidth, computeWidth(table, labelProvider.getColumnText(descriptor, 0)) + ICON_AND_CHECKBOX_WITH);
+			minKeyWidth= Math.max(minKeyWidth, computeWidth(table, labelProvider.getColumnText(descriptor, 1)));
 		}
+		
+		nameColumn.setWidth(minNameWidth);
+		keyColumn.setWidth(minKeyWidth);
+	}
+	
+	private int computeWidth(Control control, String name) {
+		GC gc= new GC(control.getDisplay());
+		try {
+			gc.setFont(JFaceResources.getDialogFont());
+			return gc.stringExtent(name).x + 10;
+		} finally {
+			gc.dispose();
+		}
+	}
+
+	private String getKeyboardShortcut(ParameterizedCommand command) {
+		final IBindingService bindingSvc= (IBindingService) PlatformUI.getWorkbench().getAdapter(IBindingService.class);
+		final Binding[] bindings= bindingSvc.getBindings();
+		for (int i= 0; i < bindings.length; i++) {
+			Binding binding= bindings[i];
+			if (command.equals(binding.getParameterizedCommand())) {
+				TriggerSequence triggers= binding.getTriggerSequence();
+				return triggers.format();
+			}
+		}
+		return null;
 	}
 	
 	private Image getImage(ImageDescriptor imgDesc) {
