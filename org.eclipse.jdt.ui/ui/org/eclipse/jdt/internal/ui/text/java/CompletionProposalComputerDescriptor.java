@@ -43,22 +43,22 @@ import org.osgi.framework.Bundle;
 
 /**
  * The description of an extension to the
- * <code>org.eclipse.jdt.ui.javaCompletionProposalComputer</code>
- * extension point. Instances are immutable and have a unique identifier
- * (see {@link #getId()}).
+ * <code>org.eclipse.jdt.ui.javaCompletionProposalComputer</code> extension point. Instances are
+ * immutable. Instances can be obtained from a {@link CompletionProposalComputerRegistry}.
  * 
+ * @see CompletionProposalComputerRegistry
  * @since 3.2
  */
 public final class CompletionProposalComputerDescriptor {
-	/** The extension point name of the partition type attribute. */
+	/** The extension schema name of the partition type attribute. */
 	private static final String TYPE= "type"; //$NON-NLS-1$
-	/** The extension point name of the class attribute. */
+	/** The extension schema name of the class attribute. */
 	private static final String CLASS= "class"; //$NON-NLS-1$
-	/** The extension point name of the icon attribute. */
+	/** The extension schema name of the icon attribute. */
 	private static final String ICON= "icon"; //$NON-NLS-1$
-	/** The extension point name of the activate attribute. */
+	/** The extension schema name of the activate attribute. */
 	private static final String ACTIVATE= "activate"; //$NON-NLS-1$
-	/** The extension point name of the partition child elements. */
+	/** The extension schema name of the partition child elements. */
 	private static final String PARTITION= "partition"; //$NON-NLS-1$
 	/** Set of Java partition types. */
 	private static final Set PARTITION_SET;
@@ -102,7 +102,7 @@ public final class CompletionProposalComputerDescriptor {
 	/** The registry we are registered with. */
 	private final CompletionProposalComputerRegistry fRegistry;
 	/** The computer, if instantiated, <code>null</code> otherwise. */
-	ICompletionProposalComputer fComputer;
+	private ICompletionProposalComputer fComputer;
 	/** The enablement state (internal). */
 	private boolean fEnabled;
 	/** The image descriptor for this computer, or <code>null</code> if none specified. */

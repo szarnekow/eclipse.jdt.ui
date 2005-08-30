@@ -111,29 +111,27 @@ public class CompletionProposalComputerRegistry {
 	}
 
 	/**
-	 * Returns the set of
-	 * {@link CompletionProposalComputerDescriptor}s describing all
-	 * extensions to the <code>javaCompletionProposalComputer</code>
-	 * extension point for the given partition type.
+	 * Returns the set of {@link CompletionProposalComputerDescriptor}s describing all extensions
+	 * to the <code>javaCompletionProposalComputer</code> extension point for the given partition
+	 * type.
 	 * <p>
 	 * A valid partition is either one of the constants defined in
 	 * {@link org.eclipse.jdt.ui.text.IJavaPartitions} or
-	 * {@link org.eclipse.jface.text.IDocument#DEFAULT_CONTENT_TYPE}.
-	 * An empty set is returned if there are no extensions for the given
-	 * partition.
+	 * {@link org.eclipse.jface.text.IDocument#DEFAULT_CONTENT_TYPE}. An empty set is returned if
+	 * there are no extensions for the given partition.
 	 * </p>
 	 * <p>
-	 * The returned set is read-only and is sorted in the order that the
-	 * extensions were read in. The returned set may change if plug-ins
-	 * are loaded or unloaded while the application is running.
+	 * The returned set is read-only and is sorted in the order that the extensions were read in.
+	 * The returned set may change if plug-ins are loaded or unloaded while the application is
+	 * running or if an extension violates the API contract of
+	 * {@link org.eclipse.jface.text.contentassist.ICompletionProposalComputer}. When computing
+	 * proposals, it is therefore imperative to copy the the returned set before iterating over it.
 	 * </p>
 	 * 
-	 * @param partition the partition type for which to retrieve the
-	 *        computer descriptors
-	 * @return the set of extensions to the
-	 *         <code>javaCompletionProposalComputer</code> extension
-	 *         point (element type:
-	 *         {@link CompletionProposalComputerDescriptor})
+	 * @param partition
+	 *        the partition type for which to retrieve the computer descriptors
+	 * @return the set of extensions to the <code>javaCompletionProposalComputer</code> extension
+	 *         point (element type: {@link CompletionProposalComputerDescriptor})
 	 */
 	public SortedSet getProposalComputerDescriptors(String partition) {
 		ensureExtensionPointRead();
@@ -142,19 +140,18 @@ public class CompletionProposalComputerRegistry {
 	}
 
 	/**
-	 * Returns the set of {@link CompletionProposalComputerDescriptor}s
-	 * describing all extensions to the
-	 * <code>javaCompletionProposalComputer</code> extension point.
+	 * Returns the set of {@link CompletionProposalComputerDescriptor}s describing all extensions
+	 * to the <code>javaCompletionProposalComputer</code> extension point.
 	 * <p>
-	 * The returned set is read-only and is sorted in the order that the
-	 * extensions were read in. The returned set may change if plug-ins
-	 * are loaded or unloaded while the application is running.
+	 * The returned set is read-only and is sorted in the order that the extensions were read in.
+	 * The returned set may change if plug-ins are loaded or unloaded while the application is
+	 * running or if an extension violates the API contract of
+	 * {@link org.eclipse.jface.text.contentassist.ICompletionProposalComputer}. When computing
+	 * proposals, it is therefore imperative to copy the the returned set before iterating over it.
 	 * </p>
 	 * 
-	 * @return the set of extensions to the
-	 *         <code>javaCompletionProposalComputer</code> extension
-	 *         point (element type:
-	 *         {@link CompletionProposalComputerDescriptor})
+	 * @return the set of extensions to the <code>javaCompletionProposalComputer</code> extension
+	 *         point (element type: {@link CompletionProposalComputerDescriptor})
 	 */
 	public SortedSet getProposalComputerDescriptors() {
 		ensureExtensionPointRead();
