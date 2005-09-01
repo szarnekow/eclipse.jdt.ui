@@ -11,9 +11,9 @@
 package org.eclipse.jdt.internal.ui.text.java;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.SortedSet;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -51,7 +51,8 @@ import org.eclipse.jface.text.contentassist.TextContentAssistInvocationContext;
 public class ContentAssistProcessor implements IContentAssistProcessor {
 
 	private char[] fCompletionAutoActivationCharacters;
-	private final SortedSet fProviders;
+	private final List fProviders;
+	private int fRepetition;
 	
 	public ContentAssistProcessor(String partition) {
 		fProviders= CompletionProposalComputerRegistry.getDefault().getProposalComputerDescriptors(partition);
@@ -79,7 +80,7 @@ public class ContentAssistProcessor implements IContentAssistProcessor {
 
 	private List collectProposals(ITextViewer viewer, int offset, IProgressMonitor monitor, TextContentAssistInvocationContext context) {
 		List proposals= new ArrayList();
-		List providers= new ArrayList(fProviders);
+		List providers= getSelectedProviders();
 		for (Iterator it= providers.iterator(); it.hasNext();) {
 			CompletionProposalComputerDescriptor desc= (CompletionProposalComputerDescriptor) it.next();
 			List computed= desc.computeCompletionProposals(context, new SubProgressMonitor(monitor, 1));
@@ -87,6 +88,14 @@ public class ContentAssistProcessor implements IContentAssistProcessor {
 		}
 		
 		return proposals;
+	}
+
+	private List getSelectedProviders() {
+		int selection= fRepetition % (fProviders.size() + 1);
+		if (selection == 0)
+			return new ArrayList(fProviders);
+		else
+			return Collections.singletonList(fProviders.get(selection - 1));
 	}
 
 	/**
@@ -126,7 +135,7 @@ public class ContentAssistProcessor implements IContentAssistProcessor {
 		List proposals= new ArrayList();
 		TextContentAssistInvocationContext context= createContext(viewer, offset);
 		
-		List providers= new ArrayList(fProviders);
+		List providers= getSelectedProviders();
 		for (Iterator it= providers.iterator(); it.hasNext();) {
 			CompletionProposalComputerDescriptor desc= (CompletionProposalComputerDescriptor) it.next();
 			List computed= desc.computeContextInformation(context, new SubProgressMonitor(monitor, 1));
@@ -215,4 +224,15 @@ public class ContentAssistProcessor implements IContentAssistProcessor {
 		return new TextContentAssistInvocationContext(viewer, offset);
 	}
 
+	public void setRepeatedInvocation(int repetition) {
+		fRepetition= repetition;
+	}
+	
+	public String getRepetitionMessage() {
+		int selection= fRepetition % (fProviders.size() + 1);
+		if (selection == 0)
+			return null;
+		else
+			return ((CompletionProposalComputerDescriptor) fProviders.get(selection - 1)).getName().replaceAll("&", "");  //$NON-NLS-2$//$NON-NLS-3$
+	}
 }

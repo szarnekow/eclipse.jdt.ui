@@ -11,8 +11,8 @@
 package org.eclipse.jdt.internal.ui.javaeditor;
 
 
+import java.util.Collection;
 import java.util.Iterator;
-import java.util.Set;
 
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.IMenuManager;
@@ -86,7 +86,7 @@ public class BasicEditorActionContributor extends BasicJavaEditorActionContribut
 			IMenuManager caMenu= new MenuManager(JavaEditorMessages.BasicEditorActionContributor_specific_content_assist_menu, "specific_content_assist"); //$NON-NLS-1$
 			editMenu.insertAfter(fRetargetContentAssist.getId(), caMenu);
 			
-			Set descriptors= CompletionProposalComputerRegistry.getDefault().getProposalComputerDescriptors();
+			Collection descriptors= CompletionProposalComputerRegistry.getDefault().getProposalComputerDescriptors();
 			for (Iterator it= descriptors.iterator(); it.hasNext();) {
 				final CompletionProposalComputerDescriptor desc= (CompletionProposalComputerDescriptor) it.next();
 				IAction caAction= new SpecificContentAssistAction(desc);

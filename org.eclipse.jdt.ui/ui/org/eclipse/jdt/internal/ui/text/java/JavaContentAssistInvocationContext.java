@@ -87,4 +87,9 @@ public class JavaContentAssistInvocationContext extends TextContentAssistInvocat
 	public void setCollector(CompletionProposalCollector collector) {
 		fCollector= collector;
 	}
+	
+	/*
+	 * Implementation note: There is no need to override hashcode and equals, as the only change is
+	 * the editor, which is equal anyway if the viewer is.
+	 */
 }

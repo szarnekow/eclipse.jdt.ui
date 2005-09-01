@@ -35,6 +35,8 @@ import org.eclipse.jface.text.ITextViewerExtension2;
 import org.eclipse.jface.text.contentassist.ContentAssistant;
 import org.eclipse.jface.text.contentassist.IContentAssistProcessor;
 import org.eclipse.jface.text.contentassist.IContentAssistant;
+import org.eclipse.jface.text.contentassist.ContentAssistant.ContentAssistEvent;
+import org.eclipse.jface.text.contentassist.ContentAssistant.ICompletionListener;
 import org.eclipse.jface.text.formatter.IContentFormatter;
 import org.eclipse.jface.text.formatter.MultiPassContentFormatter;
 import org.eclipse.jface.text.hyperlink.IHyperlinkDetector;
@@ -100,8 +102,8 @@ import org.eclipse.jdt.internal.ui.text.java.hover.JavaEditorTextHoverDescriptor
 import org.eclipse.jdt.internal.ui.text.java.hover.JavaEditorTextHoverProxy;
 import org.eclipse.jdt.internal.ui.text.java.hover.JavaInformationProvider;
 import org.eclipse.jdt.internal.ui.text.javadoc.JavaDocAutoIndentStrategy;
-import org.eclipse.jdt.internal.ui.text.javadoc.JavadocCompletionProcessor;
 import org.eclipse.jdt.internal.ui.text.javadoc.JavaDocScanner;
+import org.eclipse.jdt.internal.ui.text.javadoc.JavadocCompletionProcessor;
 import org.eclipse.jdt.internal.ui.typehierarchy.HierarchyInformationControl;
 
 
@@ -410,6 +412,19 @@ public class JavaSourceViewerConfiguration extends TextSourceViewerConfiguration
 
 			assistant.setContextInformationPopupOrientation(IContentAssistant.CONTEXT_INFO_ABOVE);
 			assistant.setInformationControlCreator(getInformationControlCreator(sourceViewer));
+			
+			final String allMessage= "press Ctrl+Space to show other proposals";
+			final String specificMessage= " - press Ctrl+Space to change";
+			assistant.setMessage(allMessage);
+			assistant.addListener(new ICompletionListener() {
+				public void proposalsAboutToShow(ContentAssistEvent event) {
+					JavaCompletionProcessor proc= (JavaCompletionProcessor) event.processor;
+					proc.setRepeatedInvocation(event.repetition);
+					String repetitionMessage= proc.getRepetitionMessage();
+					String msg= " " + (repetitionMessage == null ? allMessage : repetitionMessage + specificMessage); //$NON-NLS-1$
+					event.assistant.setMessage(msg);
+				}
+			});
 
 			return assistant;
 		}

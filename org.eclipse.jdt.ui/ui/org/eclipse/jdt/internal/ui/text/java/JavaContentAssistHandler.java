@@ -10,8 +10,8 @@
  *******************************************************************************/
 package org.eclipse.jdt.internal.ui.text.java;
 
+import java.util.Collection;
 import java.util.Iterator;
-import java.util.Set;
 
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
@@ -54,7 +54,7 @@ public final class JavaContentAssistHandler extends AbstractHandler {
 		if (action == null || !action.isEnabled())
 			return null;
 		
-		Set computers= CompletionProposalComputerRegistry.getDefault().getProposalComputerDescriptors();
+		Collection computers= CompletionProposalComputerRegistry.getDefault().getProposalComputerDescriptors();
 		boolean[] oldstates= new boolean[computers.size()];
 		int i= 0;
 		for (Iterator it1= computers.iterator(); it1.hasNext();) {

@@ -11,10 +11,10 @@
 package org.eclipse.jdt.internal.ui.preferences;
 
 import java.text.MessageFormat;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.SortedSet;
 
 import org.eclipse.core.commands.Command;
 import org.eclipse.core.commands.IParameter;
@@ -205,7 +205,7 @@ final class CodeAssistConfigurationBlockInProgress extends OptionsConfigurationB
 		CompletionProposalComputerRegistry registry= CompletionProposalComputerRegistry.getDefault();
 		fViewer.setInput(registry);
 		
-		SortedSet descriptors= registry.getProposalComputerDescriptors();
+		Collection descriptors= registry.getProposalComputerDescriptors();
 		// assume descriptors are up2date with the preferences
 		// compute widths along the way
 		final int ICON_AND_CHECKBOX_WITH= 40;
@@ -268,7 +268,7 @@ final class CodeAssistConfigurationBlockInProgress extends OptionsConfigurationB
 		String[] disabled= getTokens(getValue(PREF_DISABLED_COMPUTERS), SEPARATOR);
 		
 		CompletionProposalComputerRegistry registry= CompletionProposalComputerRegistry.getDefault();
-		SortedSet descriptors= registry.getProposalComputerDescriptors();
+		Collection descriptors= registry.getProposalComputerDescriptors();
 
 		for (Iterator it= descriptors.iterator(); it.hasNext();) {
 			CompletionProposalComputerDescriptor desc= (CompletionProposalComputerDescriptor) it.next();
@@ -288,7 +288,7 @@ final class CodeAssistConfigurationBlockInProgress extends OptionsConfigurationB
 		if (widget == fViewer.getControl()) {
 			StringBuffer buf= new StringBuffer();
 			CompletionProposalComputerRegistry registry= CompletionProposalComputerRegistry.getDefault();
-			SortedSet descriptors= registry.getProposalComputerDescriptors();
+			Collection descriptors= registry.getProposalComputerDescriptors();
 			for (Iterator it= descriptors.iterator(); it.hasNext();) {
 				CompletionProposalComputerDescriptor desc= (CompletionProposalComputerDescriptor) it.next();
 				if (!fViewer.getChecked(desc))
@@ -307,7 +307,7 @@ final class CodeAssistConfigurationBlockInProgress extends OptionsConfigurationB
 	 */
 	protected boolean processChanges(IWorkbenchPreferenceContainer container) {
 		CompletionProposalComputerRegistry registry= CompletionProposalComputerRegistry.getDefault();
-		SortedSet descriptors= registry.getProposalComputerDescriptors();
+		Collection descriptors= registry.getProposalComputerDescriptors();
 		for (Iterator it= descriptors.iterator(); it.hasNext();) {
 			CompletionProposalComputerDescriptor desc= (CompletionProposalComputerDescriptor) it.next();
 			desc.setEnabled(fViewer.getChecked(desc));

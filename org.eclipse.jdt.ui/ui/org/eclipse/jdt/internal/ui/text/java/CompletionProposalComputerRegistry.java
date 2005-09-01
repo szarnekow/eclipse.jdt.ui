@@ -11,16 +11,16 @@
 package org.eclipse.jdt.internal.ui.text.java;
 
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.StringTokenizer;
-import java.util.TreeSet;
 
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtensionRegistry;
@@ -46,17 +46,6 @@ import org.eclipse.jdt.internal.ui.JavaPlugin;
 public class CompletionProposalComputerRegistry {
 
 	private static final String EXTENSION_POINT= "javaCompletionProposalComputer"; //$NON-NLS-1$
-	private static final Comparator COMPARATOR= new Comparator() {
-		/*
-		 * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
-		 */
-		public int compare(Object o1, Object o2) {
-			CompletionProposalComputerDescriptor d1= (CompletionProposalComputerDescriptor) o1;
-			CompletionProposalComputerDescriptor d2= (CompletionProposalComputerDescriptor) o2;
-			return d1.ordinal() - d2.ordinal();
-		}
-	};
-	private static final SortedSet EMPTY_SORTED_SET= Collections.unmodifiableSortedSet(new TreeSet(COMPARATOR));
 	
 	/** The singleton instance. */
 	private static CompletionProposalComputerRegistry fgSingleton= null;
@@ -80,25 +69,25 @@ public class CompletionProposalComputerRegistry {
 	/**
 	 * The sets of descriptors, grouped by partition type (key type:
 	 * {@link String}, value type:
-	 * {@linkplain SortedSet SortedSet&lt;CompletionProposalComputerDescriptor&gt;}).
+	 * {@linkplain List List&lt;CompletionProposalComputerDescriptor&gt;}).
 	 */
 	private final Map fDescriptorsByPartition= new HashMap();
 	/**
 	 * Unmodifiable versions of the sets stored in
 	 * <code>fDescriptorsByPartition</code> (key type: {@link String},
 	 * value type:
-	 * {@linkplain SortedSet SortedSet&lt;CompletionProposalComputerDescriptor&gt;}).
+	 * {@linkplain List List&lt;CompletionProposalComputerDescriptor&gt;}).
 	 */
 	private final Map fPublicDescriptorsByPartition= new HashMap();
 	/**
 	 * All descriptors (element type:
 	 * {@link CompletionProposalComputerDescriptor}).
 	 */
-	private final SortedSet fDescriptors= new TreeSet(COMPARATOR);
+	private final List fDescriptors= new ArrayList();
 	/**
 	 * Unmodifiable view of <code>fDescriptors</code>
 	 */
-	private final SortedSet fPublicDescriptors= Collections.unmodifiableSortedSet(fDescriptors);
+	private final List fPublicDescriptors= Collections.unmodifiableList(fDescriptors);
 	/**
 	 * <code>true</code> if this registry has been loaded.
 	 */
@@ -111,49 +100,51 @@ public class CompletionProposalComputerRegistry {
 	}
 
 	/**
-	 * Returns the set of {@link CompletionProposalComputerDescriptor}s describing all extensions
+	 * Returns the list of {@link CompletionProposalComputerDescriptor}s describing all extensions
 	 * to the <code>javaCompletionProposalComputer</code> extension point for the given partition
 	 * type.
 	 * <p>
 	 * A valid partition is either one of the constants defined in
 	 * {@link org.eclipse.jdt.ui.text.IJavaPartitions} or
-	 * {@link org.eclipse.jface.text.IDocument#DEFAULT_CONTENT_TYPE}. An empty set is returned if
+	 * {@link org.eclipse.jface.text.IDocument#DEFAULT_CONTENT_TYPE}. An empty list is returned if
 	 * there are no extensions for the given partition.
 	 * </p>
 	 * <p>
-	 * The returned set is read-only and is sorted in the order that the extensions were read in.
-	 * The returned set may change if plug-ins are loaded or unloaded while the application is
-	 * running or if an extension violates the API contract of
-	 * {@link org.eclipse.jface.text.contentassist.ICompletionProposalComputer}. When computing
-	 * proposals, it is therefore imperative to copy the the returned set before iterating over it.
+	 * The returned list is read-only and is sorted in the order that the extensions were read in.
+	 * There are no duplicate elements in the returned list. The returned list may change if plug-ins
+	 * are loaded or unloaded while the application is running or if an extension violates the API
+	 * contract of {@link org.eclipse.jface.text.contentassist.ICompletionProposalComputer}. When
+	 * computing proposals, it is therefore imperative to copy the returned list before iterating
+	 * over it.
 	 * </p>
 	 * 
 	 * @param partition
 	 *        the partition type for which to retrieve the computer descriptors
-	 * @return the set of extensions to the <code>javaCompletionProposalComputer</code> extension
+	 * @return the list of extensions to the <code>javaCompletionProposalComputer</code> extension
 	 *         point (element type: {@link CompletionProposalComputerDescriptor})
 	 */
-	public SortedSet getProposalComputerDescriptors(String partition) {
+	public List getProposalComputerDescriptors(String partition) {
 		ensureExtensionPointRead();
-		SortedSet result= (SortedSet) fPublicDescriptorsByPartition.get(partition);
-		return result != null ? result : EMPTY_SORTED_SET;
+		List result= (List) fPublicDescriptorsByPartition.get(partition);
+		return result != null ? result : Collections.EMPTY_LIST;
 	}
 
 	/**
-	 * Returns the set of {@link CompletionProposalComputerDescriptor}s describing all extensions
+	 * Returns the list of {@link CompletionProposalComputerDescriptor}s describing all extensions
 	 * to the <code>javaCompletionProposalComputer</code> extension point.
 	 * <p>
-	 * The returned set is read-only and is sorted in the order that the extensions were read in.
-	 * The returned set may change if plug-ins are loaded or unloaded while the application is
-	 * running or if an extension violates the API contract of
-	 * {@link org.eclipse.jface.text.contentassist.ICompletionProposalComputer}. When computing
-	 * proposals, it is therefore imperative to copy the the returned set before iterating over it.
+	 * The returned list is read-only and is sorted in the order that the extensions were read in.
+	 * There are no duplicate elements in the returned list. The returned list may change if plug-ins
+	 * are loaded or unloaded while the application is running or if an extension violates the API
+	 * contract of {@link org.eclipse.jface.text.contentassist.ICompletionProposalComputer}. When
+	 * computing proposals, it is therefore imperative to copy the returned list before iterating
+	 * over it.
 	 * </p>
 	 * 
-	 * @return the set of extensions to the <code>javaCompletionProposalComputer</code> extension
+	 * @return the list of extensions to the <code>javaCompletionProposalComputer</code> extension
 	 *         point (element type: {@link CompletionProposalComputerDescriptor})
 	 */
-	public SortedSet getProposalComputerDescriptors() {
+	public List getProposalComputerDescriptors() {
 		ensureExtensionPointRead();
 		return fPublicDescriptors;
 	}
@@ -182,7 +173,7 @@ public class CompletionProposalComputerRegistry {
 	public void reload() {
 		IExtensionRegistry registry= Platform.getExtensionRegistry();
 		Map map= new HashMap();
-		Set all= new HashSet();
+		List all= new ArrayList();
 		
 		IPreferenceStore store= JavaPlugin.getDefault().getPreferenceStore();
 		String preference= store.getString(PreferenceConstants.CODEASSIST_DISABLED_COMPUTERS);
@@ -198,12 +189,12 @@ public class CompletionProposalComputerRegistry {
 				Set partitions= desc.getPartitions();
 				for (Iterator it= partitions.iterator(); it.hasNext();) {
 					String partition= (String) it.next();
-					SortedSet set= (SortedSet) map.get(partition);
-					if (set == null) {
-						set= new TreeSet(COMPARATOR);
-						map.put(partition, set);
+					List list= (List) map.get(partition);
+					if (list == null) {
+						list= new ArrayList();
+						map.put(partition, list);
 					}
-					set.add(desc);
+					list.add(desc);
 				}
 				all.add(desc);
 				desc.setEnabled(!disabled.contains(desc.getId()));
@@ -227,14 +218,14 @@ public class CompletionProposalComputerRegistry {
 			fPublicDescriptorsByPartition.keySet().retainAll(partitions);
 			for (Iterator it= partitions.iterator(); it.hasNext();) {
 				String partition= (String) it.next();
-				SortedSet old= (SortedSet) fDescriptorsByPartition.get(partition);
-				SortedSet current= (SortedSet) map.get(partition);
+				List old= (List) fDescriptorsByPartition.get(partition);
+				List current= (List) map.get(partition);
 				if (old != null) {
 					old.clear();
 					old.addAll(current);
 				} else {
 					fDescriptorsByPartition.put(partition, current);
-					fPublicDescriptorsByPartition.put(partition, Collections.unmodifiableSortedSet(current));
+					fPublicDescriptorsByPartition.put(partition, Collections.unmodifiableList(current));
 				}
 			}
 			

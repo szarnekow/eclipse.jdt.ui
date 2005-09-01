@@ -53,5 +53,22 @@ public final class JavadocContentAssistInvocationContext extends JavaContentAssi
 	public int getSelectionLength() {
 		return getViewer().getSelectedRange().y;
 	}
+	
+	/*
+	 * @see org.eclipse.jface.text.contentassist.TextContentAssistInvocationContext#equals(java.lang.Object)
+	 */
+	public boolean equals(Object obj) {
+		if (!super.equals(obj))
+			return false;
+		
+		return fFlags == ((JavadocContentAssistInvocationContext) obj).fFlags;
+	}
+	
+	/*
+	 * @see org.eclipse.jface.text.contentassist.TextContentAssistInvocationContext#hashCode()
+	 */
+	public int hashCode() {
+		return super.hashCode() << 2 | fFlags;
+	}
 
 }

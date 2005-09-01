@@ -10,8 +10,8 @@
  *******************************************************************************/
 package org.eclipse.jdt.internal.ui.javaeditor;
 
+import java.util.Collection;
 import java.util.Iterator;
-import java.util.Set;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
@@ -51,7 +51,7 @@ final class SpecificContentAssistAction extends Action {
 		if (action == null || !action.isEnabled())
 			return;
 		
-		Set computers= CompletionProposalComputerRegistry.getDefault().getProposalComputerDescriptors();
+		Collection computers= CompletionProposalComputerRegistry.getDefault().getProposalComputerDescriptors();
 		boolean[] oldstates= new boolean[computers.size()];
 		int i= 0;
 		for (Iterator it1= computers.iterator(); it1.hasNext();) {
