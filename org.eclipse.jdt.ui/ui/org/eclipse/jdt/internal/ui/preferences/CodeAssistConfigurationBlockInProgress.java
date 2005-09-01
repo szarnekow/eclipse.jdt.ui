@@ -224,6 +224,8 @@ final class CodeAssistConfigurationBlockInProgress extends OptionsConfigurationB
 	}
 	
 	private int computeWidth(Control control, String name) {
+		if (name == null)
+			return 0;
 		GC gc= new GC(control.getDisplay());
 		try {
 			gc.setFont(JFaceResources.getDialogFont());
