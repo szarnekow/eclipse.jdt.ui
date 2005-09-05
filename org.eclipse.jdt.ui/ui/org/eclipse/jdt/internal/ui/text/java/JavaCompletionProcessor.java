@@ -156,8 +156,8 @@ public class JavaCompletionProcessor extends ContentAssistProcessor {
 			if (proposal instanceof ICompletionProposalExtension3) {
 				current= (ICompletionProposalExtension3) proposal;
 				if (last != null) {
-					String lastCompletion= last.getPrefixCompletionText(document, offset).toString();
-					String curCompletion= current.getPrefixCompletionText(document, offset).toString();
+					String lastCompletion= getPrefixCompletionText(document, offset, last);
+					String curCompletion= getPrefixCompletionText(document, offset, current);
 					if (lastCompletion.equals(curCompletion) && !(current instanceof IJavaCompletionProposal))
 						it.remove();
 				}
@@ -180,6 +180,11 @@ public class JavaCompletionProcessor extends ContentAssistProcessor {
 			}
 
 		}
+	}
+
+	private String getPrefixCompletionText(IDocument document, int offset, ICompletionProposalExtension3 last) {
+		CharSequence prefixCompletionText= last.getPrefixCompletionText(document, offset);
+		return prefixCompletionText == null ? ((ICompletionProposal) last).getDisplayString() : prefixCompletionText.toString();
 	}
 	
 	static {
