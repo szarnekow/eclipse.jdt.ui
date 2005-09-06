@@ -12,6 +12,7 @@ package org.eclipse.jdt.internal.ui.text.java;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -88,6 +89,9 @@ public class CompletionProposalComputerRegistry {
 	 * Unmodifiable view of <code>fDescriptors</code>
 	 */
 	private final List fPublicDescriptors= Collections.unmodifiableList(fDescriptors);
+	
+	private final List fCategories= new ArrayList();
+	private final List fPublicCategories= Collections.unmodifiableList(fCategories);
 	/**
 	 * <code>true</code> if this registry has been loaded.
 	 */
@@ -148,6 +152,25 @@ public class CompletionProposalComputerRegistry {
 		ensureExtensionPointRead();
 		return fPublicDescriptors;
 	}
+	
+	/**
+	 * Returns the list of proposal categories contributed to the
+	 * <code>javaCompletionProposalComputer</code> extension point.
+	 * <p>
+	 * <p>
+	 * The returned list is read-only and is sorted in the order that the extensions were read in.
+	 * There are no duplicate elements in the returned list. The returned list may change if
+	 * plug-ins are loaded or unloaded while the application is running.
+	 * </p>
+	 * 
+	 * @return list of proposal categories contributed to the
+	 *         <code>javaCompletionProposalComputer</code> extension point (element type:
+	 *         {@link CompletionProposalCategory})
+	 */
+	public List getProposalCategories() {
+		ensureExtensionPointRead();
+		return fPublicCategories;
+	}
 
 	/**
 	 * Ensures that the extensions are read and stored in
@@ -172,20 +195,16 @@ public class CompletionProposalComputerRegistry {
 	 */
 	public void reload() {
 		IExtensionRegistry registry= Platform.getExtensionRegistry();
+		List elements= new ArrayList(Arrays.asList(registry.getConfigurationElementsFor(JavaPlugin.getPluginId(), EXTENSION_POINT)));
+		
 		Map map= new HashMap();
 		List all= new ArrayList();
 		
-		IPreferenceStore store= JavaPlugin.getDefault().getPreferenceStore();
-		String preference= store.getString(PreferenceConstants.CODEASSIST_DISABLED_COMPUTERS);
-		Set disabled= new HashSet();
-		StringTokenizer tok= new StringTokenizer(preference, "\0");  //$NON-NLS-1$
-		while (tok.hasMoreTokens())
-			disabled.add(tok.nextToken());
-		
-		IConfigurationElement[] elements= registry.getConfigurationElementsFor(JavaPlugin.getPluginId(), EXTENSION_POINT);
-		for (int i= 0; i < elements.length; i++) {
+		List categories= getCategories(elements);
+		for (Iterator iter= elements.iterator(); iter.hasNext();) {
+			IConfigurationElement element= (IConfigurationElement) iter.next();
 			try {
-				CompletionProposalComputerDescriptor desc= new CompletionProposalComputerDescriptor(elements[i], i, this);
+				CompletionProposalComputerDescriptor desc= new CompletionProposalComputerDescriptor(element, this, categories);
 				Set partitions= desc.getPartitions();
 				for (Iterator it= partitions.iterator(); it.hasNext();) {
 					String partition= (String) it.next();
@@ -197,7 +216,6 @@ public class CompletionProposalComputerRegistry {
 					list.add(desc);
 				}
 				all.add(desc);
-				desc.setEnabled(!disabled.contains(desc.getId()));
 				
 			} catch (InvalidRegistryObjectException x) {
 				/*
@@ -205,7 +223,7 @@ public class CompletionProposalComputerRegistry {
 				 * some other reason. Do not include the extension in the list and inform the user
 				 * about it.
 				 */
-				Object[] args= {elements[i].toString()};
+				Object[] args= {element.toString()};
 				String message= MessageFormat.format(JavaTextMessages.CompletionProposalComputerRegistry_invalid_message, args);
 				IStatus status= new Status(IStatus.WARNING, JavaPlugin.getPluginId(), IStatus.OK, message, x);
 				informUser(status);
@@ -213,6 +231,9 @@ public class CompletionProposalComputerRegistry {
 		}
 		
 		synchronized (this) {
+			fCategories.clear();
+			fCategories.addAll(categories);
+			
 			Set partitions= map.keySet();
 			fDescriptorsByPartition.keySet().retainAll(partitions);
 			fPublicDescriptorsByPartition.keySet().retainAll(partitions);
@@ -232,6 +253,41 @@ public class CompletionProposalComputerRegistry {
 			fDescriptors.clear();
 			fDescriptors.addAll(all);
 		}
+	}
+
+	private List getCategories(List elements) {
+		IPreferenceStore store= JavaPlugin.getDefault().getPreferenceStore();
+		String preference= store.getString(PreferenceConstants.CODEASSIST_DISABLED_COMPUTERS);
+		Set disabled= new HashSet();
+		StringTokenizer tok= new StringTokenizer(preference, "\0");  //$NON-NLS-1$
+		while (tok.hasMoreTokens())
+			disabled.add(tok.nextToken());
+
+		List categories= new ArrayList();
+		for (Iterator iter= elements.iterator(); iter.hasNext();) {
+			IConfigurationElement element= (IConfigurationElement) iter.next();
+			try {
+				if (element.getName().equals("proposalCategory")) { //$NON-NLS-1$
+					iter.remove(); // remove from list to leave only computers
+					
+					CompletionProposalCategory category= new CompletionProposalCategory(element, this);
+					categories.add(category);
+					category.setEnabled(!disabled.contains(category.getId()));
+					
+				}
+			} catch (InvalidRegistryObjectException x) {
+				/*
+				 * Element is not valid any longer as the contributing plug-in was unloaded or for
+				 * some other reason. Do not include the extension in the list and inform the user
+				 * about it.
+				 */
+				Object[] args= {element.toString()};
+				String message= MessageFormat.format(JavaTextMessages.CompletionProposalComputerRegistry_invalid_message, args);
+				IStatus status= new Status(IStatus.WARNING, JavaPlugin.getPluginId(), IStatus.OK, message, x);
+				informUser(status);
+			}
+		}
+		return categories;
 	}
 
 	/**

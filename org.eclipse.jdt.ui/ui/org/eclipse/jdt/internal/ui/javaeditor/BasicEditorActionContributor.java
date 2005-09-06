@@ -35,7 +35,7 @@ import org.eclipse.jdt.ui.actions.IJavaEditorActionDefinitionIds;
 import org.eclipse.jdt.ui.actions.JdtActionConstants;
 
 import org.eclipse.jdt.internal.ui.JavaPluginImages;
-import org.eclipse.jdt.internal.ui.text.java.CompletionProposalComputerDescriptor;
+import org.eclipse.jdt.internal.ui.text.java.CompletionProposalCategory;
 import org.eclipse.jdt.internal.ui.text.java.CompletionProposalComputerRegistry;
 
 
@@ -86,11 +86,13 @@ public class BasicEditorActionContributor extends BasicJavaEditorActionContribut
 			IMenuManager caMenu= new MenuManager(JavaEditorMessages.BasicEditorActionContributor_specific_content_assist_menu, "specific_content_assist"); //$NON-NLS-1$
 			editMenu.insertAfter(fRetargetContentAssist.getId(), caMenu);
 			
-			Collection descriptors= CompletionProposalComputerRegistry.getDefault().getProposalComputerDescriptors();
+			Collection descriptors= CompletionProposalComputerRegistry.getDefault().getProposalCategories();
 			for (Iterator it= descriptors.iterator(); it.hasNext();) {
-				final CompletionProposalComputerDescriptor desc= (CompletionProposalComputerDescriptor) it.next();
-				IAction caAction= new SpecificContentAssistAction(desc);
-				caMenu.add(caAction);
+				final CompletionProposalCategory cat= (CompletionProposalCategory) it.next();
+				if (cat.hasComputers()) {
+					IAction caAction= new SpecificContentAssistAction(cat);
+					caMenu.add(caAction);
+				}
 			}
 		}
 	}

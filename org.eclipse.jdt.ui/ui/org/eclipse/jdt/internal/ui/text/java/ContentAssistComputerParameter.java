@@ -27,11 +27,11 @@ public final class ContentAssistComputerParameter implements IParameterValues {
 	 * @see org.eclipse.core.commands.IParameterValues#getParameterValues()
 	 */
 	public Map getParameterValues() {
-		Collection descriptors= CompletionProposalComputerRegistry.getDefault().getProposalComputerDescriptors();
+		Collection descriptors= CompletionProposalComputerRegistry.getDefault().getProposalCategories();
 		Map map= new HashMap(descriptors.size());
 		for (Iterator it= descriptors.iterator(); it.hasNext();) {
-			CompletionProposalComputerDescriptor descriptor= (CompletionProposalComputerDescriptor) it.next();
-			map.put(descriptor.getName().replaceAll("&", ""), descriptor.getId()); //$NON-NLS-1$ //$NON-NLS-2$
+			CompletionProposalCategory category= (CompletionProposalCategory) it.next();
+			map.put(category.getName().replaceAll("&", ""), category.getId()); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		return map;
 	}

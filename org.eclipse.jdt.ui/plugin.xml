@@ -173,27 +173,70 @@
       </quickAssistProcessor>
    </extension>
 
-	<!-- content assist processors - do not change their order -->   
-	<!-- java(doc) completions -->   
+	<!-- content assist processors - do not change their order -->  
+	<!-- java and javadoc category -->
 	<extension
 		point="org.eclipse.jdt.ui.javaCompletionProposalComputer"
-		id="JavaCompletionProposalComputer"
-		name="%JavaCompletionProposalComputer">
+		id="javaProposalCategory"
+		name="%JavaProposalCategory">
+		<proposalCategory
+			icon="$nl$/icons/full/obj16/java_assist.png"/>
+	</extension>
+	<extension
+		point="org.eclipse.jdt.ui.javaCompletionProposalComputer"
+		id="defaultProposalCategory"
+		name="%DefaultProposalCategory">
+		<proposalCategory/>
+	</extension>
+	<extension
+		point="org.eclipse.jdt.ui.javaCompletionProposalComputer"
+		id="templateProposalCategory"
+		name="%TemplateProposalCategory">
+		<proposalCategory
+			icon="$nl$/icons/full/obj16/templates_assist.png"/>
+	</extension>
+	<extension
+		point="org.eclipse.jdt.ui.javaCompletionProposalComputer"
+		id="spellingProposalCategory"
+		name="%SpellingProposalCategory">
+		<proposalCategory
+			icon="$nl$/icons/full/obj16/spelling_assist.png"/>
+	</extension>
+	<extension
+		point="org.eclipse.jdt.ui.javaCompletionProposalComputer"
+		id="textProposalCategory"
+		name="%TextProposalCategory">
+		<proposalCategory
+			icon="$nl$/icons/full/obj16/hippie_assist.png"/>
+	</extension>
+	 
+	<!-- java completions -->   
+	<extension
+		point="org.eclipse.jdt.ui.javaCompletionProposalComputer"
+		id="JavaCompletionProposalComputer">
 		<javaCompletionProposalComputer 
 			class="org.eclipse.jdt.internal.ui.text.java.JavaCompletionProposalComputer"
-			icon="$nl$/icons/full/obj16/java_assist.png">
+			categoryId="org.eclipse.jdt.ui.javaProposalCategory">
 			<partition type="__dftl_partition_content_type"/>
+		</javaCompletionProposalComputer>
+	</extension>
+	<!-- javadoc completions -->   
+	<extension
+		point="org.eclipse.jdt.ui.javaCompletionProposalComputer"
+		id="JavaCompletionProposalComputer">
+		<javaCompletionProposalComputer 
+			class="org.eclipse.jdt.internal.ui.text.javadoc.JavadocCompletionProposalComputer"
+			categoryId="org.eclipse.jdt.ui.javaProposalCategory">
 			<partition type="__java_javadoc"/>
 		</javaCompletionProposalComputer>
 	</extension>
 	<!-- template proposals -->
 	<extension
 		point="org.eclipse.jdt.ui.javaCompletionProposalComputer"
-		id="TemplateProposalComputer"
-		name="%TemplateProposalComputer">
+		id="TemplateProposalComputer">
 		<javaCompletionProposalComputer
 			class="org.eclipse.jdt.internal.ui.text.java.TemplateCompletionProposalComputer"
-			icon="$nl$/icons/full/obj16/templates_assist.png">
+			categoryId="org.eclipse.jdt.ui.templateProposalCategory">
 			<partition type="__dftl_partition_content_type"/>
 			<partition type="__java_singleline_comment"/> <!-- to get NLS templates -->
 			<partition type="__java_javadoc"/>
@@ -202,11 +245,10 @@
 	<!-- spelling proposals -->
 	<extension
 		point="org.eclipse.jdt.ui.javaCompletionProposalComputer"
-		id="SpellingProposalComputer"
-		name="%SpellingProposalComputer">
+		id="SpellingProposalComputer">
 		<javaCompletionProposalComputer
 			class="org.eclipse.jdt.internal.ui.text.spelling.WordCompletionProposalComputer"
-			icon="$nl$/icons/full/obj16/spelling_assist.png">
+			categoryId="org.eclipse.jdt.ui.spellingProposalCategory">
 			<partition type="__java_singleline_comment"/>
 			<partition type="__java_multiline_comment"/>
 			<partition type="__java_string"/>
@@ -216,11 +258,10 @@
 	<!-- hippie word completions (in all partitions) -->   
 	<extension
 		point="org.eclipse.jdt.ui.javaCompletionProposalComputer"
-		id="HippieCompletionProposalComputer"
-		name="%HippieCompletionComputer">
+		id="HippieCompletionProposalComputer">
 		<javaCompletionProposalComputer
 			class="org.eclipse.ui.texteditor.HippieProposalComputer"
-			icon="$nl$/icons/full/obj16/hippie_assist.png"/>
+			categoryId="org.eclipse.jdt.ui.textProposalCategory"/>
 	</extension>
 	
 	<!-- the parameterized content assist action and keybindings for our contributed computers -->
@@ -228,13 +269,13 @@
 		point="org.eclipse.ui.commands">
 		<command
 			categoryId="org.eclipse.ui.category.edit"
-			description="A parameterizable command that invokes content assist with a single completion proposal computer"
+			description="%SpecificContentAssist.desc"
 			id="org.eclipse.jdt.ui.specific_content_assist.command"
-			name="Specific Content Assist"
+			name="%SpecificContentAssist.name"
 			defaultHandler="org.eclipse.jdt.internal.ui.text.java.JavaContentAssistHandler">
 			<commandParameter
-				id="org.eclipse.jdt.ui.specific_content_assist.computer_id"
-				name="type"
+				id="org.eclipse.jdt.ui.specific_content_assist.category_id"
+				name="%SpecificContentAssist.param"
 				optional="false"
 				values="org.eclipse.jdt.internal.ui.text.java.ContentAssistComputerParameter"/>
 		</command>
@@ -247,8 +288,8 @@
 			schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
 			sequence="Alt+/">
 			<parameter
-				id="org.eclipse.jdt.ui.specific_content_assist.computer_id"
-				value="org.eclipse.jdt.ui.HippieCompletionProposalComputer"/>
+				id="org.eclipse.jdt.ui.specific_content_assist.category_id"
+				value="org.eclipse.jdt.ui.textProposalCategory"/>
 		</key>
 	</extension>
 	

@@ -10,10 +10,10 @@
  *******************************************************************************/
 package org.eclipse.jdt.internal.ui.text.java;
 
-import java.net.URL;
 import java.text.MessageFormat;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -23,12 +23,9 @@ import org.eclipse.core.runtime.IExtension;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.InvalidRegistryObjectException;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.PerformanceStats;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
-
-import org.eclipse.jface.resource.ImageDescriptor;
 
 import org.eclipse.jface.text.Assert;
 import org.eclipse.jface.text.IDocument;
@@ -50,12 +47,14 @@ import org.osgi.framework.Bundle;
  * @since 3.2
  */
 public final class CompletionProposalComputerDescriptor {
+	/** The default category id. */
+	private static final String DEFAULT_CATEGORY_ID= "org.eclipse.jdt.ui.defaultProposalCategory"; //$NON-NLS-1$
+	/** The extension schema name of the category id attribute. */
+	private static final String CATEGORY_ID= "categoryId"; //$NON-NLS-1$
 	/** The extension schema name of the partition type attribute. */
 	private static final String TYPE= "type"; //$NON-NLS-1$
 	/** The extension schema name of the class attribute. */
 	private static final String CLASS= "class"; //$NON-NLS-1$
-	/** The extension schema name of the icon attribute. */
-	private static final String ICON= "icon"; //$NON-NLS-1$
 	/** The extension schema name of the activate attribute. */
 	private static final String ACTIVATE= "activate"; //$NON-NLS-1$
 	/** The extension schema name of the partition child elements. */
@@ -97,25 +96,20 @@ public final class CompletionProposalComputerDescriptor {
 	private final Set fPartitions;
 	/** The configuration element of this extension. */
 	private final IConfigurationElement fElement;
-	/** The ordinal of this descriptor, which is used to define the natural order of descriptor objects constant. */
-	private final int fOrdinal;
 	/** The registry we are registered with. */
 	private final CompletionProposalComputerRegistry fRegistry;
 	/** The computer, if instantiated, <code>null</code> otherwise. */
 	private ICompletionProposalComputer fComputer;
-	/** The enablement state (internal). */
-	private boolean fEnabled;
-	/** The image descriptor for this computer, or <code>null</code> if none specified. */
-	private final ImageDescriptor fImage;
+	/** The ui category. */
+	private final CompletionProposalCategory fCategory;
 
 	/**
 	 * Creates a new descriptor.
 	 * 
 	 * @param element the configuration element to read
-	 * @param ordinal the ordinal of this descriptor
 	 * @param registry the computer registry creating this descriptor
 	 */
-	CompletionProposalComputerDescriptor(IConfigurationElement element, int ordinal, CompletionProposalComputerRegistry registry) throws InvalidRegistryObjectException {
+	CompletionProposalComputerDescriptor(IConfigurationElement element, CompletionProposalComputerRegistry registry, List categories) throws InvalidRegistryObjectException {
 		Assert.isLegal(registry != null);
 		Assert.isLegal(element != null);
 		
@@ -150,20 +144,24 @@ public final class CompletionProposalComputerDescriptor {
 		fClass= element.getAttributeAsIs(CLASS);
 		checkNotNull(fClass, CLASS);
 		
-		String icon= element.getAttributeAsIs(ICON);
-		ImageDescriptor img= null;
-		if (icon != null) {
-			Bundle bundle= getBundle();
-			if (bundle != null) {
-				Path path= new Path(icon);
-				URL url= Platform.find(bundle, path);
-				img= ImageDescriptor.createFromURL(url);
+		String categoryId= element.getAttributeAsIs(CATEGORY_ID);
+		if (categoryId == null)
+			categoryId= DEFAULT_CATEGORY_ID;
+		CompletionProposalCategory category= null;
+		for (Iterator it= categories.iterator(); it.hasNext();) {
+			CompletionProposalCategory cat= (CompletionProposalCategory) it.next();
+			if (cat.getId().equals(categoryId)) {
+				category= cat;
+				break;
 			}
 		}
-		fImage= img;
-		
-		fOrdinal= ordinal;
-		fEnabled= true;
+		if (category == null) {
+			// create a category if it does not exist
+			fCategory= new CompletionProposalCategory(categoryId, fName, registry);
+			categories.add(fCategory);
+		} else {
+			fCategory= category;
+		}
 	}
 
 	/**
@@ -268,7 +266,7 @@ public final class CompletionProposalComputerDescriptor {
 	 * @return the list of computed completion proposals (element type: {@link org.eclipse.jface.text.contentassist.ICompletionProposal})
 	 */
 	public List computeCompletionProposals(TextContentAssistInvocationContext context, IProgressMonitor monitor) {
-		if (!fEnabled)
+		if (!isEnabled())
 			return Collections.EMPTY_LIST;
 		
 		IStatus status;
@@ -308,7 +306,7 @@ public final class CompletionProposalComputerDescriptor {
 	 * @return the list of computed context information objects (element type: {@link org.eclipse.jface.text.contentassist.IContextInformation})
 	 */
 	public List computeContextInformation(TextContentAssistInvocationContext context, IProgressMonitor monitor) {
-		if (!fEnabled)
+		if (!isEnabled())
 			return Collections.EMPTY_LIST;
 		
 		IStatus status;
@@ -402,39 +400,19 @@ public final class CompletionProposalComputerDescriptor {
 	}
 	
 	/**
-	 * Returns the ordinal of this descriptor (used to keep the
-	 * iteration order of created descriptors constant.
-	 * 
-	 * @return the ordinal of this descriptor
-	 */
-	int ordinal() {
-		return fOrdinal;
-	}
-
-	/**
-	 * Sets the enablement of the described extension.
-	 * 
-	 * @param enable <code>true</code> to enable, <code>false</code> to disable the extension
-	 */
-	public void setEnabled(boolean enable) {
-		fEnabled= enable;
-	}
-
-	/**
 	 * Returns the enablement state of the described extension.
 	 * 
 	 * @return the enablement state of the described extension
 	 */
 	public boolean isEnabled() {
-		return fEnabled;
+		return fCategory.isEnabled();
+	}
+
+	/**
+	 * @return
+	 */
+	CompletionProposalCategory getCategory() {
+		return fCategory;
 	}
 	
-	/**
-	 * Returns the image descriptor of the described extension.
-	 * 
-	 * @return the image descriptor of the described extension
-	 */
-	public ImageDescriptor getImageDescriptor() {
-		return fImage;
-	}
 }

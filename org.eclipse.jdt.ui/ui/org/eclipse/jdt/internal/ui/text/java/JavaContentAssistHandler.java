@@ -46,7 +46,7 @@ public final class JavaContentAssistHandler extends AbstractHandler {
 		if (editor == null)
 			return null;
 		
-		String computerId= event.getParameter("org.eclipse.jdt.ui.specific_content_assist.computer_id"); //$NON-NLS-1$
+		String computerId= event.getParameter("org.eclipse.jdt.ui.specific_content_assist.category_id"); //$NON-NLS-1$
 		if (computerId == null)
 			return null;
 		
@@ -54,13 +54,13 @@ public final class JavaContentAssistHandler extends AbstractHandler {
 		if (action == null || !action.isEnabled())
 			return null;
 		
-		Collection computers= CompletionProposalComputerRegistry.getDefault().getProposalComputerDescriptors();
-		boolean[] oldstates= new boolean[computers.size()];
+		Collection categories= CompletionProposalComputerRegistry.getDefault().getProposalCategories();
+		boolean[] oldstates= new boolean[categories.size()];
 		int i= 0;
-		for (Iterator it1= computers.iterator(); it1.hasNext();) {
-			CompletionProposalComputerDescriptor d= (CompletionProposalComputerDescriptor) it1.next();
-			oldstates[i++]= d.isEnabled();
-			d.setEnabled(d.getId().equals(computerId));
+		for (Iterator it1= categories.iterator(); it1.hasNext();) {
+			CompletionProposalCategory cat= (CompletionProposalCategory) it1.next();
+			oldstates[i++]= cat.isEnabled();
+			cat.setEnabled(cat.getId().equals(computerId));
 		}
 		
 		try {
@@ -69,9 +69,9 @@ public final class JavaContentAssistHandler extends AbstractHandler {
 				target.doOperation(ISourceViewer.CONTENTASSIST_PROPOSALS);
 		} finally {
 			i= 0;
-			for (Iterator it1= computers.iterator(); it1.hasNext();) {
-				CompletionProposalComputerDescriptor d= (CompletionProposalComputerDescriptor) it1.next();
-				d.setEnabled(oldstates[i++]);
+			for (Iterator it1= categories.iterator(); it1.hasNext();) {
+				CompletionProposalCategory cat= (CompletionProposalCategory) it1.next();
+				cat.setEnabled(oldstates[i++]);
 			}
 		}
 		

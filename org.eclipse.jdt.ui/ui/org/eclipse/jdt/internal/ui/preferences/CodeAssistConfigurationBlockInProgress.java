@@ -11,9 +11,11 @@
 package org.eclipse.jdt.internal.ui.preferences;
 
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.commands.Command;
@@ -59,7 +61,7 @@ import org.eclipse.ui.texteditor.ITextEditorActionDefinitionIds;
 
 import org.eclipse.jdt.ui.PreferenceConstants;
 
-import org.eclipse.jdt.internal.ui.text.java.CompletionProposalComputerDescriptor;
+import org.eclipse.jdt.internal.ui.text.java.CompletionProposalCategory;
 import org.eclipse.jdt.internal.ui.text.java.CompletionProposalComputerRegistry;
 import org.eclipse.jdt.internal.ui.wizards.IStatusChangeListener;
 
@@ -90,7 +92,7 @@ final class CodeAssistConfigurationBlockInProgress extends OptionsConfigurationB
 		 */
 		public Image getColumnImage(Object element, int columnIndex) {
 			if (columnIndex == 0)
-				return CodeAssistConfigurationBlockInProgress.this.getImage(((CompletionProposalComputerDescriptor) element).getImageDescriptor());
+				return CodeAssistConfigurationBlockInProgress.this.getImage(((CompletionProposalCategory) element).getImageDescriptor());
 			return null;
 		}
 
@@ -98,12 +100,12 @@ final class CodeAssistConfigurationBlockInProgress extends OptionsConfigurationB
 		 * @see org.eclipse.jface.viewers.ITableLabelProvider#getColumnText(java.lang.Object, int)
 		 */
 		public String getColumnText(Object element, int columnIndex) {
-			CompletionProposalComputerDescriptor desc= (CompletionProposalComputerDescriptor) element;
+			CompletionProposalCategory cat= (CompletionProposalCategory) element;
 			switch (columnIndex) {
 				case 0:
-					return desc.getName().replaceAll("&", ""); //$NON-NLS-1$ //$NON-NLS-2$
+					return cat.getName().replaceAll("&", ""); //$NON-NLS-1$ //$NON-NLS-2$
 				case 1:
-					final Parameterization[] params= { new Parameterization(fParam, desc.getId()) };
+					final Parameterization[] params= { new Parameterization(fParam, cat.getId()) };
 					final ParameterizedCommand pCmd= new ParameterizedCommand(fCommand, params);
 					String key= getKeyboardShortcut(pCmd);
 					return key;
@@ -176,8 +178,15 @@ final class CodeAssistConfigurationBlockInProgress extends OptionsConfigurationB
 			 * @see org.eclipse.jface.viewers.IStructuredContentProvider#getElements(java.lang.Object)
 			 */
 			public Object[] getElements(Object inputElement) {
-				if (fInput != null)
-					return fInput.getProposalComputerDescriptors().toArray();
+				if (fInput != null) {
+					List categories= new ArrayList(fInput.getProposalCategories());
+					for (Iterator it= categories.iterator(); it.hasNext();) {
+						CompletionProposalCategory category= (CompletionProposalCategory) it.next();
+						if (!category.hasComputers())
+							it.remove();
+					}
+					return categories.toArray();
+				}
 				return null;
 			}
 
@@ -205,19 +214,23 @@ final class CodeAssistConfigurationBlockInProgress extends OptionsConfigurationB
 		CompletionProposalComputerRegistry registry= CompletionProposalComputerRegistry.getDefault();
 		fViewer.setInput(registry);
 		
-		Collection descriptors= registry.getProposalComputerDescriptors();
+		Collection categories= registry.getProposalCategories();
 		// assume descriptors are up2date with the preferences
 		// compute widths along the way
 		final int ICON_AND_CHECKBOX_WITH= 40;
 		int minNameWidth= 100;
 		int minKeyWidth= 50;
-		for (Iterator iter= descriptors.iterator(); iter.hasNext();) {
-			CompletionProposalComputerDescriptor descriptor= (CompletionProposalComputerDescriptor) iter.next();
-			fViewer.setChecked(descriptor, descriptor.isEnabled());
-			
-			minNameWidth= Math.max(minNameWidth, computeWidth(table, labelProvider.getColumnText(descriptor, 0)) + ICON_AND_CHECKBOX_WITH);
-			minKeyWidth= Math.max(minKeyWidth, computeWidth(table, labelProvider.getColumnText(descriptor, 1)));
+		for (Iterator iter= categories.iterator(); iter.hasNext();) {
+			CompletionProposalCategory category= (CompletionProposalCategory) iter.next();
+			if (category.hasComputers()) {
+				fViewer.setChecked(category, category.isEnabled());
+				
+				minNameWidth= Math.max(minNameWidth, computeWidth(table, labelProvider.getColumnText(category, 0)) + ICON_AND_CHECKBOX_WITH);
+				minKeyWidth= Math.max(minKeyWidth, computeWidth(table, labelProvider.getColumnText(category, 1)));
+			}
 		}
+		
+		table.addSelectionListener(getSelectionListener());
 		
 		nameColumn.setWidth(minNameWidth);
 		keyColumn.setWidth(minKeyWidth);
@@ -270,16 +283,18 @@ final class CodeAssistConfigurationBlockInProgress extends OptionsConfigurationB
 		String[] disabled= getTokens(getValue(PREF_DISABLED_COMPUTERS), SEPARATOR);
 		
 		CompletionProposalComputerRegistry registry= CompletionProposalComputerRegistry.getDefault();
-		Collection descriptors= registry.getProposalComputerDescriptors();
+		Collection categories= registry.getProposalCategories();
 
-		for (Iterator it= descriptors.iterator(); it.hasNext();) {
-			CompletionProposalComputerDescriptor desc= (CompletionProposalComputerDescriptor) it.next();
-			boolean enabled= true;
-			for (int i= 0; i < disabled.length; i++) {
-				if (desc.getId().equals(disabled[i]))
-					enabled= false;
+		for (Iterator it= categories.iterator(); it.hasNext();) {
+			CompletionProposalCategory cat= (CompletionProposalCategory) it.next();
+			if (cat.hasComputers()) {
+				boolean enabled= true;
+				for (int i= 0; i < disabled.length; i++) {
+					if (cat.getId().equals(disabled[i]))
+						enabled= false;
+				}
+				fViewer.setChecked(cat, enabled);
 			}
-			fViewer.setChecked(desc, enabled);
 		}
 	}
 	
@@ -290,11 +305,11 @@ final class CodeAssistConfigurationBlockInProgress extends OptionsConfigurationB
 		if (widget == fViewer.getControl()) {
 			StringBuffer buf= new StringBuffer();
 			CompletionProposalComputerRegistry registry= CompletionProposalComputerRegistry.getDefault();
-			Collection descriptors= registry.getProposalComputerDescriptors();
+			Collection descriptors= registry.getProposalCategories();
 			for (Iterator it= descriptors.iterator(); it.hasNext();) {
-				CompletionProposalComputerDescriptor desc= (CompletionProposalComputerDescriptor) it.next();
-				if (!fViewer.getChecked(desc))
-					buf.append(desc.getId() + SEPARATOR);
+				CompletionProposalCategory cat= (CompletionProposalCategory) it.next();
+				if (cat.hasComputers() && !fViewer.getChecked(cat))
+					buf.append(cat.getId() + SEPARATOR);
 			}
 			
 			String newValue= buf.toString();
@@ -309,10 +324,11 @@ final class CodeAssistConfigurationBlockInProgress extends OptionsConfigurationB
 	 */
 	protected boolean processChanges(IWorkbenchPreferenceContainer container) {
 		CompletionProposalComputerRegistry registry= CompletionProposalComputerRegistry.getDefault();
-		Collection descriptors= registry.getProposalComputerDescriptors();
+		Collection descriptors= registry.getProposalCategories();
 		for (Iterator it= descriptors.iterator(); it.hasNext();) {
-			CompletionProposalComputerDescriptor desc= (CompletionProposalComputerDescriptor) it.next();
-			desc.setEnabled(fViewer.getChecked(desc));
+			CompletionProposalCategory cat= (CompletionProposalCategory) it.next();
+			if (cat.hasComputers())
+				cat.setEnabled(fViewer.getChecked(cat));
 		}
 		
 		return super.processChanges(container);

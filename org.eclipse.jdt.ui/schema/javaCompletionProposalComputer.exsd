@@ -17,9 +17,10 @@
          </appInfo>
       </annotation>
       <complexType>
-         <sequence>
+         <choice>
             <element ref="javaCompletionProposalComputer"/>
-         </sequence>
+            <element ref="proposalCategory"/>
+         </choice>
          <attribute name="point" type="string" use="required">
             <annotation>
                <documentation>
@@ -77,14 +78,11 @@ and must have a public 0-argument constructor.
                </documentation>
             </annotation>
          </attribute>
-         <attribute name="icon" type="string">
+         <attribute name="categoryId" type="string" use="default" value="org.eclipse.jdt.ui.defaultProposalCategory">
             <annotation>
                <documentation>
-                  The optional name of the computer, which can be displayed in the user preferences.
+                  The id of a &lt;tt&gt;proposalCategory&lt;/tt&gt;
                </documentation>
-               <appInfo>
-                  <meta.attribute kind="resource"/>
-               </appInfo>
             </annotation>
          </attribute>
       </complexType>
@@ -123,6 +121,26 @@ and must have a public 0-argument constructor.
       </complexType>
    </element>
 
+   <element name="proposalCategory">
+      <annotation>
+         <documentation>
+            A proposal category contribution defines categories of proposals used to group them in the UI.
+         </documentation>
+      </annotation>
+      <complexType>
+         <attribute name="icon" type="string">
+            <annotation>
+               <documentation>
+                  The optional icon of the category, which can be displayed in the user preferences.
+               </documentation>
+               <appInfo>
+                  <meta.attribute kind="resource"/>
+               </appInfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
    <annotation>
       <appInfo>
          <meta.section type="since"/>
@@ -142,10 +160,16 @@ and must have a public 0-argument constructor.
 &lt;p&gt;
 &lt;pre&gt;
  &lt;extension point=&quot;org.eclipse.jdt.ui.javaCompletionProposalComputer&quot;
+   id=&quot;textual_proposals&quot;
+   name=&quot;Text Proposals&quot;&gt;
+   &lt;proposalCategory icon=&quot;icons/wordcompletions.png&quot;/&gt;
+ &lt;/extension&gt;
+ &lt;extension point=&quot;org.eclipse.jdt.ui.javaCompletionProposalComputer&quot;
    id=&quot;WordCompletionProposalComputer&quot;
    name=&quot;Word Completion Proposal Computer&quot;&gt;
    &lt;javaCompletionProposalComputer
-      class=&quot;org.eclipse.ui.texteditor.HippieProposalComputer&quot;&gt;
+      class=&quot;org.eclipse.ui.texteditor.HippieProposalComputer&quot;
+      categoryId=&quot;org.eclipse.ui.texteditor.textual_proposals&quot;&gt;
       &lt;partition type=&quot;__java_javadoc&quot;/&gt;
    &lt;/javaCompletionProposalComputer&gt;
  &lt;/extension&gt;

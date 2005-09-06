@@ -24,16 +24,16 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 
-import org.eclipse.jdt.internal.ui.text.java.CompletionProposalComputerDescriptor;
+import org.eclipse.jdt.internal.ui.text.java.CompletionProposalCategory;
 import org.eclipse.jdt.internal.ui.text.java.CompletionProposalComputerRegistry;
 
 final class SpecificContentAssistAction extends Action {
-	private final CompletionProposalComputerDescriptor fDescriptor;
+	private final CompletionProposalCategory fCategory;
 
-	public SpecificContentAssistAction(CompletionProposalComputerDescriptor desc) {
-		fDescriptor= desc;
-		setText(desc.getName());
-		setImageDescriptor(desc.getImageDescriptor());
+	public SpecificContentAssistAction(CompletionProposalCategory category) {
+		fCategory= category;
+		setText(category.getName());
+		setImageDescriptor(category.getImageDescriptor());
 		setActionDefinitionId("org.eclipse.jdt.ui.specific_content_assist.command"); //$NON-NLS-1$
 	}
 
@@ -45,19 +45,19 @@ final class SpecificContentAssistAction extends Action {
 		if (editor == null)
 			return;
 		
-		String computerId= fDescriptor.getId();
+		String computerId= fCategory.getId();
 		
 		IAction action= editor.getAction("ContentAssistProposal"); //$NON-NLS-1$
 		if (action == null || !action.isEnabled())
 			return;
 		
-		Collection computers= CompletionProposalComputerRegistry.getDefault().getProposalComputerDescriptors();
-		boolean[] oldstates= new boolean[computers.size()];
+		Collection categories= CompletionProposalComputerRegistry.getDefault().getProposalCategories();
+		boolean[] oldstates= new boolean[categories.size()];
 		int i= 0;
-		for (Iterator it1= computers.iterator(); it1.hasNext();) {
-			CompletionProposalComputerDescriptor d= (CompletionProposalComputerDescriptor) it1.next();
-			oldstates[i++]= d.isEnabled();
-			d.setEnabled(d.getId().equals(computerId));
+		for (Iterator it1= categories.iterator(); it1.hasNext();) {
+			CompletionProposalCategory cat= (CompletionProposalCategory) it1.next();
+			oldstates[i++]= cat.isEnabled();
+			cat.setEnabled(cat.getId().equals(computerId));
 		}
 		
 		try {
@@ -66,9 +66,9 @@ final class SpecificContentAssistAction extends Action {
 				target.doOperation(ISourceViewer.CONTENTASSIST_PROPOSALS);
 		} finally {
 			i= 0;
-			for (Iterator it1= computers.iterator(); it1.hasNext();) {
-				CompletionProposalComputerDescriptor d= (CompletionProposalComputerDescriptor) it1.next();
-				d.setEnabled(oldstates[i++]);
+			for (Iterator it1= categories.iterator(); it1.hasNext();) {
+				CompletionProposalCategory cat= (CompletionProposalCategory) it1.next();
+				cat.setEnabled(oldstates[i++]);
 			}
 		}
 		
