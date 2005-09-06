@@ -12,6 +12,7 @@
 package org.eclipse.jdt.internal.ui.javaeditor;
 
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -19,14 +20,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
-import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IWorkspaceRoot;
-import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.commands.Command;
+import org.eclipse.core.commands.ParameterizedCommand;
+
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
+
+import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.core.resources.ResourcesPlugin;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
@@ -39,6 +44,8 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.bindings.Binding;
+import org.eclipse.jface.bindings.TriggerSequence;
 import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.dialogs.IMessageProvider;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -65,6 +72,8 @@ import org.eclipse.jface.text.Position;
 import org.eclipse.jface.text.TextUtilities;
 import org.eclipse.jface.text.contentassist.ContentAssistant;
 import org.eclipse.jface.text.contentassist.IContentAssistant;
+import org.eclipse.jface.text.contentassist.ContentAssistant.ContentAssistEvent;
+import org.eclipse.jface.text.contentassist.ContentAssistant.ICompletionListener;
 import org.eclipse.jface.text.formatter.FormattingContextProperties;
 import org.eclipse.jface.text.formatter.IFormattingContext;
 import org.eclipse.jface.text.link.ILinkedModeListener;
@@ -84,10 +93,12 @@ import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.ActionContext;
 import org.eclipse.ui.actions.ActionGroup;
+import org.eclipse.ui.commands.ICommandService;
 import org.eclipse.ui.dialogs.SaveAsDialog;
-import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.keys.IBindingService;
 import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.ui.texteditor.AbstractDecoratedTextEditorPreferenceConstants;
 import org.eclipse.ui.texteditor.ContentAssistAction;
@@ -135,6 +146,7 @@ import org.eclipse.jdt.internal.ui.text.comment.CommentFormattingContext;
 import org.eclipse.jdt.internal.ui.text.correction.CorrectionCommandInstaller;
 import org.eclipse.jdt.internal.ui.text.correction.JavaCorrectionAssistant;
 import org.eclipse.jdt.internal.ui.text.java.IJavaReconcilingListener;
+import org.eclipse.jdt.internal.ui.text.java.JavaCompletionProcessor;
 
 
 
@@ -301,8 +313,55 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 			super.configure(configuration);
 			fCorrectionAssistant= new JavaCorrectionAssistant(CompilationUnitEditor.this);
 			fCorrectionAssistant.install(this);
+			
+			IContentAssistant contentAssistant= getContentAssistant();
+			if (contentAssistant instanceof ContentAssistant) {
+				ContentAssistant assistant= (ContentAssistant) contentAssistant;
+				String shortcut= getContentAssistKeyBinding();
+				String gesture= shortcut != null ? MessageFormat.format(JavaEditorMessages.CompilationUnitEditor_content_assist_toggle_affordance_press_gesture, new Object[] { shortcut }) : JavaEditorMessages.CompilationUnitEditor_content_assist_toggle_affordance_click_gesture;
+				final String allMessage= MessageFormat.format(JavaEditorMessages.CompilationUnitEditor_content_assist_toggle_affordance_initial_message, new Object[] { gesture });
+				final MessageFormat format= new MessageFormat(JavaEditorMessages.CompilationUnitEditor_content_assist_toggle_affordance_update_message);
+				final Object[] args= { null, gesture }; 
+				assistant.setMessage(allMessage);
+				assistant.addCompletionListener(new ICompletionListener() {
+					public void proposalsAboutToShow(ContentAssistEvent event) {
+						JavaCompletionProcessor proc= (JavaCompletionProcessor) event.processor;
+						proc.setRepeatedInvocation(event.repetition);
+						String repetitionMessage= proc.getRepetitionMessage();
+						String message;
+						if (repetitionMessage == null) {
+							message= " " + allMessage; //$NON-NLS-1$
+						} else {
+							args[0]= repetitionMessage;
+							message= " " + format.format(args); //$NON-NLS-1$
+						}
+						event.assistant.setMessage(message);
+					}
+				});
+			}
 		}
 
+		private String getContentAssistKeyBinding() {
+			final ICommandService commandSvc= (ICommandService) PlatformUI.getWorkbench().getAdapter(ICommandService.class);
+			final Command command= commandSvc.getCommand(ITextEditorActionDefinitionIds.CONTENT_ASSIST_PROPOSALS);
+			ParameterizedCommand pCmd= new ParameterizedCommand(command, null);
+			String key= getKeyboardShortcut(pCmd);
+			return key;
+		}
+
+		private String getKeyboardShortcut(ParameterizedCommand command) {
+			final IBindingService bindingSvc= (IBindingService) PlatformUI.getWorkbench().getAdapter(IBindingService.class);
+			final Binding[] bindings= bindingSvc.getBindings();
+			for (int i= 0; i < bindings.length; i++) {
+				Binding binding= bindings[i];
+				if (command.equals(binding.getParameterizedCommand())) {
+					TriggerSequence triggers= binding.getTriggerSequence();
+					return triggers.format();
+				}
+			}
+			return null;
+		}
+		
 		/*
 		 * @see org.eclipse.jface.text.source.SourceViewer#createFormattingContext()
 		 * @since 3.0
