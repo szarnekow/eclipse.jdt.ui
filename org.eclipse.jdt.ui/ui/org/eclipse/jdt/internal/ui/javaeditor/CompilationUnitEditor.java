@@ -70,10 +70,10 @@ import org.eclipse.jface.text.ITypedRegion;
 import org.eclipse.jface.text.IWidgetTokenKeeper;
 import org.eclipse.jface.text.Position;
 import org.eclipse.jface.text.TextUtilities;
+import org.eclipse.jface.text.contentassist.ContentAssistEvent;
 import org.eclipse.jface.text.contentassist.ContentAssistant;
+import org.eclipse.jface.text.contentassist.ICompletionListener;
 import org.eclipse.jface.text.contentassist.IContentAssistant;
-import org.eclipse.jface.text.contentassist.ContentAssistant.ContentAssistEvent;
-import org.eclipse.jface.text.contentassist.ContentAssistant.ICompletionListener;
 import org.eclipse.jface.text.formatter.FormattingContextProperties;
 import org.eclipse.jface.text.formatter.IFormattingContext;
 import org.eclipse.jface.text.link.ILinkedModeListener;
@@ -324,7 +324,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 				final Object[] args= { null, gesture }; 
 				assistant.setMessage(allMessage);
 				assistant.addCompletionListener(new ICompletionListener() {
-					public void proposalsAboutToShow(ContentAssistEvent event) {
+					public void computingProposals(ContentAssistEvent event) {
 						JavaCompletionProcessor proc= (JavaCompletionProcessor) event.processor;
 						proc.setRepeatedInvocation(event.repetition);
 						String repetitionMessage= proc.getRepetitionMessage();
