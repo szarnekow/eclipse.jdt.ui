@@ -54,9 +54,11 @@ import org.eclipse.jdt.core.dom.SwitchCase;
 import org.eclipse.jdt.core.dom.VariableDeclaration;
 
 import org.eclipse.jdt.internal.corext.Assert;
+import org.eclipse.jdt.internal.corext.Corext;
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.dom.Bindings;
 import org.eclipse.jdt.internal.corext.refactoring.base.JavaStatusContext;
+import org.eclipse.jdt.internal.corext.refactoring.base.RefactoringStatusCodes;
 import org.eclipse.jdt.internal.corext.refactoring.changes.RenameResourceChange;
 import org.eclipse.jdt.internal.corext.refactoring.util.JavaElementUtil;
 import org.eclipse.jdt.internal.corext.refactoring.util.ResourceUtil;
@@ -246,40 +248,38 @@ public class Checks {
 		return name.equals(element.getElementName());
 	}
 
-	//-------------- native method checks ------------------
-	public static RefactoringStatus checkForNativeMethods(IType type) throws JavaModelException {
-		RefactoringStatus result= new RefactoringStatus();
-		result.merge(checkForNativeMethods(type.getMethods()));
-		result.merge(checkForNativeMethods(type.getTypes()));
-		return result;
+	//-------------- main and native method checks ------------------
+	public static RefactoringStatus checkForMainAndNativeMethods(ICompilationUnit cu) throws JavaModelException {
+		return checkForMainAndNativeMethods(cu.getTypes());
 	}
 	
-	/* non java-doc
-	 * checks all hierarchy of nested types
-	 */
-	public static RefactoringStatus checkForNativeMethods(IType[] types) throws JavaModelException {
-		if (types == null)
-			return null;
+	public static RefactoringStatus checkForMainAndNativeMethods(IType[] types) throws JavaModelException {
 		RefactoringStatus result= new RefactoringStatus();
 		for (int i= 0; i < types.length; i++)
-			result.merge(checkForNativeMethods(types[i]));
+			result.merge(checkForMainAndNativeMethods(types[i]));
 		return result;
 	}
 	
-	public static RefactoringStatus checkForNativeMethods(ICompilationUnit cu) throws JavaModelException {
-		return checkForNativeMethods(cu.getTypes());
+	public static RefactoringStatus checkForMainAndNativeMethods(IType type) throws JavaModelException {
+		RefactoringStatus result= new RefactoringStatus();
+		result.merge(checkForMainAndNativeMethods(type.getMethods()));
+		result.merge(checkForMainAndNativeMethods(type.getTypes()));
+		return result;
 	}
 	
-	private static RefactoringStatus checkForNativeMethods(IMethod[] methods) throws JavaModelException {
-		if (methods == null)
-			return null;
+	private static RefactoringStatus checkForMainAndNativeMethods(IMethod[] methods) throws JavaModelException {
 		RefactoringStatus result= new RefactoringStatus();
 		for (int i= 0; i < methods.length; i++) {
 			if (JdtFlags.isNative(methods[i])){
 				String msg= Messages.format(RefactoringCoreMessages.Checks_method_native,  
 								new String[]{JavaModelUtil.getFullyQualifiedName(methods[i].getDeclaringType()), methods[i].getElementName(), "UnsatisfiedLinkError"});//$NON-NLS-1$
-				result.addError(msg, JavaStatusContext.create(methods[i])); 
-			}				
+				result.addEntry(RefactoringStatus.ERROR, msg, JavaStatusContext.create(methods[i]), Corext.getPluginId(), RefactoringStatusCodes.NATIVE_METHOD); 
+			}
+			if (methods[i].isMainMethod()) {
+				String msg= Messages.format(RefactoringCoreMessages.Checks_has_main,
+						JavaModelUtil.getFullyQualifiedName(methods[i].getDeclaringType()));
+				result.addEntry(RefactoringStatus.WARNING, msg, JavaStatusContext.create(methods[i]), Corext.getPluginId(), RefactoringStatusCodes.MAIN_METHOD); 
+			}
 		}
 		return result;
 	}
@@ -347,32 +347,6 @@ public class Checks {
 			}
 		}
 		return result;
-	}
-	
-	//-------------- main method checks ------------------
-		
-	public static RefactoringStatus checkForMainMethod(IType type) throws JavaModelException{
-		/*
-		 * for simplicity we ignore type access modifiers and report all public static void methods
-		 */
-		RefactoringStatus result= new RefactoringStatus();
-		if (JavaModelUtil.hasMainMethod(type))
-			result.addWarning(Messages.format(RefactoringCoreMessages.Checks_has_main, JavaModelUtil.getFullyQualifiedName(type))); 
-		result.merge(checkForMainMethods(type.getTypes()));	
-		return result;
-	}
-	
-	public static RefactoringStatus checkForMainMethods(IType[] types) throws JavaModelException{
-		if (types == null)
-			return null;
-		RefactoringStatus result= new RefactoringStatus();
-		for (int i= 0; i < types.length; i++) 
-			result.merge(checkForMainMethod(types[i]));
-		return result;
-	}
-	
-	public static RefactoringStatus checkForMainMethods(ICompilationUnit cu) throws JavaModelException{
-		return checkForMainMethods(cu.getTypes());
 	}
 	
 	//---- Selection checks --------------------------------------------------------------------
