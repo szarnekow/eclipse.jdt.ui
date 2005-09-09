@@ -145,6 +145,8 @@ import org.eclipse.jdt.internal.ui.text.Symbols;
 import org.eclipse.jdt.internal.ui.text.comment.CommentFormattingContext;
 import org.eclipse.jdt.internal.ui.text.correction.CorrectionCommandInstaller;
 import org.eclipse.jdt.internal.ui.text.correction.JavaCorrectionAssistant;
+import org.eclipse.jdt.internal.ui.text.java.CompletionProposalCategory;
+import org.eclipse.jdt.internal.ui.text.java.CompletionProposalComputerRegistry;
 import org.eclipse.jdt.internal.ui.text.java.IJavaReconcilingListener;
 import org.eclipse.jdt.internal.ui.text.java.JavaCompletionProcessor;
 
@@ -316,28 +318,34 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 			
 			IContentAssistant contentAssistant= getContentAssistant();
 			if (contentAssistant instanceof ContentAssistant) {
-				ContentAssistant assistant= (ContentAssistant) contentAssistant;
-				String shortcut= getContentAssistKeyBinding();
-				String gesture= shortcut != null ? MessageFormat.format(JavaEditorMessages.CompilationUnitEditor_content_assist_toggle_affordance_press_gesture, new Object[] { shortcut }) : JavaEditorMessages.CompilationUnitEditor_content_assist_toggle_affordance_click_gesture;
-				final String allMessage= MessageFormat.format(JavaEditorMessages.CompilationUnitEditor_content_assist_toggle_affordance_initial_message, new Object[] { gesture });
-				final MessageFormat format= new MessageFormat(JavaEditorMessages.CompilationUnitEditor_content_assist_toggle_affordance_update_message);
-				final Object[] args= { null, gesture }; 
-				assistant.setMessage(allMessage);
-				assistant.addCompletionListener(new ICompletionListener() {
-					public void computingProposals(ContentAssistEvent event) {
-						JavaCompletionProcessor proc= (JavaCompletionProcessor) event.processor;
-						proc.setRepeatedInvocation(event.repetition);
-						String repetitionMessage= proc.getRepetitionMessage();
-						String message;
-						if (repetitionMessage == null) {
-							message= " " + allMessage; //$NON-NLS-1$
-						} else {
-							args[0]= repetitionMessage;
-							message= " " + format.format(args); //$NON-NLS-1$
+				int nSeparateCategories= 0;
+				List categories= CompletionProposalComputerRegistry.getDefault().getProposalCategories();
+				for (Iterator it= categories.iterator(); it.hasNext();) {
+					CompletionProposalCategory category= (CompletionProposalCategory) it.next();
+					if (category.isSeparateCommand() && category.hasComputers())
+						nSeparateCategories++;
+				}
+				
+				if (nSeparateCategories > 0) {
+					ContentAssistant assistant= (ContentAssistant) contentAssistant;
+					String shortcut= getContentAssistKeyBinding();
+					String gesture= shortcut != null ? MessageFormat.format(JavaEditorMessages.CompilationUnitEditor_content_assist_toggle_affordance_press_gesture, new Object[] { shortcut }) : JavaEditorMessages.CompilationUnitEditor_content_assist_toggle_affordance_click_gesture;
+					final MessageFormat format= new MessageFormat(JavaEditorMessages.CompilationUnitEditor_content_assist_toggle_affordance_update_message);
+					final Object[] args= { null, gesture, null }; 
+					assistant.setMessage(""); //$NON-NLS-1$
+					assistant.addCompletionListener(new ICompletionListener() {
+						public void computingProposals(ContentAssistEvent event) {
+							JavaCompletionProcessor proc= (JavaCompletionProcessor) event.processor;
+							proc.setRepeatedInvocation(event.repetition);
+							String current= proc.getCurrentCategory();
+							String next= proc.getNextCategory();
+							args[0]= current;
+							args[2]= next;
+							String message= format.format(args);
+							event.assistant.setMessage(message);
 						}
-						event.assistant.setMessage(message);
-					}
-				});
+					});
+				}
 			}
 		}
 

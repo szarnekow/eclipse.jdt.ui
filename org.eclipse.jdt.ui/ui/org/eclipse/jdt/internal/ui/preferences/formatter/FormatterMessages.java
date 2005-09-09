@@ -7,6 +7,8 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
+ *     istvan@benedek-home.de
+ *       - 103706 [formatter] indent empty lines
  *******************************************************************************/
 package org.eclipse.jdt.internal.ui.preferences.formatter;
 
@@ -400,6 +402,7 @@ final class FormatterMessages extends NLS {
 	public static String IndentationTabPage_switch_group_option_indent_statements_within_switch_body;
 	public static String IndentationTabPage_switch_group_option_indent_statements_within_case_body;
 	public static String IndentationTabPage_switch_group_option_indent_break_statements;
+    public static String IndentationTabPage_indent_empty_lines;
 	public static String ModifyDialog_dialog_title;
 	public static String ModifyDialog_apply_button;
 	public static String ModifyDialog_dialog_show_title;

@@ -3,10 +3,11 @@
 <schema targetNamespace="org.eclipse.jdt.ui">
 <annotation>
       <appInfo>
-         <meta.schema plugin="org.eclipse.jdt.ui" id="javaCompletionProposalComputer" name="%javaCompletionProposalComputer"/>
+         <meta.schema plugin="org.eclipse.jdt.ui" id="javaCompletionProposalComputer" name="Java Completion Proposal Computer"/>
       </appInfo>
       <documentation>
          This extension point allows to contribute Java completion proposal computers to participate in the content assist process of the Java editor.
+&lt;p&gt;XXX this API is provisional and may change anytime during the course of 3.2&lt;/p&gt;
       </documentation>
    </annotation>
 

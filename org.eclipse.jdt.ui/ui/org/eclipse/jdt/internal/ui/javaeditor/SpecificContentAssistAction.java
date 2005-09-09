@@ -56,8 +56,8 @@ final class SpecificContentAssistAction extends Action {
 		int i= 0;
 		for (Iterator it1= categories.iterator(); it1.hasNext();) {
 			CompletionProposalCategory cat= (CompletionProposalCategory) it1.next();
-			oldstates[i++]= cat.isEnabled();
-			cat.setEnabled(cat.getId().equals(computerId));
+			oldstates[i++]= cat.isIncluded();
+			cat.setIncluded(cat.getId().equals(computerId));
 		}
 		
 		try {
@@ -68,7 +68,7 @@ final class SpecificContentAssistAction extends Action {
 			i= 0;
 			for (Iterator it1= categories.iterator(); it1.hasNext();) {
 				CompletionProposalCategory cat= (CompletionProposalCategory) it1.next();
-				cat.setEnabled(oldstates[i++]);
+				cat.setIncluded(oldstates[i++]);
 			}
 		}
 		

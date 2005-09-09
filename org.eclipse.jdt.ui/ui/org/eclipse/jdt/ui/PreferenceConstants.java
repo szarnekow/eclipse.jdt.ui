@@ -2915,16 +2915,26 @@ public class PreferenceConstants {
 	public final static String CODEASSIST_PREFIX_COMPLETION= "content_assist_prefix_completion"; //$NON-NLS-1$
 
 	/**
-	 * A named preference that controls which completion proposals
-	 * contributors have been disabled.
+	 * A named preference that controls which completion proposal categories
+	 * have been excluded from the default proposal list.
 	 * <p>
 	 * Value is of type <code>String</code>, a "\0"-separated list of identifiers.
 	 * </p>
 	 * 
 	 * @since 3.2
 	 */
-	public static final String CODEASSIST_DISABLED_COMPUTERS= "content_assist_disabled_computers"; //$NON-NLS-1$
+	public static final String CODEASSIST_EXCLUDED_CATEGORIES= "content_assist_disabled_computers"; //$NON-NLS-1$
 
+	/**
+	 * A named preference that controls which the order of the specific code assist commands.
+	 * <p>
+	 * Value is of type <code>String</code>, a "\0"-separated list of identifiers.
+	 * </p>
+	 * 
+	 * @since 3.2
+	 */
+	public static final String CODEASSIST_CATEGORY_ORDER= "content_assist_category_order"; //$NON-NLS-1$
+	
 	/**
 	 * A named preference that controls whether folding is enabled in the Java editor.
 	 * <p>
@@ -3451,7 +3461,8 @@ public class PreferenceConstants {
 		store.setDefault(PreferenceConstants.CODEASSIST_FILL_ARGUMENT_NAMES, true);
 		store.setDefault(PreferenceConstants.CODEASSIST_GUESS_METHOD_ARGUMENTS, false);
 		store.setDefault(PreferenceConstants.CODEASSIST_PREFIX_COMPLETION, false);
-		store.setDefault(PreferenceConstants.CODEASSIST_DISABLED_COMPUTERS, ""); //$NON-NLS-1$
+		store.setDefault(PreferenceConstants.CODEASSIST_EXCLUDED_CATEGORIES, "org.eclipse.jdt.ui.spellingProposalCategory\0org.eclipse.jdt.ui.textProposalCategory\0"); //$NON-NLS-1$
+		store.setDefault(PreferenceConstants.CODEASSIST_CATEGORY_ORDER, "org.eclipse.jdt.ui.spellingProposalCategory:65541\0org.eclipse.jdt.ui.javaProposalCategory:65536\0org.eclipse.jdt.ui.textProposalCategory:1\0org.eclipse.jdt.ui.templateProposalCategory:65537\0"); //$NON-NLS-1$
 
 		store.setDefault(PreferenceConstants.EDITOR_SMART_HOME_END, true);
 		store.setDefault(PreferenceConstants.EDITOR_SUB_WORD_NAVIGATION, true);

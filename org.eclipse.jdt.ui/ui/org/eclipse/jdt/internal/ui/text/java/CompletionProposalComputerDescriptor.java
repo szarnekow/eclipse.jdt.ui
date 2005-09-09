@@ -46,7 +46,7 @@ import org.osgi.framework.Bundle;
  * @see CompletionProposalComputerRegistry
  * @since 3.2
  */
-public final class CompletionProposalComputerDescriptor {
+final class CompletionProposalComputerDescriptor {
 	/** The default category id. */
 	private static final String DEFAULT_CATEGORY_ID= "org.eclipse.jdt.ui.defaultProposalCategory"; //$NON-NLS-1$
 	/** The extension schema name of the category id attribute. */
@@ -263,7 +263,8 @@ public final class CompletionProposalComputerDescriptor {
 	 * 
 	 * @param context the invocation context passed on to the extension
 	 * @param monitor the progress monitor passed on to the extension
-	 * @return the list of computed completion proposals (element type: {@link org.eclipse.jface.text.contentassist.ICompletionProposal})
+	 * @return the list of computed completion proposals (element type:
+	 *         {@link org.eclipse.jface.text.contentassist.ICompletionProposal})
 	 */
 	public List computeCompletionProposals(TextContentAssistInvocationContext context, IProgressMonitor monitor) {
 		if (!isEnabled())
@@ -303,7 +304,8 @@ public final class CompletionProposalComputerDescriptor {
 	 * 
 	 * @param context the invocation context passed on to the extension
 	 * @param monitor the progress monitor passed on to the extension
-	 * @return the list of computed context information objects (element type: {@link org.eclipse.jface.text.contentassist.IContextInformation})
+	 * @return the list of computed context information objects (element type:
+	 *         {@link org.eclipse.jface.text.contentassist.IContextInformation})
 	 */
 	public List computeContextInformation(TextContentAssistInvocationContext context, IProgressMonitor monitor) {
 		if (!isEnabled())
@@ -404,14 +406,11 @@ public final class CompletionProposalComputerDescriptor {
 	 * 
 	 * @return the enablement state of the described extension
 	 */
-	public boolean isEnabled() {
+	private boolean isEnabled() {
 		return fCategory.isEnabled();
 	}
-
-	/**
-	 * @return
-	 */
-	CompletionProposalCategory getCategory() {
+	
+	public CompletionProposalCategory getCategory() {
 		return fCategory;
 	}
 	

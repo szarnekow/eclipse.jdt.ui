@@ -79,21 +79,21 @@ public class BasicEditorActionContributor extends BasicJavaEditorActionContribut
 		IMenuManager editMenu= menu.findMenuUsingPath(IWorkbenchActionConstants.M_EDIT);
 		if (editMenu != null) {
 			editMenu.add(fChangeEncodingAction);
-			editMenu.appendToGroup(IContextMenuConstants.GROUP_GENERATE, fRetargetContentAssist);
-			editMenu.appendToGroup(IContextMenuConstants.GROUP_GENERATE, fCorrectionAssist);
-			editMenu.appendToGroup(IContextMenuConstants.GROUP_GENERATE, fContextInformation);
-			
 			IMenuManager caMenu= new MenuManager(JavaEditorMessages.BasicEditorActionContributor_specific_content_assist_menu, "specific_content_assist"); //$NON-NLS-1$
-			editMenu.insertAfter(fRetargetContentAssist.getId(), caMenu);
+			editMenu.appendToGroup(IContextMenuConstants.GROUP_GENERATE, caMenu);
 			
+			caMenu.add(fRetargetContentAssist);
 			Collection descriptors= CompletionProposalComputerRegistry.getDefault().getProposalCategories();
 			for (Iterator it= descriptors.iterator(); it.hasNext();) {
 				final CompletionProposalCategory cat= (CompletionProposalCategory) it.next();
-				if (cat.hasComputers()) {
+				if (cat.isSeparateCommand() && cat.hasComputers()) {
 					IAction caAction= new SpecificContentAssistAction(cat);
 					caMenu.add(caAction);
 				}
 			}
+			
+			editMenu.appendToGroup(IContextMenuConstants.GROUP_GENERATE, fCorrectionAssist);
+			editMenu.appendToGroup(IContextMenuConstants.GROUP_GENERATE, fContextInformation);
 		}
 	}
 

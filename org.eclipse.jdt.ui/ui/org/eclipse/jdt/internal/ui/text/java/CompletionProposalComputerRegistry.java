@@ -127,7 +127,7 @@ public class CompletionProposalComputerRegistry {
 	 * @return the list of extensions to the <code>javaCompletionProposalComputer</code> extension
 	 *         point (element type: {@link CompletionProposalComputerDescriptor})
 	 */
-	public List getProposalComputerDescriptors(String partition) {
+	List getProposalComputerDescriptors(String partition) {
 		ensureExtensionPointRead();
 		List result= (List) fPublicDescriptorsByPartition.get(partition);
 		return result != null ? result : Collections.EMPTY_LIST;
@@ -148,7 +148,7 @@ public class CompletionProposalComputerRegistry {
 	 * @return the list of extensions to the <code>javaCompletionProposalComputer</code> extension
 	 *         point (element type: {@link CompletionProposalComputerDescriptor})
 	 */
-	public List getProposalComputerDescriptors() {
+	List getProposalComputerDescriptors() {
 		ensureExtensionPointRead();
 		return fPublicDescriptors;
 	}
@@ -257,12 +257,21 @@ public class CompletionProposalComputerRegistry {
 
 	private List getCategories(List elements) {
 		IPreferenceStore store= JavaPlugin.getDefault().getPreferenceStore();
-		String preference= store.getString(PreferenceConstants.CODEASSIST_DISABLED_COMPUTERS);
+		String preference= store.getString(PreferenceConstants.CODEASSIST_EXCLUDED_CATEGORIES);
 		Set disabled= new HashSet();
 		StringTokenizer tok= new StringTokenizer(preference, "\0");  //$NON-NLS-1$
 		while (tok.hasMoreTokens())
 			disabled.add(tok.nextToken());
-
+		Map ordered= new HashMap();
+		preference= store.getString(PreferenceConstants.CODEASSIST_CATEGORY_ORDER);
+		tok= new StringTokenizer(preference, "\0"); //$NON-NLS-1$
+		while (tok.hasMoreTokens()) {
+			StringTokenizer inner= new StringTokenizer(tok.nextToken(), ":"); //$NON-NLS-1$
+			String id= inner.nextToken();
+			int rank= Integer.parseInt(inner.nextToken());
+			ordered.put(id, new Integer(rank));
+		}
+		
 		List categories= new ArrayList();
 		for (Iterator iter= elements.iterator(); iter.hasNext();) {
 			IConfigurationElement element= (IConfigurationElement) iter.next();
@@ -272,8 +281,14 @@ public class CompletionProposalComputerRegistry {
 					
 					CompletionProposalCategory category= new CompletionProposalCategory(element, this);
 					categories.add(category);
-					category.setEnabled(!disabled.contains(category.getId()));
-					
+					category.setIncluded(!disabled.contains(category.getId()));
+					Integer rank= (Integer) ordered.get(category.getId());
+					if (rank != null) {
+						int r= rank.intValue();
+						boolean separate= r < 0xffff;
+						category.setSeparateCommand(separate);
+						category.setSortOrder(r);
+					}
 				}
 			} catch (InvalidRegistryObjectException x) {
 				/*

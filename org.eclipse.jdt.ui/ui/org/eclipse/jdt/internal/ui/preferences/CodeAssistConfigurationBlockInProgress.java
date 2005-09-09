@@ -12,7 +12,8 @@ package org.eclipse.jdt.internal.ui.preferences;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -25,30 +26,30 @@ import org.eclipse.core.commands.ParameterizedCommand;
 import org.eclipse.core.commands.common.NotDefinedException;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.RowData;
 import org.eclipse.swt.layout.RowLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Link;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
-import org.eclipse.swt.widgets.Widget;
 
 import org.eclipse.jface.bindings.Binding;
 import org.eclipse.jface.bindings.TriggerSequence;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.resource.JFaceResources;
-import org.eclipse.jface.viewers.CheckboxTableViewer;
-import org.eclipse.jface.viewers.IContentProvider;
-import org.eclipse.jface.viewers.IStructuredContentProvider;
+import org.eclipse.jface.viewers.ArrayContentProvider;
+import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
-import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.viewers.TableViewer;
 
 import org.eclipse.jface.text.Assert;
 
@@ -63,6 +64,7 @@ import org.eclipse.jdt.ui.PreferenceConstants;
 
 import org.eclipse.jdt.internal.ui.text.java.CompletionProposalCategory;
 import org.eclipse.jdt.internal.ui.text.java.CompletionProposalComputerRegistry;
+import org.eclipse.jdt.internal.ui.util.SWTUtil;
 import org.eclipse.jdt.internal.ui.wizards.IStatusChangeListener;
 
 /**
@@ -70,11 +72,79 @@ import org.eclipse.jdt.internal.ui.wizards.IStatusChangeListener;
  * @since 3.2
  */
 final class CodeAssistConfigurationBlockInProgress extends OptionsConfigurationBlock {
+
+	private static final int LIMIT= 0xffff;
+	private static final String COLON= ":"; //$NON-NLS-1$
+	private static final String SEPARATOR= "\0"; //$NON-NLS-1$
+	private static final String DASH= "-"; //$NON-NLS-1$
+	
+	private static final Key PREF_EXCLUDED_CATEGORIES= getJDTUIKey(PreferenceConstants.CODEASSIST_EXCLUDED_CATEGORIES);
+	private static final Key PREF_CATEGORY_ORDER= getJDTUIKey(PreferenceConstants.CODEASSIST_CATEGORY_ORDER);
+	
+	private static Key[] getAllKeys() {
+		return new Key[] {
+				PREF_EXCLUDED_CATEGORIES,
+				PREF_CATEGORY_ORDER,
+		};
+	}
+
 	private final class ComputerLabelProvider extends LabelProvider implements ITableLabelProvider {
+
+		/*
+		 * @see org.eclipse.jface.viewers.ITableLabelProvider#getColumnImage(java.lang.Object, int)
+		 */
+		public Image getColumnImage(Object element, int columnIndex) {
+			return ((ModelElement) element).getColumnImage(columnIndex);
+		}
+
+		/*
+		 * @see org.eclipse.jface.viewers.ITableLabelProvider#getColumnText(java.lang.Object, int)
+		 */
+		public String getColumnText(Object element, int columnIndex) {
+			return ((ModelElement) element).getColumnLabel(columnIndex);
+		}
+	}
+
+	private final Comparator fCategoryComparator= new Comparator() {
+		private int getRank(Object o) {
+			return ((ModelElement) o).getRank();
+		}
+
+		public int compare(Object o1, Object o2) {
+			return getRank(o1) - getRank(o2);
+		}
+	};
+	
+	private static abstract class ModelElement {
+		String getColumnLabel(int column) {
+			return null;
+		}
+		abstract int getRank();
+		Image getColumnImage(int column) {
+			return null;
+		}
+		boolean getIncluded() {
+			return false;
+		}
+		boolean isRealCategory() {
+			return false;
+		}
+		void setIncluded(boolean selection) {
+		}
+		String getId() {
+			return null;
+		}
+		void update() {
+		}
+		void setLabel(String label) {
+		}
+	}
+	private final class Category extends ModelElement {
+		private final CompletionProposalCategory fCategory;
 		private final Command fCommand;
 		private final IParameter fParam;
-
-		private ComputerLabelProvider() {
+		Category(CompletionProposalCategory category) {
+			fCategory= category;
 			ICommandService commandSvc= (ICommandService) PlatformUI.getWorkbench().getAdapter(ICommandService.class);
 			fCommand= commandSvc.getCommand("org.eclipse.jdt.ui.specific_content_assist.command"); //$NON-NLS-1$
 			IParameter type;
@@ -86,56 +156,101 @@ final class CodeAssistConfigurationBlockInProgress extends OptionsConfigurationB
 			}
 			fParam= type;
 		}
-
-		/*
-		 * @see org.eclipse.jface.viewers.ITableLabelProvider#getColumnImage(java.lang.Object, int)
-		 */
-		public Image getColumnImage(Object element, int columnIndex) {
-			if (columnIndex == 0)
-				return CodeAssistConfigurationBlockInProgress.this.getImage(((CompletionProposalCategory) element).getImageDescriptor());
-			return null;
+		Image getColumnImage(int column) {
+			if (column == 0)
+				return CodeAssistConfigurationBlockInProgress.this.getImage(fCategory.getImageDescriptor());
+			return super.getColumnImage(column);
 		}
-
-		/*
-		 * @see org.eclipse.jface.viewers.ITableLabelProvider#getColumnText(java.lang.Object, int)
-		 */
-		public String getColumnText(Object element, int columnIndex) {
-			CompletionProposalCategory cat= (CompletionProposalCategory) element;
+		String getColumnLabel(int columnIndex) {
 			switch (columnIndex) {
 				case 0:
-					return cat.getName().replaceAll("&", ""); //$NON-NLS-1$ //$NON-NLS-2$
+					return fCategory.getName().replaceAll("&", ""); //$NON-NLS-1$ //$NON-NLS-2$
 				case 1:
-					final Parameterization[] params= { new Parameterization(fParam, cat.getId()) };
+					final Parameterization[] params= { new Parameterization(fParam, fCategory.getId()) };
 					final ParameterizedCommand pCmd= new ParameterizedCommand(fCommand, params);
 					String key= getKeyboardShortcut(pCmd);
 					return key;
 			}
-			return null;
+			return super.getColumnLabel(columnIndex);
+		}
+		boolean isRealCategory() {
+			return true;
+		}
+		boolean getIncluded() {
+			return readInclusionPreference(fCategory);
+		}
+		void setIncluded(boolean included) {
+			writeInclusionPreference(this, included);
+		}
+		String getId() {
+			return fCategory.getId();
+		}
+		int getRank() {
+			return readOrderPreference(fCategory);
+		}
+		void update() {
+			fCategory.setIncluded(getIncluded());
+			int rank= getRank();
+			fCategory.setSortOrder(rank);
+			fCategory.setSeparateCommand(rank < LIMIT);
+		}
+	}
+	private static final class Separator extends ModelElement {
+		private String fLabel= PreferencesMessages.CodeAssistConfigurationBlockInProgress_separator;
+		String getColumnLabel(int index) {
+			if (index == 0)
+				return fLabel;
+			return super.getColumnLabel(index);
+		}
+		int getRank() {
+			return LIMIT;
+		}
+		void setLabel(String label) {
+			fLabel= label;
 		}
 	}
 
-	private static final String SEPARATOR= "\0"; //$NON-NLS-1$
-	private static final Key PREF_DISABLED_COMPUTERS= getJDTUIKey(PreferenceConstants.CODEASSIST_DISABLED_COMPUTERS);
-	private CheckboxTableViewer fViewer;
+	/** element type: {@link ModelElement}. */
+	private final List fModel;
 	private final Map fImages= new HashMap();
+
+	private TableViewer fViewer;
+	private Button fInclusionButton;
+	private Button fUpButton;
+	private Button fDownButton;
+	private final Separator fSeparator= new Separator();
 	
 	CodeAssistConfigurationBlockInProgress(IStatusChangeListener statusListener, IWorkbenchPreferenceContainer container) {
 		super(statusListener, null, getAllKeys(), container);
+		fModel= fillModel();
 	}
 
-	private static Key[] getAllKeys() {
-		return new Key[] {
-				PREF_DISABLED_COMPUTERS,
-		};
-	}
+	private List fillModel() {
+		CompletionProposalComputerRegistry registry= CompletionProposalComputerRegistry.getDefault();
+		
+		List categories= registry.getProposalCategories();
+		List model= new ArrayList();
+		for (Iterator it= categories.iterator(); it.hasNext();) {
+			CompletionProposalCategory category= (CompletionProposalCategory) it.next();
+			if (category.hasComputers()) {
+				model.add(new Category(category));
+			}
+		}
+		model.add(fSeparator);
+		return model;
+	}		
 
 	/*
 	 * @see org.eclipse.jdt.internal.ui.preferences.OptionsConfigurationBlock#createContents(org.eclipse.swt.widgets.Composite)
 	 */
 	protected Control createContents(Composite parent) {
-		Composite composite= new Composite(parent, SWT.NONE);
-		RowLayout layout= new RowLayout(SWT.VERTICAL);
-		layout.spacing= 10;
+		
+		ScrolledComposite scrolled= new ScrolledComposite(parent, SWT.H_SCROLL | SWT.V_SCROLL);
+		
+		final Composite composite= new Composite(scrolled, SWT.NONE);
+		RowLayout layout= createRowLayout(SWT.VERTICAL);
+		layout.spacing= 20;
+		layout.fill= true;
 		composite.setLayout(layout);
 		
 		final ICommandService commandSvc= (ICommandService) PlatformUI.getWorkbench().getAdapter(ICommandService.class);
@@ -143,27 +258,47 @@ final class CodeAssistConfigurationBlockInProgress extends OptionsConfigurationB
 		ParameterizedCommand pCmd= new ParameterizedCommand(command, null);
 		String key= getKeyboardShortcut(pCmd);
 		if (key == null)
-			key= PreferencesMessages.CodeAssistConfigurationBlock_no_shortcut;
+			key= PreferencesMessages.CodeAssistConfigurationBlockInProgress_no_shortcut;
 
-		new Label(composite, SWT.NONE | SWT.WRAP).setText(MessageFormat.format(PreferencesMessages.CodeAssistConfigurationBlock_computer_description, new Object[] { key }));
+		new Label(composite, SWT.NONE | SWT.WRAP).setText(MessageFormat.format(PreferencesMessages.CodeAssistConfigurationBlockInProgress_computer_description, new Object[] { key }));
 		
-		createViewer(composite);
+		createControls(composite);
 		
 		Link link= new Link(composite, SWT.NONE | SWT.WRAP);
-		link.setText(PreferencesMessages.CodeAssistConfigurationBlock_computer_link);
+		link.setText(PreferencesMessages.CodeAssistConfigurationBlockInProgress_computer_link);
 		link.addSelectionListener(new SelectionAdapter() {
 			public void widgetSelected(SelectionEvent e) {
 				PreferencesUtil.createPreferenceDialogOn(getShell(), e.text, null, null);
 			}
 		});
-		link.setLayoutData(new RowData(300, 100));
+		// limit the size of the Link as it would take all it can get
+		link.setLayoutData(new RowData(300, SWT.DEFAULT));
 		
+		updateControls();
+		if (fModel.size() > 0) {
+			fViewer.getTable().select(0);
+			handleTableSelection();
+		}
 		
-		return composite;
+		scrolled.setContent(composite);
+		scrolled.setMinSize(composite.computeSize(SWT.DEFAULT, SWT.DEFAULT));
+		scrolled.setExpandHorizontal(true);
+		scrolled.setExpandVertical(true);
+		return scrolled;
+	}
+
+	private void createControls(Composite parent) {
+		Composite composite= new Composite(parent, SWT.NONE);
+		RowLayout layout= createRowLayout(SWT.HORIZONTAL);
+		layout.fill= true;
+		composite.setLayout(layout);
+		
+		createViewer(composite);
+		createButtonList(composite);
 	}
 
 	private void createViewer(Composite composite) {
-		fViewer= CheckboxTableViewer.newCheckList(composite, SWT.FULL_SELECTION | SWT.BORDER);
+		fViewer= new TableViewer(composite, SWT.SINGLE | SWT.BORDER);
 		Table table= fViewer.getTable();
 		table.setHeaderVisible(false);
 		table.setLinesVisible(false);
@@ -171,71 +306,251 @@ final class CodeAssistConfigurationBlockInProgress extends OptionsConfigurationB
 		TableColumn nameColumn= new TableColumn(table, SWT.NONE);
 		TableColumn keyColumn= new TableColumn(table, SWT.NONE);
 		
-		IContentProvider contentProvider= new IStructuredContentProvider() {
-			private CompletionProposalComputerRegistry fInput;
-
-			/*
-			 * @see org.eclipse.jface.viewers.IStructuredContentProvider#getElements(java.lang.Object)
-			 */
-			public Object[] getElements(Object inputElement) {
-				if (fInput != null) {
-					List categories= new ArrayList(fInput.getProposalCategories());
-					for (Iterator it= categories.iterator(); it.hasNext();) {
-						CompletionProposalCategory category= (CompletionProposalCategory) it.next();
-						if (!category.hasComputers())
-							it.remove();
-					}
-					return categories.toArray();
-				}
-				return null;
-			}
-
-			/*
-			 * @see org.eclipse.jface.viewers.IContentProvider#dispose()
-			 */
-			public void dispose() {
-			}
-
-			/*
-			 * @see org.eclipse.jface.viewers.IContentProvider#inputChanged(org.eclipse.jface.viewers.Viewer, java.lang.Object, java.lang.Object)
-			 */
-			public void inputChanged(Viewer v, Object oldInput, Object newInput) {
-				if (newInput instanceof CompletionProposalComputerRegistry)
-					fInput= (CompletionProposalComputerRegistry) newInput;
-				else
-					fInput= null;
-			}
-		};
-		fViewer.setContentProvider(contentProvider);
+		fViewer.setContentProvider(new ArrayContentProvider());
 		
 		ComputerLabelProvider labelProvider= new ComputerLabelProvider();
 		fViewer.setLabelProvider(labelProvider);
-		fViewer.setSorter(null);
-		CompletionProposalComputerRegistry registry= CompletionProposalComputerRegistry.getDefault();
-		fViewer.setInput(registry);
+		fViewer.setInput(fModel);
 		
-		Collection categories= registry.getProposalCategories();
-		// assume descriptors are up2date with the preferences
-		// compute widths along the way
-		final int ICON_AND_CHECKBOX_WITH= 40;
+		final int ICON_AND_CHECKBOX_WITH= 20;
 		int minNameWidth= 100;
-		int minKeyWidth= 50;
-		for (Iterator iter= categories.iterator(); iter.hasNext();) {
-			CompletionProposalCategory category= (CompletionProposalCategory) iter.next();
-			if (category.hasComputers()) {
-				fViewer.setChecked(category, category.isEnabled());
-				
-				minNameWidth= Math.max(minNameWidth, computeWidth(table, labelProvider.getColumnText(category, 0)) + ICON_AND_CHECKBOX_WITH);
-				minKeyWidth= Math.max(minKeyWidth, computeWidth(table, labelProvider.getColumnText(category, 1)));
-			}
+		int minKeyWidth= 5;
+		for (int i= 0; i < fModel.size(); i++) {
+			minNameWidth= Math.max(minNameWidth, computeWidth(table, labelProvider.getColumnText(fModel.get(i), 0)) + ICON_AND_CHECKBOX_WITH);
+			minKeyWidth= Math.max(minKeyWidth, computeWidth(table, labelProvider.getColumnText(fModel.get(i), 1)));
 		}
 		
-		table.addSelectionListener(getSelectionListener());
+		String separatorLabel= PreferencesMessages.CodeAssistConfigurationBlockInProgress_separator;
+		int baseLabelWidth= computeWidth(table, separatorLabel);
+		StringBuffer buf= new StringBuffer(separatorLabel);
+		int dashWidth= computeWidth(table, DASH);
+		int additionalDashes= (minNameWidth - baseLabelWidth) / dashWidth;
+		for (int i= 0; i < additionalDashes; i++) {
+			buf.insert(0, DASH);
+			buf.append(DASH);
+		}
+		fSeparator.setLabel(buf.toString());
 		
 		nameColumn.setWidth(minNameWidth);
 		keyColumn.setWidth(minKeyWidth);
+		
+		table.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent e) {
+				handleTableSelection();
+			}
+		});
+		
+	}
+
+	private void createButtonList(Composite parent) {
+		Composite composite= new Composite(parent, SWT.NONE);
+		RowLayout layout= createRowLayout(SWT.VERTICAL);
+		layout.spacing= 20;
+		composite.setLayout(layout);
+		
+		createUpDownControls(composite);
+		createButtons(composite);
+	}
+
+	private void createUpDownControls(Composite parent) {
+		Composite composite= new Composite(parent, SWT.NONE);
+		RowLayout layout= createRowLayout(SWT.VERTICAL);
+		layout.fill= true;
+		composite.setLayout(layout);
+		
+		fUpButton= new Button(composite, SWT.PUSH | SWT.CENTER);
+		fUpButton.setText(PreferencesMessages.CodeAssistConfigurationBlockInProgress_Up);
+		fUpButton.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent e) {
+				int index= getSelectionIndex();
+				if (index > 0) {
+					Object item= fModel.remove(index);
+					fModel.add(index - 1, item);
+					fViewer.refresh();
+					handleTableSelection();
+					writeOrderPreference();
+				}
+			}		
+		});
+		fUpButton.setLayoutData(new RowData(SWTUtil.getButtonWidthHint(fUpButton), SWT.DEFAULT));
+		
+		fDownButton= new Button(composite, SWT.PUSH | SWT.CENTER);
+		fDownButton.setText(PreferencesMessages.CodeAssistConfigurationBlockInProgress_Down);
+		fDownButton.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent e) {
+				int index= getSelectionIndex();
+				if (index < fModel.size() - 1) {
+					Object item= fModel.remove(index);
+					fModel.add(index + 1, item);
+					fViewer.refresh();
+					handleTableSelection();
+					writeOrderPreference();
+				}
+			}		
+		});
+		fDownButton.setLayoutData(new RowData(SWTUtil.getButtonWidthHint(fDownButton), SWT.DEFAULT));
+	}
+
+	private void createButtons(Composite parent) {
+		Composite composite= new Composite(parent, SWT.NONE);
+		RowLayout layout= createRowLayout(SWT.VERTICAL);
+		layout.spacing= 10;
+		composite.setLayout(layout);
+		
+		fInclusionButton= new Button(composite, SWT.CHECK);
+		fInclusionButton.setText(PreferencesMessages.CodeAssistConfigurationBlockInProgress_include);
+		fInclusionButton.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent e) {
+				ModelElement item= getSelectedItem();
+				if (item != null) {
+					item.setIncluded(fInclusionButton.getSelection());
+				}
+			}
+
+		});
 	}
 	
+	private void handleTableSelection() {
+		ModelElement item= getSelectedItem();
+		if (item != null) {
+			fInclusionButton.setEnabled(item.isRealCategory());
+			fInclusionButton.setSelection(item.getIncluded());
+			
+			fUpButton.setEnabled(getSelectionIndex() > 0);
+			fDownButton.setEnabled(getSelectionIndex() < fModel.size() - 1);
+		} else {
+			fInclusionButton.setEnabled(false);
+			fUpButton.setEnabled(false);
+			fDownButton.setEnabled(false);
+		}
+	}
+	
+	private void writeInclusionPreference(ModelElement changed, boolean value) {
+		StringBuffer buf= new StringBuffer();
+		for (Iterator it= fModel.iterator(); it.hasNext();) {
+			ModelElement item= (ModelElement) it.next();
+			if (item.isRealCategory()) {
+				boolean included= changed == item ? value : item.getIncluded();
+				if (!included)
+					buf.append(item.getId() + SEPARATOR);
+			}
+		}
+		
+		String newValue= buf.toString();
+		String oldValue= setValue(PREF_EXCLUDED_CATEGORIES, newValue);
+		validateSettings(PREF_EXCLUDED_CATEGORIES, oldValue, newValue);
+	}
+	
+	private void writeOrderPreference() {
+		StringBuffer buf= new StringBuffer();
+		int plus= 0;
+		int i= 0;
+		for (Iterator it= fModel.iterator(); it.hasNext(); i++) {
+			ModelElement item= (ModelElement) it.next();
+			if (item.isRealCategory()) {
+				int rank= i + plus;
+				buf.append(item.getId() + COLON + rank + SEPARATOR);
+			} else {
+				plus= LIMIT;
+			}
+		}
+		
+		String newValue= buf.toString();
+		String oldValue= setValue(PREF_CATEGORY_ORDER, newValue);
+		validateSettings(PREF_CATEGORY_ORDER, oldValue, newValue);
+	}
+	
+
+	private boolean readInclusionPreference(CompletionProposalCategory cat) {
+		String[] ids= getTokens(getValue(PREF_EXCLUDED_CATEGORIES), SEPARATOR);
+		for (int i= 0; i < ids.length; i++) {
+			if (ids[i].equals(cat.getId()))
+				return false;
+		}
+		return true;
+	}
+	
+	private int readOrderPreference(CompletionProposalCategory cat) {
+		String[] sortOrderIds= getTokens(getValue(PREF_CATEGORY_ORDER), SEPARATOR);
+		for (int i= 0; i < sortOrderIds.length; i++) {
+			String[] idAndRank= getTokens(sortOrderIds[i], COLON);
+			if (idAndRank[0].equals(cat.getId()))
+				return Integer.parseInt(idAndRank[1]);
+		}
+		return LIMIT + 1;
+	}
+	
+	private ModelElement getSelectedItem() {
+		return (ModelElement) ((IStructuredSelection) fViewer.getSelection()).getFirstElement();
+	}
+	
+	private int getSelectionIndex() {
+		return fViewer.getTable().getSelectionIndex();
+	}
+	
+	/*
+	 * @see org.eclipse.jdt.internal.ui.preferences.OptionsConfigurationBlock#updateControls()
+	 */
+	protected void updateControls() {
+		super.updateControls();
+		
+		Collections.sort(fModel, fCategoryComparator);
+		fViewer.refresh();
+		handleTableSelection();
+	}
+	
+	
+	/*
+	 * @see org.eclipse.jdt.internal.ui.preferences.OptionsConfigurationBlock#processChanges(org.eclipse.ui.preferences.IWorkbenchPreferenceContainer)
+	 */
+	protected boolean processChanges(IWorkbenchPreferenceContainer container) {
+		for (Iterator it= fModel.iterator(); it.hasNext();) {
+			ModelElement item= (ModelElement) it.next();
+			item.update();
+		}
+		
+		return super.processChanges(container);
+	}
+
+	/*
+	 * @see org.eclipse.jdt.internal.ui.preferences.OptionsConfigurationBlock#validateSettings(org.eclipse.jdt.internal.ui.preferences.OptionsConfigurationBlock.Key, java.lang.String, java.lang.String)
+	 */
+	protected void validateSettings(Key changedKey, String oldValue, String newValue) {
+	}
+
+	/*
+	 * @see org.eclipse.jdt.internal.ui.preferences.OptionsConfigurationBlock#getFullBuildDialogStrings(boolean)
+	 */
+	protected String[] getFullBuildDialogStrings(boolean workspaceSettings) {
+		// no builds triggered by our settings
+		return null;
+	}
+	
+	/*
+	 * @see org.eclipse.jdt.internal.ui.preferences.OptionsConfigurationBlock#dispose()
+	 */
+	public void dispose() {
+		for (Iterator it= fImages.values().iterator(); it.hasNext();) {
+			Image image= (Image) it.next();
+			image.dispose();
+		}
+		
+		super.dispose();
+	}
+
+	private RowLayout createRowLayout(int type) {
+		RowLayout layout= new RowLayout(type);
+		layout.wrap= false;
+		layout.marginHeight= 0;
+		layout.marginTop= 0;
+		layout.marginBottom= 0;
+		layout.marginWidth= 0;
+		layout.marginLeft= 0;
+		layout.marginRight= 0;
+		layout.spacing= 5;
+		return layout;
+	}
+
 	private int computeWidth(Control control, String name) {
 		if (name == null)
 			return 0;
@@ -271,93 +586,6 @@ final class CodeAssistConfigurationBlockInProgress extends OptionsConfigurationB
 			fImages.put(imgDesc, img);
 		}
 		return img;
-	}
-
-	/*
-	 * @see org.eclipse.jdt.internal.ui.preferences.OptionsConfigurationBlock#updateControls()
-	 */
-	protected void updateControls() {
-		super.updateControls();
-		
-		// check table
-		String[] disabled= getTokens(getValue(PREF_DISABLED_COMPUTERS), SEPARATOR);
-		
-		CompletionProposalComputerRegistry registry= CompletionProposalComputerRegistry.getDefault();
-		Collection categories= registry.getProposalCategories();
-
-		for (Iterator it= categories.iterator(); it.hasNext();) {
-			CompletionProposalCategory cat= (CompletionProposalCategory) it.next();
-			if (cat.hasComputers()) {
-				boolean enabled= true;
-				for (int i= 0; i < disabled.length; i++) {
-					if (cat.getId().equals(disabled[i]))
-						enabled= false;
-				}
-				fViewer.setChecked(cat, enabled);
-			}
-		}
-	}
-	
-	/*
-	 * @see org.eclipse.jdt.internal.ui.preferences.OptionsConfigurationBlock#controlChanged(org.eclipse.swt.widgets.Widget)
-	 */
-	protected void controlChanged(Widget widget) {
-		if (widget == fViewer.getControl()) {
-			StringBuffer buf= new StringBuffer();
-			CompletionProposalComputerRegistry registry= CompletionProposalComputerRegistry.getDefault();
-			Collection descriptors= registry.getProposalCategories();
-			for (Iterator it= descriptors.iterator(); it.hasNext();) {
-				CompletionProposalCategory cat= (CompletionProposalCategory) it.next();
-				if (cat.hasComputers() && !fViewer.getChecked(cat))
-					buf.append(cat.getId() + SEPARATOR);
-			}
-			
-			String newValue= buf.toString();
-			String oldValue= setValue(PREF_DISABLED_COMPUTERS, newValue);
-			validateSettings(PREF_DISABLED_COMPUTERS, oldValue, newValue);
-		}
-		super.controlChanged(widget);
-	}
-	
-	/*
-	 * @see org.eclipse.jdt.internal.ui.preferences.OptionsConfigurationBlock#processChanges(org.eclipse.ui.preferences.IWorkbenchPreferenceContainer)
-	 */
-	protected boolean processChanges(IWorkbenchPreferenceContainer container) {
-		CompletionProposalComputerRegistry registry= CompletionProposalComputerRegistry.getDefault();
-		Collection descriptors= registry.getProposalCategories();
-		for (Iterator it= descriptors.iterator(); it.hasNext();) {
-			CompletionProposalCategory cat= (CompletionProposalCategory) it.next();
-			if (cat.hasComputers())
-				cat.setEnabled(fViewer.getChecked(cat));
-		}
-		
-		return super.processChanges(container);
-	}
-	
-	/*
-	 * @see org.eclipse.jdt.internal.ui.preferences.OptionsConfigurationBlock#validateSettings(org.eclipse.jdt.internal.ui.preferences.OptionsConfigurationBlock.Key, java.lang.String, java.lang.String)
-	 */
-	protected void validateSettings(Key changedKey, String oldValue, String newValue) {
-	}
-
-	/*
-	 * @see org.eclipse.jdt.internal.ui.preferences.OptionsConfigurationBlock#getFullBuildDialogStrings(boolean)
-	 */
-	protected String[] getFullBuildDialogStrings(boolean workspaceSettings) {
-		// no builds triggered by our settings
-		return null;
-	}
-	
-	/*
-	 * @see org.eclipse.jdt.internal.ui.preferences.OptionsConfigurationBlock#dispose()
-	 */
-	public void dispose() {
-		for (Iterator it= fImages.values().iterator(); it.hasNext();) {
-			Image image= (Image) it.next();
-			image.dispose();
-		}
-		
-		super.dispose();
 	}
 
 }

@@ -54,4 +54,5 @@ final class JavaTextMessages extends NLS {
 	public static String CompletionProposalComputerDescriptor_disabling_message;
 	public static String CompletionProposalComputerRegistry_invalid_message;
 	public static String CompletionProposalComputerRegistry_error_dialog_title;
+	public static String ContentAssistProcessor_defaultProposalCategory;
 }

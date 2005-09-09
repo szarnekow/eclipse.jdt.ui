@@ -11,10 +11,10 @@
 package org.eclipse.jdt.internal.ui.text.java;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -26,6 +26,8 @@ import org.eclipse.jface.text.contentassist.IContentAssistProcessor;
 import org.eclipse.jface.text.contentassist.IContextInformation;
 import org.eclipse.jface.text.contentassist.IContextInformationValidator;
 import org.eclipse.jface.text.contentassist.TextContentAssistInvocationContext;
+
+import org.eclipse.jdt.internal.corext.Assert;
 
 /**
  * A content assist processor that aggregates the proposals of the
@@ -51,14 +53,25 @@ import org.eclipse.jface.text.contentassist.TextContentAssistInvocationContext;
  */
 public class ContentAssistProcessor implements IContentAssistProcessor {
 
-	private char[] fCompletionAutoActivationCharacters;
-	private final List fComputers;
+	private static final Comparator ORDER_COMPARATOR= new Comparator() {
+
+		public int compare(Object o1, Object o2) {
+			CompletionProposalCategory d1= (CompletionProposalCategory) o1;
+			CompletionProposalCategory d2= (CompletionProposalCategory) o2;
+			
+			return d1.getSortOrder() - d2.getSortOrder();
+		}
+		
+	};
+	
 	private final List fCategories;
+	private final String fPartition;
+	private char[] fCompletionAutoActivationCharacters;
 	private int fRepetition;
-	private final Map fEnablement= new HashMap();
 	
 	public ContentAssistProcessor(String partition) {
-		fComputers= CompletionProposalComputerRegistry.getDefault().getProposalComputerDescriptors(partition);
+		Assert.isNotNull(partition);
+		fPartition= partition;
 		fCategories= CompletionProposalComputerRegistry.getDefault().getProposalCategories();
 	}
 
@@ -67,7 +80,7 @@ public class ContentAssistProcessor implements IContentAssistProcessor {
 	 */
 	public final ICompletionProposal[] computeCompletionProposals(ITextViewer viewer, int offset) {
 		IProgressMonitor monitor= createProgressMonitor();
-		monitor.beginTask(JavaTextMessages.ContentAssistProcessor_computing_proposals, fComputers.size() + 1);
+		monitor.beginTask(JavaTextMessages.ContentAssistProcessor_computing_proposals, fCategories.size() + 1);
 
 		TextContentAssistInvocationContext context= createContext(viewer, offset);
 		
@@ -84,39 +97,33 @@ public class ContentAssistProcessor implements IContentAssistProcessor {
 
 	private List collectProposals(ITextViewer viewer, int offset, IProgressMonitor monitor, TextContentAssistInvocationContext context) {
 		List proposals= new ArrayList();
-		List providers= getComputers();
+		List providers= getCategories();
 		for (Iterator it= providers.iterator(); it.hasNext();) {
-			CompletionProposalComputerDescriptor desc= (CompletionProposalComputerDescriptor) it.next();
-			List computed= desc.computeCompletionProposals(context, new SubProgressMonitor(monitor, 1));
+			CompletionProposalCategory cat= (CompletionProposalCategory) it.next();
+			List computed= cat.computeCompletionProposals(context, fPartition, new SubProgressMonitor(monitor, 1));
 			proposals.addAll(computed);
 		}
-		
-		restoreComputerEnablement();
 		
 		return proposals;
 	}
 
-	private void restoreComputerEnablement() {
-		for (Iterator it= fCategories.iterator(); it.hasNext();) {
-			CompletionProposalCategory category= (CompletionProposalCategory) it.next();
-			Boolean bool= (Boolean) fEnablement.get(category.getId());
-			if (bool != null)
-				category.setEnabled(bool.booleanValue());
-		}
-	}
-
-	private List getComputers() {
-		int selection= fRepetition % (fCategories.size() + 1);
-		fEnablement.clear();
-		if (selection > 0) {
-			int i= 0;
-			for (Iterator it= fCategories.iterator(); it.hasNext(); i++) {
+	private List getCategories() {
+		List steps= getSeparateCategories();
+		int selection= fRepetition % (steps.size() + 1);
+		
+		if (selection == 0) {
+			// default mix - enable all included computers
+			List included= new ArrayList();
+			for (Iterator it= fCategories.iterator(); it.hasNext();) {
 				CompletionProposalCategory category= (CompletionProposalCategory) it.next();
-				fEnablement.put(category.getId(), new Boolean(category.isEnabled()));
-				category.setEnabled(i == selection - 1);
+				if (category.isIncluded())
+					included.add(category);
 			}
+			return included;
 		}
-		return new ArrayList(fComputers);
+		
+		// selective - enable the nth enabled category
+		return Collections.singletonList(steps.get(selection - 1));
 	}
 
 	/**
@@ -139,7 +146,7 @@ public class ContentAssistProcessor implements IContentAssistProcessor {
 	 */
 	public IContextInformation[] computeContextInformation(ITextViewer viewer, int offset) {
 		IProgressMonitor monitor= createProgressMonitor();
-		monitor.beginTask(JavaTextMessages.ContentAssistProcessor_computing_contexts, fComputers.size() + 1);
+		monitor.beginTask(JavaTextMessages.ContentAssistProcessor_computing_contexts, fCategories.size() + 1);
 		
 		monitor.subTask(JavaTextMessages.ContentAssistProcessor_collecting_contexts);
 		List proposals= collectContextInformation(viewer, offset, monitor);
@@ -156,13 +163,12 @@ public class ContentAssistProcessor implements IContentAssistProcessor {
 		List proposals= new ArrayList();
 		TextContentAssistInvocationContext context= createContext(viewer, offset);
 		
-		List providers= getComputers();
+		List providers= getCategories();
 		for (Iterator it= providers.iterator(); it.hasNext();) {
-			CompletionProposalComputerDescriptor desc= (CompletionProposalComputerDescriptor) it.next();
-			List computed= desc.computeContextInformation(context, new SubProgressMonitor(monitor, 1));
+			CompletionProposalCategory cat= (CompletionProposalCategory) it.next();
+			List computed= cat.computeContextInformation(context, fPartition, new SubProgressMonitor(monitor, 1));
 			proposals.addAll(computed);
 		}
-		restoreComputerEnablement();
 		
 		return proposals;
 	}
@@ -250,11 +256,39 @@ public class ContentAssistProcessor implements IContentAssistProcessor {
 		fRepetition= repetition;
 	}
 	
-	public String getRepetitionMessage() {
-		int selection= fRepetition % (fCategories.size() + 1);
-		if (selection == 0)
-			return null;
-		else
-			return ((CompletionProposalCategory) fCategories.get(selection - 1)).getName().replaceAll("&", "");  //$NON-NLS-1$//$NON-NLS-2$
+	public String getCurrentCategory() {
+		return getCategoryName(fRepetition);
 	}
+	
+	public String getNextCategory() {
+		return getCategoryName(fRepetition + 1);
+	}
+
+	private String getCategoryName(int index) {
+		List steps= getSeparateCategories();
+		int selection= index % (steps.size() + 1);
+		if (selection == 0)
+			return JavaTextMessages.ContentAssistProcessor_defaultProposalCategory;
+		return toString((CompletionProposalCategory) steps.get(selection - 1));
+	}
+	
+	private String toString(CompletionProposalCategory category) {
+		return category.getName().replaceAll("&", ""); //$NON-NLS-1$ //$NON-NLS-2$;
+	}
+
+	private List getSeparateCategories() {
+		ArrayList sorted= new ArrayList();
+		for (Iterator it= fCategories.iterator(); it.hasNext();) {
+			CompletionProposalCategory category= (CompletionProposalCategory) it.next();
+			if (isSeparateCategory(category))
+				sorted.add(category);
+		}
+		Collections.sort(sorted, ORDER_COMPARATOR);
+		return sorted;
+	}
+
+	private boolean isSeparateCategory(CompletionProposalCategory category) {
+		return category.isSeparateCommand() && category.hasComputers();
+	}
+
 }

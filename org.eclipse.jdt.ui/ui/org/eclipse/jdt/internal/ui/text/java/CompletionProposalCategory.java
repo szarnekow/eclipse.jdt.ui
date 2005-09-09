@@ -12,6 +12,7 @@ package org.eclipse.jdt.internal.ui.text.java;
 
 import java.net.URL;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -22,8 +23,12 @@ import org.eclipse.core.runtime.InvalidRegistryObjectException;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.SubProgressMonitor;
 
 import org.eclipse.jface.resource.ImageDescriptor;
+
+import org.eclipse.jface.text.contentassist.ICompletionProposalComputer;
+import org.eclipse.jface.text.contentassist.TextContentAssistInvocationContext;
 
 import org.eclipse.jdt.internal.ui.JavaPlugin;
 
@@ -44,8 +49,12 @@ public final class CompletionProposalCategory {
 	/** The image descriptor for this category, or <code>null</code> if none specified. */
 	private final ImageDescriptor fImage;
 	
-	private boolean fEnabled= true;
+	private boolean fIsSeparateCommand= true;
+	private boolean fIsEnabled= true;
+	private boolean fIsIncluded= true;
 	private final CompletionProposalComputerRegistry fRegistry;
+	
+	private int fSortOrder= 0x10000;
 
 	CompletionProposalCategory(IConfigurationElement element, CompletionProposalComputerRegistry registry) {
 		fElement= element;
@@ -135,8 +144,8 @@ public final class CompletionProposalCategory {
 	 * 
 	 * @param enabled the new enabled state.
 	 */
-	public void setEnabled(boolean enabled) {
-		fEnabled= enabled;
+	public void setSeparateCommand(boolean enabled) {
+		fIsSeparateCommand= enabled;
 	}
 	
 	/**
@@ -144,8 +153,30 @@ public final class CompletionProposalCategory {
 	 * 
 	 * @return the enablement state of the category
 	 */
+	public boolean isSeparateCommand() {
+		return fIsSeparateCommand;
+	}
+	
+	/**
+	 * @param included the included
+	 */
+	public void setIncluded(boolean included) {
+		fIsIncluded= included;
+	}
+	
+	/**
+	 * @return included
+	 */
+	public boolean isIncluded() {
+		return fIsIncluded;
+	}
+
 	public boolean isEnabled() {
-		return fEnabled;
+		return fIsEnabled;
+	}
+
+	public void setEnabled(boolean isEnabled) {
+		fIsEnabled= isEnabled;
 	}
 
 	/**
@@ -163,6 +194,64 @@ public final class CompletionProposalCategory {
 				return true;
 		}
 		return false;
+	}
+	
+	/**
+	 * @return sortOrder
+	 */
+	public int getSortOrder() {
+		return fSortOrder;
+	}
+	
+	/**
+	 * @param sortOrder the sortOrder
+	 */
+	public void setSortOrder(int sortOrder) {
+		fSortOrder= sortOrder;
+	}
+
+	/**
+	 * Safely computes completion proposals of all computers of this category through their
+	 * extension. If an extension is disabled, throws an exception or otherwise does not adhere to
+	 * the contract described in {@link ICompletionProposalComputer}, it is disabled.
+	 * 
+	 * @param context the invocation context passed on to the extension
+	 * @param partition the partition type where to invocation occurred
+	 * @param monitor the progress monitor passed on to the extension
+	 * @return the list of computed completion proposals (element type:
+	 *         {@link org.eclipse.jface.text.contentassist.ICompletionProposal})
+	 */
+	public List computeCompletionProposals(TextContentAssistInvocationContext context, String partition, SubProgressMonitor monitor) {
+		List result= new ArrayList();
+		List descriptors= new ArrayList(fRegistry.getProposalComputerDescriptors(partition));
+		for (Iterator it= descriptors.iterator(); it.hasNext();) {
+			CompletionProposalComputerDescriptor desc= (CompletionProposalComputerDescriptor) it.next();
+			if (desc.getCategory() == this)
+				result.addAll(desc.computeCompletionProposals(context, monitor));
+		}
+		return result;
+	}
+
+	/**
+	 * Safely computes context information objects of all computers of this category through their
+	 * extension. If an extension is disabled, throws an exception or otherwise does not adhere to
+	 * the contract described in {@link ICompletionProposalComputer}, it is disabled.
+	 * 
+	 * @param context the invocation context passed on to the extension
+	 * @param partition the partition type where to invocation occurred
+	 * @param monitor the progress monitor passed on to the extension
+	 * @return the list of computed context information objects (element type:
+	 *         {@link org.eclipse.jface.text.contentassist.IContextInformation})
+	 */
+	public List computeContextInformation(TextContentAssistInvocationContext context, String partition, SubProgressMonitor monitor) {
+		List result= new ArrayList();
+		List descriptors= new ArrayList(fRegistry.getProposalComputerDescriptors(partition));
+		for (Iterator it= descriptors.iterator(); it.hasNext();) {
+			CompletionProposalComputerDescriptor desc= (CompletionProposalComputerDescriptor) it.next();
+			if (desc.getCategory() == this)
+				result.addAll(desc.computeContextInformation(context, monitor));
+		}
+		return result;
 	}
 	
 }
