@@ -299,11 +299,11 @@ public final class JavaUI {
 			roots= project.getPackageFragmentRoots();	
 		}
 		
-		List consideredRoots= null;
+		List<IPackageFragmentRoot> consideredRoots= null;
 		if ((style & IJavaElementSearchConstants.CONSIDER_BINARIES) != 0) {
 			consideredRoots= Arrays.asList(roots);
 		} else {
-			consideredRoots= new ArrayList(roots.length);
+			consideredRoots= new ArrayList<IPackageFragmentRoot>(roots.length);
 			for (int i= 0; i < roots.length; i++) {
 				IPackageFragmentRoot root= roots[i];
 				if (root.getKind() != IPackageFragmentRoot.K_BINARY)
@@ -316,10 +316,10 @@ public final class JavaUI {
 		if (consideredRoots.size() > 1)
 			flags= flags | JavaElementLabelProvider.SHOW_ROOT;
 
-		List packages= new ArrayList();
-		Iterator iter= consideredRoots.iterator();
+		List<IJavaElement> packages= new ArrayList<IJavaElement>();
+		Iterator<IPackageFragmentRoot> iter= consideredRoots.iterator();
 		while(iter.hasNext()) {
-			IPackageFragmentRoot root= (IPackageFragmentRoot)iter.next();
+			IPackageFragmentRoot root= iter.next();
 			packages.addAll(Arrays.asList(root.getChildren()));
 		}			
 		ElementListSelectionDialog dialog= new ElementListSelectionDialog(parent, new JavaElementLabelProvider(flags));
@@ -646,7 +646,7 @@ public final class JavaUI {
 	 */
 	public static IWorkingCopy[] getSharedWorkingCopiesOnClasspath() {
 		IWorkingCopy[] wcs= getSharedWorkingCopies();
-		List result= new ArrayList(wcs.length);
+		List<IWorkingCopy> result= new ArrayList<IWorkingCopy>(wcs.length);
 		for (int i = 0; i < wcs.length; i++) {
 			IWorkingCopy wc= wcs[i];
 			if (wc instanceof IJavaElement) {
@@ -656,7 +656,7 @@ public final class JavaUI {
 				}
 			}
 		}
-		return (IWorkingCopy[])result.toArray(new IWorkingCopy[result.size()]);
+		return result.toArray(new IWorkingCopy[result.size()]);
 	}
 	
 	/**

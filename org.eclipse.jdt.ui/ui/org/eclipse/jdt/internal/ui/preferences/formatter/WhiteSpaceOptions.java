@@ -39,16 +39,16 @@ public final class WhiteSpaceOptions {
 	    
 	    public int index;
 	    
-	    protected final Map fWorkingValues;
-	    protected final ArrayList fChildren;
+	    protected final Map<String, String> fWorkingValues;
+	    protected final ArrayList<Node> fChildren;
 
-	    public Node(InnerNode parent, Map workingValues, String message) {
+	    public Node(InnerNode parent, Map<String, String> workingValues, String message) {
 	        if (workingValues == null || message == null)
 	            throw new IllegalArgumentException();
 	        fParent= parent;
 	        fWorkingValues= workingValues;
 	        fName= message;
-	        fChildren= new ArrayList();
+	        fChildren= new ArrayList<Node>();
 	        if (fParent != null)
 	            fParent.add(this);
 	    }
@@ -59,7 +59,7 @@ public final class WhiteSpaceOptions {
 	        return !fChildren.isEmpty();
 	    }
 	    
-	    public List getChildren() {
+	    public List<Node> getChildren() {
 	        return Collections.unmodifiableList(fChildren);
 	    }
 	    
@@ -71,9 +71,9 @@ public final class WhiteSpaceOptions {
 	        return fName;
 	    }
 	    
-	    public abstract List getSnippets();
+	    public abstract List<Object> getSnippets();
 	    
-	    public abstract void getCheckedLeafs(List list);
+	    public abstract void getCheckedLeafs(List<OptionNode> list);
 	}
 	
 	/**
@@ -86,19 +86,19 @@ public final class WhiteSpaceOptions {
         }
 
 	    public void setChecked(boolean checked) {
-	        for (final Iterator iter = fChildren.iterator(); iter.hasNext();)
-	            ((Node)iter.next()).setChecked(checked);
+	        for (final Iterator<Node> iter = fChildren.iterator(); iter.hasNext();)
+	            iter.next().setChecked(checked);
 	    }
 
 	    public void add(Node child) {
 	        fChildren.add(child);
 	    }
 
-        public List getSnippets() {
-            final ArrayList snippets= new ArrayList(fChildren.size());
-            for (Iterator iter= fChildren.iterator(); iter.hasNext();) {
-                final List childSnippets= ((Node)iter.next()).getSnippets();
-                for (final Iterator chIter= childSnippets.iterator(); chIter.hasNext(); ) {
+        public List<Object> getSnippets() {
+            final ArrayList<Object> snippets= new ArrayList<Object>(fChildren.size());
+            for (Iterator<Node> iter= fChildren.iterator(); iter.hasNext();) {
+                final List<Object> childSnippets= iter.next().getSnippets();
+                for (final Iterator<Object> chIter= childSnippets.iterator(); chIter.hasNext(); ) {
                     final Object snippet= chIter.next();
                     if (!snippets.contains(snippet)) 
                         snippets.add(snippet);
@@ -107,9 +107,9 @@ public final class WhiteSpaceOptions {
             return snippets;
         }
         
-        public void getCheckedLeafs(List list) {
-            for (Iterator iter= fChildren.iterator(); iter.hasNext();) {
-                ((Node)iter.next()).getCheckedLeafs(list);
+        public void getCheckedLeafs(List<OptionNode> list) {
+            for (Iterator<Node> iter= fChildren.iterator(); iter.hasNext();) {
+                iter.next().getCheckedLeafs(list);
             }
         }
 	}
@@ -120,12 +120,12 @@ public final class WhiteSpaceOptions {
 	 */
 	public static class OptionNode extends Node {
 	    private final String fKey;
-	    private final ArrayList fSnippets;
+	    private final ArrayList<Object> fSnippets;
 	    
 	    public OptionNode(InnerNode parent, Map workingValues, String messageKey, String key, PreviewSnippet snippet) {
 	        super(parent, workingValues, messageKey);
 	        fKey= key;
-	        fSnippets= new ArrayList(1);
+	        fSnippets= new ArrayList<Object>(1);
 	        fSnippets.add(snippet);
 	    }
 	    
@@ -137,11 +137,11 @@ public final class WhiteSpaceOptions {
             return JavaCore.INSERT.equals(fWorkingValues.get(fKey));
         }
         
-        public List getSnippets() {
+        public List<Object> getSnippets() {
             return fSnippets;
         }
         
-        public void getCheckedLeafs(List list) {
+        public void getCheckedLeafs(List<OptionNode> list) {
             if (getChecked()) 
                 list.add(this);
         }
@@ -307,8 +307,8 @@ public final class WhiteSpaceOptions {
 	 * @param workingValues
 	 * @return returns roots (type <code>Node</code>)
 	 */
-	public static List createTreeBySyntaxElem(Map workingValues) {
-        final ArrayList roots= new ArrayList();
+	public static List<InnerNode> createTreeBySyntaxElem(Map workingValues) {
+        final ArrayList<InnerNode> roots= new ArrayList<InnerNode>();
         
         InnerNode element;
 
@@ -387,9 +387,9 @@ public final class WhiteSpaceOptions {
      * @param workingValues
      * @return returns roots (type <code>Node</code>)
      */
-    public static List createAltTree(Map workingValues) {
+    public static List<Node> createAltTree(Map workingValues) {
 
-        final ArrayList roots= new ArrayList();
+        final ArrayList<Node> roots= new ArrayList<Node>();
         
         InnerNode parent;
         
@@ -499,13 +499,13 @@ public final class WhiteSpaceOptions {
         return roots;
 	}
 
-	private static InnerNode createParentNode(List roots, Map workingValues, String text) {
+	private static InnerNode createParentNode(List<Node> roots, Map workingValues, String text) {
         final InnerNode parent= new InnerNode(null, workingValues, text);
         roots.add(parent);
         return parent;
     }
 
-    public static ArrayList createTreeByJavaElement(Map workingValues) {
+    public static ArrayList<Node> createTreeByJavaElement(Map workingValues) {
 
         final InnerNode declarations= new InnerNode(null, workingValues, FormatterMessages.WhiteSpaceTabPage_declarations); 
         createClassTree(workingValues, declarations);
@@ -549,7 +549,7 @@ public final class WhiteSpaceOptions {
 		createTypeParameterTree(workingValues, paramtypes);
 		createWildcardTypeTree(workingValues, paramtypes);
 		
-        final ArrayList roots= new ArrayList();
+        final ArrayList<Node> roots= new ArrayList<Node>();
 		roots.add(declarations);
 		roots.add(statements);
 		roots.add(expressions);
@@ -1233,9 +1233,9 @@ public final class WhiteSpaceOptions {
 	    return new OptionNode(root, workingValues, message, key, snippet);
 	}
 
-	public static void makeIndexForNodes(List tree, List flatList) {
-        for (final Iterator iter= tree.iterator(); iter.hasNext();) {
-            final Node node= (Node) iter.next();
+	public static void makeIndexForNodes(List<Node> tree, List<Node> flatList) {
+        for (final Iterator<Node> iter= tree.iterator(); iter.hasNext();) {
+            final Node node= iter.next();
             node.index= flatList.size();
             flatList.add(node);
             makeIndexForNodes(node.getChildren(), flatList);

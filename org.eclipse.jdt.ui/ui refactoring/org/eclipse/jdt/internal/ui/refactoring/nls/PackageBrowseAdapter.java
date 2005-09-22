@@ -65,7 +65,7 @@ public class PackageBrowseAdapter implements IStringButtonAdapter {
 		try{
 			IJavaProject project= cu.getJavaProject();
 			IPackageFragmentRoot[] roots= project.getPackageFragmentRoots();
-			List result= new ArrayList();
+			List<IPackageFragment> result= new ArrayList<IPackageFragment>();
 			HashMap entered =new HashMap();
 			for (int i= 0; i < roots.length; i++){
 				if (canAddPackageRoot(roots[i])){
@@ -93,7 +93,7 @@ public class PackageBrowseAdapter implements IStringButtonAdapter {
     	return true;	
     }
 	
-	static void getValidPackages(IPackageFragmentRoot root, List result, HashMap entered, String elementNameMatch) throws JavaModelException {
+	static void getValidPackages(IPackageFragmentRoot root, List<IPackageFragment> result, HashMap entered, String elementNameMatch) throws JavaModelException {
 		IJavaElement[] children= null;
 		try {
 			children= root.getChildren();
@@ -131,10 +131,10 @@ public class PackageBrowseAdapter implements IStringButtonAdapter {
     	return true;	
     }
 
-    public static List searchAllPackages(IJavaProject project, String matcher) {
+    public static List<IPackageFragment> searchAllPackages(IJavaProject project, String matcher) {
 		try{
 			IPackageFragmentRoot[] roots= project.getPackageFragmentRoots();
-			List result= new ArrayList();
+			List<IPackageFragment> result= new ArrayList<IPackageFragment>();
 			for (int i= 0; i < roots.length; i++){
 				if (canAddPackageRoot(roots[i])){
 					getValidPackages(roots[i], result, null, matcher);
@@ -143,7 +143,7 @@ public class PackageBrowseAdapter implements IStringButtonAdapter {
 			return result;
 		} catch (JavaModelException e) {
 			JavaPlugin.log(e);
-			return new ArrayList(0);
+			return new ArrayList<IPackageFragment>(0);
 		}
     }
 }

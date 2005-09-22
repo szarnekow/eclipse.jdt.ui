@@ -63,10 +63,10 @@ public class ExceptionOccurrencesFinder extends ASTVisitor implements IOccurrenc
 	
 	private ITypeBinding fException;
 	private ASTNode fStart;
-	private List fResult;
+	private List<ASTNode> fResult;
 	
 	public ExceptionOccurrencesFinder() {
-		fResult= new ArrayList();
+		fResult= new ArrayList<ASTNode>();
 	}
 	
 	public String initialize(CompilationUnit root, int offset, int length) {
@@ -113,7 +113,7 @@ public class ExceptionOccurrencesFinder extends ASTVisitor implements IOccurrenc
 	
 	private boolean methodThrowsException(MethodDeclaration method, Name exception) {
 		ASTMatcher matcher = new ASTMatcher();
-		for (Iterator iter = method.thrownExceptions().iterator(); iter.hasNext();) {
+		for (Iterator<ASTNode> iter = method.thrownExceptions().iterator(); iter.hasNext();) {
 			Name thrown = (Name)iter.next();
 			if (exception.subtreeMatch(matcher, thrown))
 				return true;
@@ -121,7 +121,7 @@ public class ExceptionOccurrencesFinder extends ASTVisitor implements IOccurrenc
 		return false;
 	}
 	
-	public List perform() {
+	public List<ASTNode> perform() {
 		fStart.accept(this);
 		if (fSelectedName != null) {
 			fResult.add(fSelectedName);
@@ -129,18 +129,18 @@ public class ExceptionOccurrencesFinder extends ASTVisitor implements IOccurrenc
 		return fResult;
 	}
 	
-	public void collectOccurrenceMatches(IJavaElement element, IDocument document, Collection resultingMatches) {
-		HashMap lineToLineElement= new HashMap();
+	public void collectOccurrenceMatches(IJavaElement element, IDocument document, Collection<Match> resultingMatches) {
+		HashMap<Integer, ExceptionOccurrencesGroupKey> lineToLineElement= new HashMap<Integer, ExceptionOccurrencesGroupKey>();
 		
-		for (Iterator iter= fResult.iterator(); iter.hasNext();) {
-			ASTNode node= (ASTNode) iter.next();
+		for (Iterator<ASTNode> iter= fResult.iterator(); iter.hasNext();) {
+			ASTNode node= iter.next();
 			int startPosition= node.getStartPosition();
 			int length= node.getLength();
 			try {
 				boolean isException= node == fSelectedName;
 				int line= document.getLineOfOffset(startPosition);
 				Integer lineInteger= new Integer(line);
-				ExceptionOccurrencesGroupKey groupKey= (ExceptionOccurrencesGroupKey) lineToLineElement.get(lineInteger);
+				ExceptionOccurrencesGroupKey groupKey= lineToLineElement.get(lineInteger);
 				if (groupKey == null) {
 					IRegion region= document.getLineInformation(line);
 					String lineContents= document.get(region.getOffset(), region.getLength()).trim();

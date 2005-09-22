@@ -78,11 +78,11 @@ public class MissingReturnTypeCorrectionProposal extends LinkedCorrectionProposa
 
 			Block block= fMethodDecl.getBody();
 
-			List statements= block.statements();
+			List<ASTNode> statements= block.statements();
 			int nStatements= statements.size();
 			ASTNode lastStatement= null;
 			if (nStatements > 0) {
-				lastStatement= (ASTNode) statements.get(nStatements - 1);
+				lastStatement= statements.get(nStatements - 1);
 			}
 
 			if (returnBinding != null && lastStatement instanceof ExpressionStatement && lastStatement.getNodeType() != ASTNode.ASSIGNMENT) {

@@ -103,7 +103,7 @@ import org.eclipse.jdt.internal.ui.wizards.buildpaths.CPListElement;
 
 public class ReorgCorrectionsSubProcessor {
 
-	public static void getWrongTypeNameProposals(IInvocationContext context, IProblemLocation problem, Collection proposals) throws CoreException {
+	public static void getWrongTypeNameProposals(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) throws CoreException {
 		String[] args= problem.getProblemArguments();
 		if (args.length == 2) {
 			ICompilationUnit cu= context.getCompilationUnit();
@@ -124,7 +124,7 @@ public class ReorgCorrectionsSubProcessor {
 		}
 	}
 
-	public static void getWrongPackageDeclNameProposals(IInvocationContext context, IProblemLocation problem, Collection proposals) throws CoreException {
+	public static void getWrongPackageDeclNameProposals(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) throws CoreException {
 		String[] args= problem.getProblemArguments();
 		if (args.length == 1) {
 			ICompilationUnit cu= context.getCompilationUnit();
@@ -158,7 +158,7 @@ public class ReorgCorrectionsSubProcessor {
 		}
 	}
 
-	public static void removeImportStatementProposals(IInvocationContext context, IProblemLocation problem, Collection proposals) {
+	public static void removeImportStatementProposals(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) {
 		final ICompilationUnit cu= context.getCompilationUnit();
 
 		ASTNode selectedNode= problem.getCoveringNode(context.getASTRoot());
@@ -195,7 +195,7 @@ public class ReorgCorrectionsSubProcessor {
 		proposals.add(proposal);
 	}
 
-	public static void importNotFoundProposals(IInvocationContext context, IProblemLocation problem, Collection proposals) throws CoreException {
+	public static void importNotFoundProposals(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) throws CoreException {
 		ICompilationUnit cu= context.getCompilationUnit();
 		IJavaProject project= cu.getJavaProject();
 
@@ -215,7 +215,7 @@ public class ReorgCorrectionsSubProcessor {
 				typeName= Signature.getSimpleName(name).toCharArray();
 			}
 			IJavaSearchScope scope= SearchEngine.createWorkspaceScope();
-			ArrayList res= new ArrayList();
+			ArrayList<TypeInfo> res= new ArrayList<TypeInfo>();
 			TypeNameRequestor requestor= new TypeInfoRequestor(res);
 			new SearchEngine().searchAllTypeNames(packageName, typeName,
 					SearchPattern.R_EXACT_MATCH | SearchPattern.R_CASE_SENSITIVE, IJavaSearchConstants.TYPE, scope, requestor,
@@ -224,9 +224,9 @@ public class ReorgCorrectionsSubProcessor {
 			if (res.isEmpty()) {
 				return;
 			}
-			HashSet addedClaspaths= new HashSet();
+			HashSet<Object> addedClaspaths= new HashSet<Object>();
 			for (int i= 0; i < res.size(); i++) {
-				TypeInfo curr= (TypeInfo) res.get(i);
+				TypeInfo curr= res.get(i);
 				IType type= curr.resolveType(scope);
 				if (type != null) {
 					IPackageFragmentRoot root= (IPackageFragmentRoot) type.getAncestor(IJavaElement.PACKAGE_FRAGMENT_ROOT);
@@ -298,7 +298,7 @@ public class ReorgCorrectionsSubProcessor {
 			setImage(images.getImage(IDE.SharedImages.IMG_OBJ_PROJECT));
 		}
 		public void apply(IDocument document) {
-			Map data= null;
+			Map<Object, Object> data= null;
 			if (fReferencedType != null) {
 				IJavaElement elem= fReferencedType.getJavaElement();
 				if (elem != null) {
@@ -307,7 +307,7 @@ public class ReorgCorrectionsSubProcessor {
 						try {
 							IClasspathEntry entry= root.getRawClasspathEntry();
 							if (entry != null) {
-								data= new HashMap(1);
+								data= new HashMap<Object, Object>(1);
 								data.put(BuildPathsPropertyPage.DATA_REVEAL_ENTRY, entry);
 								if (entry.getEntryKind() != IClasspathEntry.CPE_CONTAINER) {
 									data.put(BuildPathsPropertyPage.DATA_REVEAL_ATTRIBUTE_KEY, CPListElement.ACCESSRULES);
@@ -470,7 +470,7 @@ public class ReorgCorrectionsSubProcessor {
 		}
 	}
 
-	public static void getNeed50ComplianceProposals(IInvocationContext context, IProblemLocation problem, Collection proposals) {
+	public static void getNeed50ComplianceProposals(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) {
 		IJavaProject project= context.getCompilationUnit().getJavaProject();
 		
 		String label1= CorrectionMessages.ReorgCorrectionsSubProcessor_50_project_compliance_description;
@@ -482,14 +482,14 @@ public class ReorgCorrectionsSubProcessor {
 		}
 	}
 
-	public static void getIncorrectBuildPathProposals(IInvocationContext context, IProblemLocation problem, Collection proposals) {
+	public static void getIncorrectBuildPathProposals(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) {
 		IProject project= context.getCompilationUnit().getJavaProject().getProject();
 		String label= CorrectionMessages.ReorgCorrectionsSubProcessor_configure_buildpath_label;
 		OpenBuildPathCorrectionProposal proposal= new OpenBuildPathCorrectionProposal(project, label, 5, null);
 		proposals.add(proposal);
 	}
 
-	public static void getAccessRulesProposals(IInvocationContext context, IProblemLocation problem, Collection proposals) {
+	public static void getAccessRulesProposals(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) {
 		IBinding referencedElement= null;
 		ASTNode node= problem.getCoveredNode(context.getASTRoot());
 		if (node instanceof Type) {

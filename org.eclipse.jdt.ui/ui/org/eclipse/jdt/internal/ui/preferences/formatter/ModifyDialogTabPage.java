@@ -74,7 +74,7 @@ public abstract class ModifyDialogTabPage {
 	 * On each change, the new value is written to the map and the listeners are notified.
 	 */
 	protected abstract class Preference extends Observable {
-	    private final Map fPreferences;
+	    private final Map<String, String> fPreferences;
 	    private boolean fEnabled;
 	    private String fKey;
 	    
@@ -83,7 +83,7 @@ public abstract class ModifyDialogTabPage {
 	     * @param preferences The map where the value is written.
 	     * @param key The key for which a value is managed.
 	     */
-	    public Preference(Map preferences, String key) {
+	    public Preference(Map<String, String> preferences, String key) {
 	        fPreferences= preferences;
 	        fEnabled= true;
 	        fKey= key;
@@ -91,7 +91,7 @@ public abstract class ModifyDialogTabPage {
 	    /**
 	     * @return Gets the map of this Preference.
 	     */
-	    protected final Map getPreferences() {
+	    protected final Map<String, String> getPreferences() {
 	        return fPreferences;
 	    }
 
@@ -270,7 +270,7 @@ public abstract class ModifyDialogTabPage {
 		}
 		
 		public String getSelectedItem() {
-			final String selected= (String)getPreferences().get(getKey());
+			final String selected= getPreferences().get(getKey());
 			for (int i= 0; i < fValues.length; i++) {
 				if (fValues[i].equals(selected)) {
 					return fItems[i];
@@ -410,7 +410,7 @@ public abstract class ModifyDialogTabPage {
 			fNumberText.setEnabled(hasKey && getEnabled());
 
 			if (hasKey) {
-			    String s= (String)getPreferences().get(getKey());
+			    String s= getPreferences().get(getKey());
 			    try {
 			        fSelected= Integer.parseInt(s);
 			    } catch (NumberFormatException e) {
@@ -446,20 +446,20 @@ public abstract class ModifyDialogTabPage {
 		
 		private final IDialogSettings fDialogSettings;
 		
-		private final Map fItemMap;
-		private final List fItemList;
+		private final Map<Control, Integer> fItemMap;
+		private final List<Control> fItemList;
 		
 		private int fIndex;
 		
 		public DefaultFocusManager() {
 			fDialogSettings= JavaPlugin.getDefault().getDialogSettings();
-			fItemMap= new HashMap();
-			fItemList= new ArrayList();
+			fItemMap= new HashMap<Control, Integer>();
+			fItemList= new ArrayList<Control>();
 			fIndex= 0;
 		}
 
 		public void focusGained(FocusEvent e) {
-			fDialogSettings.put(PREF_LAST_FOCUS_INDEX, ((Integer)fItemMap.get(e.widget)).intValue());
+			fDialogSettings.put(PREF_LAST_FOCUS_INDEX, fItemMap.get(e.widget).intValue());
 		}
 		
 		public void add(Control control) {
@@ -484,7 +484,7 @@ public abstract class ModifyDialogTabPage {
 				index= fDialogSettings.getInt(PREF_LAST_FOCUS_INDEX);
 				// make sure the value is within the range
 				if ((index >= 0) && (index <= fItemList.size() - 1)) {
-					((Control)fItemList.get(index)).setFocus();
+					fItemList.get(index).setFocus();
 				}
 			} catch (NumberFormatException ex) {
 				// this is the first time

@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 
@@ -135,24 +136,24 @@ public final class JavaDeleteProcessor extends DeleteProcessor {
 	public RefactoringParticipant[] loadParticipants(RefactoringStatus status, SharableParticipants shared) throws CoreException {
 		String[] natures= getAffectedProjectNatures();
 		ResourceModifications mod= new ResourceModifications();
-		List collected= new ArrayList();
+		List<IAdaptable> collected= new ArrayList<IAdaptable>();
 		for (int i= 0; i < fJavaElements.length; i++) {
 			handleJavaElementDelete(collected, fJavaElements[i], natures, mod, shared);
 		}
 		for (int i= 0; i < fResources.length; i++) {
 			handleResourceDelete(collected, fResources[i], natures, shared);
 		}
-		List result= new ArrayList();
-		for (Iterator iter= collected.iterator(); iter.hasNext();) {
+		List<RefactoringParticipant> result= new ArrayList<RefactoringParticipant>();
+		for (Iterator<IAdaptable> iter= collected.iterator(); iter.hasNext();) {
 			result.addAll(Arrays.asList(ParticipantManager.loadDeleteParticipants(status, 
 				this, iter.next(), 
 				new DeleteArguments(), natures, shared)));
 		}
 		result.addAll(Arrays.asList(mod.getParticipants(status, this, natures, shared)));
-		return (RefactoringParticipant[]) result.toArray(new RefactoringParticipant[result.size()]);
+		return result.toArray(new RefactoringParticipant[result.size()]);
 	}
 	
-	private void handleJavaElementDelete(List collected, IJavaElement element, String[] natures, ResourceModifications mod, SharableParticipants shared) throws CoreException {
+	private void handleJavaElementDelete(List<IAdaptable> collected, IJavaElement element, String[] natures, ResourceModifications mod, SharableParticipants shared) throws CoreException {
 		switch(element.getElementType()) {
 			case IJavaElement.JAVA_MODEL:
 				return;
@@ -194,7 +195,7 @@ public final class JavaDeleteProcessor extends DeleteProcessor {
 		}
 	}
 
-	private void handlePackageFragmentDelete(List collected, IPackageFragment pack, String[] natures, ResourceModifications mod, SharableParticipants shared) throws CoreException {
+	private void handlePackageFragmentDelete(List<IAdaptable> collected, IPackageFragment pack, String[] natures, ResourceModifications mod, SharableParticipants shared) throws CoreException {
 		collected.add(pack);
 		IContainer container= (IContainer)pack.getResource();
 		if (container == null)
@@ -216,17 +217,17 @@ public final class JavaDeleteProcessor extends DeleteProcessor {
 		}
 	}
 	
-	private void handleResourceDelete(List collected, IResource element, String[] natures, SharableParticipants shared) {
+	private void handleResourceDelete(List<IAdaptable> collected, IResource element, String[] natures, SharableParticipants shared) {
 		collected.add(element);
 	}
 
 	private String[] getAffectedProjectNatures() throws CoreException {
 		String[] jNatures= JavaProcessors.computeAffectedNaturs(fJavaElements);
 		String[] rNatures= ResourceProcessors.computeAffectedNatures(fResources);
-		Set result= new HashSet();
+		Set<String> result= new HashSet<String>();
 		result.addAll(Arrays.asList(jNatures));
 		result.addAll(Arrays.asList(rNatures));
-		return (String[])result.toArray(new String[result.size()]);
+		return result.toArray(new String[result.size()]);
 	}
 
 	/* 
@@ -391,7 +392,7 @@ public final class JavaDeleteProcessor extends DeleteProcessor {
 	}
 
 	private void removeUnconfirmedReferencedArchiveFiles(IConfirmQuery query) throws JavaModelException, OperationCanceledException {
-		List filesToSkip= new ArrayList(0);
+		List<IResource> filesToSkip= new ArrayList<IResource>(0);
 		for (int i= 0; i < fResources.length; i++) {
 			IResource resource= fResources[i];
 			if (! (resource instanceof IFile))
@@ -403,30 +404,30 @@ public final class JavaDeleteProcessor extends DeleteProcessor {
 			IPackageFragmentRoot root= project.findPackageFragmentRoot(resource.getFullPath());
 			if (root == null)
 				continue;
-			List referencingProjects= new ArrayList(1);
+			List<IJavaProject> referencingProjects= new ArrayList<IJavaProject>(1);
 			referencingProjects.add(root.getJavaProject());
 			referencingProjects.addAll(Arrays.asList(JavaElementUtil.getReferencingProjects(root)));
 			if (skipDeletingReferencedRoot(query, root, referencingProjects))
 				filesToSkip.add(resource);
 		}
-		removeFromSetToDelete((IFile[]) filesToSkip.toArray(new IFile[filesToSkip.size()]));
+		removeFromSetToDelete(filesToSkip.toArray(new IFile[filesToSkip.size()]));
 	}
 
 	private void removeUnconfirmedReferencedPackageFragmentRoots(IConfirmQuery query) throws JavaModelException, OperationCanceledException {
-		List rootsToSkip= new ArrayList(0);
+		List<IPackageFragmentRoot> rootsToSkip= new ArrayList<IPackageFragmentRoot>(0);
 		for (int i= 0; i < fJavaElements.length; i++) {
 			IJavaElement element= fJavaElements[i];
 			if (! (element instanceof IPackageFragmentRoot))
 				continue;
 			IPackageFragmentRoot root= (IPackageFragmentRoot)element;
-			List referencingProjects= Arrays.asList(JavaElementUtil.getReferencingProjects(root));
+			List<IJavaProject> referencingProjects= Arrays.asList(JavaElementUtil.getReferencingProjects(root));
 			if (skipDeletingReferencedRoot(query, root, referencingProjects))
 				rootsToSkip.add(root);
 		}
-		removeFromSetToDelete((IJavaElement[]) rootsToSkip.toArray(new IJavaElement[rootsToSkip.size()]));
+		removeFromSetToDelete(rootsToSkip.toArray(new IJavaElement[rootsToSkip.size()]));
 	}
 
-	private static boolean skipDeletingReferencedRoot(IConfirmQuery query, IPackageFragmentRoot root, List referencingProjects) throws OperationCanceledException {
+	private static boolean skipDeletingReferencedRoot(IConfirmQuery query, IPackageFragmentRoot root, List<IJavaProject> referencingProjects) throws OperationCanceledException {
 		if (referencingProjects.isEmpty() || root == null || ! root.exists() ||! root.isArchive())
 			return false;
 		String question= Messages.format(RefactoringCoreMessages.DeleteRefactoring_3, root.getElementName()); 
@@ -436,7 +437,7 @@ public final class JavaDeleteProcessor extends DeleteProcessor {
 	private void removeUnconfirmedFoldersThatContainSourceFolders() throws CoreException {
 		String queryTitle= RefactoringCoreMessages.DeleteRefactoring_4; 
 		IConfirmQuery query= fDeleteQueries.createYesYesToAllNoNoToAllQuery(queryTitle, true, IReorgQueries.CONFIRM_DELETE_FOLDERS_CONTAINING_SOURCE_FOLDERS);
-		List foldersToSkip= new ArrayList(0);
+		List<IFolder> foldersToSkip= new ArrayList<IFolder>(0);
 		for (int i= 0; i < fResources.length; i++) {
 			IResource resource= fResources[i];
 			if (resource instanceof IFolder){
@@ -448,7 +449,7 @@ public final class JavaDeleteProcessor extends DeleteProcessor {
 				}
 			}
 		}
-		removeFromSetToDelete((IResource[]) foldersToSkip.toArray(new IResource[foldersToSkip.size()]));
+		removeFromSetToDelete(foldersToSkip.toArray(new IResource[foldersToSkip.size()]));
 	}
 
 	private static boolean containsSourceFolder(IFolder folder) throws CoreException {
@@ -481,7 +482,7 @@ public final class JavaDeleteProcessor extends DeleteProcessor {
 	}
 	
 	private IFile[] getClassPathFiles() {
-		List result= new ArrayList();
+		List<IFile> result= new ArrayList<IFile>();
 		for (int i= 0; i < fJavaElements.length; i++) {
 			IJavaElement element= fJavaElements[i];
 			if (element instanceof IPackageFragmentRoot) {
@@ -491,7 +492,7 @@ public final class JavaDeleteProcessor extends DeleteProcessor {
 					result.add(classPathFile);
 			}
 		}
-		return (IFile[])result.toArray(new IFile[result.size()]);
+		return result.toArray(new IFile[result.size()]);
 	}
 	
 	public Change createChange(IProgressMonitor pm) throws CoreException {
@@ -518,23 +519,23 @@ public final class JavaDeleteProcessor extends DeleteProcessor {
 		if (fields.length == 0)
 			return;
 		//IField -> IMethod[]
-		Map getterSetterMapping= createGetterSetterMapping(fields);
+		Map<IField, IMethod[]> getterSetterMapping= createGetterSetterMapping(fields);
 		if (getterSetterMapping.isEmpty())
 			return;
 		removeAlreadySelectedMethods(getterSetterMapping);
 		if (getterSetterMapping.isEmpty())
 			return;
 			
-		List gettersSettersToAdd= getGettersSettersToDelete(getterSetterMapping);
-		addToSetToDelete((IMethod[]) gettersSettersToAdd.toArray(new IMethod[gettersSettersToAdd.size()]));
+		List<IMethod> gettersSettersToAdd= getGettersSettersToDelete(getterSetterMapping);
+		addToSetToDelete(gettersSettersToAdd.toArray(new IMethod[gettersSettersToAdd.size()]));
 	}
 
-	private List getGettersSettersToDelete(Map getterSetterMapping) {
-		List gettersSettersToAdd= new ArrayList(getterSetterMapping.size());
+	private List<IMethod> getGettersSettersToDelete(Map<IField, IMethod[]> getterSetterMapping) {
+		List<IMethod> gettersSettersToAdd= new ArrayList<IMethod>(getterSetterMapping.size());
 		String queryTitle= RefactoringCoreMessages.DeleteRefactoring_8; 
 		IConfirmQuery getterSetterQuery= fDeleteQueries.createYesYesToAllNoNoToAllQuery(queryTitle, true, IReorgQueries.CONFIRM_DELETE_GETTER_SETTER);
-		for (Iterator iter= getterSetterMapping.keySet().iterator(); iter.hasNext();) {
-			IField field= (IField) iter.next();
+		for (Iterator<IField> iter= getterSetterMapping.keySet().iterator(); iter.hasNext();) {
+			IField field= iter.next();
 			Assert.isTrue(hasGetter(getterSetterMapping, field) || hasSetter(getterSetterMapping, field));
 			String deleteGetterSetter= Messages.format(RefactoringCoreMessages.DeleteRefactoring_9, JavaElementUtil.createFieldSignature(field)); 
 			if (getterSetterQuery.confirm(deleteGetterSetter)){
@@ -548,10 +549,10 @@ public final class JavaDeleteProcessor extends DeleteProcessor {
 	}
 
 	//note: modifies the mapping
-	private void removeAlreadySelectedMethods(Map getterSetterMapping) {
-		List elementsToDelete= Arrays.asList(fJavaElements);
-		for (Iterator iter= getterSetterMapping.keySet().iterator(); iter.hasNext();) {
-			IField field= (IField) iter.next();
+	private void removeAlreadySelectedMethods(Map<IField, IMethod[]> getterSetterMapping) {
+		List<IJavaElement> elementsToDelete= Arrays.asList(fJavaElements);
+		for (Iterator<IField> iter= getterSetterMapping.keySet().iterator(); iter.hasNext();) {
+			IField field= iter.next();
 			//remove getter
 			IMethod getter= getGetter(getterSetterMapping, field);
 			if (getter != null && elementsToDelete.contains(getter))
@@ -571,8 +572,8 @@ public final class JavaDeleteProcessor extends DeleteProcessor {
 	/*
 	 * IField -> IMethod[] (array of 2 - [getter, setter], one of which can be null)
 	 */
-	private static Map createGetterSetterMapping(IField[] fields) throws JavaModelException {
-		Map result= new HashMap();
+	private static Map<IField, IMethod[]> createGetterSetterMapping(IField[] fields) throws JavaModelException {
+		Map<IField, IMethod[]> result= new HashMap<IField, IMethod[]>();
 		for (int i= 0; i < fields.length; i++) {
 			IField field= fields[i];
 			IMethod[] getterSetter= getGetterSetter(field);
@@ -581,33 +582,33 @@ public final class JavaDeleteProcessor extends DeleteProcessor {
 		}		
 		return result;
 	}
-	private static boolean hasSetter(Map getterSetterMapping, IField field){
+	private static boolean hasSetter(Map<IField, IMethod[]> getterSetterMapping, IField field){
 		return getterSetterMapping.containsKey(field) && 
 			   getSetter(getterSetterMapping, field) != null;
 	}
-	private static boolean hasGetter(Map getterSetterMapping, IField field){
+	private static boolean hasGetter(Map<IField, IMethod[]> getterSetterMapping, IField field){
 		return getterSetterMapping.containsKey(field) && 
 			   getGetter(getterSetterMapping, field) != null;
 	}
-	private static void removeGetterFromMapping(Map getterSetterMapping, IField field){
-		((IMethod[])getterSetterMapping.get(field))[0]= null;
+	private static void removeGetterFromMapping(Map<IField, IMethod[]> getterSetterMapping, IField field){
+		getterSetterMapping.get(field)[0]= null;
 	}
-	private static void removeSetterFromMapping(Map getterSetterMapping, IField field){
-		((IMethod[])getterSetterMapping.get(field))[1]= null;
+	private static void removeSetterFromMapping(Map<IField, IMethod[]> getterSetterMapping, IField field){
+		getterSetterMapping.get(field)[1]= null;
 	}
-	private static IMethod getGetter(Map getterSetterMapping, IField field){
-		return ((IMethod[])getterSetterMapping.get(field))[0];
+	private static IMethod getGetter(Map<IField, IMethod[]> getterSetterMapping, IField field){
+		return getterSetterMapping.get(field)[0];
 	}
-	private static IMethod getSetter(Map getterSetterMapping, IField field){
-		return ((IMethod[])getterSetterMapping.get(field))[1];
+	private static IMethod getSetter(Map<IField, IMethod[]> getterSetterMapping, IField field){
+		return getterSetterMapping.get(field)[1];
 	}
 	private static IField[] getFields(IJavaElement[] elements){
-		List fields= new ArrayList(3);
+		List<IJavaElement> fields= new ArrayList<IJavaElement>(3);
 		for (int i= 0; i < elements.length; i++) {
 			if (elements[i] instanceof IField)
 				fields.add(elements[i]);
 		}
-		return (IField[]) fields.toArray(new IField[fields.size()]);
+		return fields.toArray(new IField[fields.size()]);
 	}
 
 	/*
@@ -630,12 +631,12 @@ public final class JavaDeleteProcessor extends DeleteProcessor {
 
 	//----------- empty CUs related method
 	private void addEmptyCusToDelete() throws JavaModelException {
-		Set cusToEmpty= getCusToEmpty();
-		addToSetToDelete((ICompilationUnit[]) cusToEmpty.toArray(new ICompilationUnit[cusToEmpty.size()]));
+		Set<ICompilationUnit> cusToEmpty= getCusToEmpty();
+		addToSetToDelete(cusToEmpty.toArray(new ICompilationUnit[cusToEmpty.size()]));
 	}
 
-	private Set getCusToEmpty() throws JavaModelException {
-		Set result= new HashSet();
+	private Set<ICompilationUnit> getCusToEmpty() throws JavaModelException {
+		Set<ICompilationUnit> result= new HashSet<ICompilationUnit>();
 		for (int i= 0; i < fJavaElements.length; i++) {
 			IJavaElement element= fJavaElements[i];	
 			ICompilationUnit cu= ReorgUtils.getCompilationUnit(element);
@@ -646,7 +647,7 @@ public final class JavaDeleteProcessor extends DeleteProcessor {
 	}
 
 	private boolean willHaveAllTopLevelTypesDeleted(ICompilationUnit cu) throws JavaModelException {
-		Set elementSet= new HashSet(Arrays.asList(fJavaElements));
+		Set<IJavaElement> elementSet= new HashSet<IJavaElement>(Arrays.asList(fJavaElements));
 		IType[] topLevelTypes= cu.getTypes();
 		for (int i= 0; i < topLevelTypes.length; i++) {
 			if (! elementSet.contains(topLevelTypes[i]))

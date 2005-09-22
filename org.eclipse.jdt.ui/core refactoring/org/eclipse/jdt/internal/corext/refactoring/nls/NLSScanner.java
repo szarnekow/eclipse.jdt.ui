@@ -46,7 +46,7 @@ public class NLSScanner {
 	}
 	
 	private static NLSLine[] scan(char[] content) throws InvalidInputException {
-		List lines= new ArrayList();
+		List<NLSLine> lines= new ArrayList<NLSLine>();
 		IScanner scanner= ToolFactory.createScanner(true, true, false, true);
 		scanner.setSource(content);
 		int token= scanner.getNextToken();
@@ -85,7 +85,7 @@ public class NLSScanner {
 		}
 		NLSLine[] result;
 		try {
-			result= (NLSLine[]) lines.toArray(new NLSLine[lines.size()]);
+			result= lines.toArray(new NLSLine[lines.size()]);
 			IDocument document= new Document(String.valueOf(scanner.getSource()));
 			for (int i= 0; i < result.length; i++) {
 				setTagPositions(document, result[i]);

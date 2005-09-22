@@ -27,7 +27,7 @@ import org.eclipse.jdt.internal.corext.dom.ScopeAnalyzer;
 
 public class ImportReferencesCollector extends GenericVisitor {
 
-	public static void collect(ASTNode node, IJavaProject project, Region rangeLimit, Collection resultingTypeImports, Collection resultingStaticImports) {
+	public static void collect(ASTNode node, IJavaProject project, Region rangeLimit, Collection<SimpleName> resultingTypeImports, Collection<Name> resultingStaticImports) {
 		CompilationUnit astRoot= (CompilationUnit) node.getRoot();
 		node.accept(new ImportReferencesCollector(project, astRoot, rangeLimit, resultingTypeImports, resultingStaticImports));
 	}
@@ -35,10 +35,10 @@ public class ImportReferencesCollector extends GenericVisitor {
 	
 	private CompilationUnit fASTRoot;
 	private Region fSubRange;
-	private Collection/*<Name>*/ fTypeImports;
-	private Collection/*<Name>*/ fStaticImports;
+	private Collection/*<Name>*/<SimpleName> fTypeImports;
+	private Collection/*<Name>*/<Name> fStaticImports;
 
-	private ImportReferencesCollector(IJavaProject project, CompilationUnit astRoot, Region rangeLimit, Collection resultingTypeImports, Collection resultingStaticImports) {
+	private ImportReferencesCollector(IJavaProject project, CompilationUnit astRoot, Region rangeLimit, Collection<SimpleName> resultingTypeImports, Collection<Name> resultingStaticImports) {
 		super(true);
 		fTypeImports= resultingTypeImports;
 		fStaticImports= resultingStaticImports;
@@ -145,10 +145,10 @@ public class ImportReferencesCollector extends GenericVisitor {
 
 	}
 	
-	private void doVisitChildren(List elements) {
+	private void doVisitChildren(List<ASTNode> elements) {
 		int nElements= elements.size();
 		for (int i= 0; i < nElements; i++) {
-			((ASTNode) elements.get(i)).accept(this);
+			elements.get(i).accept(this);
 		}
 	}
 	
@@ -346,7 +346,7 @@ public class ImportReferencesCollector extends GenericVisitor {
 			doVisitNode(node.getReturnType2());
 		}
 		doVisitChildren(node.parameters());
-		Iterator iter=node.thrownExceptions().iterator();
+		Iterator<ASTNode> iter=node.thrownExceptions().iterator();
 		while (iter.hasNext()) {
 			typeRefFound((Name) iter.next());
 		}
@@ -356,7 +356,7 @@ public class ImportReferencesCollector extends GenericVisitor {
 	
 	public boolean visit(TagElement node) {
 		String tagName= node.getTagName();
-		List list= node.fragments();
+		List<ASTNode> list= node.fragments();
 		int idx= 0;
 		if (tagName != null && !list.isEmpty()) {
 			Object first= list.get(0);
@@ -372,7 +372,7 @@ public class ImportReferencesCollector extends GenericVisitor {
 			}
 		}
 		for (int i= idx; i < list.size(); i++) {
-			doVisitNode((ASTNode) list.get(i));
+			doVisitNode(list.get(i));
 		}
 		return false;
 	}
@@ -400,7 +400,7 @@ public class ImportReferencesCollector extends GenericVisitor {
 				possibleStaticImportFound(name);
 			}
 		}
-		List list= node.parameters();
+		List<ASTNode> list= node.parameters();
 		if (list != null) {
 			doVisitChildren(list); // visit MethodRefParameter with Type
 		}

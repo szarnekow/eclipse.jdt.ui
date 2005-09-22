@@ -107,7 +107,7 @@ public class EmptyTypeSet extends TypeSet {
 	/* (non-Javadoc)
 	 * @see org.eclipse.jdt.internal.corext.refactoring.typeconstraints.typesets.TypeSet#iterator()
 	 */
-	public Iterator iterator() {
+	public Iterator<TType> iterator() {
 		return new Iterator() {
 			public void remove() {
 				//do nothing

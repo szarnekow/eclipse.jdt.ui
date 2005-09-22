@@ -467,7 +467,7 @@ public class JavaSourceViewer extends ProjectionViewer implements IPropertyChang
 		Assert.isNotNull(listener);
 
 		if (fTextPresentationListeners == null)
-			fTextPresentationListeners= new ArrayList();
+			fTextPresentationListeners= new ArrayList<ITextPresentationListener>();
 
 		fTextPresentationListeners.remove(listener);
 		fTextPresentationListeners.add(0, listener);
@@ -531,7 +531,7 @@ public class JavaSourceViewer extends ProjectionViewer implements IPropertyChang
 		IRegion line= document.getLineInformationOfOffset(lineOffset);
 		ITypedRegion[] linePartitioning= TextUtilities.computePartitioning(document, IJavaPartitions.JAVA_PARTITIONING, lineOffset, line.getLength(), false);
 
-		List segmentation= new ArrayList();
+		List<ITypedRegion> segmentation= new ArrayList<ITypedRegion>();
 		for (int i= 0; i < linePartitioning.length; i++) {
 			if (IJavaPartitions.JAVA_STRING.equals(linePartitioning[i].getType()))
 				segmentation.add(linePartitioning[i]);
@@ -546,7 +546,7 @@ public class JavaSourceViewer extends ProjectionViewer implements IPropertyChang
 
 		int j= 0;
 		for (int i= 0; i < size; i++) {
-			ITypedRegion segment= (ITypedRegion) segmentation.get(i);
+			ITypedRegion segment= segmentation.get(i);
 
 			if (i == 0)
 				segments[j++]= 0;

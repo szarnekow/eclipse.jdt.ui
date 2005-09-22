@@ -91,16 +91,16 @@ public class LineWrappingTabPage extends ModifyDialogTabPage {
 	
 	private final class CategoryListener implements ISelectionChangedListener, IDoubleClickListener {
 		
-		private final List fCategoriesList;
+		private final List<Category> fCategoriesList;
 		
 		private int fIndex= 0;
 		
 		public CategoryListener(List categoriesTree) {
-			fCategoriesList= new ArrayList();
+			fCategoriesList= new ArrayList<Category>();
 			flatten(fCategoriesList, categoriesTree);
 		}
 		
-		private void flatten(List categoriesList, List categoriesTree) {
+		private void flatten(List<Category> categoriesList, List categoriesTree) {
 			for (final Iterator iter= categoriesTree.iterator(); iter.hasNext(); ) {
 				final Category category= (Category) iter.next();
 				category.index= fIndex++;
@@ -165,7 +165,7 @@ public class LineWrappingTabPage extends ModifyDialogTabPage {
 			if (index < 0 || index > fCategoriesList.size() - 1) {
 				index= 1; // In order to select a category with preview initially
 			}
-			final Category category= (Category)fCategoriesList.get(index);
+			final Category category= fCategoriesList.get(index);
 			fCategoriesViewer.setSelection(new StructuredSelection(new Category[] {category}));
 		}
 
@@ -179,12 +179,12 @@ public class LineWrappingTabPage extends ModifyDialogTabPage {
 	}
 	
 	private class SelectionState {
-	    private List fElements= new ArrayList();
+	    private List<Category> fElements= new ArrayList<Category>();
 	    
 	    public void refreshState(IStructuredSelection selection) {
-	        Map wrappingStyleMap= new HashMap();
-		    Map indentStyleMap= new HashMap();
-		    Map forceWrappingMap= new HashMap();
+	        Map<Object, Integer> wrappingStyleMap= new HashMap<Object, Integer>();
+		    Map<Object, Integer> indentStyleMap= new HashMap<Object, Integer>();
+		    Map<Object, Integer> forceWrappingMap= new HashMap<Object, Integer>();
 	        fElements.clear();
 	        evaluateElements(selection.iterator());
 	        evaluateMaps(wrappingStyleMap, indentStyleMap, forceWrappingMap);
@@ -192,7 +192,7 @@ public class LineWrappingTabPage extends ModifyDialogTabPage {
 	        refreshControls(wrappingStyleMap, indentStyleMap, forceWrappingMap);
 	    }
 	    
-	    public List getElements() {
+	    public List<Category> getElements() {
 	        return fElements;
 	    }
 	    
@@ -212,24 +212,24 @@ public class LineWrappingTabPage extends ModifyDialogTabPage {
             }
         }
 	    
-	    private void evaluateMaps(Map wrappingStyleMap, Map indentStyleMap, Map forceWrappingMap) {
-	        Iterator iterator= fElements.iterator();
+	    private void evaluateMaps(Map<Object, Integer> wrappingStyleMap, Map<Object, Integer> indentStyleMap, Map<Object, Integer> forceWrappingMap) {
+	        Iterator<Category> iterator= fElements.iterator();
             while (iterator.hasNext()) {
-                insertIntoMap(wrappingStyleMap, indentStyleMap, forceWrappingMap, (Category)iterator.next());
+                insertIntoMap(wrappingStyleMap, indentStyleMap, forceWrappingMap, iterator.next());
             }
 	    }
   
-        private String getPreviewText(Map wrappingMap, Map indentMap, Map forceMap) {
-            Iterator iterator= fElements.iterator();
+        private String getPreviewText(Map<Object, Integer> wrappingMap, Map<Object, Integer> indentMap, Map<Object, Integer> forceMap) {
+            Iterator<Category> iterator= fElements.iterator();
             String previewText= ""; //$NON-NLS-1$
             while (iterator.hasNext()) {
-                Category category= (Category)iterator.next();
+                Category category= iterator.next();
                 previewText= previewText + category.previewText + "\n\n"; //$NON-NLS-1$
             }
             return previewText;
         }
         
-        private void insertIntoMap(Map wrappingMap, Map indentMap, Map forceMap, Category category) {
+        private void insertIntoMap(Map<Object, Integer> wrappingMap, Map<Object, Integer> indentMap, Map<Object, Integer> forceMap, Category category) {
             final String value= (String)fWorkingValues.get(category.key);
             Integer wrappingStyle;
             Integer indentStyle;
@@ -250,28 +250,28 @@ public class LineWrappingTabPage extends ModifyDialogTabPage {
             increaseMapEntry(forceMap, forceWrapping);
         }
         
-        private void increaseMapEntry(Map map, Object type) {
-            Integer count= (Integer)map.get(type);
+        private void increaseMapEntry(Map<Object, Integer> map, Object type) {
+            Integer count= map.get(type);
             if (count == null) // not in map yet -> count == 0
                 map.put(type, new Integer(1));
             else
                 map.put(type, new Integer(count.intValue() + 1));
         }
                 
-        private void refreshControls(Map wrappingStyleMap, Map indentStyleMap, Map forceWrappingMap) {
+        private void refreshControls(Map<Object, Integer> wrappingStyleMap, Map<Object, Integer> indentStyleMap, Map<Object, Integer> forceWrappingMap) {
             updateCombos(wrappingStyleMap, indentStyleMap);
             updateButton(forceWrappingMap);
             Integer wrappingStyleMax= getWrappingStyleMax(wrappingStyleMap);
-			boolean isInhomogeneous= (fElements.size() != ((Integer)wrappingStyleMap.get(wrappingStyleMax)).intValue());
+			boolean isInhomogeneous= (fElements.size() != wrappingStyleMap.get(wrappingStyleMax).intValue());
 			updateControlEnablement(isInhomogeneous, wrappingStyleMax.intValue());
 		    doUpdatePreview();
 			notifyValuesModified();
         }
         
-        private Integer getWrappingStyleMax(Map wrappingStyleMap) {
+        private Integer getWrappingStyleMax(Map<Object, Integer> wrappingStyleMap) {
             int maxCount= 0, maxStyle= 0;
             for (int i=0; i<WRAPPING_NAMES.length; i++) {
-                Integer count= (Integer)wrappingStyleMap.get(new Integer(i));
+                Integer count= wrappingStyleMap.get(new Integer(i));
                 if (count == null)
                     continue;
                 if (count.intValue() > maxCount) {
@@ -282,9 +282,9 @@ public class LineWrappingTabPage extends ModifyDialogTabPage {
             return new Integer(maxStyle);
         }
         
-        private void updateButton(Map forceWrappingMap) {
-            Integer nrOfTrue= (Integer)forceWrappingMap.get(Boolean.TRUE);
-            Integer nrOfFalse= (Integer)forceWrappingMap.get(Boolean.FALSE);
+        private void updateButton(Map<Object, Integer> forceWrappingMap) {
+            Integer nrOfTrue= forceWrappingMap.get(Boolean.TRUE);
+            Integer nrOfFalse= forceWrappingMap.get(Boolean.FALSE);
             
             if (nrOfTrue == null || nrOfFalse == null)
                 fForceSplit.setSelection(nrOfTrue != null);
@@ -312,17 +312,17 @@ public class LineWrappingTabPage extends ModifyDialogTabPage {
             return nrOfFalse.intValue();
         }
         
-        private void updateCombos(Map wrappingStyleMap, Map indentStyleMap) {
+        private void updateCombos(Map<Object, Integer> wrappingStyleMap, Map<Object, Integer> indentStyleMap) {
             updateCombo(fWrappingStyleCombo, wrappingStyleMap, WRAPPING_NAMES);
             updateCombo(fIndentStyleCombo, indentStyleMap, INDENT_NAMES);
         }
         
-        private void updateCombo(Combo combo, Map map, final String[] items) {
+        private void updateCombo(Combo combo, Map<Object, Integer> map, final String[] items) {
             String[] newItems= new String[items.length];
             int maxCount= 0, maxStyle= 0;
                         
             for(int i = 0; i < items.length; i++) {
-                Integer count= (Integer) map.get(new Integer(i));
+                Integer count= map.get(new Integer(i));
                 int val= (count == null) ? 0 : count.intValue();
                 if (val > maxCount) {
                     maxCount= val;
@@ -747,10 +747,10 @@ public class LineWrappingTabPage extends ModifyDialogTabPage {
 	}
 	
 	protected void forceSplitChanged(boolean forceSplit) {
-	    Iterator iterator= fSelectionState.fElements.iterator();
+	    Iterator<Category> iterator= fSelectionState.fElements.iterator();
 	    String currentKey;
         while (iterator.hasNext()) {
-            currentKey= ((Category)iterator.next()).key;
+            currentKey= iterator.next().key;
             try {
                 changeForceSplit(currentKey, forceSplit);
             } catch (IllegalArgumentException e) {
@@ -771,10 +771,10 @@ public class LineWrappingTabPage extends ModifyDialogTabPage {
 	}
 	
 	protected void wrappingStyleChanged(int wrappingStyle) {
-	       Iterator iterator= fSelectionState.fElements.iterator();
+	       Iterator<Category> iterator= fSelectionState.fElements.iterator();
 	       String currentKey;
 	        while (iterator.hasNext()) {
-	        	currentKey= ((Category)iterator.next()).key;
+	        	currentKey= iterator.next().key;
 	        	try {
 	        	    changeWrappingStyle(currentKey, wrappingStyle);
 	        	} catch (IllegalArgumentException e) {
@@ -795,10 +795,10 @@ public class LineWrappingTabPage extends ModifyDialogTabPage {
 	}
 	
 	protected void indentStyleChanged(int indentStyle) {
-	    Iterator iterator= fSelectionState.fElements.iterator();
+	    Iterator<Category> iterator= fSelectionState.fElements.iterator();
 	    String currentKey;
         while (iterator.hasNext()) {
-            currentKey= ((Category)iterator.next()).key;
+            currentKey= iterator.next().key;
         	try {
             	changeIndentStyle(currentKey, indentStyle);
         	} catch (IllegalArgumentException e) {

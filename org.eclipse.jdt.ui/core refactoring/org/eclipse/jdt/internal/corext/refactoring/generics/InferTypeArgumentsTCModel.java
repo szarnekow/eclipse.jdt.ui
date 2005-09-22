@@ -73,19 +73,19 @@ public class InferTypeArgumentsTCModel {
 	/**
 	 * Map from a {@link ConstraintVariable2} to itself.
 	 */
-	private HashMap/*<ConstraintVariable2, ConstraintVariable2>*/ fConstraintVariables;
+	private HashMap/*<ConstraintVariable2, ConstraintVariable2>*/<ConstraintVariable2, ConstraintVariable2> fConstraintVariables;
 	/**
 	 * Map from a {@link ITypeConstraint2} to itself.
 	 */
-	private HashMap/*<ITypeConstraint2, ITypeConstraint2>*/ fTypeConstraints;
-	private Collection/*CastVariable2*/ fCastVariables;
+	private HashMap/*<ITypeConstraint2, ITypeConstraint2>*/<ITypeConstraint2, ITypeConstraint2> fTypeConstraints;
+	private Collection/*CastVariable2*/<CastVariable2> fCastVariables;
 	
-	private HashSet fCuScopedConstraintVariables;
+	private HashSet<ConstraintVariable2> fCuScopedConstraintVariables;
 	
 	private TypeEnvironment fTypeEnvironment;
 	
 	private static final int MAX_TTYPE_CACHE= 1024;
-	private Map/*<String, TType>*/ fTTypeCache= new LinkedHashMap(MAX_TTYPE_CACHE, 0.75f, true) {
+	private Map/*<String, TType>*/<Object, Object> fTTypeCache= new LinkedHashMap(MAX_TTYPE_CACHE, 0.75f, true) {
 		private static final long serialVersionUID= 1L;
 		protected boolean removeEldestEntry(Map.Entry eldest) {
 			return size() > MAX_TTYPE_CACHE;
@@ -94,11 +94,11 @@ public class InferTypeArgumentsTCModel {
 	
 	
 	public InferTypeArgumentsTCModel() {
-		fTypeConstraints= new HashMap();
-		fConstraintVariables= new HashMap();
-		fCastVariables= new ArrayList();
+		fTypeConstraints= new HashMap<ITypeConstraint2, ITypeConstraint2>();
+		fConstraintVariables= new HashMap<ConstraintVariable2, ConstraintVariable2>();
+		fCastVariables= new ArrayList<CastVariable2>();
 		
-		fCuScopedConstraintVariables= new HashSet();
+		fCuScopedConstraintVariables= new HashSet<ConstraintVariable2>();
 		
 		fTypeEnvironment= new TypeEnvironment(true);
 	}
@@ -159,8 +159,8 @@ public class InferTypeArgumentsTCModel {
 	}
 	
 	private void pruneUnusedCuScopedCvs() {
-		for (Iterator iter= fCuScopedConstraintVariables.iterator(); iter.hasNext();) {
-			ConstraintVariable2 cv= (ConstraintVariable2) iter.next();
+		for (Iterator<ConstraintVariable2> iter= fCuScopedConstraintVariables.iterator(); iter.hasNext();) {
+			ConstraintVariable2 cv= iter.next();
 			pruneCvIfUnused(cv);
 		}
 	}
@@ -179,7 +179,7 @@ public class InferTypeArgumentsTCModel {
 			return false;
 		
 		Map elementVariables= getElementVariables(cv);
-		for (Iterator iter= elementVariables.values().iterator(); iter.hasNext();) {
+		for (Iterator<Object> iter= elementVariables.values().iterator(); iter.hasNext();) {
 			CollectionElementVariable2 elementVariable= (CollectionElementVariable2) iter.next();
 			if (! pruneCvIfUnused(elementVariable))
 				return false;
@@ -192,18 +192,18 @@ public class InferTypeArgumentsTCModel {
 	public ConstraintVariable2[] getAllConstraintVariables() {
 		ConstraintVariable2[] result= new ConstraintVariable2[fConstraintVariables.size()];
 		int i= 0;
-		for (Iterator iter= fConstraintVariables.keySet().iterator(); iter.hasNext(); i++)
-			result[i]= (ConstraintVariable2) iter.next();
+		for (Iterator<ConstraintVariable2> iter= fConstraintVariables.keySet().iterator(); iter.hasNext(); i++)
+			result[i]= iter.next();
 		return result;
 	}
 	
 	public ITypeConstraint2[] getAllTypeConstraints() {
-		Set typeConstraints= fTypeConstraints.keySet();
-		return (ITypeConstraint2[]) typeConstraints.toArray(new ITypeConstraint2[typeConstraints.size()]);
+		Set<ITypeConstraint2> typeConstraints= fTypeConstraints.keySet();
+		return typeConstraints.toArray(new ITypeConstraint2[typeConstraints.size()]);
 	}
 	
 	public CastVariable2[] getCastVariables() {
-		return (CastVariable2[]) fCastVariables.toArray(new CastVariable2[fCastVariables.size()]);
+		return fCastVariables.toArray(new CastVariable2[fCastVariables.size()]);
 	}
 	
 	/**
@@ -250,10 +250,10 @@ public class InferTypeArgumentsTCModel {
 		if (usedIn == null) {
 			storedCv.setData(USED_IN, typeConstraint);
 		} else if (usedIn instanceof ArrayList) {
-			ArrayList usedInList= (ArrayList) usedIn;
+			ArrayList<ITypeConstraint2> usedInList= (ArrayList<ITypeConstraint2>) usedIn;
 			usedInList.add(typeConstraint);
 		} else {
-			ArrayList usedInList= new ArrayList(2);
+			ArrayList<Object> usedInList= new ArrayList<Object>(2);
 			usedInList.add(usedIn);
 			usedInList.add(typeConstraint);
 			storedCv.setData(USED_IN, usedInList);
@@ -783,10 +783,10 @@ public class InferTypeArgumentsTCModel {
 	}
 	
 	private void setElementVariable(ConstraintVariable2 typeConstraintVariable, CollectionElementVariable2 elementVariable, TypeVariable typeVariable) {
-		HashMap keyToElementVar= (HashMap) typeConstraintVariable.getData(INDEXED_COLLECTION_ELEMENTS);
+		HashMap<String, CollectionElementVariable2> keyToElementVar= (HashMap<String, CollectionElementVariable2>) typeConstraintVariable.getData(INDEXED_COLLECTION_ELEMENTS);
 		String key= typeVariable.getBindingKey();
 		if (keyToElementVar == null) {
-			keyToElementVar= new HashMap();
+			keyToElementVar= new HashMap<String, CollectionElementVariable2>();
 			typeConstraintVariable.setData(INDEXED_COLLECTION_ELEMENTS, keyToElementVar);
 		} else {
 			Object existingElementVar= keyToElementVar.get(key);

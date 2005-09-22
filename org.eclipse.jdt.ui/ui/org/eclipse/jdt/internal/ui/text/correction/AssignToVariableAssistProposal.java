@@ -254,7 +254,7 @@ public class AssignToVariableAssistProposal extends LinkedCorrectionProposal {
 	}
 
 	private String[] suggestFieldNames(ITypeBinding binding, Expression expression, int modifiers) {
-		ArrayList res= new ArrayList();
+		ArrayList<String> res= new ArrayList<String>();
 
 		IJavaProject project= getCompilationUnit().getJavaProject();
 		ITypeBinding base= binding.isArray() ? binding.getElementType() : binding;
@@ -282,17 +282,17 @@ public class AssignToVariableAssistProposal extends LinkedCorrectionProposal {
 				res.add(curr);
 			}
 		}
-		return (String[]) res.toArray(new String[res.size()]);
+		return res.toArray(new String[res.size()]);
 	}
 
 	private String[] getUsedVariableNames() {
 		return ASTResolving.getUsedVariableNames(fNodeToAssign);
 	}
 
-	private int findAssignmentInsertIndex(List statements) {
+	private int findAssignmentInsertIndex(List<ASTNode> statements) {
 
-		HashSet paramsBefore= new HashSet();
-		List params = ((MethodDeclaration) fNodeToAssign.getParent()).parameters();
+		HashSet<String> paramsBefore= new HashSet<String>();
+		List<ASTNode> params = ((MethodDeclaration) fNodeToAssign.getParent()).parameters();
 		for (int i = 0; i < params.size() && (params.get(i) != fNodeToAssign); i++) {
 			SingleVariableDeclaration decl= (SingleVariableDeclaration) params.get(i);
 			paramsBefore.add(decl.getName().getIdentifier());

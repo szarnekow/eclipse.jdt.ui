@@ -585,7 +585,7 @@ public class StubUtility {
 		IDocument doc= new Document(buffer.getString());
 		int nLines= doc.getNumberOfLines();
 		MultiTextEdit edit= new MultiTextEdit();
-		HashSet removedLines= new HashSet();
+		HashSet<Integer> removedLines= new HashSet<Integer>();
 		for (int i= 0; i < variables.length; i++) {
 			TemplateVariable position= findVariable(buffer, variables[i]); // look if Javadoc tags have to be added
 			if (position == null || position.getLength() > 0) {
@@ -778,19 +778,19 @@ public class StubUtility {
 		}
 			
 		IDocument textBuffer= new Document(str);
-		List typeParams= decl.typeParameters();
+		List<ASTNode> typeParams= decl.typeParameters();
 		String[] typeParamNames= new String[typeParams.size()];
 		for (int i= 0; i < typeParamNames.length; i++) {
 			TypeParameter elem= (TypeParameter) typeParams.get(i);
 			typeParamNames[i]= elem.getName().getIdentifier();
 		}
-		List params= decl.parameters();
+		List<ASTNode> params= decl.parameters();
 		String[] paramNames= new String[params.size()];
 		for (int i= 0; i < paramNames.length; i++) {
 			SingleVariableDeclaration elem= (SingleVariableDeclaration) params.get(i);
 			paramNames[i]= elem.getName().getIdentifier();
 		}
-		List exceptions= decl.thrownExceptions();
+		List<ASTNode> exceptions= decl.thrownExceptions();
 		String[] exceptionNames= new String[exceptions.size()];
 		for (int i= 0; i < exceptionNames.length; i++) {
 			exceptionNames[i]= ASTNodes.getSimpleNameIdentifier((Name) exceptions.get(i));
@@ -948,13 +948,13 @@ public class StubUtility {
 	 * @return The found method or null, if nothing found
 	 * @throws JavaModelException
 	 */
-	private static IMethod findMethod(IMethod method, List allMethods) throws JavaModelException {
+	private static IMethod findMethod(IMethod method, List<IMethod> allMethods) throws JavaModelException {
 		String name= method.getElementName();
 		String[] paramTypes= method.getParameterTypes();
 		boolean isConstructor= method.isConstructor();
 
 		for (int i= allMethods.size() - 1; i >= 0; i--) {
-			IMethod curr= (IMethod) allMethods.get(i);
+			IMethod curr= allMethods.get(i);
 			if (JavaModelUtil.isSameMethodSignature(name, paramTypes, isConstructor, curr)) {
 				return curr;
 			}			
@@ -970,7 +970,7 @@ public class StubUtility {
 	 * @throws CoreException
 	 */
 	public static IMethod[] getOverridableConstructors(IType type) throws CoreException {
-		List constructorMethods= new ArrayList();
+		List<IMethod> constructorMethods= new ArrayList<IMethod>();
 		ITypeHierarchy hierarchy= type.newSupertypeHierarchy(null);				
 		IType supertype= hierarchy.getSuperclass(type);
 		if (supertype == null)
@@ -999,7 +999,7 @@ public class StubUtility {
 				constructorMethods.add(curr);
 			}
 		}
-		return (IMethod[]) constructorMethods.toArray(new IMethod[constructorMethods.size()]);
+		return constructorMethods.toArray(new IMethod[constructorMethods.size()]);
 	}
 
 	/**
@@ -1012,7 +1012,7 @@ public class StubUtility {
 	 * @throws JavaModelException
 	 */
 	public static IMethod[] getOverridableMethods(IType type, ITypeHierarchy hierarchy, boolean isSubType) throws JavaModelException {
-		List allMethods= new ArrayList();
+		List<IMethod> allMethods= new ArrayList<IMethod>();
 
 		IMethod[] typeMethods= type.getMethods();
 		for (int i= 0; i < typeMethods.length; i++) {
@@ -1061,12 +1061,12 @@ public class StubUtility {
 		}
 		// remove finals
 		for (int i= allMethods.size() - 1; i >= 0; i--) {
-			IMethod curr= (IMethod) allMethods.get(i);
+			IMethod curr= allMethods.get(i);
 			if (Flags.isFinal(curr.getFlags())) {
 				allMethods.remove(i);
 			}
 		}
-		return (IMethod[]) allMethods.toArray(new IMethod[allMethods.size()]);
+		return allMethods.toArray(new IMethod[allMethods.size()]);
 	}
 	
 	private static boolean prefereInterfaceMethod(ITypeHierarchy hierarchy, IMethod interfaceMethod, IMethod curr) throws JavaModelException {
@@ -1222,15 +1222,15 @@ public class StubUtility {
 		String[] res;
 		if (modifiers == (Flags.AccStatic | Flags.AccFinal)) {
 			//TODO: workaround JDT/Core bug 85946:
-			List excludedList= Arrays.asList(excluded);
+			List<String> excludedList= Arrays.asList(excluded);
 			String[] camelCase= NamingConventions.suggestLocalVariableNames(project, "", name, dimensions, new String[0]); //$NON-NLS-1$
-			ArrayList result= new ArrayList(camelCase.length);
+			ArrayList<String> result= new ArrayList<String>(camelCase.length);
 			for (int i= 0; i < camelCase.length; i++) {
 				String upper= getUpperFromCamelCase(camelCase[i]);
 				if (! excludedList.contains(upper))
 					result.add(upper);
 			}
-			res= (String[]) result.toArray(new String[result.size()]);
+			res= result.toArray(new String[result.size()]);
 		} else {
 			res= NamingConventions.suggestFieldNames(project, "", name, dimensions, modifiers, excluded); //$NON-NLS-1$
 		}
@@ -1275,7 +1275,7 @@ public class StubUtility {
 		return Character.toUpperCase(baseName.charAt(0)) + baseName.substring(1);
 	}
 	
-	private static final List BASE_TYPES= Arrays.asList(
+	private static final List<String> BASE_TYPES= Arrays.asList(
 			new String[] {"boolean", "byte", "char", "double", "float", "int", "long", "short"});  //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$
 
 	public static String suggestArgumentName(IJavaProject project, String baseName, String[] excluded) {

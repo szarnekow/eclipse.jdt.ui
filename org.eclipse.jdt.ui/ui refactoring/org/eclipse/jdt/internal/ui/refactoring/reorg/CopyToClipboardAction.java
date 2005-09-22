@@ -28,6 +28,7 @@ import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
 
 import org.eclipse.swt.SWTError;
+import org.eclipse.swt.dnd.ByteArrayTransfer;
 import org.eclipse.swt.dnd.Clipboard;
 import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.dnd.FileTransfer;
@@ -165,7 +166,7 @@ public class CopyToClipboardAction extends SelectionDispatchAction{
 
 		public void copyToClipboard() throws CoreException{
 			//Set<String> fileNames
-			Set fileNames= new HashSet(fResources.length + fJavaElements.length);
+			Set<String> fileNames= new HashSet<String>(fResources.length + fJavaElements.length);
 			StringBuffer namesBuf = new StringBuffer();
 			processResources(fileNames, namesBuf);
 			processJavaElements(fileNames, namesBuf);
@@ -182,16 +183,16 @@ public class CopyToClipboardAction extends SelectionDispatchAction{
 			IJavaElement[] javaElementsForClipboard= ReorgUtils.union(fJavaElements, cusOfMainTypes);
 			
 			TypedSource[] typedSources= TypedSource.createTypedSources(javaElementsForClipboard);
-			String[] fileNameArray= (String[]) fileNames.toArray(new String[fileNames.size()]);
+			String[] fileNameArray= fileNames.toArray(new String[fileNames.size()]);
 			copyToClipboard(resourcesForClipboard, fileNameArray, namesBuf.toString(), javaElementsForClipboard, typedSources, 0);
 		}
 
 		private static IJavaElement[] getCompilationUnits(IJavaElement[] javaElements) {
-			List cus= ReorgUtils.getElementsOfType(javaElements, IJavaElement.COMPILATION_UNIT);
-			return (ICompilationUnit[]) cus.toArray(new ICompilationUnit[cus.size()]);
+			List<IJavaElement> cus= ReorgUtils.getElementsOfType(javaElements, IJavaElement.COMPILATION_UNIT);
+			return cus.toArray(new ICompilationUnit[cus.size()]);
 		}
 
-		private void processResources(Set fileNames, StringBuffer namesBuf) {
+		private void processResources(Set<String> fileNames, StringBuffer namesBuf) {
 			for (int i= 0; i < fResources.length; i++) {
 				IResource resource= fResources[i];
 				addFileName(fileNames, resource);
@@ -202,7 +203,7 @@ public class CopyToClipboardAction extends SelectionDispatchAction{
 			}
 		}
 
-		private void processJavaElements(Set fileNames, StringBuffer namesBuf) {
+		private void processJavaElements(Set<String> fileNames, StringBuffer namesBuf) {
 			for (int i= 0; i < fJavaElements.length; i++) {
 				IJavaElement element= fJavaElements[i];
 				switch (element.getElementType()) {
@@ -223,13 +224,13 @@ public class CopyToClipboardAction extends SelectionDispatchAction{
 			}
 		}
 
-		private static void addFileNames(Set fileName, IResource[] resources) {
+		private static void addFileNames(Set<String> fileName, IResource[] resources) {
 			for (int i= 0; i < resources.length; i++) {
 				addFileName(fileName, resources[i]);
 			}
 		}
 
-		private static void addFileName(Set fileName, IResource resource){
+		private static void addFileName(Set<String> fileName, IResource resource){
 			if (resource == null)
 				return;
 			IPath location = resource.getLocation();
@@ -259,7 +260,7 @@ public class CopyToClipboardAction extends SelectionDispatchAction{
 		}
 		
 		private static Transfer[] createDataTypeArray(IResource[] resources, IJavaElement[] javaElements, String[] fileNames, TypedSource[] typedSources) {
-			List result= new ArrayList(4);
+			List<ByteArrayTransfer> result= new ArrayList<ByteArrayTransfer>(4);
 			if (resources.length != 0)
 				result.add(ResourceTransfer.getInstance());
 			if (javaElements.length != 0)
@@ -269,11 +270,11 @@ public class CopyToClipboardAction extends SelectionDispatchAction{
 			if (typedSources.length != 0)
 				result.add(TypedSourceTransfer.getInstance());
 			result.add(TextTransfer.getInstance());			
-			return (Transfer[]) result.toArray(new Transfer[result.size()]);
+			return result.toArray(new Transfer[result.size()]);
 		}
 
 		private static Object[] createDataArray(IResource[] resources, IJavaElement[] javaElements, String[] fileNames, String names, TypedSource[] typedSources) {
-			List result= new ArrayList(4);
+			List<Object> result= new ArrayList<Object>(4);
 			if (resources.length != 0)
 				result.add(resources);
 			if (javaElements.length != 0)

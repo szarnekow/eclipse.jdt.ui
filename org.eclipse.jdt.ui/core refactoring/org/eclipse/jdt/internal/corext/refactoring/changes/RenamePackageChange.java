@@ -40,7 +40,7 @@ import org.eclipse.jdt.internal.corext.util.Messages;
 
 public class RenamePackageChange extends AbstractJavaElementRenameChange {
 
-	private Map fCompilationUnitStamps;
+	private Map<IResource, Long> fCompilationUnitStamps;
 	private final boolean fRenameSubpackages;
 
 	public RenamePackageChange(IPackageFragment pack, String newName, boolean renameSubpackages) {
@@ -49,7 +49,7 @@ public class RenamePackageChange extends AbstractJavaElementRenameChange {
 	}
 
 	private RenamePackageChange(IPath resourcePath, String oldName, String newName, long stampToRestore,
-		Map compilationUnitStamps, boolean renameSubpackages) {
+		Map<IResource, Long> compilationUnitStamps, boolean renameSubpackages) {
 		super(resourcePath, oldName, newName, stampToRestore);
 		fCompilationUnitStamps= compilationUnitStamps;
 		fRenameSubpackages= renameSubpackages;
@@ -128,7 +128,7 @@ public class RenamePackageChange extends AbstractJavaElementRenameChange {
 		IPackageFragment pack= getPackage();
 		if (pack == null)
 			return new NullChange();
-		Map stamps= new HashMap();
+		Map<IResource, Long> stamps= new HashMap<IResource, Long>();
 		if (! fRenameSubpackages) {
 			addStamps(stamps, pack.getCompilationUnits());
 		} else {
@@ -142,7 +142,7 @@ public class RenamePackageChange extends AbstractJavaElementRenameChange {
 			// Note: This reverse change only works if the renamePackage change did not merge the source package into an existing target.
 	}
 
-	private void addStamps(Map stamps, ICompilationUnit[] units) {
+	private void addStamps(Map<IResource, Long> stamps, ICompilationUnit[] units) {
 		for (int i= 0; i < units.length; i++) {
 			IResource resource= units[i].getResource();
 			long stamp= IResource.NULL_STAMP;
@@ -184,7 +184,7 @@ public class RenamePackageChange extends AbstractJavaElementRenameChange {
 				for (int i= 0; i < units.length; i++) {
 					IResource resource= units[i].getResource();
 					if (resource != null) {
-						Long stamp= (Long)fCompilationUnitStamps.get(resource);
+						Long stamp= fCompilationUnitStamps.get(resource);
 						if (stamp != null) {
 							resource.revertModificationStamp(stamp.longValue());
 						}

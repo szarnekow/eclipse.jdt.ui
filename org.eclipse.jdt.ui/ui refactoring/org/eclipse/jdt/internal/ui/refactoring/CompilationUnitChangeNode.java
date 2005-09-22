@@ -88,8 +88,8 @@ public class CompilationUnitChangeNode extends TextEditChangeNode {
 		final TextEditBasedChange change= getTextEditBasedChange();
 		ICompilationUnit cunit= (ICompilationUnit) change.getAdapter(ICompilationUnit.class);
 		if (cunit != null) {
-			List children= new ArrayList(5);
-			Map map= new HashMap(20);
+			List<ChildNode> children= new ArrayList<ChildNode>(5);
+			Map<IJavaElement, JavaLanguageNode> map= new HashMap<IJavaElement, JavaLanguageNode>(20);
 			TextEditBasedChangeGroup[] changes= getSortedChangeGroups(change);
 			for (int i= 0; i < changes.length; i++) {
 				TextEditBasedChangeGroup tec= changes[i];
@@ -105,7 +105,7 @@ public class CompilationUnitChangeNode extends TextEditChangeNode {
 					children.add(createTextEditGroupNode(this, tec));
 				}
 			}
-			return (ChildNode[]) children.toArray(new ChildNode[children.size()]);
+			return children.toArray(new ChildNode[children.size()]);
 		} else {
 			return EMPTY_CHILDREN;
 		}
@@ -131,14 +131,14 @@ public class CompilationUnitChangeNode extends TextEditChangeNode {
 	
 	private TextEditBasedChangeGroup[] getSortedChangeGroups(TextEditBasedChange change) {
 		TextEditBasedChangeGroup[] edits= change.getChangeGroups();
-		List result= new ArrayList(edits.length);
+		List<TextEditBasedChangeGroup> result= new ArrayList<TextEditBasedChangeGroup>(edits.length);
 		for (int i= 0; i < edits.length; i++) {
 			if (!edits[i].getTextEditGroup().isEmpty())
 				result.add(edits[i]);
 		}
-		Comparator comparator= new OffsetComparator();
+		Comparator<TextEditBasedChangeGroup> comparator= new OffsetComparator();
 		Collections.sort(result, comparator);
-		return (TextEditBasedChangeGroup[])result.toArray(new TextEditBasedChangeGroup[result.size()]);
+		return result.toArray(new TextEditBasedChangeGroup[result.size()]);
 	}
 	
 	private IJavaElement getModifiedJavaElement(TextEditBasedChangeGroup edit, ICompilationUnit cunit) throws JavaModelException {
@@ -165,8 +165,8 @@ public class CompilationUnitChangeNode extends TextEditChangeNode {
 		return result;
 	}
 	
-	private JavaLanguageNode getChangeElement(Map map, IJavaElement element, List children, TextEditChangeNode cunitChange) {
-		JavaLanguageNode result= (JavaLanguageNode)map.get(element);
+	private JavaLanguageNode getChangeElement(Map<IJavaElement, JavaLanguageNode> map, IJavaElement element, List<ChildNode> children, TextEditChangeNode cunitChange) {
+		JavaLanguageNode result= map.get(element);
 		if (result != null)
 			return result;
 		IJavaElement parent= element.getParent();

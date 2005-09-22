@@ -84,7 +84,7 @@ public class WorkingSetAwareContentProvider extends PackageExplorerContentProvid
 	}
 	
 	private Object[] filterClosedElements(Object[] children) {
-		List result= new ArrayList(children.length);
+		List<Object> result= new ArrayList<Object>(children.length);
 		for (int i= 0; i < children.length; i++) {
 			Object element= children[i];
 			boolean add= false;
@@ -123,16 +123,16 @@ public class WorkingSetAwareContentProvider extends PackageExplorerContentProvid
 			TreePath path= new TreePath(new Object[] {element});
 			return new TreePath[] {path};
 		}
-		List modelParents= getModelPath(element);
-		List result= new ArrayList();
+		List<Object> modelParents= getModelPath(element);
+		List<TreePath> result= new ArrayList<TreePath>();
 		for (int i= 0; i < modelParents.size(); i++) {
 			result.addAll(getTreePaths(modelParents, i));
 		}
-		return (TreePath[])result.toArray(new TreePath[result.size()]);
+		return result.toArray(new TreePath[result.size()]);
 	}
 	
-	private List getModelPath(Object element) {
-		List result= new ArrayList();
+	private List<Object> getModelPath(Object element) {
+		List<Object> result= new ArrayList<Object>();
 		result.add(element);
 		Object parent= super.getParent(element);
 		Object input= getViewerInput();
@@ -145,13 +145,13 @@ public class WorkingSetAwareContentProvider extends PackageExplorerContentProvid
 		return result;
 	}
 	
-	private List/*<TreePath>*/ getTreePaths(List modelParents, int index) {
-		List result= new ArrayList();
+	private List/*<TreePath>*/<TreePath> getTreePaths(List<Object> modelParents, int index) {
+		List<TreePath> result= new ArrayList<TreePath>();
 		Object input= getViewerInput();
 		Object element= modelParents.get(index);
 		Object[] parents= fWorkingSetModel.getAllParents(element);
 		for (int i= 0; i < parents.length; i++) {
-			List chain= new ArrayList();
+			List<Object> chain= new ArrayList<Object>();
 			if (!parents[i].equals(input))
 				chain.add(parents[i]);
 			for (int m= index; m < modelParents.size(); m++) {
@@ -180,7 +180,7 @@ public class WorkingSetAwareContentProvider extends PackageExplorerContentProvid
 		return first;
 	}
 	
-	protected void augmentElementToRefresh(List toRefresh, int relation, Object affectedElement) {
+	protected void augmentElementToRefresh(List<Object> toRefresh, int relation, Object affectedElement) {
 		// we are refreshing the JavaModel and are in working set mode.
 		if (JavaCore.create(ResourcesPlugin.getWorkspace().getRoot()).equals(affectedElement)) {
 			toRefresh.remove(affectedElement);
@@ -196,7 +196,7 @@ public class WorkingSetAwareContentProvider extends PackageExplorerContentProvid
 	private void workingSetModelChanged(PropertyChangeEvent event) {
 		String property= event.getProperty();
 		Object newValue= event.getNewValue();
-		List toRefresh= new ArrayList(1);
+		List<Object> toRefresh= new ArrayList<Object>(1);
 		if (WorkingSetModel.CHANGE_WORKING_SET_MODEL_CONTENT.equals(property)) {
 			toRefresh.add(fWorkingSetModel);
 		} else if (IWorkingSetManager.CHANGE_WORKING_SET_CONTENT_CHANGE.equals(property)) {

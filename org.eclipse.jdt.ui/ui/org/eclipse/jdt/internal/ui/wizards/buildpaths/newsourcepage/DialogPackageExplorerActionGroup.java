@@ -173,7 +173,7 @@ public class DialogPackageExplorerActionGroup extends CompositeActionGroup {
     
     private ClasspathModifierAction[] fActions;
     private int fLastType;
-    private List fListeners;
+    private List<IPackageExplorerActionListener> fListeners;
     private static final int fContextSensitiveActions= 5;
     
     /**
@@ -189,7 +189,7 @@ public class DialogPackageExplorerActionGroup extends CompositeActionGroup {
     public DialogPackageExplorerActionGroup(IClasspathInformationProvider provider, IClasspathModifierListener listener) {
         super();
         fLastType= UNDEFINED;
-        fListeners= new ArrayList();
+        fListeners= new ArrayList<IPackageExplorerActionListener>();
         fActions= new ClasspathModifierAction[7];
         ClasspathModifierOperation op;
         op= new CreateFolderOperation(listener, provider);
@@ -455,12 +455,12 @@ public class DialogPackageExplorerActionGroup extends CompositeActionGroup {
      */
     private void internalSetContext(List selectedElements, IJavaProject project, int type) throws JavaModelException {
         fLastType= type;
-        List availableActions= getAvailableActions(selectedElements, project);
+        List<ClasspathModifierAction> availableActions= getAvailableActions(selectedElements, project);
         ClasspathModifierAction[] actions= new ClasspathModifierAction[availableActions.size()];
         String[] descriptions= new String[availableActions.size()];
         if (availableActions.size() > 0) {
             for(int i= 0; i < availableActions.size(); i++) {
-                ClasspathModifierAction action= (ClasspathModifierAction)availableActions.get(i);
+                ClasspathModifierAction action= availableActions.get(i);
                 actions[i]= action;
                 descriptions[i]= action.getDescription(type);
             }
@@ -506,10 +506,10 @@ public class DialogPackageExplorerActionGroup extends CompositeActionGroup {
      * @param actions an array of available actions
      */
     private void informListeners(String[] descriptions, ClasspathModifierAction[] actions) {
-        Iterator iterator= fListeners.iterator();
+        Iterator<IPackageExplorerActionListener> iterator= fListeners.iterator();
         PackageExplorerActionEvent event= new PackageExplorerActionEvent(descriptions, actions);
         while(iterator.hasNext()) {
-            IPackageExplorerActionListener listener= (IPackageExplorerActionListener)iterator.next();
+            IPackageExplorerActionListener listener= iterator.next();
             listener.handlePackageExplorerActionEvent(event);
         }
     }
@@ -662,12 +662,12 @@ public class DialogPackageExplorerActionGroup extends CompositeActionGroup {
      * @return a list of <code>ClasspathModifierAction</code>s
      * @throws JavaModelException
      */
-    private List getAvailableActions(List selectedElements, IJavaProject project) throws JavaModelException {
+    private List<ClasspathModifierAction> getAvailableActions(List selectedElements, IJavaProject project) throws JavaModelException {
 		if (project == null || !project.exists()) {
-			return new ArrayList();
+			return new ArrayList<ClasspathModifierAction>();
 		}
 		
-        List actions= new ArrayList();
+        List<ClasspathModifierAction> actions= new ArrayList<ClasspathModifierAction>();
         int[] types= new int[selectedElements.size()];
         for(int i= 0; i < types.length; i++) {
             types[i]= getType(selectedElements.get(i), project);

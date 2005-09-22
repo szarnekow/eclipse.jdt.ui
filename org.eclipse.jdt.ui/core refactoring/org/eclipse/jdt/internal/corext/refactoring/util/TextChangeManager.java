@@ -24,7 +24,7 @@ import org.eclipse.ltk.core.refactoring.TextChange;
  */
 public class TextChangeManager {
 	
-	private Map fMap= new HashMap(10); // ICompilationUnit -> TextChange
+	private Map<ICompilationUnit, TextChange> fMap= new HashMap<ICompilationUnit, TextChange>(10); // ICompilationUnit -> TextChange
 	
 	private final boolean fKeepExecutedTextEdits;
 	
@@ -55,7 +55,7 @@ public class TextChangeManager {
 	 * @return the text change associated with the given compilation unit. 
 	 */
 	public TextChange get(ICompilationUnit cu) {
-		TextChange result= (TextChange)fMap.get(cu);
+		TextChange result= fMap.get(cu);
 		if (result == null) {
 			result= new CompilationUnitChange(cu.getElementName(), cu);
 			result.setKeepPreviewEdits(fKeepExecutedTextEdits);
@@ -72,7 +72,7 @@ public class TextChangeManager {
 	 * @return the removed <tt>TextChange</tt>.
 	 */
 	public TextChange remove(ICompilationUnit unit) {
-		return (TextChange)fMap.remove(unit);
+		return fMap.remove(unit);
 	}
 	
 	/**
@@ -81,7 +81,7 @@ public class TextChangeManager {
 	 * @return all text changes managed by this instance
 	 */
 	public TextChange[] getAllChanges(){
-		return (TextChange[])fMap.values().toArray(new TextChange[fMap.values().size()]);
+		return fMap.values().toArray(new TextChange[fMap.values().size()]);
 	}
 
 	/**
@@ -90,7 +90,7 @@ public class TextChangeManager {
 	 * @return all compilation units managed by this instance
 	 */	
 	public ICompilationUnit[] getAllCompilationUnits(){
-		return (ICompilationUnit[]) fMap.keySet().toArray(new ICompilationUnit[fMap.keySet().size()]);
+		return fMap.keySet().toArray(new ICompilationUnit[fMap.keySet().size()]);
 	}
 	
 	/**

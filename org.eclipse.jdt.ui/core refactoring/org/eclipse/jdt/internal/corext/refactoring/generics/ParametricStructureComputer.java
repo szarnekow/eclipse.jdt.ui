@@ -98,7 +98,7 @@ public class ParametricStructureComputer {
 	}
 
 	
-	private Stack/*<ConstraintVariable2>*/ fWorkList2= new Stack();
+	private Stack/*<ConstraintVariable2>*/<ConstraintVariable2> fWorkList2= new Stack<ConstraintVariable2>();
 
 
 	private void setStructureAndPush(ConstraintVariable2 v, ParametricStructure structure) {
@@ -206,7 +206,7 @@ public class ParametricStructureComputer {
 			dumpContainerStructure();
 
 		while (!fWorkList2.isEmpty()) {
-			ConstraintVariable2 v= (ConstraintVariable2) fWorkList2.pop();
+			ConstraintVariable2 v= fWorkList2.pop();
 			List/*<ITypeConstraint>*/ usedIn= fTCModel.getUsedIn(v);
 			
 			for(Iterator/*<ITypeConstraint>*/ iter= usedIn.iterator(); iter.hasNext(); ) {
@@ -313,7 +313,7 @@ public class ParametricStructureComputer {
 		// Propagate structure from container variable to any subsidiary element variables
 		if (elemStructure(v) != ParametricStructure.NONE && fTCModel.getElementVariables(v).size() > 0) {
 			ParametricStructure t= elemStructure(v);
-			for(Iterator iterator=fTCModel.getElementVariables(v).values().iterator(); iterator.hasNext(); ) {
+			for(Iterator<Object> iterator=fTCModel.getElementVariables(v).values().iterator(); iterator.hasNext(); ) {
 				CollectionElementVariable2 typeVar= (CollectionElementVariable2) iterator.next();
 				int declarationTypeVariableIndex= typeVar.getDeclarationTypeVariableIndex();
 
@@ -530,7 +530,7 @@ public class ParametricStructureComputer {
 		throw new IllegalStateException("Attempt to create element variables for parametric variable of unknown type: " + parmType); //$NON-NLS-1$
 	}
 
-	private Collection/*<ConstraintVariable2>*/ getElementVariables(GenericType base, ConstraintVariable2 parent) {
+	private Collection/*<ConstraintVariable2>*/<Object> getElementVariables(GenericType base, ConstraintVariable2 parent) {
 		fTCModel.makeElementVariables(parent, base);
 		return fTCModel.getElementVariables(parent).values();
 	}
@@ -538,16 +538,16 @@ public class ParametricStructureComputer {
 	private Collection/*ConstraintVariable2*/ createAndInitVars(ConstraintVariable2 v, ParametricStructure parmType) {
 //TODO (->): in InferTypeArgumentsConstraintsSolver#createInitialEstimate(..)
 //->		fTypeEstimates.setEstimateOf(v, SubTypesOfSingleton.create(ParametricStructure.getBaseContainerType(parmType.getBase(), sHierarchy)));
-		Collection/*<ConstraintVariable2>*/ elementVars= getElementVariables(parmType.getBase(), v);
+		Collection/*<ConstraintVariable2>*/<Object> elementVars= getElementVariables(parmType.getBase(), v);
 //->		setNewTypeParamEstimateForEach(elementVars);
 		Collection result= createVars(elementVars, parmType.getParameters());
 		return result;
 	}
 	
-	private Collection/*ConstraintVariable2*/ createVars(Collection/*ConstraintVariable2>*/ cvs, ParametricStructure[] parms) {
+	private Collection/*ConstraintVariable2*/ createVars(Collection/*ConstraintVariable2>*/<Object> cvs, ParametricStructure[] parms) {
 		if (parms.length > 0) { // happens, e.g., for Properties (non-parametric)
 //			Assert.isTrue(cvs.size() == parms.length, "cvs.length==" + cvs.size() + " parms.length=" + parms.length); //assumption is wrong in presence of NOT_DECLARED_TYPE_VARIABLE_INDEX
-			for (Iterator iter= cvs.iterator(); iter.hasNext(); ) {
+			for (Iterator<Object> iter= cvs.iterator(); iter.hasNext(); ) {
 				CollectionElementVariable2 childVar= (CollectionElementVariable2) iter.next();
 				int declarationTypeVariableIndex= childVar.getDeclarationTypeVariableIndex();
 
@@ -555,7 +555,7 @@ public class ParametricStructureComputer {
 					setElemStructure(childVar, parms[declarationTypeVariableIndex]);
 			}
 		} else {
-			for (Iterator iter= cvs.iterator(); iter.hasNext(); ) {
+			for (Iterator<Object> iter= cvs.iterator(); iter.hasNext(); ) {
 				CollectionElementVariable2 childVar= (CollectionElementVariable2) iter.next();
 				int declarationTypeVariableIndex= childVar.getDeclarationTypeVariableIndex();
 
@@ -564,7 +564,7 @@ public class ParametricStructureComputer {
 			}
 		}
 		List result= new ArrayList(cvs.size() * 2);//roughly
-		for (Iterator iter= cvs.iterator(); iter.hasNext(); ) {
+		for (Iterator<Object> iter= cvs.iterator(); iter.hasNext(); ) {
 			CollectionElementVariable2 childVar= (CollectionElementVariable2) iter.next();
 			int declarationTypeVariableIndex= childVar.getDeclarationTypeVariableIndex();
 

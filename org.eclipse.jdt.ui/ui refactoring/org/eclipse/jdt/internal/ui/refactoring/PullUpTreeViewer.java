@@ -32,12 +32,12 @@ import org.eclipse.jface.viewers.TreeExpansionEvent;
 
 class PullUpTreeViewer extends CheckboxTreeViewer {
 	
-	private Set fActiveElements;
+	private Set<IMember> fActiveElements;
 	
 	public PullUpTreeViewer(Tree tree) {
 		super(tree);
 		
-		fActiveElements= new HashSet();
+		fActiveElements= new HashSet<IMember>();
 		
 		addCheckStateListener(createCheckStateListener());
 

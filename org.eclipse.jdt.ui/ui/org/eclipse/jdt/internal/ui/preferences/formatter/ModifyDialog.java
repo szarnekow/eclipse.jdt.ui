@@ -75,7 +75,7 @@ public class ModifyDialog extends StatusDialog {
 	
 	private IStatus fStandardStatus;
 	
-	protected final List fTabPages;
+	protected final List<ModifyDialogTabPage> fTabPages;
 	
 	final IDialogSettings fDialogSettings;
 	private TabFolder fTabFolder;
@@ -99,7 +99,7 @@ public class ModifyDialog extends StatusDialog {
 		fWorkingValues= new HashMap(fProfile.getSettings());
 		updateStatus(fStandardStatus);
 		setStatusLineAboveButtons(false);
-		fTabPages= new ArrayList();
+		fTabPages= new ArrayList<ModifyDialogTabPage>();
 		fDialogSettings= JavaPlugin.getDefault().getDialogSettings();	
 	}
 	

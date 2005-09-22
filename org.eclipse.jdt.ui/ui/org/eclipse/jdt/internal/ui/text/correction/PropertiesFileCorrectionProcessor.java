@@ -110,7 +110,7 @@ public class PropertiesFileCorrectionProcessor implements IContentAssistProcesso
 		AssistContext context= new AssistContext(null, documentOffset, length);
 
 		fgErrorMessage= null;
-		ArrayList proposals= new ArrayList();
+		ArrayList<IJavaCompletionProposal> proposals= new ArrayList<IJavaCompletionProposal>();
 
 		IAnnotationModel model= null;
 		IEditorInput input= part.getEditorInput();
@@ -138,7 +138,7 @@ public class PropertiesFileCorrectionProcessor implements IContentAssistProcesso
 				proposals.add(new ChangeCorrectionProposal(CorrectionMessages.NoCorrectionProposal_description, null, 0, null));
 			}
 
-			ICompletionProposal[] res= (ICompletionProposal[]) proposals.toArray(new ICompletionProposal[proposals.size()]);
+			ICompletionProposal[] res= proposals.toArray(new ICompletionProposal[proposals.size()]);
 			Arrays.sort(res, new CompletionProposalComparator());
 			return res;
 		} finally {
@@ -154,10 +154,10 @@ public class PropertiesFileCorrectionProcessor implements IContentAssistProcesso
 		return (pos != null) && (offset >= pos.getOffset() && offset <= (pos.getOffset() +  pos.getLength()));
 	}
 
-	private void processAnnotations(IInvocationContext context, IAnnotationModel model, ArrayList proposals) {
+	private void processAnnotations(IInvocationContext context, IAnnotationModel model, ArrayList<IJavaCompletionProposal> proposals) {
 		int offset= context.getSelectionOffset();
 
-		ArrayList problems= new ArrayList();
+		ArrayList<ProblemLocation> problems= new ArrayList<ProblemLocation>();
 		Iterator iter= model.getAnnotationIterator();
 		while (iter.hasNext()) {
 			Annotation annotation= (Annotation) iter.next();
@@ -168,11 +168,11 @@ public class PropertiesFileCorrectionProcessor implements IContentAssistProcesso
 				}
 			}
 		}
-		IProblemLocation[] problemLocations= (IProblemLocation[]) problems.toArray(new IProblemLocation[problems.size()]);
+		IProblemLocation[] problemLocations= problems.toArray(new IProblemLocation[problems.size()]);
 		collectCorrections(context, problemLocations, proposals);
 	}
 
-	private void processAnnotation(Annotation curr, Position pos, List problems, List proposals) {
+	private void processAnnotation(Annotation curr, Position pos, List<ProblemLocation> problems, List<IJavaCompletionProposal> proposals) {
 		if (curr instanceof IJavaAnnotation) {
 			IJavaAnnotation javaAnnotation= (IJavaAnnotation) curr;
 			int problemId= javaAnnotation.getId();
@@ -192,7 +192,7 @@ public class PropertiesFileCorrectionProcessor implements IContentAssistProcesso
 		}
 	}
 
-	public static void collectCorrections(IInvocationContext context, IProblemLocation[] locations, ArrayList proposals) {
+	public static void collectCorrections(IInvocationContext context, IProblemLocation[] locations, ArrayList<IJavaCompletionProposal> proposals) {
 		try {
 			IJavaCompletionProposal[] res= fgWordQuickFixProcessor.getCorrections(context, locations);
 			if (res != null) {

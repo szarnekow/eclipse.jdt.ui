@@ -52,10 +52,10 @@ public class CheckboxTreeAndListGroup implements ICheckStateListener, ISelection
 
 	private Object fRoot;
 	private Object fCurrentTreeSelection;
-	private List fExpandedTreeNodes= new ArrayList();
-	private Map fCheckedStateStore= new HashMap(9);
-	private List fWhiteCheckedTreeItems= new ArrayList();
-	private List fListeners= new ArrayList();
+	private List<Object> fExpandedTreeNodes= new ArrayList<Object>();
+	private Map<Object, List> fCheckedStateStore= new HashMap<Object, List>(9);
+	private List<Object> fWhiteCheckedTreeItems= new ArrayList<Object>();
+	private List<ICheckStateListener> fListeners= new ArrayList<ICheckStateListener>();
 
 	private ITreeContentProvider fTreeContentProvider;
 	private IStructuredContentProvider fListContentProvider;
@@ -151,7 +151,7 @@ public class CheckboxTreeAndListGroup implements ICheckStateListener, ISelection
 	 *	@param treeElement java.lang.Object
 	 */
 	protected boolean areAllElementsChecked(Object treeElement) {
-		List checkedElements= (List)fCheckedStateStore.get(treeElement);
+		List checkedElements= fCheckedStateStore.get(treeElement);
 		if (checkedElements == null) // ie.- tree item not even gray-checked
 			return false;
 
@@ -265,7 +265,7 @@ public class CheckboxTreeAndListGroup implements ICheckStateListener, ISelection
 	protected boolean determineShouldBeAtLeastGrayChecked(Object treeElement) {
 		// if any list items associated with treeElement are checked then it
 		// retains its gray-checked status regardless of its children
-		List checked= (List) fCheckedStateStore.get(treeElement);
+		List checked= fCheckedStateStore.get(treeElement);
 		if (checked != null && (!checked.isEmpty()))
 			return true;
 
@@ -320,11 +320,11 @@ public class CheckboxTreeAndListGroup implements ICheckStateListener, ISelection
 	 *
 	 *	@return java.util.Vector
 	 */
-	public Iterator getAllCheckedListItems() {
-		Set result= new HashSet();
-		Iterator listCollectionsEnum= fCheckedStateStore.values().iterator();
+	public Iterator<Object> getAllCheckedListItems() {
+		Set<Object> result= new HashSet<Object>();
+		Iterator<List> listCollectionsEnum= fCheckedStateStore.values().iterator();
 		while (listCollectionsEnum.hasNext())
-			result.addAll((List)listCollectionsEnum.next());
+			result.addAll(listCollectionsEnum.next());
 		return result.iterator();
 	}
 	/**
@@ -333,8 +333,8 @@ public class CheckboxTreeAndListGroup implements ICheckStateListener, ISelection
 	 *
 	 *	@return java.util.Vector
 	 */
-	public Set getAllCheckedTreeItems() {
-		return new HashSet(fCheckedStateStore.keySet());
+	public Set<Object> getAllCheckedTreeItems() {
+		return new HashSet<Object>(fCheckedStateStore.keySet());
 	}
 	/**
 	 *	Answers the number of elements that have been checked by the
@@ -440,14 +440,14 @@ public class CheckboxTreeAndListGroup implements ICheckStateListener, ISelection
 		Object listElement,
 		boolean state,
 		boolean updatingFromSelection) {
-		List checkedListItems= (List) fCheckedStateStore.get(fCurrentTreeSelection);
+		List<Object> checkedListItems= fCheckedStateStore.get(fCurrentTreeSelection);
 
 		if (state) {
 			if (checkedListItems == null) {
 				// since the associated tree item has gone from 0 -> 1 checked
 				// list items, tree checking may need to be updated
 				grayCheckHierarchy(fCurrentTreeSelection);
-				checkedListItems= (List) fCheckedStateStore.get(fCurrentTreeSelection);
+				checkedListItems= fCheckedStateStore.get(fCurrentTreeSelection);
 			}
 			checkedListItems.add(listElement);
 		} else {
@@ -467,9 +467,9 @@ public class CheckboxTreeAndListGroup implements ICheckStateListener, ISelection
 	 *	its checked state changed to the passed state
 	 */
 	protected void notifyCheckStateChangeListeners(CheckStateChangedEvent event) {
-		Iterator listenersEnum= fListeners.iterator();
+		Iterator<ICheckStateListener> listenersEnum= fListeners.iterator();
 		while (listenersEnum.hasNext())
-			 ((ICheckStateListener) listenersEnum.next()).checkStateChanged(event);
+			 listenersEnum.next().checkStateChanged(event);
 	}
 	/**
 	 *Sets the contents of the list viewer based upon the specified selected
@@ -482,7 +482,7 @@ public class CheckboxTreeAndListGroup implements ICheckStateListener, ISelection
 			return;
 		fCurrentTreeSelection= treeElement;
 		fListViewer.setInput(treeElement);
-		List listItemsToCheck= (List) fCheckedStateStore.get(treeElement);
+		List listItemsToCheck= fCheckedStateStore.get(treeElement);
 
 		if (listItemsToCheck != null) {
 			Iterator listItemsEnum= listItemsToCheck.iterator();
@@ -574,7 +574,7 @@ public class CheckboxTreeAndListGroup implements ICheckStateListener, ISelection
 
 		if (state) {
 			Object[] listItems= getListElements(treeElement);
-			List listItemsChecked= new ArrayList();
+			List<Object> listItemsChecked= new ArrayList<Object>();
 			for (int i= 0; i < listItems.length; ++i)
 				listItemsChecked.add(listItems[i]);
 
@@ -722,7 +722,7 @@ public class CheckboxTreeAndListGroup implements ICheckStateListener, ISelection
 	 */
 	protected Object[] filter(ViewerFilter[] filters, Object[] elements) {
 		if (filters != null) {
-			ArrayList filtered = new ArrayList(elements.length);
+			ArrayList<Object> filtered = new ArrayList<Object>(elements.length);
 			for (int i = 0; i < elements.length; i++) {
 				boolean add = true;
 				for (int j = 0; j < filters.length; j++) {
@@ -746,8 +746,8 @@ public class CheckboxTreeAndListGroup implements ICheckStateListener, ISelection
 		return filter(fListViewer.getFilters(), fListContentProvider.getElements(element));
 	}
 
-	public Set getWhiteCheckedTreeItems() {
-		return new HashSet(fWhiteCheckedTreeItems);
+	public Set<Object> getWhiteCheckedTreeItems() {
+		return new HashSet<Object>(fWhiteCheckedTreeItems);
 	}
 
 	private void handleUpdateSelection(Map items) {

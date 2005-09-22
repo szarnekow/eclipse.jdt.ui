@@ -91,7 +91,7 @@ public final class SerialVersionHashProposal extends AbstractSerialVersionPropos
 	 */
 	protected static String[] computeUserAndBootClasspath(final IJavaProject project) throws CoreException {
 		final IRuntimeClasspathEntry[] unresolved= JavaRuntime.computeUnresolvedRuntimeClasspath(project);
-		final List resolved= new ArrayList(unresolved.length);
+		final List<String> resolved= new ArrayList<String>(unresolved.length);
 		for (int index= 0; index < unresolved.length; index++) {
 			final IRuntimeClasspathEntry entry= unresolved[index];
 			final int property= entry.getClasspathProperty();
@@ -104,7 +104,7 @@ public final class SerialVersionHashProposal extends AbstractSerialVersionPropos
 				}
 			}
 		}
-		return (String[]) resolved.toArray(new String[resolved.size()]);
+		return resolved.toArray(new String[resolved.size()]);
 	}
 
 	/**
@@ -235,7 +235,7 @@ public final class SerialVersionHashProposal extends AbstractSerialVersionPropos
 			classpath[1]= JavaRuntime.newArchiveRuntimeClasspathEntry(Path.fromOSString(Platform.asLocalURL(JavaPlugin.getDefault().getBundle().getEntry(SERIAL_SUPPORT_JAR)).getFile()));
 			for (int index= 2; index < classpath.length; index++)
 				classpath[index]= JavaRuntime.newArchiveRuntimeClasspathEntry(Path.fromOSString(entries[index - 2]));
-			final List mementos= new ArrayList(classpath.length);
+			final List<String> mementos= new ArrayList<String>(classpath.length);
 			IRuntimeClasspathEntry entry= null;
 			for (int index= 0; index < classpath.length; index++) {
 				entry= classpath[index];

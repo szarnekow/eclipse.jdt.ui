@@ -143,8 +143,8 @@ public class SortMembersOperation implements IWorkspaceRunnable {
 						}
 
 						// if names equal, sort by parameter types
-						List parameters1= method1.parameters();
-						List parameters2= method2.parameters();
+						List<ASTNode> parameters1= method1.parameters();
+						List<ASTNode> parameters2= method2.parameters();
 						int length1= parameters1.size();
 						int length2= parameters2.size();
 

@@ -23,7 +23,7 @@ import org.eclipse.jdt.internal.corext.dom.GenericVisitor;
 import org.eclipse.jdt.internal.corext.dom.Selection;
 
 class NameCollector extends GenericVisitor {
-	private List names= new ArrayList();
+	private List<String> names= new ArrayList<String>();
 	private Selection fSelection;
 	public NameCollector(ASTNode node) {
 		fSelection= Selection.createFromStartLength(node.getStartPosition(), node.getLength());
@@ -59,7 +59,7 @@ class NameCollector extends GenericVisitor {
 		return false;
 	}
 
-    List getNames() {
+    List<String> getNames() {
         return names;
     }
 }

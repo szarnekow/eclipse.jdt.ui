@@ -34,14 +34,14 @@ import org.eclipse.jdt.internal.ui.callhierarchy.MethodWrapperWorkbenchAdapter;
  *
  */
 public abstract class MethodWrapper extends PlatformObject {
-    private Map fElements = null;
+    private Map<Object, MethodCall> fElements = null;
 
     /*
      * A cache of previously found methods. This cache should be searched
      * before adding a "new" method object reference to the list of elements.
      * This way previously found methods won't be searched again.
      */
-    private Map fMethodCache;
+    private Map<Object, Map> fMethodCache;
     private MethodCall fMethodCall;
     private MethodWrapper fParent;
     private int fLevel;
@@ -53,7 +53,7 @@ public abstract class MethodWrapper extends PlatformObject {
         Assert.isNotNull(methodCall);
 
         if (parent == null) {
-            setMethodCache(new HashMap());
+            setMethodCache(new HashMap<Object, Map>());
             fLevel = 1;
         } else {
             setMethodCache(parent.getMethodCache());
@@ -85,7 +85,7 @@ public abstract class MethodWrapper extends PlatformObject {
         MethodWrapper[] result = new MethodWrapper[fElements.size()];
         int i = 0;
 
-        for (Iterator iter = fElements.keySet().iterator(); iter.hasNext();) {
+        for (Iterator<Object> iter = fElements.keySet().iterator(); iter.hasNext();) {
             MethodCall methodCall = getMethodCallFromMap(fElements, iter.next());
             result[i++] = createMethodWrapper(methodCall);
         }
@@ -175,24 +175,24 @@ public abstract class MethodWrapper extends PlatformObject {
         return result;
     }
 
-    private void setMethodCache(Map methodCache) {
+    private void setMethodCache(Map<Object, Map> methodCache) {
         fMethodCache = methodCache;
     }
 
     protected abstract String getTaskName();
 
     private void addCallToCache(MethodCall methodCall) {
-        Map cachedCalls = lookupMethod(this.getMethodCall());
+        Map<Object, MethodCall> cachedCalls = lookupMethod(this.getMethodCall());
         cachedCalls.put(methodCall.getKey(), methodCall);
     }
 
     protected abstract MethodWrapper createMethodWrapper(MethodCall methodCall);
 
     private void doFindChildren(IProgressMonitor progressMonitor) {
-        Map existingResults = lookupMethod(getMethodCall());
+        Map<Object, MethodCall> existingResults = lookupMethod(getMethodCall());
 
         if (existingResults != null) {
-            fElements = new HashMap();
+            fElements = new HashMap<Object, MethodCall>();
             fElements.putAll(existingResults);
         } else {
             initCalls();
@@ -240,14 +240,14 @@ public abstract class MethodWrapper extends PlatformObject {
      * callees, depending on the concrete subclass.
      * @return The result of the search for children
      */
-    protected abstract Map findChildren(IProgressMonitor progressMonitor);
+    protected abstract Map<Object, MethodCall> findChildren(IProgressMonitor progressMonitor);
 
-    private Map getMethodCache() {
+    private Map<Object, Map> getMethodCache() {
         return fMethodCache;
     }
 
     private void initCalls() {
-        this.fElements = new HashMap();
+        this.fElements = new HashMap<Object, MethodCall>();
 
         initCacheForMethod();
     }
@@ -256,14 +256,14 @@ public abstract class MethodWrapper extends PlatformObject {
      * Looks up a previously created search result in the "global" cache.
      * @return the List of previously found search results
      */
-    private Map lookupMethod(MethodCall methodCall) {
-        return (Map) getMethodCache().get(methodCall.getKey());
+    private Map<Object, MethodCall> lookupMethod(MethodCall methodCall) {
+        return getMethodCache().get(methodCall.getKey());
     }
 
     private void performSearch(IProgressMonitor progressMonitor) {
         fElements = findChildren(progressMonitor);
 
-        for (Iterator iter = fElements.keySet().iterator(); iter.hasNext();) {
+        for (Iterator<Object> iter = fElements.keySet().iterator(); iter.hasNext();) {
             checkCanceled(progressMonitor);
 
             MethodCall methodCall = getMethodCallFromMap(fElements, iter.next());
@@ -271,8 +271,8 @@ public abstract class MethodWrapper extends PlatformObject {
         }
     }
 
-    private MethodCall getMethodCallFromMap(Map elements, Object key) {
-        return (MethodCall) elements.get(key);
+    private MethodCall getMethodCallFromMap(Map<Object, MethodCall> elements, Object key) {
+        return elements.get(key);
     }
 
     private void initCacheForMethod() {

@@ -83,7 +83,7 @@ import org.eclipse.jdt.internal.corext.Assert;
 public final class ConstraintCollector extends ASTVisitor {
 
 	private final ConstraintCreator fCreator;
-	private final Set fConstraints;
+	private final Set<ITypeConstraint> fConstraints;
 	
 	public ConstraintCollector() {
 		this(new FullConstraintCreator());
@@ -92,7 +92,7 @@ public final class ConstraintCollector extends ASTVisitor {
 	public ConstraintCollector(ConstraintCreator creator) {
 		Assert.isNotNull(creator);
 		fCreator= creator;
-		fConstraints= new LinkedHashSet();
+		fConstraints= new LinkedHashSet<ITypeConstraint>();
 	}
 
 	private void add(ITypeConstraint[] constraints){
@@ -104,7 +104,7 @@ public final class ConstraintCollector extends ASTVisitor {
 	}
 
 	public ITypeConstraint[] getConstraints(){
-		return (ITypeConstraint[]) fConstraints.toArray(new ITypeConstraint[fConstraints.size()]);
+		return fConstraints.toArray(new ITypeConstraint[fConstraints.size()]);
 	}
 	
 	//------------------------- visit methods -------------------------//

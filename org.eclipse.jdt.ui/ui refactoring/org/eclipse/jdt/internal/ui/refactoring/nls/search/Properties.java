@@ -19,18 +19,18 @@ class Properties extends java.util.Properties {
 	
 	private static final long serialVersionUID= 1L;
 	
-	private Set fDuplicateKeys;
+	private Set<Object> fDuplicateKeys;
 
 	public Properties() {
 	}
 	
-	public Properties(Set duplicateKeys) {
+	public Properties(Set<Object> duplicateKeys) {
 		super();
 		Assert.isNotNull(duplicateKeys);
 		fDuplicateKeys= duplicateKeys;
 	}
 	
-	public Properties (Properties properties, Set duplicateKeys) {
+	public Properties (Properties properties, Set<Object> duplicateKeys) {
 		super(properties);
 		Assert.isNotNull(duplicateKeys);
 		fDuplicateKeys= duplicateKeys;

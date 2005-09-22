@@ -42,12 +42,12 @@ public class RenameUserInterfaceStarter extends UserInterfaceStarter {
 	private static class SelectionState {
 		private Display fDisplay;
 		private Object fElement;
-		private List fParts;
-		private List fSelections;
+		private List<IWorkbenchPart> fParts;
+		private List<IStructuredSelection> fSelections;
 		public SelectionState(Object element) {
 			fElement= element;
-			fParts= new ArrayList();
-			fSelections= new ArrayList();
+			fParts= new ArrayList<IWorkbenchPart>();
+			fSelections= new ArrayList<IStructuredSelection>();
 			init();
 		}
 		private void init() {
@@ -91,7 +91,7 @@ public class RenameUserInterfaceStarter extends UserInterfaceStarter {
 			if (fDisplay == null)
 				return;
 			for (int i= 0; i < fParts.size(); i++) {
-				final IStructuredSelection selection= (IStructuredSelection)fSelections.get(i);
+				final IStructuredSelection selection= fSelections.get(i);
 				final ISetSelectionTarget target= (ISetSelectionTarget)fParts.get(i);
 				List l= selection.toList();
 				int index= l.indexOf(fElement);

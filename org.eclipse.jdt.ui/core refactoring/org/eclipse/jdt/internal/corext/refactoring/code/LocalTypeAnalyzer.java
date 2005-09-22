@@ -31,8 +31,8 @@ import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 public class LocalTypeAnalyzer extends ASTVisitor {
 
 	private Selection fSelection;
-	private List fTypeDeclarationsBefore= new ArrayList(2);
-	private List fTypeDeclarationsSelected= new ArrayList(2);
+	private List<AbstractTypeDeclaration> fTypeDeclarationsBefore= new ArrayList<AbstractTypeDeclaration>(2);
+	private List<AbstractTypeDeclaration> fTypeDeclarationsSelected= new ArrayList<AbstractTypeDeclaration>(2);
 	private String fBeforeTypeReferenced;
 	private String fSelectedTypeReferenced;
 
@@ -102,9 +102,9 @@ public class LocalTypeAnalyzer extends ASTVisitor {
 		}
 	}
 	
-	private boolean checkBinding(List declarations, ITypeBinding binding) {
-		for (Iterator iter= declarations.iterator(); iter.hasNext();) {
-			AbstractTypeDeclaration declaration= (AbstractTypeDeclaration)iter.next();
+	private boolean checkBinding(List<AbstractTypeDeclaration> declarations, ITypeBinding binding) {
+		for (Iterator<AbstractTypeDeclaration> iter= declarations.iterator(); iter.hasNext();) {
+			AbstractTypeDeclaration declaration= iter.next();
 			if (declaration.resolveBinding() == binding) {
 				return true;
 			}

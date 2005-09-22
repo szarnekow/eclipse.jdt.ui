@@ -17,6 +17,8 @@ import java.util.List;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 
+import org.eclipse.core.resources.IResource;
+
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
@@ -59,7 +61,7 @@ public class ExcludeOperation extends ClasspathModifierOperation {
      * @param monitor a progress monitor, can be <code>null</code>
      */
     public void run(IProgressMonitor monitor) throws InvocationTargetException {
-        List result= null;
+        List<IResource> result= null;
         fException= null;
         try {
             List javaElements= getSelectedElements();

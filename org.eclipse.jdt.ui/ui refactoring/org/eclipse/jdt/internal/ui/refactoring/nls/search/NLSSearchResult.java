@@ -72,9 +72,9 @@ public class NLSSearchResult extends AbstractTextSearchResult implements IEditor
 			return computeContainedMatches(result, fileEditorInput.getFile());
 		} else if (editorInput instanceof IClassFileEditorInput) {
 			IClassFileEditorInput classFileEditorInput= (IClassFileEditorInput) editorInput;
-			Set matches= new HashSet();
+			Set<Match> matches= new HashSet<Match>();
 			collectMatches(matches, classFileEditorInput.getClassFile());
-			return (Match[]) matches.toArray(new Match[matches.size()]);
+			return matches.toArray(new Match[matches.size()]);
 		}
 		return null;
 	}
@@ -84,22 +84,22 @@ public class NLSSearchResult extends AbstractTextSearchResult implements IEditor
 	 */
 	public Match[] computeContainedMatches(AbstractTextSearchResult result, IFile file) {
 		if (fQuery.getPropertiesFile().equals(file)) {
-			ArrayList matches= new ArrayList();
+			ArrayList<Match> matches= new ArrayList<Match>();
 			if (fDuplicatesGroup != null)
 				matches.addAll(Arrays.asList(getMatches(fDuplicatesGroup)));
 			if (fUnusedGroup != null)
 				matches.addAll(Arrays.asList(getMatches(fUnusedGroup)));
-			return (Match[]) matches.toArray(new Match[matches.size()]);
+			return matches.toArray(new Match[matches.size()]);
 		} else {
 			//TODO: copied from JavaSearchResult:
 			IJavaElement javaElement= JavaCore.create(file);
-			Set matches= new HashSet();
+			Set<Match> matches= new HashSet<Match>();
 			collectMatches(matches, javaElement);
-			return (Match[]) matches.toArray(new Match[matches.size()]);
+			return matches.toArray(new Match[matches.size()]);
 		}
 	}
 	
-	private void collectMatches(Set matches, IJavaElement element) {
+	private void collectMatches(Set<Match> matches, IJavaElement element) {
 		//TODO: copied from JavaSearchResult:
 		Match[] m= getMatches(element);
 		if (m.length != 0) {

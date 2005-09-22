@@ -70,11 +70,11 @@ public final class WordCompletionProposalComputer implements ICompletionProposal
 			
 					if (checker != null) {
 			
-						final List proposals= new ArrayList(checker.getProposals(candidate, Character.isUpperCase(candidate.charAt(0))));
+						final List<RankedWordProposal> proposals= new ArrayList<RankedWordProposal>(checker.getProposals(candidate, Character.isUpperCase(candidate.charAt(0))));
 						final List result= new ArrayList(proposals.size());
 			
-						for (Iterator it= proposals.iterator(); it.hasNext();) {
-							RankedWordProposal word= (RankedWordProposal) it.next();
+						for (Iterator<RankedWordProposal> it= proposals.iterator(); it.hasNext();) {
+							RankedWordProposal word= it.next();
 							String text= word.getText();
 							if (text.startsWith(candidate))
 								word.setRank(word.getRank() + PREFIX_RANK_SHIFT);

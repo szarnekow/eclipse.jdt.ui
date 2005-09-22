@@ -47,9 +47,9 @@ public class ProblemMarkerManager implements IResourceChangeListener, IAnnotatio
 	 */
 	private static class ProjectErrorVisitor implements IResourceDeltaVisitor {
 
-		private HashSet fChangedElements; 
+		private HashSet<IResource> fChangedElements; 
 		
-		public ProjectErrorVisitor(HashSet changedElements) {
+		public ProjectErrorVisitor(HashSet<IResource> changedElements) {
 			fChangedElements= changedElements;
 		}
 			
@@ -106,7 +106,7 @@ public class ProblemMarkerManager implements IResourceChangeListener, IAnnotatio
 	 * @see IResourceChangeListener#resourceChanged
 	 */	
 	public void resourceChanged(IResourceChangeEvent event) {
-		HashSet changedElements= new HashSet();
+		HashSet<IResource> changedElements= new HashSet<IResource>();
 		
 		try {
 			IResourceDelta delta= event.getDelta();
@@ -117,7 +117,7 @@ public class ProblemMarkerManager implements IResourceChangeListener, IAnnotatio
 		}
 
 		if (!changedElements.isEmpty()) {
-			IResource[] changes= (IResource[]) changedElements.toArray(new IResource[changedElements.size()]);
+			IResource[] changes= changedElements.toArray(new IResource[changedElements.size()]);
 			fireChanges(changes, true);
 		}
 	}

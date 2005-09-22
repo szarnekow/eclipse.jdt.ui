@@ -82,12 +82,12 @@ public class ImplementOccurrencesFinder implements org.eclipse.jdt.internal.ui.s
 	
 	
 	private ASTNode fStart;
-	private List fResult;
+	private List<ASTNode> fResult;
 	private ASTNode fSelectedNode;
 	private ITypeBinding fSelectedType;
 	
 	public ImplementOccurrencesFinder() {
-		fResult= new ArrayList();
+		fResult= new ArrayList<ASTNode>();
 	}
 	
 	public String initialize(CompilationUnit root, int offset, int length) {
@@ -114,7 +114,7 @@ public class ImplementOccurrencesFinder implements org.eclipse.jdt.internal.ui.s
 	/*
 	 * @see org.eclipse.jdt.internal.ui.search.IOccurrencesFinder#perform()
 	 */
-	public List perform() {
+	public List<ASTNode> perform() {
 		fStart.accept(new MethodVisitor());
 		if (fSelectedNode != null)
 			fResult.add(fSelectedNode);
@@ -122,9 +122,9 @@ public class ImplementOccurrencesFinder implements org.eclipse.jdt.internal.ui.s
 		return fResult;
 	}
 	
-	public void collectOccurrenceMatches(IJavaElement element, IDocument document, Collection resultingMatches) {
-		for (Iterator iter= fResult.iterator(); iter.hasNext();) {
-			ASTNode node= (ASTNode) iter.next();
+	public void collectOccurrenceMatches(IJavaElement element, IDocument document, Collection<Match> resultingMatches) {
+		for (Iterator<ASTNode> iter= fResult.iterator(); iter.hasNext();) {
+			ASTNode node= iter.next();
 			int startPosition= node.getStartPosition();
 			int length= node.getLength();
 			try {

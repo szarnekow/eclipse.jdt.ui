@@ -79,12 +79,12 @@ class DeleteChangeCreator {
 			result.add(createDeleteChange(resources[i]));
 		}
 		
-		Map grouped= ReorgUtils.groupByCompilationUnit(getElementsSmallerThanCu(javaElements));
+		Map<ICompilationUnit, ArrayList> grouped= ReorgUtils.groupByCompilationUnit(getElementsSmallerThanCu(javaElements));
 		if (grouped.size() != 0 ){
 			Assert.isNotNull(manager);
-			for (Iterator iter= grouped.keySet().iterator(); iter.hasNext();) {
-				ICompilationUnit cu= (ICompilationUnit) iter.next();
-				result.add(createDeleteChange(cu, (List)grouped.get(cu), manager));
+			for (Iterator<ICompilationUnit> iter= grouped.keySet().iterator(); iter.hasNext();) {
+				ICompilationUnit cu= iter.next();
+				result.add(createDeleteChange(cu, grouped.get(cu), manager));
 			}
 		}
 
@@ -132,8 +132,8 @@ class DeleteChangeCreator {
 	}
 
 	//List<IJavaElement>
-	private static List getElementsSmallerThanCu(IJavaElement[] javaElements){
-		List result= new ArrayList();
+	private static List<IJavaElement> getElementsSmallerThanCu(IJavaElement[] javaElements){
+		List<IJavaElement> result= new ArrayList<IJavaElement>();
 		for (int i= 0; i < javaElements.length; i++) {
 			IJavaElement element= javaElements[i];
 			if (ReorgUtils.isInsideCompilationUnit(element))

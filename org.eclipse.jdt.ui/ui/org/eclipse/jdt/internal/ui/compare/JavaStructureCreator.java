@@ -27,7 +27,6 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.internal.ui.JavaPlugin;
 
 import org.eclipse.compare.*;
-import org.eclipse.compare.IResourceProvider;
 import org.eclipse.compare.structuremergeviewer.*;
 
 
@@ -47,7 +46,7 @@ public class JavaStructureCreator implements IStructureCreator {
 		JavaNode fLeft= null;
 		JavaNode fRight= null;
 		
-		ArrayList fChildren= new ArrayList();
+		ArrayList<IDiffElement> fChildren= new ArrayList<IDiffElement>();
 		
 		void add(IDiffElement diff) {
 			fChildren.add(diff);
@@ -286,7 +285,7 @@ public class JavaStructureCreator implements IStructureCreator {
 	 */
 	public void rewriteTree(Differencer differencer, IDiffContainer root) {
 		
-		HashMap map= new HashMap(10);
+		HashMap<String, RewriteInfo> map= new HashMap<String, RewriteInfo>(10);
 				
 		Object[] children= root.getChildren();
 		for (int i= 0; i < children.length; i++) {
@@ -302,7 +301,7 @@ public class JavaStructureCreator implements IStructureCreator {
 				
 				// find or create a RewriteInfo for all methods with the same name
 				String name= jn.extractMethodName();
-				RewriteInfo nameInfo= (RewriteInfo) map.get(name);
+				RewriteInfo nameInfo= map.get(name);
 				if (nameInfo == null) {
 					nameInfo= new RewriteInfo();
 					map.put(name, nameInfo);
@@ -314,7 +313,7 @@ public class JavaStructureCreator implements IStructureCreator {
 				String argList= jn.extractArgumentList();
 				RewriteInfo argInfo= null;
 				if (argList != null && !argList.equals("()")) { //$NON-NLS-1$
-					argInfo= (RewriteInfo) map.get(argList);
+					argInfo= map.get(argList);
 					if (argInfo == null) {
 						argInfo= new RewriteInfo();
 						map.put(argList, argInfo);
@@ -345,10 +344,10 @@ public class JavaStructureCreator implements IStructureCreator {
 		
 		// now we have to rebuild the diff tree according to the combined
 		// changes
-		Iterator it= map.keySet().iterator();
+		Iterator<String> it= map.keySet().iterator();
 		while (it.hasNext()) {
-			String name= (String) it.next();
-			RewriteInfo i= (RewriteInfo) map.get(name);
+			String name= it.next();
+			RewriteInfo i= map.get(name);
 			if (i.matches()) { // we found a RewriteInfo that could be succesfully combined
 				
 				// we have to find the differences of the newly combined node
@@ -356,9 +355,9 @@ public class JavaStructureCreator implements IStructureCreator {
 				DiffNode d= (DiffNode) differencer.findDifferences(true, null, root, i.fAncestor, i.fLeft, i.fRight);
 				if (d != null) {// there better should be a difference
 					d.setDontExpand(true);
-					Iterator it2= i.fChildren.iterator();
+					Iterator<IDiffElement> it2= i.fChildren.iterator();
 					while (it2.hasNext()) {
-						IDiffElement rd= (IDiffElement) it2.next();
+						IDiffElement rd= it2.next();
 						root.removeToRoot(rd);
 						d.add(rd);
 					}
@@ -396,7 +395,7 @@ public class JavaStructureCreator implements IStructureCreator {
 			
 		// build a path starting at the given Java element and walk
 		// up the parent chain until we reach a IWorkingCopy or ICompilationUnit
-		List args= new ArrayList();
+		List<String> args= new ArrayList<String>();
 		while (je != null) {
 			// each path component has a name that uses the same
 			// conventions as a JavaNode name
@@ -413,7 +412,7 @@ public class JavaStructureCreator implements IStructureCreator {
 		int n= args.size();
 		String[] path= new String[n];
 		for (int i= 0; i < n; i++)
-			path[i]= (String) args.get(n-1-i);
+			path[i]= args.get(n-1-i);
 			
 		return path;
 	}

@@ -26,14 +26,14 @@ public class CompositeOrTypeConstraint implements ITypeConstraint{
 	}
 	
 	private static ITypeConstraint[] getCopy(ITypeConstraint[] constraints) {
-		List l= Arrays.asList(constraints);
-		return (ITypeConstraint[]) l.toArray(new ITypeConstraint[l.size()]);
+		List<ITypeConstraint> l= Arrays.asList(constraints);
+		return l.toArray(new ITypeConstraint[l.size()]);
 	}
 
 	private static ITypeConstraint[] sort(ITypeConstraint[] constraints) {
 		//TODO bogus to sort by toString - will have to come up with something better
-		Arrays.sort(constraints, new Comparator(){
-			public int compare(Object o1, Object o2) {
+		Arrays.sort(constraints, new Comparator<ITypeConstraint>(){
+			public int compare(ITypeConstraint o1, ITypeConstraint o2) {
 				return o2.toString().compareTo(o1.toString());
 			}
 		});

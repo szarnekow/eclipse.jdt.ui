@@ -124,7 +124,7 @@ public class CallInliner {
 	private FlowInfo fFlowInfo;
 	private CodeScopeBuilder.Scope fInvocationScope;
 	private boolean fFieldInitializer;
-	private List fLocals;
+	private List<VariableDeclarationStatement> fLocals;
 	private CallContext fContext;
 	
 	private class InlineEvaluator extends HierarchicalASTVisitor {
@@ -227,7 +227,7 @@ public class CallInliner {
 		fBuffer= RefactoringFileBuffers.acquire(fCUnit);
 		fSourceProvider= provider;
 		fImportEdit= new ImportRewrite(fCUnit);
-		fLocals= new ArrayList(3);
+		fLocals= new ArrayList<VariableDeclarationStatement>(3);
 		fRewrite= ASTRewrite.create(ast);
 		fRewrite.setTargetSourceRangeComputer(new NoCommentSourceRangeComputer());
 		fTypeEnvironment= new TypeEnvironment();
@@ -268,7 +268,7 @@ public class CallInliner {
 	public RefactoringStatus initialize(ASTNode invocation, int severity) {
 		RefactoringStatus result= new RefactoringStatus();
 		fInvocation= invocation;
-		fLocals= new ArrayList(3);
+		fLocals= new ArrayList<VariableDeclarationStatement>(3);
 		
 		checkMethodDeclaration(result, severity);
 		if (result.getSeverity() >= severity)
@@ -477,7 +477,7 @@ public class CallInliner {
 	}
 
 	private void computeRealArguments() throws BadLocationException {
-		List arguments= Invocations.getArguments(fInvocation);
+		List<ASTNode> arguments= Invocations.getArguments(fInvocation);
 		boolean needsVarargBoxing= needsVarargBoxing(arguments);
 		int varargIndex= fSourceProvider.getVarargIndex();
 		String[] realArguments= new String[needsVarargBoxing ? varargIndex + 1 : arguments.size()];
@@ -508,7 +508,7 @@ public class CallInliner {
 			fragment.setName(ast.newSimpleName(name));
 			ArrayInitializer initializer= ast.newArrayInitializer();
 			for (int i= varargIndex; i < arguments.size(); i++) {
-				initializer.expressions().add(fRewrite.createCopyTarget((ASTNode)arguments.get(i)));
+				initializer.expressions().add(fRewrite.createCopyTarget(arguments.get(i)));
 			}
 			fragment.setInitializer(initializer);
 			VariableDeclarationStatement decl= ast.newVariableDeclarationStatement(fragment);
@@ -518,7 +518,7 @@ public class CallInliner {
 		fContext.arguments= realArguments;
 	}
 	
-	private boolean needsVarargBoxing(List arguments) {
+	private boolean needsVarargBoxing(List<ASTNode> arguments) {
 		if (!fSourceProvider.isVarargs())
 			return false;
 		/*
@@ -578,8 +578,8 @@ public class CallInliner {
 	private void addNewLocals(TextEditGroup textEditGroup) {
 		if (fLocals.isEmpty())
 			return;
-		for (Iterator iter= fLocals.iterator(); iter.hasNext();) {
-			ASTNode element= (ASTNode)iter.next();
+		for (Iterator<VariableDeclarationStatement> iter= fLocals.iterator(); iter.hasNext();) {
+			ASTNode element= iter.next();
 			fListRewrite.insertAt(element, fInsertionIndex++, textEditGroup);
 		}
 	}
@@ -676,13 +676,13 @@ public class CallInliner {
 			}
 			ITypeBinding[] parameters= method.getParameterTypes();
 			int argumentIndex= methodInvocation.arguments().indexOf(fInvocation);
-			List returnExprs= fSourceProvider.getReturnExpressions();
+			List<Expression> returnExprs= fSourceProvider.getReturnExpressions();
 			// it is inferred that only methods consisting of a single 
 			// return statement can be inlined as parameters in other 
 			// method invocations
 			if (returnExprs.size() != 1)
 				return false;
-			parameters[argumentIndex]= ((Expression)returnExprs.get(0)).resolveTypeBinding();
+			parameters[argumentIndex]= returnExprs.get(0).resolveTypeBinding();
 
 			ITypeBinding type= ASTNodes.getReceiverTypeBinding(methodInvocation);
 			TypeBindingVisitor visitor= new AmbiguousMethodAnalyzer(

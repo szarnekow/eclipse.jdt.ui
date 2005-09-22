@@ -99,9 +99,9 @@ public class CompletionProposalCollector extends CompletionRequestor {
 	private final CompletionProposalLabelProvider fLabelProvider= new CompletionProposalLabelProvider();
 	private final ImageDescriptorRegistry fRegistry= JavaPlugin.getImageDescriptorRegistry();
 
-	private final List fJavaProposals= new ArrayList();
-	private final List fKeywords= new ArrayList();
-	private final Set fSuggestedMethodNames= new HashSet();
+	private final List<IJavaCompletionProposal> fJavaProposals= new ArrayList<IJavaCompletionProposal>();
+	private final List<IJavaCompletionProposal> fKeywords= new ArrayList<IJavaCompletionProposal>();
+	private final Set<String> fSuggestedMethodNames= new HashSet<String>();
 
 	private final ICompilationUnit fCompilationUnit;
 	private final IJavaProject fJavaProject;
@@ -261,7 +261,7 @@ public class CompletionProposalCollector extends CompletionRequestor {
 	 * @return the unsorted list of received proposals
 	 */
 	public final IJavaCompletionProposal[] getJavaCompletionProposals() {
-		return (IJavaCompletionProposal[]) fJavaProposals.toArray(new IJavaCompletionProposal[fJavaProposals.size()]);
+		return fJavaProposals.toArray(new IJavaCompletionProposal[fJavaProposals.size()]);
 	}
 
 	/**
@@ -270,7 +270,7 @@ public class CompletionProposalCollector extends CompletionRequestor {
 	 * @return the unsorted list of received keyword proposals
 	 */
 	public final IJavaCompletionProposal[] getKeywordCompletionProposals() {
-		return (JavaCompletionProposal[]) fKeywords.toArray(new JavaCompletionProposal[fKeywords.size()]);
+		return fKeywords.toArray(new JavaCompletionProposal[fKeywords.size()]);
 	}
 
 	/**

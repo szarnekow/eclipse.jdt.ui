@@ -642,7 +642,7 @@ public class ListDialogField extends DialogField {
 	/**
 	 * Adds elements at the end of the list.
 	 */	
-	public void addElements(List elements) {
+	public void addElements(List<String> elements) {
 		int nElements= elements.size();
 		
 		if (nElements > 0) {

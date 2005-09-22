@@ -654,8 +654,8 @@ class ExternalizeWizardPage extends UserInputWizardPage {
 				fNLSRefactoring.getResourceBundleName(),
 				fNLSRefactoring.getResourceBundlePackage());
 		
-		ArrayList currChoices= new ArrayList();
-		ArrayList currLabels= new ArrayList();
+		ArrayList<AccessorDescription> currChoices= new ArrayList<AccessorDescription>();
+		ArrayList<String> currLabels= new ArrayList<String>();
 		
 		currChoices.add(configured);
 		currLabels.add(configured.getLabel());
@@ -673,8 +673,8 @@ class ExternalizeWizardPage extends UserInputWizardPage {
 			}
 		}
 		
-		String[] labels= (String[]) currLabels.toArray(new String[currLabels.size()]);
-		fAccessorChoices= (AccessorDescription[]) currChoices.toArray(new AccessorDescription[currChoices.size()]);
+		String[] labels= currLabels.toArray(new String[currLabels.size()]);
+		fAccessorChoices= currChoices.toArray(new AccessorDescription[currChoices.size()]);
 		
 		fAccessorClassField.setItems(labels);
 		fAccessorClassField.select(0);
@@ -686,7 +686,7 @@ class ExternalizeWizardPage extends UserInputWizardPage {
 		if (section == null) {
 			return new AccessorDescription[0];
 		}
-		ArrayList res= new ArrayList();
+		ArrayList<AccessorDescription> res= new ArrayList<AccessorDescription>();
 		for (int i= 0; i < SETTINGS_MAX_ENTRIES; i++) {
 			IDialogSettings serializedDesc= section.getSection(String.valueOf(i));
 			if (serializedDesc != null) {
@@ -696,7 +696,7 @@ class ExternalizeWizardPage extends UserInputWizardPage {
 				}
 			}
 		}
-		return (AccessorDescription[]) res.toArray(new AccessorDescription[res.size()]);
+		return res.toArray(new AccessorDescription[res.size()]);
 	}
 	
 	
@@ -1164,7 +1164,7 @@ class ExternalizeWizardPage extends UserInputWizardPage {
 	 */
 	private void openRenameDialog() {
 		IStructuredSelection sel= (IStructuredSelection) fTableViewer.getSelection();
-		List elementsToRename= getExternalizedElements(sel);
+		List<NLSSubstitution> elementsToRename= getExternalizedElements(sel);
 		RenameKeysDialog dialog= new RenameKeysDialog(getShell(), elementsToRename);
 		if (dialog.open() == Window.OK) {
 			fTableViewer.refresh();
@@ -1290,8 +1290,8 @@ class ExternalizeWizardPage extends UserInputWizardPage {
 		return false;
 	}
 		
-	private List getExternalizedElements(IStructuredSelection selection) {
-		ArrayList res= new ArrayList();
+	private List<NLSSubstitution> getExternalizedElements(IStructuredSelection selection) {
+		ArrayList<NLSSubstitution> res= new ArrayList<NLSSubstitution>();
 		for (Iterator iter= selection.iterator(); iter.hasNext();) {
 			NLSSubstitution substitution= (NLSSubstitution) iter.next();
 			if (substitution.getState() == NLSSubstitution.EXTERNALIZED && !substitution.hasStateChanged()) {

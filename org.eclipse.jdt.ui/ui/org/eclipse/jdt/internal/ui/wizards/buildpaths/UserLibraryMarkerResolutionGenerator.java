@@ -78,7 +78,7 @@ public class UserLibraryMarkerResolutionGenerator implements IMarkerResolutionGe
 		}
 		
 		
-		ArrayList resolutions= new ArrayList();
+		ArrayList<UserLibraryMarkerResolution> resolutions= new ArrayList<UserLibraryMarkerResolution>();
 		
 		String[] arguments= CorrectionEngine.getProblemArguments(marker);
 		final IPath path= new Path(arguments[0]);
@@ -109,7 +109,7 @@ public class UserLibraryMarkerResolutionGenerator implements IMarkerResolutionGe
 				changeToExistingLibrary(shell, path, true, project);
 			}
 		});
-		return (IMarkerResolution[]) resolutions.toArray(new IMarkerResolution[resolutions.size()]);
+		return resolutions.toArray(new IMarkerResolution[resolutions.size()]);
 	}
 
 	protected void changeToExistingLibrary(Shell shell, IPath path, boolean isNew, final IJavaProject project) {
@@ -176,7 +176,7 @@ public class UserLibraryMarkerResolutionGenerator implements IMarkerResolutionGe
 	protected void createUserLibrary(final Shell shell, IPath unboundPath, IJavaProject project) {
 		String name= unboundPath.segment(1);
 		String id= UserLibraryPreferencePage.ID;
-		HashMap data= new HashMap(3);
+		HashMap<String, Comparable> data= new HashMap<String, Comparable>(3);
 		data.put(UserLibraryPreferencePage.DATA_LIBRARY_TO_SELECT, name);
 		data.put(UserLibraryPreferencePage.DATA_DO_CREATE, Boolean.TRUE);
 		PreferencesUtil.createPreferenceDialogOn(shell, id, new String[] { id }, data).open();

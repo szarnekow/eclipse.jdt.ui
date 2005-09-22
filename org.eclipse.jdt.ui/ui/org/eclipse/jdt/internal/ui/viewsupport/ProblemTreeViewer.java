@@ -118,7 +118,7 @@ public class ProblemTreeViewer extends TreeViewer implements ResourceToItemsMapp
 		}
 		
 		if (changed != null && !fResourceToItemsMapper.isEmpty()) {
-			ArrayList others= new ArrayList();
+			ArrayList<Object> others= new ArrayList<Object>();
 			for (int i= 0; i < changed.length; i++) {
 				Object curr= changed[i];
 				if (curr instanceof IResource) {

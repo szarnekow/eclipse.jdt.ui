@@ -35,15 +35,15 @@ import org.eclipse.jdt.internal.corext.dom.Bindings;
  */
 public class ConstraintVariableFactory implements IConstraintVariableFactory {
 
-	private Map/*<IBinding,IBinding>*/ fBindingMap= new HashMap();
+	private Map/*<IBinding,IBinding>*/<IBinding, IBinding> fBindingMap= new HashMap<IBinding, IBinding>();
 
-	private Map/*<IBinding + CompilationUnitRange,ExpressionVariable>*/ fExpressionMap= new Hashtable();
-	private Map/*<Integer,ExpressionVariable>*/ fLiteralMap= new HashMap();	
-	private Map/*<CompilationUnitRange,TypeVariable>*/ fTypeVariableMap= new HashMap();
-	private Map/*<String,DeclaringTypeVariable>*/ fDeclaringTypeVariableMap= new HashMap();
-	private Map/*<String,ParameterTypeVariable>*/ fParameterMap= new HashMap();
-	private Map/*<String,RawBindingVariable>*/ fRawBindingMap= new HashMap();
-	private Map/*<String,ReturnTypeVariable>*/ fReturnVariableMap= new HashMap();
+	private Map/*<IBinding + CompilationUnitRange,ExpressionVariable>*/<Object, ExpressionVariable> fExpressionMap= new Hashtable<Object, ExpressionVariable>();
+	private Map/*<Integer,ExpressionVariable>*/<Integer, ExpressionVariable> fLiteralMap= new HashMap<Integer, ExpressionVariable>();	
+	private Map/*<CompilationUnitRange,TypeVariable>*/<CompilationUnitRange, TypeVariable> fTypeVariableMap= new HashMap<CompilationUnitRange, TypeVariable>();
+	private Map/*<String,DeclaringTypeVariable>*/<String, DeclaringTypeVariable> fDeclaringTypeVariableMap= new HashMap<String, DeclaringTypeVariable>();
+	private Map/*<String,ParameterTypeVariable>*/<String, ParameterTypeVariable> fParameterMap= new HashMap<String, ParameterTypeVariable>();
+	private Map/*<String,RawBindingVariable>*/<String, RawBindingVariable> fRawBindingMap= new HashMap<String, RawBindingVariable>();
+	private Map/*<String,ReturnTypeVariable>*/<String, ReturnTypeVariable> fReturnVariableMap= new HashMap<String, ReturnTypeVariable>();
 	
 	public static final boolean REPORT= false;
 	protected int nrCreated=0;
@@ -76,7 +76,7 @@ public class ConstraintVariableFactory implements IConstraintVariableFactory {
 				if (REPORT) nrRetrieved++;
 			}
 			if (REPORT) dumpConstraintStats();
-			return (ExpressionVariable) fLiteralMap.get(nodeType);
+			return fLiteralMap.get(nodeType);
 		}
 			
 		// For ExpressionVariables, there are two cases. If the expression has a binding
@@ -89,7 +89,7 @@ public class ConstraintVariableFactory implements IConstraintVariableFactory {
 		} else {
 			key= new CompilationUnitRange(ASTCreator.getCu(expression), expression);
 		}
-		ev= (ExpressionVariable)fExpressionMap.get(key);
+		ev= fExpressionMap.get(key);
 		
 		if (ev != null){
 			if (REPORT) nrRetrieved++;
@@ -109,10 +109,10 @@ public class ConstraintVariableFactory implements IConstraintVariableFactory {
 	//
 	private IBinding getKey(IBinding binding) {
 		if (fBindingMap.containsKey(binding)){
-			return (IBinding)fBindingMap.get(binding);
+			return fBindingMap.get(binding);
 		} else {
-			for (Iterator it= fBindingMap.keySet().iterator(); it.hasNext(); ){
-				IBinding b2= (IBinding)it.next();
+			for (Iterator<IBinding> it= fBindingMap.keySet().iterator(); it.hasNext(); ){
+				IBinding b2= it.next();
 				if (Bindings.equals(binding, b2)){
 					fBindingMap.put(binding, b2);
 					return b2;
@@ -135,7 +135,7 @@ public class ConstraintVariableFactory implements IConstraintVariableFactory {
 			if (REPORT) nrRetrieved++;
 		}
 		if (REPORT) dumpConstraintStats();
-		return (DeclaringTypeVariable)fDeclaringTypeVariableMap.get(key);
+		return fDeclaringTypeVariableMap.get(key);
 	}
 	/* (non-Javadoc)
 	 * @see org.eclipse.jdt.internal.corext.refactoring.typeconstraints.IConstraintVariableFactory#makeDeclaringTypeVariable(org.eclipse.jdt.core.dom.IVariableBinding)
@@ -149,7 +149,7 @@ public class ConstraintVariableFactory implements IConstraintVariableFactory {
 			if (REPORT) nrRetrieved++;
 		}
 		if (REPORT) dumpConstraintStats();
-		return (DeclaringTypeVariable)fDeclaringTypeVariableMap.get(key);
+		return fDeclaringTypeVariableMap.get(key);
 	}
 
 	/* (non-Javadoc)
@@ -164,7 +164,7 @@ public class ConstraintVariableFactory implements IConstraintVariableFactory {
 			if (REPORT) nrRetrieved++;
 		}
 		if (REPORT) dumpConstraintStats();
-		return (DeclaringTypeVariable)fDeclaringTypeVariableMap.get(key);
+		return fDeclaringTypeVariableMap.get(key);
 	}
 	
 	/* (non-Javadoc)
@@ -180,7 +180,7 @@ public class ConstraintVariableFactory implements IConstraintVariableFactory {
 			if (REPORT) nrRetrieved++;
 		}
 		if (REPORT) dumpConstraintStats();
-		return (ParameterTypeVariable)fParameterMap.get(key);
+		return fParameterMap.get(key);
 	}
 
 	/* (non-Javadoc)
@@ -195,7 +195,7 @@ public class ConstraintVariableFactory implements IConstraintVariableFactory {
 			if (REPORT) nrRetrieved++;
 		}
 		if (REPORT) dumpConstraintStats();
-		return (RawBindingVariable)fRawBindingMap.get(key);
+		return fRawBindingMap.get(key);
 	}
 
 	/* (non-Javadoc)
@@ -217,7 +217,7 @@ public class ConstraintVariableFactory implements IConstraintVariableFactory {
 			if (REPORT) nrRetrieved++;
 		}
 		if (REPORT) dumpConstraintStats();
-		return (ReturnTypeVariable)fReturnVariableMap.get(key);
+		return fReturnVariableMap.get(key);
 	}
 
 	/* (non-Javadoc)
@@ -234,7 +234,7 @@ public class ConstraintVariableFactory implements IConstraintVariableFactory {
 			if (REPORT) nrRetrieved++;
 		}
 		if (REPORT) dumpConstraintStats();
-		return (TypeVariable) fTypeVariableMap.get(range);
+		return fTypeVariableMap.get(range);
 	}
 
 	/* (non-Javadoc)
@@ -248,7 +248,7 @@ public class ConstraintVariableFactory implements IConstraintVariableFactory {
 			if (REPORT) nrRetrieved++;
 		}
 		if (REPORT) dumpConstraintStats();
-		return (TypeVariable) fTypeVariableMap.get(range);
+		return fTypeVariableMap.get(range);
 	}
 
 	protected void dumpConstraintStats() {

@@ -64,7 +64,7 @@ public class PropertiesSpellingReconcileStrategy implements IReconcilingStrategy
 		private IAnnotationModel fAnnotationModel;
 
 		/** Annotations to add */
-		private Map fAddAnnotations;
+		private Map<Annotation, Position> fAddAnnotations;
 
 		/**
 		 * Initializes this collector with the given annotation model.
@@ -103,14 +103,14 @@ public class PropertiesSpellingReconcileStrategy implements IReconcilingStrategy
 		 * @see org.eclipse.ui.texteditor.spelling.ISpellingProblemCollector#beginCollecting()
 		 */
 		public void beginCollecting() {
-			fAddAnnotations= new HashMap();
+			fAddAnnotations= new HashMap<Annotation, Position>();
 		}
 
 		/*
 		 * @see org.eclipse.ui.texteditor.spelling.ISpellingProblemCollector#endCollecting()
 		 */
 		public void endCollecting() {
-			List removeAnnotations= new ArrayList();
+			List<Annotation> removeAnnotations= new ArrayList<Annotation>();
 			for (Iterator iter= fAnnotationModel.getAnnotationIterator(); iter.hasNext();) {
 				Annotation annotation= (Annotation) iter.next();
 				if (ProblemAnnotation.SPELLING_ANNOTATION_TYPE.equals(annotation.getType()))
@@ -118,13 +118,13 @@ public class PropertiesSpellingReconcileStrategy implements IReconcilingStrategy
 			}
 
 			if (fAnnotationModel instanceof IAnnotationModelExtension)
-				((IAnnotationModelExtension) fAnnotationModel).replaceAnnotations((Annotation[]) removeAnnotations.toArray(new Annotation[removeAnnotations.size()]), fAddAnnotations);
+				((IAnnotationModelExtension) fAnnotationModel).replaceAnnotations(removeAnnotations.toArray(new Annotation[removeAnnotations.size()]), fAddAnnotations);
 			else {
-				for (Iterator iter= removeAnnotations.iterator(); iter.hasNext();)
-					fAnnotationModel.removeAnnotation((Annotation) iter.next());
-				for (Iterator iter= fAddAnnotations.keySet().iterator(); iter.hasNext();) {
-					Annotation annotation= (Annotation) iter.next();
-					fAnnotationModel.addAnnotation(annotation, (Position) fAddAnnotations.get(annotation));
+				for (Iterator<Annotation> iter= removeAnnotations.iterator(); iter.hasNext();)
+					fAnnotationModel.removeAnnotation(iter.next());
+				for (Iterator<Annotation> iter= fAddAnnotations.keySet().iterator(); iter.hasNext();) {
+					Annotation annotation= iter.next();
+					fAnnotationModel.addAnnotation(annotation, fAddAnnotations.get(annotation));
 				}
 			}
 

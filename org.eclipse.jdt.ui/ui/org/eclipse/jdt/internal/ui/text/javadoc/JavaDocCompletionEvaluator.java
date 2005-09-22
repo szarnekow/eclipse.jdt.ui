@@ -82,12 +82,12 @@ public class JavaDocCompletionEvaluator implements IJavadocCompletionProcessor, 
 	private String fErrorMessage;
 
 	private JavaElementLabelProvider fLabelProvider;
-	private List fResult;
+	private List<JavaCompletionProposal> fResult;
 
 	private boolean fRestrictToMatchingCase;
 
 	public JavaDocCompletionEvaluator() {
-		fResult= new ArrayList();
+		fResult= new ArrayList<JavaCompletionProposal>();
 	}
 
 	private static boolean isWordPart(char ch) {
@@ -183,7 +183,7 @@ public class JavaDocCompletionEvaluator implements IJavadocCompletionProcessor, 
 		fLabelProvider= new JavaElementLabelProvider(JavaElementLabelProvider.SHOW_POST_QUALIFIED | JavaElementLabelProvider.SHOW_PARAMETERS);
 		try {
 			evalProposals();
-			return (JavaCompletionProposal[]) fResult.toArray(new JavaCompletionProposal[fResult.size()]);
+			return fResult.toArray(new JavaCompletionProposal[fResult.size()]);
 		} catch (JavaModelException e) {
 			fErrorMessage= e.getLocalizedMessage();
 		} finally {
@@ -442,7 +442,7 @@ public class JavaDocCompletionEvaluator implements IJavadocCompletionProcessor, 
 
 	private ICompilationUnit createPreparedCU(IMember elem, int wordStart, int wordEnd) throws JavaModelException {
 		int startpos= elem.getSourceRange().getOffset();
-		char[] content= (char[]) fCompilationUnit.getBuffer().getCharacters().clone();
+		char[] content= fCompilationUnit.getBuffer().getCharacters().clone();
 		if ((elem.getDeclaringType() == null) && (wordStart + 6 < content.length)) {
 			content[startpos++]= 'i'; content[startpos++]= 'm'; content[startpos++]= 'p';
 			content[startpos++]= 'o'; content[startpos++]= 'r'; content[startpos++]= 't';

@@ -67,7 +67,7 @@ public class CustomFiltersDialog extends SelectionDialog {
 	private Button fEnableUserDefinedPatterns;
 	private Text fUserDefinedPatterns;
 
-	private Stack fFilterDescriptorChangeHistory;
+	private Stack<Object> fFilterDescriptorChangeHistory;
 
 	
 	/**
@@ -97,7 +97,7 @@ public class CustomFiltersDialog extends SelectionDialog {
 		fEnabledFilterIds= enabledFilterIds;
 
 		fBuiltInFilters= FilterDescriptor.getFilterDescriptors(fViewId);
-		fFilterDescriptorChangeHistory= new Stack();
+		fFilterDescriptorChangeHistory= new Stack<Object>();
 		setShellStyle(getShellStyle() | SWT.RESIZE);
 	}
 
@@ -184,7 +184,7 @@ public class CustomFiltersDialog extends SelectionDialog {
 		fCheckBoxList.setInput(fBuiltInFilters);
 		setInitialSelections(getEnabledFilterDescriptors());
 		
-		List initialSelection= getInitialElementSelections();
+		List<Object[]> initialSelection= getInitialElementSelections();
 		if (initialSelection != null && !initialSelection.isEmpty())
 			checkInitialSelections();
 
@@ -261,14 +261,14 @@ public class CustomFiltersDialog extends SelectionDialog {
 	}
 
 	private void checkInitialSelections() {
-		Iterator itemsToCheck= getInitialElementSelections().iterator();
+		Iterator<Object[]> itemsToCheck= getInitialElementSelections().iterator();
 		while (itemsToCheck.hasNext())
 			fCheckBoxList.setChecked(itemsToCheck.next(),true);
 	}
 
 	protected void okPressed() {
 		if (fBuiltInFilters != null) {
-			ArrayList result= new ArrayList();
+			ArrayList<Object> result= new ArrayList<Object>();
 			for (int i= 0; i < fBuiltInFilters.length; ++i) {
 				if (fCheckBoxList.getChecked(fBuiltInFilters[i]))
 					result.add(fBuiltInFilters[i]);
@@ -319,10 +319,10 @@ public class CustomFiltersDialog extends SelectionDialog {
 	 */
 	public String[] getEnabledFilterIds() {
 		Object[] result= getResult();
-		Set enabledIds= new HashSet(result.length);
+		Set<String> enabledIds= new HashSet<String>(result.length);
 		for (int i= 0; i < result.length; i++)
 			enabledIds.add(((FilterDescriptor)result[i]).getId());
-		return (String[]) enabledIds.toArray(new String[enabledIds.size()]);
+		return enabledIds.toArray(new String[enabledIds.size()]);
 	}
 
 	/**
@@ -336,27 +336,27 @@ public class CustomFiltersDialog extends SelectionDialog {
 	 * @return a stack with the filter descriptor check history
 	 * @since 3.0
 	 */
-	public Stack getFilterDescriptorChangeHistory() {
+	public Stack<Object> getFilterDescriptorChangeHistory() {
 		return fFilterDescriptorChangeHistory;
 	}
 
 	private FilterDescriptor[] getEnabledFilterDescriptors() {
 		FilterDescriptor[] filterDescs= fBuiltInFilters;
-		List result= new ArrayList(filterDescs.length);
-		List enabledFilterIds= Arrays.asList(fEnabledFilterIds);
+		List<FilterDescriptor> result= new ArrayList<FilterDescriptor>(filterDescs.length);
+		List<String> enabledFilterIds= Arrays.asList(fEnabledFilterIds);
 		for (int i= 0; i < filterDescs.length; i++) {
 			String id= filterDescs[i].getId();
 			if (enabledFilterIds.contains(id))
 				result.add(filterDescs[i]);
 		}
-		return (FilterDescriptor[])result.toArray(new FilterDescriptor[result.size()]);
+		return result.toArray(new FilterDescriptor[result.size()]);
 	}
 
 
 	public static String[] convertFromString(String patterns, String separator) {
 		StringTokenizer tokenizer= new StringTokenizer(patterns, separator, true);
 		int tokenCount= tokenizer.countTokens();
-		List result= new ArrayList(tokenCount);
+		List<String> result= new ArrayList<String>(tokenCount);
 		boolean escape= false;
 		boolean append= false;
 		while (tokenizer.hasMoreTokens()) {
@@ -377,15 +377,15 @@ public class CustomFiltersDialog extends SelectionDialog {
 				escape= false;
 			}
 		}
-		return (String[])result.toArray(new String[result.size()]);
+		return result.toArray(new String[result.size()]);
 	}
 	
-	private static void addPattern(List list, String pattern) {
+	private static void addPattern(List<String> list, String pattern) {
 		if (list.isEmpty())
 			list.add(pattern);
 		else {
 			int index= list.size() - 1;
-			list.set(index, ((String)list.get(index)) + pattern);
+			list.set(index, list.get(index) + pattern);
 		}
 	}
 

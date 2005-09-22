@@ -39,14 +39,14 @@ public class ResourceToItemsMapper {
 	private static final int NUMBER_LIST_REUSE= 10;
 
 	// map from resource to item
-	private HashMap fResourceToItem;
-	private Stack fReuseLists;
+	private HashMap<IResource, Object> fResourceToItem;
+	private Stack<List> fReuseLists;
 	
 	private IContentViewerAccessor fContentViewerAccess;
 
 	public ResourceToItemsMapper(IContentViewerAccessor viewer) {
-		fResourceToItem= new HashMap();
-		fReuseLists= new Stack();
+		fResourceToItem= new HashMap<IResource, Object>();
+		fReuseLists= new Stack<List>();
 		
 		fContentViewerAccess= viewer;
 	}
@@ -88,13 +88,13 @@ public class ResourceToItemsMapper {
 				fResourceToItem.put(resource, item);
 			} else if (existingMapping instanceof Item) {
 				if (existingMapping != item) {
-					List list= getNewList();
+					List<Object> list= getNewList();
 					list.add(existingMapping);
 					list.add(item);
 					fResourceToItem.put(resource, list);
 				}
 			} else { // List			
-				List list= (List) existingMapping;
+				List<Item> list= (List<Item>) existingMapping;
 				if (!list.contains(item)) {
 					list.add(item);
 				}
@@ -126,11 +126,11 @@ public class ResourceToItemsMapper {
 		}
 	}
 	
-	private List getNewList() {
+	private List<Object> getNewList() {
 		if (!fReuseLists.isEmpty()) {
-			return (List) fReuseLists.pop();
+			return fReuseLists.pop();
 		}
-		return new ArrayList(2);
+		return new ArrayList<Object>(2);
 	}
 	
 	private void releaseList(List list) {

@@ -96,7 +96,7 @@ public class JavaExpandHover extends AnnotationExpandHover {
 		if (model == null)
 			return null;
 
-		List exact= new ArrayList();
+		List<Annotation> exact= new ArrayList<Annotation>();
 		HashMap messagesAtPosition= new HashMap();
 
 		Iterator e= model.getAnnotationIterator();
@@ -143,7 +143,7 @@ public class JavaExpandHover extends AnnotationExpandHover {
 			setLastRulerMouseLocation(viewer, line);
 
 		if (exact.size() > 0) {
-			Annotation first= (Annotation) exact.get(0);
+			Annotation first= exact.get(0);
 			if (!isBreakpointAnnotation(first))
 				exact.add(0, new NoBreakpointAnnotation());
 		}
@@ -153,7 +153,7 @@ public class JavaExpandHover extends AnnotationExpandHover {
 			return null;
 
 		AnnotationHoverInput input= new AnnotationHoverInput();
-		input.fAnnotations= (Annotation[]) exact.toArray(new Annotation[0]);
+		input.fAnnotations= exact.toArray(new Annotation[0]);
 		input.fViewer= viewer;
 		input.fRulerInfo= fCompositeRuler;
 		input.fAnnotationListener= fgListener;

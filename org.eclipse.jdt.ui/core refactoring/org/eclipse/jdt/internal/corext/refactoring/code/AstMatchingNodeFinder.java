@@ -115,18 +115,18 @@ class AstMatchingNodeFinder {
 	
 	private static class Visitor extends ASTVisitor{
 		
-		Collection fFound;
+		Collection<ASTNode> fFound;
 		ASTMatcher fMatcher;
 		ASTNode fNodeToMatch;
 		
 		Visitor(ASTNode nodeToMatch){
 			fNodeToMatch= nodeToMatch;
-			fFound= new ArrayList();
+			fFound= new ArrayList<ASTNode>();
 			fMatcher= new JdtASTMatcher();
 		}
 		
 		ASTNode[] getMatchingNodes(){
-			return (ASTNode[]) fFound.toArray(new ASTNode[fFound.size()]);
+			return fFound.toArray(new ASTNode[fFound.size()]);
 		}
 		
 		private boolean matches(ASTNode node){

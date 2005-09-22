@@ -108,7 +108,7 @@ public class NLSSearchPage extends DialogPage implements ISearchPage, IJavaSearc
 	private static final String RESOURCE_BUNDLE_FIELD= "RESOURCE_BUNDLE"; //$NON-NLS-1$
 	private static final String BUNDLE_NAME_FIELD= "BUNDLE_NAME"; //$NON-NLS-1$
 
-	private static java.util.List fgPreviousSearchPatterns= new ArrayList(20);
+	private static java.util.List<SearchPatternData> fgPreviousSearchPatterns= new ArrayList<SearchPatternData>(20);
 
 	private Combo fWrapperClassCombo;
 	private Text fPropertyFileText;
@@ -204,7 +204,7 @@ public class NLSSearchPage extends DialogPage implements ISearchPage, IJavaSearc
 		int patternCount= fgPreviousSearchPatterns.size();
 		String[] patterns= new String[patternCount];
 		for (int i= 0; i < patternCount; i++)
-			patterns[i]= ((SearchPatternData) fgPreviousSearchPatterns.get(patternCount - 1 - i)).wrapperClassName;
+			patterns[i]= fgPreviousSearchPatterns.get(patternCount - 1 - i).wrapperClassName;
 		return patterns;
 	}
 
@@ -236,7 +236,7 @@ public class NLSSearchPage extends DialogPage implements ISearchPage, IJavaSearc
 		}
 
 		while (match == null && i < size) {
-			match= (SearchPatternData) fgPreviousSearchPatterns.get(i);
+			match= fgPreviousSearchPatterns.get(i);
 			i++;
 			if (!pattern.equals(match.wrapperClassName))
 				match= null;
@@ -332,7 +332,7 @@ public class NLSSearchPage extends DialogPage implements ISearchPage, IJavaSearc
 				if (fWrapperClassCombo.getSelectionIndex() < 0)
 					return;
 				int index= fgPreviousSearchPatterns.size() - 1 - fWrapperClassCombo.getSelectionIndex();
-				SearchPatternData values= (SearchPatternData) fgPreviousSearchPatterns.get(index);
+				SearchPatternData values= fgPreviousSearchPatterns.get(index);
 				fWrapperClass= values.wrapperClass;
 				fWrapperClassCombo.setText(values.wrapperClassName);
 				fPropertyFileText.setText(values.propertyFileName);

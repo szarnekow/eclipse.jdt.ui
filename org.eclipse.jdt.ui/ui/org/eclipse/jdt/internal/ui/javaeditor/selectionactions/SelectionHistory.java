@@ -23,7 +23,7 @@ import org.eclipse.jdt.internal.ui.javaeditor.JavaEditor;
 
 public class SelectionHistory {
 
-	private List fHistory;
+	private List<ISourceRange> fHistory;
 	private JavaEditor fEditor;
 	private ISelectionChangedListener fSelectionListener;
 	private int fSelectionChangeListenerCounter;
@@ -32,7 +32,7 @@ public class SelectionHistory {
 	public SelectionHistory(JavaEditor editor) {
 		Assert.isNotNull(editor);
 		fEditor= editor;
-		fHistory= new ArrayList(3);
+		fHistory= new ArrayList<ISourceRange>(3);
 		fSelectionListener= new ISelectionChangedListener() {
 			public void selectionChanged(SelectionChangedEvent event) {
 				if (fSelectionChangeListenerCounter == 0)
@@ -60,7 +60,7 @@ public class SelectionHistory {
 		if (isEmpty())
 			return null;
 		int size= fHistory.size();
-		ISourceRange result= (ISourceRange)fHistory.remove(size - 1);
+		ISourceRange result= fHistory.remove(size - 1);
 		fHistoryAction.update();
 		return result;
 	}

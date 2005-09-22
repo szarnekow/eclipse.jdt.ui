@@ -40,7 +40,7 @@ public class RefactoringScopeFactory {
 	/*
 	 * Adds to <code> projects </code> IJavaProject objects for all projects directly or indirectly referencing focus. @param projects IJavaProjects will be added to this set
 	 */
-	private static void addReferencingProjects(IJavaProject focus, Set projects) throws JavaModelException {
+	private static void addReferencingProjects(IJavaProject focus, Set<IJavaProject> projects) throws JavaModelException {
 		IProject[] referencingProjects= focus.getProject().getReferencingProjects();
 		for (int i= 0; i < referencingProjects.length; i++) {
 			IJavaProject candidate= JavaCore.create(referencingProjects[i]);
@@ -55,7 +55,7 @@ public class RefactoringScopeFactory {
 		}
 	}
 
-	private static void addRelatedReferencing(IJavaProject focus, Set projects) throws CoreException {
+	private static void addRelatedReferencing(IJavaProject focus, Set<IJavaProject> projects) throws CoreException {
 		IProject[] referencingProjects= focus.getProject().getReferencingProjects();
 		for (int i= 0; i < referencingProjects.length; i++) {
 			IJavaProject candidate= JavaCore.create(referencingProjects[i]);
@@ -72,7 +72,7 @@ public class RefactoringScopeFactory {
 		}
 	}
 
-	private static void addRelatedReferenced(IJavaProject focus, Set projects) throws CoreException {
+	private static void addRelatedReferenced(IJavaProject focus, Set<IJavaProject> projects) throws CoreException {
 		IProject[] referencedProjects= focus.getProject().getReferencedProjects();
 		for (int i= 0; i < referencedProjects.length; i++) {
 			IJavaProject candidate= JavaCore.create(referencedProjects[i]);
@@ -135,8 +135,8 @@ public class RefactoringScopeFactory {
 				}
 			}
 		}
-		Collection referencingProjects= getReferencingProjects(javaElement.getJavaProject());
-		return SearchEngine.createJavaSearchScope((IJavaProject[]) referencingProjects.toArray(new IJavaProject[referencingProjects.size()]));
+		Collection<IJavaProject> referencingProjects= getReferencingProjects(javaElement.getJavaProject());
+		return SearchEngine.createJavaSearchScope(referencingProjects.toArray(new IJavaProject[referencingProjects.size()]));
 	}
 	
 	/**
@@ -168,11 +168,11 @@ public class RefactoringScopeFactory {
 	 * @return the search scope
 	 */
 	public static IJavaSearchScope createReferencedScope(IJavaElement[] javaElements) {
-		Set projects= new HashSet();
+		Set<IJavaProject> projects= new HashSet<IJavaProject>();
 		for (int i= 0; i < javaElements.length; i++) {
 			projects.add(javaElements[i].getJavaProject());
 		}
-		IJavaProject[] prj= (IJavaProject[]) projects.toArray(new IJavaProject[projects.size()]);
+		IJavaProject[] prj= projects.toArray(new IJavaProject[projects.size()]);
 		return SearchEngine.createJavaSearchScope(prj, true);
 	}
 
@@ -185,11 +185,11 @@ public class RefactoringScopeFactory {
 	 * @return the search scope
 	 */
 	public static IJavaSearchScope createReferencedScope(IJavaElement[] javaElements, int includeMask) {
-		Set projects= new HashSet();
+		Set<IJavaProject> projects= new HashSet<IJavaProject>();
 		for (int i= 0; i < javaElements.length; i++) {
 			projects.add(javaElements[i].getJavaProject());
 		}
-		IJavaProject[] prj= (IJavaProject[]) projects.toArray(new IJavaProject[projects.size()]);
+		IJavaProject[] prj= projects.toArray(new IJavaProject[projects.size()]);
 		return SearchEngine.createJavaSearchScope(prj, includeMask);
 	}
 
@@ -207,17 +207,17 @@ public class RefactoringScopeFactory {
 	}
 
 	private static IJavaElement[] getAllScopeElements(IJavaProject project) throws JavaModelException {
-		Collection sourceRoots= getAllSourceRootsInProjects(getReferencingProjects(project));
-		return (IPackageFragmentRoot[]) sourceRoots.toArray(new IPackageFragmentRoot[sourceRoots.size()]);
+		Collection<IPackageFragmentRoot> sourceRoots= getAllSourceRootsInProjects(getReferencingProjects(project));
+		return sourceRoots.toArray(new IPackageFragmentRoot[sourceRoots.size()]);
 	}
 
 	/*
 	 * @param projects a collection of IJavaProject @return Collection a collection of IPackageFragmentRoot, one element for each packageFragmentRoot which lies within a project in <code> projects </code> .
 	 */
-	private static Collection getAllSourceRootsInProjects(Collection projects) throws JavaModelException {
-		List result= new ArrayList();
-		for (Iterator it= projects.iterator(); it.hasNext();)
-			result.addAll(getSourceRoots((IJavaProject) it.next()));
+	private static Collection<IPackageFragmentRoot> getAllSourceRootsInProjects(Collection<IJavaProject> projects) throws JavaModelException {
+		List<IPackageFragmentRoot> result= new ArrayList<IPackageFragmentRoot>();
+		for (Iterator<IJavaProject> it= projects.iterator(); it.hasNext();)
+			result.addAll(getSourceRoots(it.next()));
 		return result;
 	}
 
@@ -242,25 +242,25 @@ public class RefactoringScopeFactory {
 	}
 
 	private static IJavaProject[] getRelatedProjects(IJavaProject focus) throws CoreException {
-		final Set projects= new HashSet();
+		final Set<IJavaProject> projects= new HashSet<IJavaProject>();
 
 		addRelatedReferencing(focus, projects);
 		addRelatedReferenced(focus, projects);
 
 		projects.add(focus);
-		return (IJavaProject[]) projects.toArray(new IJavaProject[projects.size()]);
+		return projects.toArray(new IJavaProject[projects.size()]);
 	}
 
-	private static Collection getReferencingProjects(IJavaProject focus) throws JavaModelException {
-		Set projects= new HashSet();
+	private static Collection<IJavaProject> getReferencingProjects(IJavaProject focus) throws JavaModelException {
+		Set<IJavaProject> projects= new HashSet<IJavaProject>();
 
 		addReferencingProjects(focus, projects);
 		projects.add(focus);
 		return projects;
 	}
 
-	private static List getSourceRoots(IJavaProject javaProject) throws JavaModelException {
-		List elements= new ArrayList();
+	private static List<IPackageFragmentRoot> getSourceRoots(IJavaProject javaProject) throws JavaModelException {
+		List<IPackageFragmentRoot> elements= new ArrayList<IPackageFragmentRoot>();
 		IPackageFragmentRoot[] roots= javaProject.getPackageFragmentRoots();
 		// Add all package fragment roots except archives
 		for (int i= 0; i < roots.length; i++) {

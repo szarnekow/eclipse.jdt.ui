@@ -27,17 +27,17 @@ import org.eclipse.jdt.internal.corext.dom.Selection;
 public class LocalDeclarationAnalyzer extends ASTVisitor {
 
 	private Selection fSelection;
-	private List fAffectedLocals;
+	private List<VariableDeclaration> fAffectedLocals;
 
 	public static VariableDeclaration[] perform(BodyDeclaration parent, Selection selection) {
 		LocalDeclarationAnalyzer analyzer= new LocalDeclarationAnalyzer(selection);
 		parent.accept(analyzer);
-		return (VariableDeclaration[]) analyzer.fAffectedLocals.toArray(new VariableDeclaration[analyzer.fAffectedLocals.size()]);
+		return analyzer.fAffectedLocals.toArray(new VariableDeclaration[analyzer.fAffectedLocals.size()]);
 	}
 
 	private LocalDeclarationAnalyzer(Selection selection) {
 		fSelection= selection;
-		fAffectedLocals= new ArrayList(1);
+		fAffectedLocals= new ArrayList<VariableDeclaration>(1);
 	}
 	
 	public boolean visit(SimpleName node) {

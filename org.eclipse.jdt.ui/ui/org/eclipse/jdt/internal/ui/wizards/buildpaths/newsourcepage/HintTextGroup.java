@@ -91,14 +91,14 @@ public final class HintTextGroup implements IClasspathInformationProvider, IPack
     private IJavaProject fCurrJProject;
     private List fNewFolders;
     private String fOldOutputLocation;
-    private HashMap fImageMap;
+    private HashMap<String, Image> fImageMap;
     
     public HintTextGroup(DialogPackageExplorer packageExplorer, StringDialogField outputLocationField, SelectionButtonDialogField useFolderOutputs, IRunnableContext runnableContext) {
         fPackageExplorer= packageExplorer;
         fRunnableContext= runnableContext;
         fCurrJProject= null;
         fNewFolders= new ArrayList();
-        fImageMap= new HashMap();
+        fImageMap= new HashMap<String, Image>();
         fOutputLocationField= outputLocationField;
     }
     
@@ -117,10 +117,10 @@ public final class HintTextGroup implements IClasspathInformationProvider, IPack
         fTopComposite.setData(null);
         fTopComposite.addDisposeListener(new DisposeListener() {
             public void widgetDisposed(DisposeEvent e) {
-                Collection collection= fImageMap.values();
-                Iterator iterator= collection.iterator();
+                Collection<Image> collection= fImageMap.values();
+                Iterator<Image> iterator= collection.iterator();
                 while(iterator.hasNext()) {
-                    Image image= (Image)iterator.next();
+                    Image image= iterator.next();
                     image.dispose();
                 }
             }
@@ -200,7 +200,7 @@ public final class HintTextGroup implements IClasspathInformationProvider, IPack
      */
     private void createLabel(Composite parent, String text, final ClasspathModifierAction action, final IRunnableContext context) {
         FormText formText= createFormText(parent, text);
-        Image image= (Image)fImageMap.get(action.getId());
+        Image image= fImageMap.get(action.getId());
         if (image == null) {
             image= action.getImageDescriptor().createImage();
             fImageMap.put(action.getId(), image);

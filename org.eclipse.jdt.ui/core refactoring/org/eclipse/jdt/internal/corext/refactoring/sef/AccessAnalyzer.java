@@ -60,7 +60,7 @@ class AccessAnalyzer extends ASTVisitor {
 	private String fGetter;
 	private String fSetter;
 	private ASTRewrite fRewriter;
-	private List fGroupDescriptions;
+	private List<TextEditGroup> fGroupDescriptions;
 	private RefactoringStatus fStatus;
 	private boolean fSetterMustReturnValue;
 	private boolean fEncapsulateDeclaringClass;
@@ -81,7 +81,7 @@ class AccessAnalyzer extends ASTVisitor {
 		fFieldBinding= field.getVariableDeclaration();
 		fDeclaringClassBinding= declaringClass;
 		fRewriter= rewriter;
-		fGroupDescriptions= new ArrayList();
+		fGroupDescriptions= new ArrayList<TextEditGroup>();
 		fGetter= refactoring.getGetterName();
 		fSetter= refactoring.getSetterName();
 		fEncapsulateDeclaringClass= refactoring.getEncapsulateDeclaringClass();
@@ -101,7 +101,7 @@ class AccessAnalyzer extends ASTVisitor {
 		return fStatus;
 	}
 	
-	public List getGroupDescriptions() {
+	public List<TextEditGroup> getGroupDescriptions() {
 		return fGroupDescriptions;
 	}
 	
@@ -119,7 +119,7 @@ class AccessAnalyzer extends ASTVisitor {
 			Expression receiver= getReceiver(lhs);
 			if (receiver != null)
 				invocation.setExpression((Expression)fRewriter.createCopyTarget(receiver));
-			List arguments= invocation.arguments();
+			List<ASTNode> arguments= invocation.arguments();
 			if (node.getOperator() == Assignment.Operator.ASSIGN) {
 				arguments.add(fRewriter.createCopyTarget(node.getRightHandSide()));
 			} else {

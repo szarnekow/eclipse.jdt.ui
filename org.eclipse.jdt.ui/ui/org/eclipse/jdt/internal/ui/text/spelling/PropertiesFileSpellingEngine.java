@@ -46,10 +46,10 @@ public class PropertiesFileSpellingEngine extends SpellingEngine {
 		ISpellEventListener listener= new SpellEventListener(collector);
 		try {
 			checker.addListener(listener);
-			List partitionList= new ArrayList();
+			List<ITypedRegion> partitionList= new ArrayList<ITypedRegion>();
 			for (int i= 0; i < regions.length; i++)
 				partitionList.addAll(Arrays.asList(TextUtilities.computePartitioning(document, IPropertiesFilePartitions.PROPERTIES_FILE_PARTITIONING, regions[i].getOffset(), regions[i].getLength(), false)));
-			ITypedRegion[] partitions= (ITypedRegion[]) partitionList.toArray(new ITypedRegion[partitionList.size()]);
+			ITypedRegion[] partitions= partitionList.toArray(new ITypedRegion[partitionList.size()]);
 
 			for (int i= 0; i < partitions.length; i++) {
 				ITypedRegion partition= partitions[i];

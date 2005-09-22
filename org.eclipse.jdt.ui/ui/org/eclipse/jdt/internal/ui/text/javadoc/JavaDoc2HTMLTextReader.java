@@ -38,11 +38,11 @@ public class JavaDoc2HTMLTextReader extends SubstitutionTextReader {
 		}
 	}
 
-	private List fParameters;
+	private List<String> fParameters;
 	private String fReturn;
-	private List fExceptions;
-	private List fSees;
-	private List fRest; // list of Pair objects
+	private List<String> fExceptions;
+	private List<String> fSees;
+	private List<Pair> fRest; // list of Pair objects
 
 	public JavaDoc2HTMLTextReader(Reader reader) {
 		super(reader);
@@ -105,10 +105,10 @@ public class JavaDoc2HTMLTextReader extends SubstitutionTextReader {
 		return result;
 	}
 
-	private void printDefinitions(StringBuffer buffer, List list, boolean firstword) {
-		Iterator e= list.iterator();
+	private void printDefinitions(StringBuffer buffer, List<String> list, boolean firstword) {
+		Iterator<String> e= list.iterator();
 		while (e.hasNext()) {
-			String s= (String) e.next();
+			String s= e.next();
 			buffer.append("<dd>"); //$NON-NLS-1$
 			if (!firstword)
 				buffer.append(s);
@@ -152,7 +152,7 @@ public class JavaDoc2HTMLTextReader extends SubstitutionTextReader {
 		return i;
 	}
 
-	private void print(StringBuffer buffer, String tag, List elements, boolean firstword) {
+	private void print(StringBuffer buffer, String tag, List<String> elements, boolean firstword) {
 		if ( !elements.isEmpty()) {
 			buffer.append("<dt>"); //$NON-NLS-1$
 			buffer.append(tag);
@@ -174,9 +174,9 @@ public class JavaDoc2HTMLTextReader extends SubstitutionTextReader {
 
 	private void printRest(StringBuffer buffer) {
 		if ( !fRest.isEmpty()) {
-			Iterator e= fRest.iterator();
+			Iterator<Pair> e= fRest.iterator();
 			while (e.hasNext()) {
-				Pair p= (Pair) e.next();
+				Pair p= e.next();
 				buffer.append("<dt>"); //$NON-NLS-1$
 				if (p.fTag != null)
 					buffer.append(p.fTag);
@@ -225,10 +225,10 @@ public class JavaDoc2HTMLTextReader extends SubstitutionTextReader {
 	 */
 	private String processSimpleTag() throws IOException {
 
-		fParameters= new ArrayList();
-		fExceptions= new ArrayList();
-		fSees= new ArrayList();
-		fRest= new ArrayList();
+		fParameters= new ArrayList<String>();
+		fExceptions= new ArrayList<String>();
+		fSees= new ArrayList<String>();
+		fRest= new ArrayList<Pair>();
 
 		StringBuffer buffer= new StringBuffer();
 		int c= '@';

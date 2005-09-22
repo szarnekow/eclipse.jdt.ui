@@ -161,9 +161,9 @@ public class DeclarationsSearchGroup extends ActionGroup  {
 		
 		javaSearchMM.add(new Separator());
 		
-		Iterator iter= SearchUtil.getLRUWorkingSets().sortedIterator();
+		Iterator<IWorkingSet[]> iter= SearchUtil.getLRUWorkingSets().sortedIterator();
 		while (iter.hasNext()) {
-			addWorkingSetAction((IWorkingSet[]) iter.next(), javaSearchMM);
+			addWorkingSetAction(iter.next(), javaSearchMM);
 		}
 		addAction(fFindDeclarationsInWorkingSetAction, javaSearchMM);
 

@@ -353,7 +353,7 @@ public class IntroduceFactoryRefactoring extends Refactoring {
 	 * @return ICompilationUnit[]
 	 */
 	private ICompilationUnit[] collectAffectedUnits(SearchResultGroup[] searchHits) {
-		Collection	result= new ArrayList();
+		Collection<ICompilationUnit>	result= new ArrayList<ICompilationUnit>();
 		boolean hitInFactoryClass= false;
 
 		for(int i=0; i < searchHits.length; i++) {
@@ -366,7 +366,7 @@ public class IntroduceFactoryRefactoring extends Refactoring {
 		}
 		if (!hitInFactoryClass)
 			result.add(fFactoryUnitHandle);
-		return (ICompilationUnit[]) result.toArray(new ICompilationUnit[result.size()]);
+		return result.toArray(new ICompilationUnit[result.size()]);
 	}
 
 	/**
@@ -411,7 +411,7 @@ public class IntroduceFactoryRefactoring extends Refactoring {
 	 * (i.e. are binary and therefore can't be modified).
 	 */
 	private SearchResultGroup[] excludeBinaryUnits(SearchResultGroup[] groups) {
-		Collection/*<SearchResultGroup>*/	result= new ArrayList();
+		Collection/*<SearchResultGroup>*/<SearchResultGroup>	result= new ArrayList<SearchResultGroup>();
 
 		for (int i = 0; i < groups.length; i++) {
 			SearchResultGroup	rg=   groups[i];
@@ -422,7 +422,7 @@ public class IntroduceFactoryRefactoring extends Refactoring {
 			else
 				fCallSitesInBinaryUnits= true;
 		}
-		return (SearchResultGroup[]) result.toArray(new SearchResultGroup[result.size()]);
+		return result.toArray(new SearchResultGroup[result.size()]);
 	}
 
 	/**
@@ -525,10 +525,10 @@ public class IntroduceFactoryRefactoring extends Refactoring {
 		MethodDeclaration	ctorDecl= (MethodDeclaration) ctorUnit.findDeclaringNode(fCtorBinding.getKey());
 
 		if (ctorDecl != null) {
-			List	formalArgs= ctorDecl.parameters();
+			List<ASTNode>	formalArgs= ctorDecl.parameters();
 			int		i= 0;
 
-			for(Iterator iter= formalArgs.iterator(); iter.hasNext(); i++) {
+			for(Iterator<ASTNode> iter= formalArgs.iterator(); iter.hasNext(); i++) {
 				SingleVariableDeclaration	svd= (SingleVariableDeclaration) iter.next();
 
 				names[i]= svd.getName().getIdentifier();
@@ -556,7 +556,7 @@ public class IntroduceFactoryRefactoring extends Refactoring {
 		ClassInstanceCreation	newCtorCall= ast.newClassInstanceCreation();
 		ReturnStatement			ret= ast.newReturnStatement();
 		Block		body= ast.newBlock();
-		List		stmts= body.statements();
+		List<ASTNode>		stmts= body.statements();
 		String		retTypeName= ctorBinding.getName();
 
 		createFactoryMethodSignature(ast, newMethod);
@@ -595,7 +595,7 @@ public class IntroduceFactoryRefactoring extends Refactoring {
         else {
             Type baseType= ast.newSimpleType(ast.newSimpleName(ctorTypeName));
             ParameterizedType newInstantiatedType= ast.newParameterizedType(baseType);
-            List/*<Type>*/ newInstTypeArgs= newInstantiatedType.typeArguments();
+            List/*<Type>*/<ASTNode> newInstTypeArgs= newInstantiatedType.typeArguments();
 
             for(int i= 0; i < ctorOwnerTypeParameters.length; i++) {
                 Type typeArg= ASTNodeFactory.newType(ast, ctorOwnerTypeParameters[i].getName());
@@ -623,7 +623,7 @@ public class IntroduceFactoryRefactoring extends Refactoring {
         else {
             Type baseType= ast.newSimpleType(ast.newSimpleName(retTypeName));
             ParameterizedType newRetType= ast.newParameterizedType(baseType);
-            List/*<Type>*/ newRetTypeArgs= newRetType.typeArguments();
+            List/*<Type>*/<ASTNode> newRetTypeArgs= newRetType.typeArguments();
 
             for(int i= 0; i < ctorOwnerTypeParameters.length; i++) {
                 Type retTypeArg= ASTNodeFactory.newType(ast, ctorOwnerTypeParameters[i].getName());
@@ -646,7 +646,7 @@ public class IntroduceFactoryRefactoring extends Refactoring {
 	 * @param newMethod the <code>MethodDeclaration</code> for the factory method
 	 */
 	private void createFactoryMethodSignature(AST ast, MethodDeclaration newMethod) {
-		List argDecls= newMethod.parameters();
+		List<ASTNode> argDecls= newMethod.parameters();
 
 		for(int i=0; i < fArgTypes.length; i++) {
 			SingleVariableDeclaration argDecl= ast.newSingleVariableDeclaration();
@@ -667,7 +667,7 @@ public class IntroduceFactoryRefactoring extends Refactoring {
 		}
 
 		ITypeBinding[] ctorExcepts= fCtorBinding.getExceptionTypes();
-		List exceptions= newMethod.thrownExceptions();
+		List<ASTNode> exceptions= newMethod.thrownExceptions();
 
 		for(int i=0; i < ctorExcepts.length; i++) {
 			String excName= fImportRewriter.addImport(ctorExcepts[i]);
@@ -697,11 +697,11 @@ public class IntroduceFactoryRefactoring extends Refactoring {
 	 */
 	private void copyTypeParameters(AST ast, MethodDeclaration newMethod) {
 		ITypeBinding[] ctorOwnerTypeParms= fCtorBinding.getDeclaringClass().getTypeParameters();
-		List/*<TypeParameter>*/ factoryMethodTypeParms= newMethod.typeParameters();
+		List/*<TypeParameter>*/<ASTNode> factoryMethodTypeParms= newMethod.typeParameters();
 		for(int i= 0; i < ctorOwnerTypeParms.length; i++) {
             TypeParameter newParm= ast.newTypeParameter();
             ITypeBinding[] parmTypeBounds= ctorOwnerTypeParms[i].getTypeBounds();
-            List/*<Type>*/ newParmBounds= newParm.typeBounds();
+            List/*<Type>*/<ASTNode> newParmBounds= newParm.typeBounds();
 
             newParm.setName(ast.newSimpleName(ctorOwnerTypeParms[i].getName()));
             for(int b=0; b < parmTypeBounds.length; b++) {
@@ -745,7 +745,7 @@ public class IntroduceFactoryRefactoring extends Refactoring {
 	 * the factory method
 	 */
 	private void createFactoryMethodConstructorArgs(AST ast, ClassInstanceCreation newCtorCall) {
-		List	argList= newCtorCall.arguments();
+		List<ASTNode>	argList= newCtorCall.arguments();
 
 		for(int i=0; i < fArgTypes.length; i++) {
 			ASTNode	ctorArg= ast.newSimpleName(fFormalArgNames[i]);
@@ -766,8 +766,8 @@ public class IntroduceFactoryRefactoring extends Refactoring {
 													 ASTRewrite unitRewriter, TextEditGroup gd) {
 		MethodInvocation	factoryMethodCall= ast.newMethodInvocation();
 
-		List	actualFactoryArgs= factoryMethodCall.arguments();
-		List	actualCtorArgs= ctorCall.arguments();
+		List<ASTNode>	actualFactoryArgs= factoryMethodCall.arguments();
+		List<ASTNode>	actualCtorArgs= ctorCall.arguments();
 
 		// Need to use a qualified name for the factory method if we're not
 		// in the context of the class holding the factory.
@@ -1131,9 +1131,9 @@ public class IntroduceFactoryRefactoring extends Refactoring {
 	 * @param name
 	 */
 	private boolean hasMethod(AbstractTypeDeclaration type, String name) {
-		List	decls= type.bodyDeclarations();
+		List<ASTNode>	decls= type.bodyDeclarations();
 
-		for (Iterator iter = decls.iterator(); iter.hasNext();) {
+		for (Iterator<ASTNode> iter = decls.iterator(); iter.hasNext();) {
 			BodyDeclaration decl = (BodyDeclaration) iter.next();
 			if (decl instanceof MethodDeclaration) {
 				if (((MethodDeclaration) decl).getName().getIdentifier().equals(name))

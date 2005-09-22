@@ -55,7 +55,7 @@ public class EditVariableEntryDialog extends StatusDialog {
 	
 	private IStatus fNameStatus;
 	
-	private Set fExistingEntries;
+	private Set<IPath> fExistingEntries;
 	private VariablePathDialogField fFileNameField;
 	private CLabel fFullPathResolvedLabel;
 
@@ -67,7 +67,7 @@ public class EditVariableEntryDialog extends StatusDialog {
 		super(parent);
 		setTitle(NewWizardMessages.EditVariableEntryDialog_title); 
 		
-		fExistingEntries= new HashSet();
+		fExistingEntries= new HashSet<IPath>();
 		if (existingEntries != null) {
 			for (int i = 0; i < existingEntries.length; i++) {
 				IPath curr= existingEntries[i];

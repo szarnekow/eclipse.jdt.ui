@@ -44,7 +44,7 @@ public class JavaCompletionProcessor extends ContentAssistProcessor {
 	private final static String VISIBILITY= JavaCore.CODEASSIST_VISIBILITY_CHECK;
 	private final static String ENABLED= "enabled"; //$NON-NLS-1$
 	private final static String DISABLED= "disabled"; //$NON-NLS-1$
-	private static final Set KEYWORDS;
+	private static final Set<String> KEYWORDS;
 	
 	private IContextInformationValidator fValidator;
 
@@ -188,7 +188,7 @@ public class JavaCompletionProcessor extends ContentAssistProcessor {
 	}
 	
 	static {
-		Set keywords= new HashSet(42);
+		Set<String> keywords= new HashSet<String>(42);
 		keywords.add("abstract"); //$NON-NLS-1$
 		keywords.add("assert"); //$NON-NLS-1$
 		keywords.add("break"); //$NON-NLS-1$

@@ -145,7 +145,7 @@ public class OverrideMethodDialog extends SourceActionDialog {
 		 */
 		public Object[] getChildren(Object parentElement) {
 			if (parentElement instanceof ITypeBinding) {
-				ArrayList result= new ArrayList(fMethods.length);
+				ArrayList<IMethodBinding> result= new ArrayList<IMethodBinding>(fMethods.length);
 				for (int index= 0; index < fMethods.length; index++) {
 					if (fMethods[index].getDeclaringClass().isEqualTo((IBinding) parentElement))
 						result.add(fMethods[index]);
@@ -315,18 +315,18 @@ public class OverrideMethodDialog extends SourceActionDialog {
 			if (declaration != null)
 				binding= declaration.resolveBinding();
 		}
-		List toImplement= new ArrayList();
+		List<IMethodBinding> toImplement= new ArrayList<IMethodBinding>();
 		IMethodBinding[] overridable= null;
 		if (binding != null) {
 			final IPackageBinding pack= binding.getPackage();
 			final IMethodBinding[] methods= StubUtility2.getOverridableMethods(fUnit.getAST(), binding, false);
-			List list= new ArrayList(methods.length);
+			List<IMethodBinding> list= new ArrayList<IMethodBinding>(methods.length);
 			for (int index= 0; index < methods.length; index++) {
 				final IMethodBinding cur= methods[index];
 				if (Bindings.isVisibleInHierarchy(cur, pack))
 					list.add(cur);
 			}
-			overridable= (IMethodBinding[]) list.toArray(new IMethodBinding[list.size()]);
+			overridable= list.toArray(new IMethodBinding[list.size()]);
 		} else
 			overridable= new IMethodBinding[] {};
 		for (int i= 0; i < overridable.length; i++) {
@@ -347,20 +347,20 @@ public class OverrideMethodDialog extends SourceActionDialog {
 			}
 		}
 
-		IMethodBinding[] toImplementArray= (IMethodBinding[]) toImplement.toArray(new IMethodBinding[toImplement.size()]);
+		IMethodBinding[] toImplementArray= toImplement.toArray(new IMethodBinding[toImplement.size()]);
 		setInitialSelections(toImplementArray);
 
-		HashSet expanded= new HashSet(toImplementArray.length);
+		HashSet<ITypeBinding> expanded= new HashSet<ITypeBinding>(toImplementArray.length);
 		for (int i= 0; i < toImplementArray.length; i++) {
 			expanded.add(toImplementArray[i].getDeclaringClass());
 		}
 
-		HashSet types= new HashSet(overridable.length);
+		HashSet<ITypeBinding> types= new HashSet<ITypeBinding>(overridable.length);
 		for (int i= 0; i < overridable.length; i++) {
 			types.add(overridable[i].getDeclaringClass());
 		}
 
-		ITypeBinding[] typesArrays= (ITypeBinding[]) types.toArray(new ITypeBinding[types.size()]);
+		ITypeBinding[] typesArrays= types.toArray(new ITypeBinding[types.size()]);
 		ViewerSorter sorter= new OverrideMethodSorter(binding);
 		if (expanded.isEmpty() && typesArrays.length > 0) {
 			sorter.sort(null, typesArrays);

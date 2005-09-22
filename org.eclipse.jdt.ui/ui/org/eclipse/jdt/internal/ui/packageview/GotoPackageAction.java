@@ -84,8 +84,8 @@ class GotoPackageAction extends Action {
 		IWorkspaceRoot wsroot= JavaPlugin.getWorkspace().getRoot();
 		IJavaModel model= JavaCore.create(wsroot);
 		IJavaProject[] projects= model.getJavaProjects();
-		Set set= new HashSet(); 
-		List allPackages= new ArrayList();
+		Set<IPackageFragmentRoot> set= new HashSet<IPackageFragmentRoot>(); 
+		List<IJavaElement> allPackages= new ArrayList<IJavaElement>();
 		for (int i= 0; i < projects.length; i++) {
 			IPackageFragmentRoot[] roots= projects[i].getPackageFragmentRoots();	
 			for (int j= 0; j < roots.length; j++) {
@@ -100,7 +100,7 @@ class GotoPackageAction extends Action {
 		return allPackages.toArray();
 	}
 	
-	private void appendPackages(List all, IJavaElement[] packages) {
+	private void appendPackages(List<IJavaElement> all, IJavaElement[] packages) {
 		for (int i= 0; i < packages.length; i++) {
 			IJavaElement element= packages[i];
 			if (!isFiltered(element))

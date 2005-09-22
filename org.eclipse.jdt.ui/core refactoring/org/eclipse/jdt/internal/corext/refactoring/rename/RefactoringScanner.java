@@ -31,7 +31,7 @@ public class RefactoringScanner {
 	
 	private IScanner fScanner;
 	private ISourceRange fNoFlyZone; // don't scan in ImportContainer (sometimes edited by ImportStructure)
-	private Set fMatches; //Set<Integer>, start positions
+	private Set<Integer> fMatches; //Set<Integer>, start positions
 
 	
 	public RefactoringScanner(String name, String qualifier) {
@@ -43,7 +43,7 @@ public class RefactoringScanner {
 	
 	public void scan(ICompilationUnit cu)	throws JavaModelException {
 		char[] chars= cu.getBuffer().getCharacters();
-		fMatches= new HashSet();
+		fMatches= new HashSet<Integer>();
 		fScanner= ToolFactory.createScanner(true, true, false, true);
 		fScanner.setSource(chars);
 
@@ -60,7 +60,7 @@ public class RefactoringScanner {
 	/** only for testing */
 	public void scan(String text) {
 		char[] chars= text.toCharArray();
-		fMatches= new HashSet();
+		fMatches= new HashSet<Integer>();
 		fScanner= ToolFactory.createScanner(true, true, false, true);
 		fScanner.setSource(chars);
 		doScan();
@@ -164,7 +164,7 @@ public class RefactoringScanner {
 	/**
 	 * @return Set of Integer (start positions of matches)
 	 */
-	public Set getMatches() {
+	public Set<Integer> getMatches() {
 		return fMatches;
 	}
 }

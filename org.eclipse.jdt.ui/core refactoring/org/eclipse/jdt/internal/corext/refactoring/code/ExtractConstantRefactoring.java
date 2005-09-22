@@ -120,7 +120,7 @@ public class ExtractConstantRefactoring extends Refactoring {
 	private boolean fSelectionAllStaticFinal;
 	private boolean fAllStaticFinalCheckPerformed= false;
 	
-	private List fBodyDeclarations;
+	private List<ASTNode> fBodyDeclarations;
 	
 	//Constant Declaration Location
 	private BodyDeclaration fToInsertAfter;
@@ -606,7 +606,7 @@ public class ExtractConstantRefactoring extends Refactoring {
 			return;
 
 		BodyDeclaration lastStaticDependency= null;
-		Iterator decls= getBodyDeclarations();
+		Iterator<ASTNode> decls= getBodyDeclarations();
 		
 		Assert.isTrue(decls.hasNext()); /* Admissible selected expressions must occur
 		                                   within a body declaration.  Thus, the 
@@ -654,7 +654,7 @@ public class ExtractConstantRefactoring extends Refactoring {
 		
 		if(bd instanceof FieldDeclaration) {
 			FieldDeclaration fieldDecl = (FieldDeclaration) bd;
-			for(Iterator fragments = fieldDecl.fragments().iterator(); fragments.hasNext();) {
+			for(Iterator<ASTNode> fragments = fieldDecl.fragments().iterator(); fragments.hasNext();) {
 				VariableDeclarationFragment fragment = (VariableDeclarationFragment) fragments.next();
 				SimpleName staticFieldName = fragment.getName();
 				if(selected.getSubFragmentsMatching(ASTFragmentFactory.createFragmentForFullSubtree(staticFieldName)).length != 0)
@@ -680,7 +680,7 @@ public class ExtractConstantRefactoring extends Refactoring {
 		return fToInsertAfter;
 	}
 	
-	private Iterator getBodyDeclarations() throws JavaModelException {
+	private Iterator<ASTNode> getBodyDeclarations() throws JavaModelException {
 		if(fBodyDeclarations == null)
 			fBodyDeclarations= getContainingTypeDeclarationNode().bodyDeclarations();
 		return fBodyDeclarations.iterator();
@@ -713,11 +713,11 @@ public class ExtractConstantRefactoring extends Refactoring {
 	 *   Elements returned by next() are BodyDeclaration
 	 *   instances.
 	 */
-	private Iterator getReplacementScope() throws JavaModelException {
+	private Iterator<BodyDeclaration> getReplacementScope() throws JavaModelException {
 		boolean declPredecessorReached= false;
 		
-		Collection scope= new ArrayList();
-		for(Iterator bodyDeclarations = getBodyDeclarations(); bodyDeclarations.hasNext();) {
+		Collection<BodyDeclaration> scope= new ArrayList<BodyDeclaration>();
+		for(Iterator<ASTNode> bodyDeclarations = getBodyDeclarations(); bodyDeclarations.hasNext();) {
 		    BodyDeclaration bodyDeclaration= (BodyDeclaration) bodyDeclarations.next();
 		    
 		    if(bodyDeclaration == getNodeToInsertConstantDeclarationAfter())
@@ -730,11 +730,11 @@ public class ExtractConstantRefactoring extends Refactoring {
 	}
 
 	private IASTFragment[] getFragmentsToReplace() throws JavaModelException {
-		List toReplace = new ArrayList();
+		List<IASTFragment> toReplace = new ArrayList<IASTFragment>();
 		if (fReplaceAllOccurrences) {
-			Iterator replacementScope = getReplacementScope();
+			Iterator<BodyDeclaration> replacementScope = getReplacementScope();
 			while(replacementScope.hasNext()) {
-				BodyDeclaration bodyDecl = (BodyDeclaration) replacementScope.next();
+				BodyDeclaration bodyDecl = replacementScope.next();
 				IASTFragment[] allMatches= ASTFragmentFactory.createFragmentForFullSubtree(bodyDecl).getSubFragmentsMatching(getSelectedExpression());
 				IASTFragment[] replaceableMatches = retainOnlyReplacableMatches(allMatches);
 				for(int i = 0; i < replaceableMatches.length; i++)
@@ -742,17 +742,17 @@ public class ExtractConstantRefactoring extends Refactoring {
 			}
 		} else if (canReplace(getSelectedExpression()))
 			toReplace.add(getSelectedExpression());
-		return (IASTFragment[]) toReplace.toArray(new IASTFragment[toReplace.size()]);
+		return toReplace.toArray(new IASTFragment[toReplace.size()]);
 	}
 
 	// !! - like one in ExtractTempRefactoring
 	private static IASTFragment[] retainOnlyReplacableMatches(IASTFragment[] allMatches) {
-		List result= new ArrayList(allMatches.length);
+		List<IASTFragment> result= new ArrayList<IASTFragment>(allMatches.length);
 		for (int i= 0; i < allMatches.length; i++) {
 			if (canReplace(allMatches[i]))
 				result.add(allMatches[i]);
 		}
-		return (IASTFragment[]) result.toArray(new IASTFragment[result.size()]);
+		return result.toArray(new IASTFragment[result.size()]);
 	}
 
 	// !! - like one in ExtractTempRefactoring

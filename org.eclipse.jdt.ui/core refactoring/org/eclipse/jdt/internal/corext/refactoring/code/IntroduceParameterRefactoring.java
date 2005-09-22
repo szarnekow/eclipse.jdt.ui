@@ -187,7 +187,7 @@ public class IntroduceParameterRefactoring extends Refactoring {
 		String defaultValue= fSourceCU.getBuffer().getText(fSelectedExpression.getStartPosition(), fSelectedExpression.getLength());
 		fParameter.setDefaultValue(defaultValue);
 		
-		List parameterInfos= fChangeSignatureRefactoring.getParameterInfos();
+		List<Object> parameterInfos= fChangeSignatureRefactoring.getParameterInfos();
 		int parametersCount= parameterInfos.size();
 		if (parametersCount > 0 &&
 				((ParameterInfo) parameterInfos.get(parametersCount - 1)).isOldVarargs())
@@ -311,7 +311,7 @@ public class IntroduceParameterRefactoring extends Refactoring {
 		}		
 	}	
 
-	public List getParameterInfos() {
+	public List<Object> getParameterInfos() {
 		return fChangeSignatureRefactoring.getParameterInfos();
 	}
 	

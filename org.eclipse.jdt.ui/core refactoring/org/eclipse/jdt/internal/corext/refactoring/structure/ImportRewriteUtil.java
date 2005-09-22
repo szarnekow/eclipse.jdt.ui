@@ -46,7 +46,7 @@ public final class ImportRewriteUtil {
 	 * @param staticImports the map of name nodes to strings (element type: Map <Name, String>).
 	 * @param declarations <code>true</code> if method declarations are treated as abstract, <code>false</code> otherwise
 	 */
-	public static void addImports(final CompilationUnitRewrite rewrite, final ASTNode node, final Map typeImports, final Map staticImports, final boolean declarations) {
+	public static void addImports(final CompilationUnitRewrite rewrite, final ASTNode node, final Map<Name, String> typeImports, final Map<Name, String> staticImports, final boolean declarations) {
 		addImports(rewrite, node, typeImports, staticImports, null, declarations);
 	}
 
@@ -60,7 +60,7 @@ public final class ImportRewriteUtil {
 	 * @param excludeBindings the set of bindings to exclude (element type: Set <IBinding>).
 	 * @param declarations <code>true</code> if method declarations are treated as abstract, <code>false</code> otherwise
 	 */
-	public static void addImports(final CompilationUnitRewrite rewrite, final ASTNode node, final Map typeImports, final Map staticImports, final Collection excludeBindings, final boolean declarations) {
+	public static void addImports(final CompilationUnitRewrite rewrite, final ASTNode node, final Map<Name, String> typeImports, final Map<Name, String> staticImports, final Collection<IBinding> excludeBindings, final boolean declarations) {
 		Assert.isNotNull(rewrite);
 		Assert.isNotNull(node);
 		Assert.isNotNull(typeImports);
@@ -122,7 +122,7 @@ public final class ImportRewriteUtil {
 	 * @param staticBindings the set of bindings (element type: Set <IBinding>).
 	 * @param declarations <code>true</code> if method declarations are treated as abstract, <code>false</code> otherwise
 	 */
-	public static void collectImports(final IJavaProject project, final ASTNode node, final Collection typeBindings, final Collection staticBindings, final boolean declarations) {
+	public static void collectImports(final IJavaProject project, final ASTNode node, final Collection<ITypeBinding> typeBindings, final Collection<IBinding> staticBindings, final boolean declarations) {
 		collectImports(project, node, typeBindings, staticBindings, null, declarations);
 	}
 
@@ -136,7 +136,7 @@ public final class ImportRewriteUtil {
 	 * @param excludeBindings the set of bindings to exclude (element type: Set <IBinding>).
 	 * @param declarations <code>true</code> if method declarations are treated as abstract, <code>false</code> otherwise
 	 */
-	public static void collectImports(final IJavaProject project, final ASTNode node, final Collection typeBindings, final Collection staticBindings, final Collection excludeBindings, final boolean declarations) {
+	public static void collectImports(final IJavaProject project, final ASTNode node, final Collection<ITypeBinding> typeBindings, final Collection<IBinding> staticBindings, final Collection excludeBindings, final boolean declarations) {
 		Assert.isNotNull(project);
 		Assert.isNotNull(node);
 		Assert.isNotNull(typeBindings);

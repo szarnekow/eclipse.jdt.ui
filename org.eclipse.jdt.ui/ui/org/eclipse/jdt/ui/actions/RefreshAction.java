@@ -113,7 +113,7 @@ public class RefreshAction extends SelectionDispatchAction {
 			public void run(IProgressMonitor monitor) throws CoreException {
 				monitor.beginTask(ActionMessages.RefreshAction_progressMessage, resources.length * 2); 
 				monitor.subTask(""); //$NON-NLS-1$
-				List javaElements= new ArrayList(5);
+				List<IJavaElement> javaElements= new ArrayList<IJavaElement>(5);
 				for (int r= 0; r < resources.length; r++) {
 					IResource resource= resources[r];
 					if (resource.getType() == IResource.PROJECT) {
@@ -131,7 +131,7 @@ public class RefreshAction extends SelectionDispatchAction {
 				}
 				IJavaModel model= JavaCore.create(ResourcesPlugin.getWorkspace().getRoot());
 				model.refreshExternalArchives(
-					(IJavaElement[]) javaElements.toArray(new IJavaElement[javaElements.size()]),
+					javaElements.toArray(new IJavaElement[javaElements.size()]),
 					new SubProgressMonitor(monitor, resources.length));
 			}
 		};
@@ -152,19 +152,19 @@ public class RefreshAction extends SelectionDispatchAction {
 			return new IResource[] {ResourcesPlugin.getWorkspace().getRoot()};
 		}
 		
-		List result= new ArrayList(selection.size());
+		List<IResource> result= new ArrayList<IResource>(selection.size());
 		getResources(result, selection.toArray());
 		
-		for (Iterator iter= result.iterator(); iter.hasNext();) {
-			IResource resource= (IResource) iter.next();
+		for (Iterator<IResource> iter= result.iterator(); iter.hasNext();) {
+			IResource resource= iter.next();
 			if (isDescendent(result, resource))
 				iter.remove();			
 		}
 		
-		return (IResource[]) result.toArray(new IResource[result.size()]);
+		return result.toArray(new IResource[result.size()]);
 	}
 	
-	private void getResources(List result, Object[] elements) {
+	private void getResources(List<IResource> result, Object[] elements) {
 		for (int i= 0; i < elements.length; i++) {
 			Object element= elements[i];
 			// Must check working set before IAdaptable since WorkingSet
@@ -183,7 +183,7 @@ public class RefreshAction extends SelectionDispatchAction {
 		}
 	}
 	
-	private boolean isDescendent(List candidates, IResource element) {
+	private boolean isDescendent(List<IResource> candidates, IResource element) {
 		IResource parent= element.getParent();
 		while (parent != null) {
 			if (candidates.contains(parent))

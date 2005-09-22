@@ -64,7 +64,7 @@ public class ContentAssistProcessor implements IContentAssistProcessor {
 		
 	};
 	
-	private final List fCategories;
+	private final List<CompletionProposalCategory> fCategories;
 	private final String fPartition;
 	private char[] fCompletionAutoActivationCharacters;
 	private int fRepetition;
@@ -114,8 +114,8 @@ public class ContentAssistProcessor implements IContentAssistProcessor {
 		if (selection == 0) {
 			// default mix - enable all included computers
 			List included= new ArrayList();
-			for (Iterator it= fCategories.iterator(); it.hasNext();) {
-				CompletionProposalCategory category= (CompletionProposalCategory) it.next();
+			for (Iterator<CompletionProposalCategory> it= fCategories.iterator(); it.hasNext();) {
+				CompletionProposalCategory category= it.next();
 				if (category.isIncluded())
 					included.add(category);
 			}
@@ -278,8 +278,8 @@ public class ContentAssistProcessor implements IContentAssistProcessor {
 
 	private List getSeparateCategories() {
 		ArrayList sorted= new ArrayList();
-		for (Iterator it= fCategories.iterator(); it.hasNext();) {
-			CompletionProposalCategory category= (CompletionProposalCategory) it.next();
+		for (Iterator<CompletionProposalCategory> it= fCategories.iterator(); it.hasNext();) {
+			CompletionProposalCategory category= it.next();
 			if (isSeparateCategory(category))
 				sorted.add(category);
 		}

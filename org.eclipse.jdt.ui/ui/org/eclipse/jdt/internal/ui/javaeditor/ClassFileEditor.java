@@ -106,8 +106,8 @@ public class ClassFileEditor extends JavaEditor implements ClassFileDocumentProv
 			private Color fBackgroundColor;
 			private Color fForegroundColor;
 			private Color fSeparatorColor;
-			private List fBannerLabels= new ArrayList();
-			private List fHeaderLabels= new ArrayList();
+			private List<Label> fBannerLabels= new ArrayList<Label>();
+			private List<Label> fHeaderLabels= new ArrayList<Label>();
 			private Font fFont;
 
 			/**
@@ -304,13 +304,13 @@ public class ClassFileEditor extends JavaEditor implements ClassFileDocumentProv
 			 */
 			public void propertyChange(PropertyChangeEvent event) {
 
-				for (Iterator iterator = fBannerLabels.iterator(); iterator.hasNext();) {
-					Label label = (Label) iterator.next();
+				for (Iterator<Label> iterator = fBannerLabels.iterator(); iterator.hasNext();) {
+					Label label = iterator.next();
 					label.setFont(JFaceResources.getBannerFont());
 				}
 
-				for (Iterator iterator = fHeaderLabels.iterator(); iterator.hasNext();) {
-					Label label = (Label) iterator.next();
+				for (Iterator<Label> iterator = fHeaderLabels.iterator(); iterator.hasNext();) {
+					Label label = iterator.next();
 					label.setFont(JFaceResources.getHeaderFont());
 				}
 

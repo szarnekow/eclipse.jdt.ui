@@ -87,9 +87,9 @@ public abstract class FlowInfo {
 
 	protected int fReturnKind;
 	protected int[] fAccessModes;
-	protected Set fBranches;
-	protected Set fExceptions;
-	protected Set fTypeVariables;
+	protected Set<Object> fBranches;
+	protected Set<Object> fExceptions;
+	protected Set<Object> fTypeVariables;
 	
 	protected FlowInfo() {
 		this(UNDEFINED);
@@ -168,7 +168,7 @@ public abstract class FlowInfo {
 		return fBranches != null && !fBranches.isEmpty();
 	}
 	
-	protected Set getBranches() {
+	protected Set<Object> getBranches() {
 		return fBranches;
 	}
 	
@@ -192,7 +192,7 @@ public abstract class FlowInfo {
 	public ITypeBinding[] getExceptions() {
 		if (fExceptions == null)
 			return new ITypeBinding[0];
-		return (ITypeBinding[]) fExceptions.toArray(new ITypeBinding[fExceptions.size()]);
+		return fExceptions.toArray(new ITypeBinding[fExceptions.size()]);
 	}
 
 	protected boolean hasUncaughtException() {
@@ -201,7 +201,7 @@ public abstract class FlowInfo {
 	
 	protected void addException(ITypeBinding type) {
 		if (fExceptions == null)
-			fExceptions= new HashSet(2);
+			fExceptions= new HashSet<Object>(2);
 		fExceptions.add(type);
 	}
 	
@@ -209,11 +209,11 @@ public abstract class FlowInfo {
 		if (fExceptions == null)
 			return;
 			
-		List catchClauses= node.catchClauses();
+		List<CatchClause> catchClauses= node.catchClauses();
 		if (catchClauses.isEmpty())
 			return;
 		// Make sure we have a copy since we are modifing the fExceptions list	
-		ITypeBinding[] exceptions= (ITypeBinding[]) fExceptions.toArray(new ITypeBinding[fExceptions.size()]);
+		ITypeBinding[] exceptions= fExceptions.toArray(new ITypeBinding[fExceptions.size()]);
 		for (int i= 0; i < exceptions.length; i++) {
 			handleException(catchClauses, exceptions[i]);
 		}
@@ -221,9 +221,9 @@ public abstract class FlowInfo {
 			fExceptions= null;
 	}
 
-	private void handleException(List catchClauses, ITypeBinding type) {
-		for (Iterator iter= catchClauses.iterator(); iter.hasNext();) {
-			IVariableBinding binding= ((CatchClause)iter.next()).getException().resolveBinding();
+	private void handleException(List<CatchClause> catchClauses, ITypeBinding type) {
+		for (Iterator<CatchClause> iter= catchClauses.iterator(); iter.hasNext();) {
+			IVariableBinding binding= iter.next().getException().resolveBinding();
 			if (binding == null)
 				continue;
 			ITypeBinding catchedType= binding.getType();
@@ -242,12 +242,12 @@ public abstract class FlowInfo {
 	public ITypeBinding[] getTypeVariables() {
 		if (fTypeVariables == null)
 			return new ITypeBinding[0];
-		return (ITypeBinding[])fTypeVariables.toArray(new ITypeBinding[fTypeVariables.size()]);
+		return fTypeVariables.toArray(new ITypeBinding[fTypeVariables.size()]);
 	}
 	
 	protected void addTypeVariable(ITypeBinding typeParameter) {
 		if (fTypeVariables == null)
-			fTypeVariables= new HashSet();
+			fTypeVariables= new HashSet<Object>();
 		fTypeVariables.add(typeParameter);
 	}
 	
@@ -284,12 +284,12 @@ public abstract class FlowInfo {
 		fExceptions= mergeSets(fExceptions, otherInfo.fExceptions);
 	}
 	
-	private static Set mergeSets(Set thisSet, Set otherSet) {
+	private static Set<Object> mergeSets(Set<Object> thisSet, Set<Object> otherSet) {
 		if (otherSet != null) {
 			if (thisSet == null) {
 				thisSet= otherSet;
 			} else {
-				Iterator iter= otherSet.iterator();
+				Iterator<Object> iter= otherSet.iterator();
 				while (iter.hasNext()) {
 					thisSet.add(iter.next());
 				}
@@ -310,7 +310,7 @@ public abstract class FlowInfo {
 	 * @return an array of local variable bindings conforming to the given type.
 	 */
 	public IVariableBinding[] get(FlowContext context, int mode) {
-		List result= new ArrayList();
+		List<IVariableBinding> result= new ArrayList<IVariableBinding>();
 		int[] locals= getAccessModes();
 		if (locals == null)
 			return EMPTY_ARRAY;
@@ -319,7 +319,7 @@ public abstract class FlowInfo {
 			if ((accessMode & mode) != 0)
 				result.add(context.getLocalFromIndex(i));
 		}
-		return (IVariableBinding[])result.toArray(new IVariableBinding[result.size()]);
+		return result.toArray(new IVariableBinding[result.size()]);
 	}
 	
 	/**

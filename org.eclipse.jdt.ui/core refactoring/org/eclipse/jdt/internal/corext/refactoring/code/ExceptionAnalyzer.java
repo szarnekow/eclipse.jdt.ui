@@ -29,8 +29,8 @@ import org.eclipse.jdt.internal.corext.refactoring.util.AbstractExceptionAnalyze
 		for (int i= 0; i < statements.length; i++) {
 			statements[i].accept(analyzer);
 		}
-		List exceptions= analyzer.getCurrentExceptions();
-		return (ITypeBinding[]) exceptions.toArray(new ITypeBinding[exceptions.size()]);
+		List<ITypeBinding> exceptions= analyzer.getCurrentExceptions();
+		return exceptions.toArray(new ITypeBinding[exceptions.size()]);
 	}
 
 	public boolean visit(ThrowStatement node) {

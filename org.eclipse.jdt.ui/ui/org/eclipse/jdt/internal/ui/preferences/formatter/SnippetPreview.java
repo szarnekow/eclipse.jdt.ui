@@ -43,11 +43,11 @@ public class SnippetPreview extends JavaPreview {
         }
     }
     
-    private ArrayList fSnippets;
+    private ArrayList<Object> fSnippets;
 
     public SnippetPreview(Map workingValues, Composite parent) {
         super(workingValues, parent);
-        fSnippets= new ArrayList();
+        fSnippets= new ArrayList<Object>();
     }
 
     protected void doFormatPreview() {
@@ -59,7 +59,7 @@ public class SnippetPreview extends JavaPreview {
         final String delimiter= TextUtilities.getDefaultLineDelimiter(fPreviewDocument);
         
         final StringBuffer buffer= new StringBuffer();
-        for (final Iterator iter= fSnippets.iterator(); iter.hasNext();) {
+        for (final Iterator<Object> iter= fSnippets.iterator(); iter.hasNext();) {
             final PreviewSnippet snippet= (PreviewSnippet) iter.next();
             String formattedSource;
             try {
@@ -88,7 +88,7 @@ public class SnippetPreview extends JavaPreview {
         fSnippets.remove(snippet);
     }
     
-    public void addAll(Collection snippets) {
+    public void addAll(Collection<Object> snippets) {
         fSnippets.addAll(snippets);
     }
     

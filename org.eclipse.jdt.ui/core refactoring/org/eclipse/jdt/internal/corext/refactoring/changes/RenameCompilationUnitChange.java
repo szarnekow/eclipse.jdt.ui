@@ -81,7 +81,7 @@ public class RenameCompilationUnitChange extends AbstractJavaElementRenameChange
 	 * @see org.eclipse.ltk.core.refactoring.Change#getRefactoringDescriptor()
 	 */
 	public RefactoringDescriptor getRefactoringDescriptor() {
-		final Map arguments= new HashMap();
+		final Map<String, String> arguments= new HashMap<String, String>();
 		arguments.put(ATTRIBUTE_PATH, getResourcePath().toPortableString());
 		arguments.put(ATTRIBUTE_NAME, getNewName());
 		return new RefactoringDescriptor(ID_RENAME_COMPILATION_UNIT, getResource().getProject().getName(), MessageFormat.format(RefactoringCoreMessages.RenameCompilationUnitChange_descriptor_description, new String[] { getOldName(), getNewName()}), null, arguments);

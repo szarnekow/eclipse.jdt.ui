@@ -50,13 +50,13 @@ import org.eclipse.jdt.internal.ui.javaeditor.IClassFileEditorInput;
 
 public class JavaSearchResult extends AbstractTextSearchResult implements IEditorMatchAdapter, IFileMatchAdapter {
 	private JavaSearchQuery fQuery;
-	private Map fElementsToParticipants;
+	private Map<Object, IMatchPresentation> fElementsToParticipants;
 	private static final Match[] NO_MATCHES= new Match[0];
 	private ISearchResultListener fFilterListener;
 	
 	public JavaSearchResult(JavaSearchQuery query) {
 		fQuery= query;
-		fElementsToParticipants= new HashMap();
+		fElementsToParticipants= new HashMap<Object, IMatchPresentation>();
 	}
 
 	public ImageDescriptor getImageDescriptor() {
@@ -88,9 +88,9 @@ public class JavaSearchResult extends AbstractTextSearchResult implements IEdito
 			return computeContainedMatches(result, fileEditorInput.getFile());
 		} else if (editorInput instanceof IClassFileEditorInput) {
 			IClassFileEditorInput classFileEditorInput= (IClassFileEditorInput) editorInput;
-			Set matches= new HashSet();
+			Set<Match> matches= new HashSet<Match>();
 			collectMatches(matches, classFileEditorInput.getClassFile());
-			return (Match[]) matches.toArray(new Match[matches.size()]);
+			return matches.toArray(new Match[matches.size()]);
 		}
 		return null;
 	}
@@ -99,12 +99,12 @@ public class JavaSearchResult extends AbstractTextSearchResult implements IEdito
 		IJavaElement javaElement= JavaCore.create(file);
 		if (!(javaElement instanceof ICompilationUnit || javaElement instanceof IClassFile))
 			return NO_MATCHES;
-		Set matches= new HashSet();
+		Set<Match> matches= new HashSet<Match>();
 		collectMatches(matches, javaElement);
-		return (Match[]) matches.toArray(new Match[matches.size()]);
+		return matches.toArray(new Match[matches.size()]);
 	}
 	
-	private void collectMatches(Set matches, IJavaElement element) {
+	private void collectMatches(Set<Match> matches, IJavaElement element) {
 		Match[] m= getMatches(element);
 		if (m.length != 0) {
 			for (int i= 0; i < m.length; i++) {
@@ -191,7 +191,7 @@ public class JavaSearchResult extends AbstractTextSearchResult implements IEdito
 	}
 	
 	synchronized IMatchPresentation getSearchParticpant(Object element) {
-		return (IMatchPresentation) fElementsToParticipants.get(element);
+		return fElementsToParticipants.get(element);
 	}
 
 	boolean addMatch(Match match, IMatchPresentation participant) {

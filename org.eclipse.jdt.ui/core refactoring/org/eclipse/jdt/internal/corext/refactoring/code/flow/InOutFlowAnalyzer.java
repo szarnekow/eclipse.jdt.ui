@@ -76,7 +76,7 @@ public class InOutFlowAnalyzer extends FlowAnalyzer {
 	public void endVisit(MethodDeclaration node) {
 		super.endVisit(node);
 		FlowInfo info= accessFlowInfo(node);
-		for (Iterator iter= node.parameters().iterator(); iter.hasNext();) {
+		for (Iterator<ASTNode> iter= node.parameters().iterator(); iter.hasNext();) {
 			clearAccessMode(info, (SingleVariableDeclaration)iter.next());
 		}
 	}
@@ -87,12 +87,12 @@ public class InOutFlowAnalyzer extends FlowAnalyzer {
 			info.clearAccessMode(binding, fFlowContext);
 	}
 	
-	private void clearAccessMode(FlowInfo info, List nodes) {
+	private void clearAccessMode(FlowInfo info, List<ASTNode> nodes) {
 		if (nodes== null || nodes.isEmpty() || info == null)
 			return;
-		for (Iterator iter= nodes.iterator(); iter.hasNext(); ) {
+		for (Iterator<ASTNode> iter= nodes.iterator(); iter.hasNext(); ) {
 			Object node= iter.next();
-			Iterator fragments= null;
+			Iterator<ASTNode> fragments= null;
 			if (node instanceof VariableDeclarationStatement) {
 				fragments= ((VariableDeclarationStatement)node).fragments().iterator();
 			} else if (node instanceof VariableDeclarationExpression) {

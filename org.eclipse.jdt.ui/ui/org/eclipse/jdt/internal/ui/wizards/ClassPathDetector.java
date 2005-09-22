@@ -53,9 +53,9 @@ import org.eclipse.jdt.ui.PreferenceConstants;
   */
 public class ClassPathDetector implements IResourceProxyVisitor {
 		
-	private HashMap fSourceFolders;
-	private List fClassFiles;
-	private HashSet fJARFiles;
+	private HashMap<IPath, List> fSourceFolders;
+	private List<IResource> fClassFiles;
+	private HashSet<IPath> fJARFiles;
 		
 	private IProject fProject;
 		
@@ -75,9 +75,9 @@ public class ClassPathDetector implements IResourceProxyVisitor {
 	
 	
 	public ClassPathDetector(IProject project, IProgressMonitor monitor) throws CoreException {
-		fSourceFolders= new HashMap();
-		fJARFiles= new HashSet(10);
-		fClassFiles= new ArrayList(100);
+		fSourceFolders= new HashMap<IPath, List>();
+		fJARFiles= new HashSet<IPath>(10);
+		fClassFiles= new ArrayList<IResource>(100);
 		fProject= project;
 			
 		fResultClasspath= null;
@@ -91,9 +91,9 @@ public class ClassPathDetector implements IResourceProxyVisitor {
 	}
 	
 	
-	private boolean isNested(IPath path, Iterator iter) {
+	private boolean isNested(IPath path, Iterator<IPath> iter) {
 		while (iter.hasNext()) {
-			IPath other= (IPath) iter.next();
+			IPath other= iter.next();
 			if (other.isPrefixOf(path)) {
 				return true;
 			}
@@ -114,7 +114,7 @@ public class ClassPathDetector implements IResourceProxyVisitor {
 			fProject.accept(this, IResource.NONE);
 			monitor.worked(1);
 			
-			ArrayList cpEntries= new ArrayList();
+			ArrayList<IClasspathEntry> cpEntries= new ArrayList<IClasspathEntry>();
 
 			detectSourceFolders(cpEntries);
 			if (monitor.isCanceled()) {
@@ -143,7 +143,7 @@ public class ClassPathDetector implements IResourceProxyVisitor {
 				cpEntries.add(jreEntries[i]);
 			}
 
-			IClasspathEntry[] entries= (IClasspathEntry[]) cpEntries.toArray(new IClasspathEntry[cpEntries.size()]);
+			IClasspathEntry[] entries= cpEntries.toArray(new IClasspathEntry[cpEntries.size()]);
 			if (!JavaConventions.validateClasspath(JavaCore.create(fProject), entries, outputLocation).isOK()) {
 				return;
 			}
@@ -156,10 +156,10 @@ public class ClassPathDetector implements IResourceProxyVisitor {
 	}
 	
 	private IPath findInSourceFolders(IPath path) {
-		Iterator iter= fSourceFolders.keySet().iterator();
+		Iterator<IPath> iter= fSourceFolders.keySet().iterator();
 		while (iter.hasNext()) {
 			Object key= iter.next();
-			List cus= (List) fSourceFolders.get(key);
+			List cus= fSourceFolders.get(key);
 			if (cus.contains(path)) {
 				return (IPath) key;
 			}
@@ -167,10 +167,10 @@ public class ClassPathDetector implements IResourceProxyVisitor {
 		return null;
 	}
 	
-	private IPath detectOutputFolder(List entries) {
-		HashSet classFolders= new HashSet();
+	private IPath detectOutputFolder(List<IClasspathEntry> entries) {
+		HashSet<IPath> classFolders= new HashSet<IPath>();
 		
-		for (Iterator iter= fClassFiles.iterator(); iter.hasNext();) {
+		for (Iterator<IResource> iter= fClassFiles.iterator(); iter.hasNext();) {
 			IFile file= (IFile) iter.next();
 			IPath location= file.getLocation();
 			if (location == null) {
@@ -221,11 +221,11 @@ public class ClassPathDetector implements IResourceProxyVisitor {
 	}
 
 
-	private void detectLibraries(ArrayList cpEntries, IPath outputLocation) {
-		ArrayList res= new ArrayList();
-		Set sourceFolderSet= fSourceFolders.keySet();
-		for (Iterator iter= fJARFiles.iterator(); iter.hasNext();) {
-			IPath path= (IPath) iter.next();
+	private void detectLibraries(ArrayList<IClasspathEntry> cpEntries, IPath outputLocation) {
+		ArrayList<IClasspathEntry> res= new ArrayList<IClasspathEntry>();
+		Set<IPath> sourceFolderSet= fSourceFolders.keySet();
+		for (Iterator<IPath> iter= fJARFiles.iterator(); iter.hasNext();) {
+			IPath path= iter.next();
 			if (isNested(path, sourceFolderSet.iterator())) {
 				continue;
 			}
@@ -240,20 +240,20 @@ public class ClassPathDetector implements IResourceProxyVisitor {
 	}
 
 
-	private void detectSourceFolders(ArrayList resEntries) {
-		ArrayList res= new ArrayList();
-		Set sourceFolderSet= fSourceFolders.keySet();
-		for (Iterator iter= sourceFolderSet.iterator(); iter.hasNext();) {
-			IPath path= (IPath) iter.next();
-			ArrayList excluded= new ArrayList();
-			for (Iterator inner= sourceFolderSet.iterator(); inner.hasNext();) {
-				IPath other= (IPath) inner.next();
+	private void detectSourceFolders(ArrayList<IClasspathEntry> resEntries) {
+		ArrayList<IClasspathEntry> res= new ArrayList<IClasspathEntry>();
+		Set<IPath> sourceFolderSet= fSourceFolders.keySet();
+		for (Iterator<IPath> iter= sourceFolderSet.iterator(); iter.hasNext();) {
+			IPath path= iter.next();
+			ArrayList<IPath> excluded= new ArrayList<IPath>();
+			for (Iterator<IPath> inner= sourceFolderSet.iterator(); inner.hasNext();) {
+				IPath other= inner.next();
 				if (!path.equals(other) && path.isPrefixOf(other)) {
 					IPath pathToExclude= other.removeFirstSegments(path.segmentCount()).addTrailingSeparator();
 					excluded.add(pathToExclude);
 				}
 			}
-			IPath[] excludedPaths= (IPath[]) excluded.toArray(new IPath[excluded.size()]);
+			IPath[] excludedPaths= excluded.toArray(new IPath[excluded.size()]);
 			IClasspathEntry entry= JavaCore.newSourceEntry(path, excludedPaths);
 			res.add(entry);
 		}
@@ -316,10 +316,10 @@ public class ClassPathDetector implements IResourceProxyVisitor {
 	}
 	
 	
-	private void addToMap(HashMap map, IPath folderPath, IPath relPath) {
-		List list= (List) map.get(folderPath);
+	private void addToMap(HashMap<IPath, List> map, IPath folderPath, IPath relPath) {
+		List<IPath> list= map.get(folderPath);
 		if (list == null) {
-			list= new ArrayList(50);
+			list= new ArrayList<IPath>(50);
 			map.put(folderPath, list);
 		}		
 		list.add(relPath);

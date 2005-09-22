@@ -175,7 +175,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 
 	class AdaptedSourceViewer extends JavaSourceViewer  {
 
-		private List fTextConverters;
+		private List<ITextConverter> fTextConverters;
 		private boolean fIgnoreTextConverters= false;
 		private JavaCorrectionAssistant fCorrectionAssistant;
 
@@ -252,7 +252,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 
 		public void addTextConverter(ITextConverter textConverter) {
 			if (fTextConverters == null) {
-				fTextConverters= new ArrayList(1);
+				fTextConverters= new ArrayList<ITextConverter>(1);
 				fTextConverters.add(textConverter);
 			} else if (!fTextConverters.contains(textConverter))
 				fTextConverters.add(textConverter);
@@ -272,8 +272,8 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 		protected void customizeDocumentCommand(DocumentCommand command) {
 			super.customizeDocumentCommand(command);
 			if (!fIgnoreTextConverters && fTextConverters != null) {
-				for (Iterator e = fTextConverters.iterator(); e.hasNext();)
-					((ITextConverter) e.next()).customizeDocumentCommand(getDocument(), command);
+				for (Iterator<ITextConverter> e = fTextConverters.iterator(); e.hasNext();)
+					e.next().customizeDocumentCommand(getDocument(), command);
 			}
 		}
 
@@ -463,10 +463,10 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 
 		final char fExitCharacter;
 		final char fEscapeCharacter;
-		final Stack fStack;
+		final Stack<BracketLevel> fStack;
 		final int fSize;
 
-		public ExitPolicy(char exitCharacter, char escapeCharacter, Stack stack) {
+		public ExitPolicy(char exitCharacter, char escapeCharacter, Stack<BracketLevel> stack) {
 			fExitCharacter= exitCharacter;
 			fEscapeCharacter= escapeCharacter;
 			fStack= stack;
@@ -480,7 +480,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 
 			if (fSize == fStack.size() && !isMasked(offset)) {
 				if (event.character == fExitCharacter) {
-					BracketLevel level= (BracketLevel) fStack.peek();
+					BracketLevel level= fStack.peek();
 					if (level.fFirstPosition.offset > offset || level.fSecondPosition.offset < offset)
 						return null;
 					if (level.fSecondPosition.offset == offset && length == 0)
@@ -611,7 +611,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 		private boolean fCloseAngularBrackets= true;
 		private final String CATEGORY= toString();
 		private IPositionUpdater fUpdater= new ExclusivePositionUpdater(CATEGORY);
-		private Stack fBracketLevelStack= new Stack();
+		private Stack<BracketLevel> fBracketLevelStack= new Stack<BracketLevel>();
 
 		public void setCloseBracketsEnabled(boolean enabled) {
 			fCloseBrackets= enabled;
@@ -780,7 +780,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 		 */
 		public void left(LinkedModeModel environment, int flags) {
 
-			final BracketLevel level= (BracketLevel) fBracketLevelStack.pop();
+			final BracketLevel level= fBracketLevelStack.pop();
 
 			if (flags != ILinkedModeListener.EXTERNAL_MODIFICATION)
 				return;

@@ -218,9 +218,9 @@ public abstract class BlockCommentAction extends TextEditorAction {
 	 * @param edits a list of <code>Edit</code>s
 	 * @throws BadLocationException if an <code>Edit</code> threw such an exception.
 	 */
-	protected void executeEdits(List edits) throws BadLocationException {
-		for (Iterator it= edits.iterator(); it.hasNext();) {
-			Edit edit= (Edit) it.next();
+	protected void executeEdits(List<Edit> edits) throws BadLocationException {
+		for (Iterator<Edit> it= edits.iterator(); it.hasNext();) {
+			Edit edit= it.next();
 			edit.perform();
 		}
 	}

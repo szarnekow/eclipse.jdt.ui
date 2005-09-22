@@ -152,8 +152,8 @@ public class InlineTempRefactoring extends Refactoring {
 		
 		if (ASTNodes.getParent(fTempDeclaration, ASTNode.FOR_STATEMENT) != null){
 			ForStatement forStmt= (ForStatement)ASTNodes.getParent(fTempDeclaration, ASTNode.FOR_STATEMENT);
-			for (Iterator iter= forStmt.initializers().iterator(); iter.hasNext();) {
-				if (ASTNodes.isParent(fTempDeclaration, (Expression) iter.next()))
+			for (Iterator<ASTNode> iter= forStmt.initializers().iterator(); iter.hasNext();) {
+				if (ASTNodes.isParent(fTempDeclaration, iter.next()))
 					return RefactoringStatus.createFatalErrorStatus(RefactoringCoreMessages.InlineTempRefactoring_for_initializers); 
 			}
 		}

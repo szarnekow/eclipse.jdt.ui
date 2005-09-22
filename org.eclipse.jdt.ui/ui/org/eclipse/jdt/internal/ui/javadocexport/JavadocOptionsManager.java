@@ -463,7 +463,7 @@ public class JavadocOptionsManager {
 	private IContainer[] getSourceContainers(Element element) {
 		String sourcePaths= element.getAttribute(SOURCEPATH);
 		StringTokenizer tokenizer= new StringTokenizer(sourcePaths, String.valueOf(File.pathSeparatorChar));
-		ArrayList res= new ArrayList();
+		ArrayList<IContainer> res= new ArrayList<IContainer>();
 		
 		IWorkspaceRoot root= ResourcesPlugin.getWorkspace().getRoot();
 		
@@ -476,12 +476,12 @@ public class JavadocOptionsManager {
 				}
 			}
 		}
-		return (IContainer[]) res.toArray(new IContainer[res.size()]);
+		return res.toArray(new IContainer[res.size()]);
 	}
 	
 
 	private IJavaElement[] getSelectedElementsFromAnt(Element element) {
-		List res= new ArrayList();
+		List<IJavaElement> res= new ArrayList<IJavaElement>();
 
 		// get all the packages listed in the ANT file
 		String packagenames= element.getAttribute(PACKAGENAMES);
@@ -527,7 +527,7 @@ public class JavadocOptionsManager {
 				}
 			}
 		}
-		return (IJavaElement[]) res.toArray(new IJavaElement[res.size()]);
+		return res.toArray(new IJavaElement[res.size()]);
 	}
 
 	/**
@@ -679,7 +679,7 @@ public class JavadocOptionsManager {
 	}
 	
 
-	public void getArgumentArray(List vmArgs, List toolArgs) {
+	public void getArgumentArray(List<String> vmArgs, List<String> toolArgs) {
 
 		//bug 38692
 		vmArgs.add(getJavadocCommandHistory()[0]);
@@ -778,12 +778,12 @@ public class JavadocOptionsManager {
 		}
 	}
 	
-	private void addProxyOptions(List vmOptions) {
+	private void addProxyOptions(List<String> vmOptions) {
 		// bug 74132
 		String hostPrefix= "-J-Dhttp.proxyHost="; //$NON-NLS-1$
 		String portPrefix= "-J-Dhttp.proxyPort="; //$NON-NLS-1$
 		for (int i= 0; i < vmOptions.size(); i++) {
-			String curr= (String) vmOptions.get(i);
+			String curr= vmOptions.get(i);
 			if (curr.startsWith(hostPrefix) || curr.startsWith(portPrefix)) {
 				return;
 			}
@@ -992,7 +992,7 @@ public class JavadocOptionsManager {
 	}
 
 	private IJavaElement[] getInitialElementsFromSelection(List candidates) {
-		ArrayList res= new ArrayList();
+		ArrayList<IJavaElement> res= new ArrayList<IJavaElement>();
 		for (int i= 0; i < candidates.size(); i++) {
 			try {
 				IJavaElement elem= getSelectableJavaElement(candidates.get(i));
@@ -1003,7 +1003,7 @@ public class JavadocOptionsManager {
 				// ignore this
 			}
 		}
-		return (IJavaElement[]) res.toArray(new IJavaElement[res.size()]);
+		return res.toArray(new IJavaElement[res.size()]);
 	}
 
 	private IJavaElement getSelectableJavaElement(Object obj) throws JavaModelException {

@@ -58,16 +58,16 @@ import org.eclipse.jdt.internal.ui.viewsupport.BindingLabelProvider;
 public class ReturnTypeSubProcessor {
 
 	private static class ReturnStatementCollector extends ASTVisitor {
-		private ArrayList fResult= new ArrayList();
+		private ArrayList<ReturnStatement> fResult= new ArrayList<ReturnStatement>();
 
-		public Iterator returnStatements() {
+		public Iterator<ReturnStatement> returnStatements() {
 			return fResult.iterator();
 		}
 
 		public ITypeBinding getTypeBinding(AST ast) {
 			boolean couldBeObject= false;
 			for (int i= 0; i < fResult.size(); i++) {
-				ReturnStatement node= (ReturnStatement) fResult.get(i);
+				ReturnStatement node= fResult.get(i);
 				Expression expr= node.getExpression();
 				if (expr != null) {
 					ITypeBinding binding= Bindings.normalizeTypeBinding(expr.resolveTypeBinding());
@@ -110,7 +110,7 @@ public class ReturnTypeSubProcessor {
 	}
 
 
-	public static void addMethodWithConstrNameProposals(IInvocationContext context, IProblemLocation problem, Collection proposals) {
+	public static void addMethodWithConstrNameProposals(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) {
 		ICompilationUnit cu= context.getCompilationUnit();
 
 		ASTNode selectedNode= problem.getCoveringNode(context.getASTRoot());
@@ -128,7 +128,7 @@ public class ReturnTypeSubProcessor {
 
 	}
 
-	public static void addVoidMethodReturnsProposals(IInvocationContext context, IProblemLocation problem, Collection proposals) throws CoreException {
+	public static void addVoidMethodReturnsProposals(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) throws CoreException {
 		ICompilationUnit cu= context.getCompilationUnit();
 
 		CompilationUnit astRoot= context.getASTRoot();
@@ -200,7 +200,7 @@ public class ReturnTypeSubProcessor {
 
 
 
-	public static void addMissingReturnTypeProposals(IInvocationContext context, IProblemLocation problem, Collection proposals) throws CoreException {
+	public static void addMissingReturnTypeProposals(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) throws CoreException {
 		ICompilationUnit cu= context.getCompilationUnit();
 
 		CompilationUnit astRoot= context.getASTRoot();
@@ -275,7 +275,7 @@ public class ReturnTypeSubProcessor {
 		}
 	}
 
-	public static void addMissingReturnStatementProposals(IInvocationContext context, IProblemLocation problem, Collection proposals) {
+	public static void addMissingReturnStatementProposals(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) {
 		ICompilationUnit cu= context.getCompilationUnit();
 
 		ASTNode selectedNode= problem.getCoveringNode(context.getASTRoot());
@@ -313,7 +313,7 @@ public class ReturnTypeSubProcessor {
 		}
 	}
 
-	public static void addMethodRetunsVoidProposals(IInvocationContext context, IProblemLocation problem, Collection proposals) throws JavaModelException {
+	public static void addMethodRetunsVoidProposals(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) throws JavaModelException {
 		CompilationUnit astRoot= context.getASTRoot();
 		ASTNode selectedNode= problem.getCoveringNode(astRoot);
 		if (!(selectedNode instanceof ReturnStatement)) {

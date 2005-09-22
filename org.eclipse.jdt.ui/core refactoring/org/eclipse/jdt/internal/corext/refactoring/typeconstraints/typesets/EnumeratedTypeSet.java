@@ -37,13 +37,13 @@ public class EnumeratedTypeSet extends TypeSet {
 	/**
 	 * Set containing the TTypes in this EnumeratedTypeSet.
 	 */
-	Set/*<TType>*/ fMembers= new LinkedHashSet();
+	Set/*<TType>*/<TType> fMembers= new LinkedHashSet<TType>();
 
 	/**
 	 * Constructs a new EnumeratedTypeSet with the members of Set s in it.
 	 * All elements of s must be TTypes.
 	 */
-	public EnumeratedTypeSet(Iterator types, TypeSetEnvironment typeSetEnvironment) {
+	public EnumeratedTypeSet(Iterator<TType> types, TypeSetEnvironment typeSetEnvironment) {
 		super(typeSetEnvironment);
 		while (types.hasNext()) {
 			fMembers.add(types.next());
@@ -89,12 +89,12 @@ public class EnumeratedTypeSet extends TypeSet {
 		} else if (o instanceof TypeSet) {
 			TypeSet other= (TypeSet) o;
 
-			for(Iterator otherIter= other.iterator(); otherIter.hasNext(); ) {
+			for(Iterator<TType> otherIter= other.iterator(); otherIter.hasNext(); ) {
 				if (!fMembers.contains(otherIter.next()))
 					return false;
 			}
-			for(Iterator myIter= fMembers.iterator(); myIter.hasNext(); ) {
-				if (!other.contains((TType) myIter.next()))
+			for(Iterator<TType> myIter= fMembers.iterator(); myIter.hasNext(); ) {
+				if (!other.contains(myIter.next()))
 					return false;
 			}
 			return true;
@@ -136,7 +136,7 @@ public class EnumeratedTypeSet extends TypeSet {
 			// More than an optimization: the universe never contains array types, so
 			// if s2 has array types, the following will retain them, as it should.
 			EnumeratedTypeSet ets2= (EnumeratedTypeSet) s2;
-			fMembers= new LinkedHashSet();
+			fMembers= new LinkedHashSet<TType>();
 			fMembers.addAll(ets2.fMembers);
 		} else
 			retainAll(s2);
@@ -198,7 +198,7 @@ public class EnumeratedTypeSet extends TypeSet {
 	 */
 	public void clear() {
 		if (isUniverse())
-			fMembers= new LinkedHashSet();
+			fMembers= new LinkedHashSet<TType>();
 		else
 			fMembers.clear();
 	}
@@ -214,7 +214,7 @@ public class EnumeratedTypeSet extends TypeSet {
 	 * @see java.util.Set#toArray()
 	 */
 	public TType[] toArray() {
-		return (TType[]) fMembers.toArray(new TType[fMembers.size()]);
+		return fMembers.toArray(new TType[fMembers.size()]);
 	}
 
 	/* (non-Javadoc)
@@ -244,8 +244,8 @@ public class EnumeratedTypeSet extends TypeSet {
 		return fMembers.remove(t);
 	}
 
-	private Set cloneSet(Set members) {
-		Set result= new LinkedHashSet();
+	private Set<TType> cloneSet(Set<TType> members) {
+		Set<TType> result= new LinkedHashSet<TType>();
 		result.addAll(members);
 		return result;
 	}
@@ -322,7 +322,7 @@ public class EnumeratedTypeSet extends TypeSet {
 	 * @see org.eclipse.jdt.internal.corext.refactoring.typeconstraints.typesets.TypeSet#anyMember()
 	 */
 	public TType anyMember() {
-		return (TType) fMembers.iterator().next();
+		return fMembers.iterator().next();
 	}
 
 	/* (non-Javadoc)
@@ -330,7 +330,7 @@ public class EnumeratedTypeSet extends TypeSet {
 	 */
 	public TypeSet upperBound() {
 		if (fMembers.size() == 1)
-			return new SingletonTypeSet((TType) fMembers.iterator().next(), getTypeSetEnvironment());
+			return new SingletonTypeSet(fMembers.iterator().next(), getTypeSetEnvironment());
 		if (fMembers.contains(getJavaLangObject()))
 			return new SingletonTypeSet(getJavaLangObject(), getTypeSetEnvironment());
 
@@ -338,8 +338,8 @@ public class EnumeratedTypeSet extends TypeSet {
 
 		// Add to result each element of fMembers that has no proper supertype in fMembers
 		result.fMembers.addAll(fMembers);
-		for(Iterator iter= fMembers.iterator(); iter.hasNext(); ) {
-			TType t= (TType) iter.next();
+		for(Iterator<TType> iter= fMembers.iterator(); iter.hasNext(); ) {
+			TType t= iter.next();
 
 			if (t.isArrayType()) {
 				ArrayType at= (ArrayType) t;
@@ -362,15 +362,15 @@ public class EnumeratedTypeSet extends TypeSet {
 	 */
 	public TypeSet lowerBound() {
 		if (fMembers.size() == 1)
-			return new SingletonTypeSet((TType) fMembers.iterator().next(), getTypeSetEnvironment());
+			return new SingletonTypeSet(fMembers.iterator().next(), getTypeSetEnvironment());
 
 		EnumeratedTypeSet result= new EnumeratedTypeSet(getTypeSetEnvironment());
 
 		// Add to result each element of fMembers that has no proper subtype in fMembers
 		result.fMembers.addAll(fMembers);
 
-		for(Iterator iter= fMembers.iterator(); iter.hasNext(); ) {
-			TType t= (TType) iter.next();
+		for(Iterator<TType> iter= fMembers.iterator(); iter.hasNext(); ) {
+			TType t= iter.next();
 
 			// java.lang.Object is only in the lower bound if fMembers consists
 			// of only java.lang.Object, but that case is handled above.
@@ -416,7 +416,7 @@ public class EnumeratedTypeSet extends TypeSet {
 	 */
 	public TType uniqueLowerBound() {
 		if (fMembers.size() == 1)
-			return (TType) fMembers.iterator().next();
+			return fMembers.iterator().next();
 		return null;
 	}
 
@@ -425,14 +425,14 @@ public class EnumeratedTypeSet extends TypeSet {
 	 */
 	public TType uniqueUpperBound() {
 		if (fMembers.size() == 1)
-			return (TType) fMembers.iterator().next();
+			return fMembers.iterator().next();
 		return null;
 	}
 
 	/* (non-Javadoc)
 	 * @see java.util.Set#iterator()
 	 */
-	public Iterator iterator() {
+	public Iterator<TType> iterator() {
 		return fMembers.iterator();
 	}
 
@@ -440,7 +440,7 @@ public class EnumeratedTypeSet extends TypeSet {
 	 * @see java.util.Set#toArray(java.lang.Object[])
 	 */
 	public TType[] toArray(TType[] a) {
-		return (TType[]) fMembers.toArray(a);
+		return fMembers.toArray(a);
 	}
 
 	/**
@@ -459,9 +459,9 @@ public class EnumeratedTypeSet extends TypeSet {
 			b.append(" <universe>"); //$NON-NLS-1$
 		else {
 			int count=0;
-			Iterator iter;
+			Iterator<TType> iter;
 			for(iter= iterator(); iter.hasNext() && count < sMaxElements; count++) {
-				TType type= (TType) iter.next();
+				TType type= iter.next();
 				b.append(' ')
 				 .append(type.getPrettySignature());
 				if (iter.hasNext())

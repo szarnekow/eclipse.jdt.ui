@@ -29,12 +29,12 @@ import org.eclipse.jdt.core.dom.TypeDeclaration;
 
 public abstract class AbstractExceptionAnalyzer extends ASTVisitor {
 	
-	private List fCurrentExceptions;	// Elements in this list are of type TypeBinding
-	private Stack fTryStack;
+	private List<ITypeBinding> fCurrentExceptions;	// Elements in this list are of type TypeBinding
+	private Stack<List> fTryStack;
 
 	protected AbstractExceptionAnalyzer() {
-		fTryStack= new Stack();
-		fCurrentExceptions= new ArrayList(1);
+		fTryStack= new Stack<List>();
+		fCurrentExceptions= new ArrayList<ITypeBinding>(1);
 		fTryStack.push(fCurrentExceptions);
 	}
 
@@ -71,25 +71,25 @@ public abstract class AbstractExceptionAnalyzer extends ASTVisitor {
 	}
 	
 	public boolean visit(TryStatement node) {
-		fCurrentExceptions= new ArrayList(1);
+		fCurrentExceptions= new ArrayList<ITypeBinding>(1);
 		fTryStack.push(fCurrentExceptions);
 		
 		// visit try block
 		node.getBody().accept(this);
 		
 		// Remove those exceptions that get catch by following catch blocks
-		List catchClauses= node.catchClauses();
+		List<CatchClause> catchClauses= node.catchClauses();
 		if (!catchClauses.isEmpty())
 			handleCatchArguments(catchClauses);
-		List current= (List)fTryStack.pop();
-		fCurrentExceptions= (List)fTryStack.peek();
+		List current= fTryStack.pop();
+		fCurrentExceptions= fTryStack.peek();
 		for (Iterator iter= current.iterator(); iter.hasNext();) {
 			addException((ITypeBinding)iter.next());
 		}
 		
 		// visit catch and finally
-		for (Iterator iter= catchClauses.iterator(); iter.hasNext(); ) {
-			((CatchClause)iter.next()).accept(this);
+		for (Iterator<CatchClause> iter= catchClauses.iterator(); iter.hasNext(); ) {
+			iter.next().accept(this);
 		}
 		if (node.getFinally() != null)
 			node.getFinally().accept(this);
@@ -111,18 +111,18 @@ public abstract class AbstractExceptionAnalyzer extends ASTVisitor {
 			fCurrentExceptions.add(exception);
 	}
 	
-	protected List getCurrentExceptions() {
+	protected List<ITypeBinding> getCurrentExceptions() {
 		return fCurrentExceptions;
 	}
 	
-	private void handleCatchArguments(List catchClauses) {
-		for (Iterator iter= catchClauses.iterator(); iter.hasNext(); ) {
-			CatchClause clause= (CatchClause)iter.next();
+	private void handleCatchArguments(List<CatchClause> catchClauses) {
+		for (Iterator<CatchClause> iter= catchClauses.iterator(); iter.hasNext(); ) {
+			CatchClause clause= iter.next();
 			ITypeBinding catchTypeBinding= clause.getException().getType().resolveBinding();
 			if (catchTypeBinding == null)	// No correct type resolve.
 				continue;
-			for (Iterator exceptions= new ArrayList(fCurrentExceptions).iterator(); exceptions.hasNext(); ) {
-				ITypeBinding throwTypeBinding= (ITypeBinding)exceptions.next();
+			for (Iterator<ITypeBinding> exceptions= new ArrayList<ITypeBinding>(fCurrentExceptions).iterator(); exceptions.hasNext(); ) {
+				ITypeBinding throwTypeBinding= exceptions.next();
 				if (catches(catchTypeBinding, throwTypeBinding))
 					fCurrentExceptions.remove(throwTypeBinding);
 			}

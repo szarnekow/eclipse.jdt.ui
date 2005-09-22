@@ -407,7 +407,7 @@ public class JavaProjectWizardFirstPage extends WizardPage {
 		public void widgetDefaultSelected(SelectionEvent e) {
 			String jreID= BuildPathSupport.JRE_PREF_PAGE_ID;
 			String complianceId= CompliancePreferencePage.PREF_ID;
-			Map data= new HashMap();
+			Map<String, Boolean> data= new HashMap<String, Boolean>();
 			data.put(PropertyAndPreferencePage.DATA_NO_LINK, Boolean.TRUE);
 			PreferencesUtil.createPreferenceDialogOn(getShell(), complianceId, new String[] { jreID, complianceId  }, data).open();
 			

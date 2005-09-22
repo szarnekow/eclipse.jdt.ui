@@ -15,15 +15,18 @@ import java.util.List;
 
 import org.eclipse.jface.text.IDocument;
 
+import org.eclipse.search.ui.text.Match;
+
 
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 
 public interface IOccurrencesFinder {
 	
 	public String initialize(CompilationUnit root, int offset, int length);
 	
-	public List perform();
+	public List<ASTNode> perform();
 	
 	public String getJobLabel();
 
@@ -31,5 +34,5 @@ public interface IOccurrencesFinder {
 	
 	public String getSingularLabel(String documentName);
 	
-	public void collectOccurrenceMatches(IJavaElement element, IDocument document, Collection resultingMatches);
+	public void collectOccurrenceMatches(IJavaElement element, IDocument document, Collection<Match> resultingMatches);
 }

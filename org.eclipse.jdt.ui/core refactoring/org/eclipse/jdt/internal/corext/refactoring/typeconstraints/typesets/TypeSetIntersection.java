@@ -199,8 +199,8 @@ public class TypeSetIntersection extends TypeSet {
 		if (fEnumCache != null) return fEnumCache.isSingleton();
 
 		int count= 0;
-		for(Iterator lhsIter= fLHS.iterator(); lhsIter.hasNext(); ) {
-			TType t= (TType) lhsIter.next();
+		for(Iterator<TType> lhsIter= fLHS.iterator(); lhsIter.hasNext(); ) {
+			TType t= lhsIter.next();
 			if (fRHS.contains(t))
 				count++;
 			if (count > 1)
@@ -215,8 +215,8 @@ public class TypeSetIntersection extends TypeSet {
 	public TType anyMember() {
 		if (fEnumCache != null) return fEnumCache.anyMember();
 
-		for(Iterator lhsIter= fLHS.iterator(); lhsIter.hasNext(); ) {
-			TType t= (TType) lhsIter.next();
+		for(Iterator<TType> lhsIter= fLHS.iterator(); lhsIter.hasNext(); ) {
+			TType t= lhsIter.next();
 			if (fRHS.contains(t))
 				return t;
 		}
@@ -226,7 +226,7 @@ public class TypeSetIntersection extends TypeSet {
 	/* (non-Javadoc)
 	 * @see org.eclipse.jdt.internal.corext.refactoring.typeconstraints.typesets.TypeSet#iterator()
 	 */
-	public Iterator iterator() {
+	public Iterator<TType> iterator() {
 		return enumerate().iterator();
 
 //		return new Iterator() {

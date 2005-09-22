@@ -84,14 +84,14 @@ public final class StubUtility2 {
 		decl.setConstructor(true);
 
 		ITypeBinding[] typeParams= binding.getTypeParameters();
-		List typeParameters= decl.typeParameters();
+		List<ASTNode> typeParameters= decl.typeParameters();
 		for (int i= 0; i < typeParams.length; i++) {
 			ITypeBinding curr= typeParams[i];
 			TypeParameter newTypeParam= ast.newTypeParameter();
 			newTypeParam.setName(ast.newSimpleName(curr.getName()));
 			ITypeBinding[] typeBounds= curr.getTypeBounds();
 			if (typeBounds.length != 1 || !"java.lang.Object".equals(typeBounds[0].getQualifiedName())) {//$NON-NLS-1$
-				List newTypeBounds= newTypeParam.typeBounds();
+				List<ASTNode> newTypeBounds= newTypeParam.typeBounds();
 				for (int k= 0; k < typeBounds.length; k++) {
 					newTypeBounds.add(imports.addImport(typeBounds[k], ast));
 				}
@@ -99,9 +99,9 @@ public final class StubUtility2 {
 			typeParameters.add(newTypeParam);
 		}
 
-		List parameters= createParameters(unit, imports, ast, binding, decl);
+		List<ASTNode> parameters= createParameters(unit, imports, ast, binding, decl);
 
-		List thrownExceptions= decl.thrownExceptions();
+		List<ASTNode> thrownExceptions= decl.thrownExceptions();
 		ITypeBinding[] excTypes= binding.getExceptionTypes();
 		for (int i= 0; i < excTypes.length; i++) {
 			String excTypeName= imports.addImport(excTypes[i]);
@@ -116,7 +116,7 @@ public final class StubUtility2 {
 		if (!omitSuper) {
 			SuperConstructorInvocation invocation= ast.newSuperConstructorInvocation();
 			SingleVariableDeclaration varDecl= null;
-			for (Iterator iterator= parameters.iterator(); iterator.hasNext();) {
+			for (Iterator<ASTNode> iterator= parameters.iterator(); iterator.hasNext();) {
 				varDecl= (SingleVariableDeclaration) iterator.next();
 				invocation.arguments().add(ast.newSimpleName(varDecl.getName().getIdentifier()));
 			}
@@ -146,17 +146,17 @@ public final class StubUtility2 {
 		decl.setName(ast.newSimpleName(typeBinding.getName()));
 		decl.setConstructor(true);
 
-		List parameters= decl.parameters();
+		List<ASTNode> parameters= decl.parameters();
 		if (superConstructor != null) {
 			ITypeBinding[] typeParams= superConstructor.getTypeParameters();
-			List typeParameters= decl.typeParameters();
+			List<ASTNode> typeParameters= decl.typeParameters();
 			for (int i= 0; i < typeParams.length; i++) {
 				ITypeBinding curr= typeParams[i];
 				TypeParameter newTypeParam= ast.newTypeParameter();
 				newTypeParam.setName(ast.newSimpleName(curr.getName()));
 				ITypeBinding[] typeBounds= curr.getTypeBounds();
 				if (typeBounds.length != 1 || !"java.lang.Object".equals(typeBounds[0].getQualifiedName())) {//$NON-NLS-1$
-					List newTypeBounds= newTypeParam.typeBounds();
+					List<ASTNode> newTypeBounds= newTypeParam.typeBounds();
 					for (int k= 0; k < typeBounds.length; k++) {
 						newTypeBounds.add(imports.addImport(typeBounds[k], ast));
 					}
@@ -166,7 +166,7 @@ public final class StubUtility2 {
 
 			createParameters(unit, imports, ast, superConstructor, decl);
 
-			List thrownExceptions= decl.thrownExceptions();
+			List<ASTNode> thrownExceptions= decl.thrownExceptions();
 			ITypeBinding[] excTypes= superConstructor.getExceptionTypes();
 			for (int i= 0; i < excTypes.length; i++) {
 				String excTypeName= imports.addImport(excTypes[i]);
@@ -183,18 +183,18 @@ public final class StubUtility2 {
 		if (superConstructor != null) {
 			SuperConstructorInvocation invocation= ast.newSuperConstructorInvocation();
 			SingleVariableDeclaration varDecl= null;
-			for (Iterator iterator= parameters.iterator(); iterator.hasNext();) {
+			for (Iterator<ASTNode> iterator= parameters.iterator(); iterator.hasNext();) {
 				varDecl= (SingleVariableDeclaration) iterator.next();
 				invocation.arguments().add(ast.newSimpleName(varDecl.getName().getIdentifier()));
 			}
 			bodyStatement= ASTNodes.asFormattedString(invocation, 0, delimiter);
 		}
 
-		List prohibited= new ArrayList();
-		for (final Iterator iterator= parameters.iterator(); iterator.hasNext();)
+		List<String> prohibited= new ArrayList<String>();
+		for (final Iterator<ASTNode> iterator= parameters.iterator(); iterator.hasNext();)
 			prohibited.add(((SingleVariableDeclaration) iterator.next()).getName().getIdentifier());
 		String param= null;
-		List list= new ArrayList(prohibited);
+		List<String> list= new ArrayList<String>(prohibited);
 		String[] excluded= null;
 		for (int i= 0; i < variableBindings.length; i++) {
 			SingleVariableDeclaration var= ast.newSingleVariableDeclaration();
@@ -213,7 +213,7 @@ public final class StubUtility2 {
 			body.statements().add(todoNode);
 		}
 
-		list= new ArrayList(prohibited);
+		list= new ArrayList<String>(prohibited);
 		for (int i= 0; i < variableBindings.length; i++) {
 			excluded= new String[list.size()];
 			list.toArray(excluded);
@@ -261,14 +261,14 @@ public final class StubUtility2 {
 		decl.setConstructor(false);
 
 		ITypeBinding[] typeParams= methodBinding.getTypeParameters();
-		List typeParameters= decl.typeParameters();
+		List<ASTNode> typeParameters= decl.typeParameters();
 		for (int i= 0; i < typeParams.length; i++) {
 			ITypeBinding curr= typeParams[i];
 			TypeParameter newTypeParam= ast.newTypeParameter();
 			newTypeParam.setName(ast.newSimpleName(curr.getName()));
 			ITypeBinding[] typeBounds= curr.getTypeBounds();
 			if (typeBounds.length != 1 || !"java.lang.Object".equals(typeBounds[0].getQualifiedName())) {//$NON-NLS-1$
-				List newTypeBounds= newTypeParam.typeBounds();
+				List<ASTNode> newTypeBounds= newTypeParam.typeBounds();
 				for (int k= 0; k < typeBounds.length; k++) {
 					newTypeBounds.add(imports.addImport(typeBounds[k], ast));
 				}
@@ -278,7 +278,7 @@ public final class StubUtility2 {
 
 		decl.setReturnType2(imports.addImport(methodBinding.getReturnType(), ast));
 
-		List parameters= decl.parameters();
+		List<ASTNode> parameters= decl.parameters();
 		ITypeBinding[] params= methodBinding.getParameterTypes();
 		String[] paramNames= suggestArgumentNames(unit.getJavaProject(), methodBinding);
 		for (int i= 0; i < params.length; i++) {
@@ -299,7 +299,7 @@ public final class StubUtility2 {
 			parameters.add(varDecl);
 		}
 
-		List thrownExceptions= decl.thrownExceptions();
+		List<ASTNode> thrownExceptions= decl.thrownExceptions();
 		ITypeBinding[] excTypes= methodBinding.getExceptionTypes();
 		for (int i= 0; i < excTypes.length; i++) {
 			String excTypeName= imports.addImport(excTypes[i]);
@@ -314,7 +314,7 @@ public final class StubUtility2 {
 		Statement statement= null;
 		MethodInvocation invocation= ast.newMethodInvocation();
 		invocation.setName(ast.newSimpleName(methodBinding.getName()));
-		List arguments= invocation.arguments();
+		List<ASTNode> arguments= invocation.arguments();
 		for (int i= 0; i < params.length; i++)
 			arguments.add(ast.newSimpleName(paramNames[i]));
 		if (settings.useKeywordThis) {
@@ -360,14 +360,14 @@ public final class StubUtility2 {
 		decl.setConstructor(false);
 
 		ITypeBinding[] typeParams= binding.getTypeParameters();
-		List typeParameters= decl.typeParameters();
+		List<ASTNode> typeParameters= decl.typeParameters();
 		for (int i= 0; i < typeParams.length; i++) {
 			ITypeBinding curr= typeParams[i];
 			TypeParameter newTypeParam= ast.newTypeParameter();
 			newTypeParam.setName(ast.newSimpleName(curr.getName()));
 			ITypeBinding[] typeBounds= curr.getTypeBounds();
 			if (typeBounds.length != 1 || !"java.lang.Object".equals(typeBounds[0].getQualifiedName())) {//$NON-NLS-1$
-				List newTypeBounds= newTypeParam.typeBounds();
+				List<ASTNode> newTypeBounds= newTypeParam.typeBounds();
 				for (int k= 0; k < typeBounds.length; k++) {
 					newTypeBounds.add(imports.addImport(typeBounds[k], ast));
 				}
@@ -377,9 +377,9 @@ public final class StubUtility2 {
 
 		decl.setReturnType2(imports.addImport(binding.getReturnType(), ast));
 
-		List parameters= createParameters(unit, imports, ast, binding, decl);
+		List<ASTNode> parameters= createParameters(unit, imports, ast, binding, decl);
 
-		List thrownExceptions= decl.thrownExceptions();
+		List<ASTNode> thrownExceptions= decl.thrownExceptions();
 		ITypeBinding[] excTypes= binding.getExceptionTypes();
 		for (int i= 0; i < excTypes.length; i++) {
 			String excTypeName= imports.addImport(excTypes[i]);
@@ -405,7 +405,7 @@ public final class StubUtility2 {
 				SuperMethodInvocation invocation= ast.newSuperMethodInvocation();
 				invocation.setName(ast.newSimpleName(binding.getName()));
 				SingleVariableDeclaration varDecl= null;
-				for (Iterator iterator= parameters.iterator(); iterator.hasNext();) {
+				for (Iterator<ASTNode> iterator= parameters.iterator(); iterator.hasNext();) {
 					varDecl= (SingleVariableDeclaration) iterator.next();
 					invocation.arguments().add(ast.newSimpleName(varDecl.getName().getIdentifier()));
 				}
@@ -450,14 +450,14 @@ public final class StubUtility2 {
 		decl.setConstructor(false);
 
 		ITypeBinding[] typeParams= binding.getTypeParameters();
-		List typeParameters= decl.typeParameters();
+		List<ASTNode> typeParameters= decl.typeParameters();
 		for (int index= 0; index < typeParams.length; index++) {
 			ITypeBinding curr= typeParams[index];
 			TypeParameter newTypeParam= ast.newTypeParameter();
 			newTypeParam.setName(ast.newSimpleName(curr.getName()));
 			ITypeBinding[] typeBounds= curr.getTypeBounds();
 			if (typeBounds.length != 1 || !"java.lang.Object".equals(typeBounds[0].getQualifiedName())) {//$NON-NLS-1$
-				List newTypeBounds= newTypeParam.typeBounds();
+				List<ASTNode> newTypeBounds= newTypeParam.typeBounds();
 				for (int offset= 0; offset < typeBounds.length; offset++) {
 					newTypeBounds.add(createTypeNode(structure, typeBounds[offset], ast));
 				}
@@ -467,9 +467,9 @@ public final class StubUtility2 {
 
 		decl.setReturnType2(createTypeNode(structure, binding.getReturnType(), ast));
 
-		List parameters= createParameters(unit, structure, ast, binding, decl);
+		List<ASTNode> parameters= createParameters(unit, structure, ast, binding, decl);
 
-		List thrownExceptions= decl.thrownExceptions();
+		List<ASTNode> thrownExceptions= decl.thrownExceptions();
 		ITypeBinding[] excTypes= binding.getExceptionTypes();
 		for (int index= 0; index < excTypes.length; index++)
 			thrownExceptions.add(ASTNodeFactory.newName(ast, structure != null ? structure.addImport(excTypes[index]) : excTypes[index].getQualifiedName()));
@@ -493,7 +493,7 @@ public final class StubUtility2 {
 				SuperMethodInvocation invocation= ast.newSuperMethodInvocation();
 				invocation.setName(ast.newSimpleName(binding.getName()));
 				SingleVariableDeclaration varDecl= null;
-				for (Iterator iterator= parameters.iterator(); iterator.hasNext();) {
+				for (Iterator<ASTNode> iterator= parameters.iterator(); iterator.hasNext();) {
 					varDecl= (SingleVariableDeclaration) iterator.next();
 					invocation.arguments().add(ast.newSimpleName(varDecl.getName().getIdentifier()));
 				}
@@ -528,8 +528,8 @@ public final class StubUtility2 {
 		return decl;
 	}
 
-	private static List createParameters(ICompilationUnit unit, ImportRewrite imports, AST ast, IMethodBinding binding, MethodDeclaration decl) {
-		List parameters= decl.parameters();
+	private static List<ASTNode> createParameters(ICompilationUnit unit, ImportRewrite imports, AST ast, IMethodBinding binding, MethodDeclaration decl) {
+		List<ASTNode> parameters= decl.parameters();
 		ITypeBinding[] params= binding.getParameterTypes();
 		String[] paramNames= suggestArgumentNames(unit.getJavaProject(), binding);
 		for (int i= 0; i < params.length; i++) {
@@ -548,8 +548,8 @@ public final class StubUtility2 {
 		return parameters;
 	}
 
-	private static List createParameters(ICompilationUnit unit, ImportsStructure structure, AST ast, IMethodBinding binding, MethodDeclaration decl) {
-		List parameters= decl.parameters();
+	private static List<ASTNode> createParameters(ICompilationUnit unit, ImportsStructure structure, AST ast, IMethodBinding binding, MethodDeclaration decl) {
+		List<ASTNode> parameters= decl.parameters();
 		ITypeBinding[] params= binding.getParameterTypes();
 		String[] paramNames= suggestArgumentNames(unit.getJavaProject(), binding);
 		for (int i= 0; i < params.length; i++) {
@@ -596,7 +596,7 @@ public final class StubUtility2 {
 			ITypeBinding[] typeArguments= normalized.getTypeArguments();
 			if (typeArguments.length > 0) {
 				ParameterizedType type= ast.newParameterizedType(ast.newSimpleType(ASTNodeFactory.newName(ast, qualified)));
-				List arguments= type.typeArguments();
+				List<ASTNode> arguments= type.typeArguments();
 				for (int index= 0; index < typeArguments.length; index++)
 					arguments.add(createTypeNode(typeArguments[index], ast));
 				return type;
@@ -606,9 +606,9 @@ public final class StubUtility2 {
 		return ast.newSimpleType(ASTNodeFactory.newName(ast, Bindings.getRawName(normalized)));
 	}
 
-	private static IMethodBinding findMethodBinding(IMethodBinding method, List allMethods) {
+	private static IMethodBinding findMethodBinding(IMethodBinding method, List<IMethodBinding> allMethods) {
 		for (int i= 0; i < allMethods.size(); i++) {
-			IMethodBinding curr= (IMethodBinding) allMethods.get(i);
+			IMethodBinding curr= allMethods.get(i);
 			if (Bindings.isSubsignature(method, curr)) {
 				return curr;
 			}
@@ -616,16 +616,16 @@ public final class StubUtility2 {
 		return null;
 	}
 
-	private static IMethodBinding findOverridingMethod(IMethodBinding method, List allMethods) {
+	private static IMethodBinding findOverridingMethod(IMethodBinding method, List<IMethodBinding> allMethods) {
 		for (int i= 0; i < allMethods.size(); i++) {
-			IMethodBinding curr= (IMethodBinding) allMethods.get(i);
+			IMethodBinding curr= allMethods.get(i);
 			if (Bindings.areOverriddenMethods(curr, method) || Bindings.isSubsignature(curr, method))
 				return curr;
 		}
 		return null;
 	}
 
-	private static void findUnimplementedInterfaceMethods(ITypeBinding typeBinding, HashSet visited, ArrayList allMethods, IPackageBinding currPack, ArrayList toImplement) {
+	private static void findUnimplementedInterfaceMethods(ITypeBinding typeBinding, HashSet<ITypeBinding> visited, ArrayList<IMethodBinding> allMethods, IPackageBinding currPack, ArrayList<IMethodBinding> toImplement) {
 		if (visited.add(typeBinding)) {
 			IMethodBinding[] typeMethods= typeBinding.getDeclaredMethods();
 			for (int i= 0; i < typeMethods.length; i++) {
@@ -645,8 +645,8 @@ public final class StubUtility2 {
 	}
 
 	public static IBinding[][] getDelegatableMethods(AST ast, ITypeBinding binding) {
-		final List tuples= new ArrayList();
-		final List declared= new ArrayList();
+		final List<IBinding[]> tuples= new ArrayList<IBinding[]>();
+		final List<IMethodBinding> declared= new ArrayList<IMethodBinding>();
 		IMethodBinding[] typeMethods= binding.getDeclaredMethods();
 		for (int index= 0; index < typeMethods.length; index++)
 			declared.add(typeMethods[index]);
@@ -654,13 +654,13 @@ public final class StubUtility2 {
 		for (int index= 0; index < typeFields.length; index++) {
 			IVariableBinding fieldBinding= typeFields[index];
 			if (fieldBinding.isField() && !fieldBinding.isEnumConstant() && !fieldBinding.isSynthetic())
-				getDelegatableMethods(ast, tuples, new ArrayList(declared), fieldBinding, fieldBinding.getType(), binding);
+				getDelegatableMethods(ast, tuples, new ArrayList<IMethodBinding>(declared), fieldBinding, fieldBinding.getType(), binding);
 		}
 		// list of tuple<IVariableBinding, IMethodBinding>
-		return (IBinding[][]) tuples.toArray(new IBinding[tuples.size()][2]);
+		return tuples.toArray(new IBinding[tuples.size()][2]);
 	}
 
-	private static void getDelegatableMethods(AST ast, List tuples, List methods, IVariableBinding fieldBinding, ITypeBinding typeBinding, ITypeBinding binding) {
+	private static void getDelegatableMethods(AST ast, List<IBinding[]> tuples, List<IMethodBinding> methods, IVariableBinding fieldBinding, ITypeBinding typeBinding, ITypeBinding binding) {
 		boolean match= false;
 		if (typeBinding.isTypeVariable()) {
 			ITypeBinding[] typeBounds= typeBinding.getTypeBounds();
@@ -672,7 +672,7 @@ public final class StubUtility2 {
 					match= false;
 					final IMethodBinding methodBinding= candidates[candidate];
 					for (int offset= 0; offset < methods.size() && !match; offset++) {
-						if (Bindings.areOverriddenMethods((IMethodBinding) methods.get(offset), methodBinding))
+						if (Bindings.areOverriddenMethods(methods.get(offset), methodBinding))
 							match= true;
 					}
 					if (!match) {
@@ -693,7 +693,7 @@ public final class StubUtility2 {
 				match= false;
 				final IMethodBinding methodBinding= candidates[index];
 				for (int offset= 0; offset < methods.size() && !match; offset++) {
-					if (Bindings.areOverriddenMethods((IMethodBinding) methods.get(offset), methodBinding))
+					if (Bindings.areOverriddenMethods(methods.get(offset), methodBinding))
 						match= true;
 				}
 				if (!match) {
@@ -711,7 +711,7 @@ public final class StubUtility2 {
 	}
 
 	private static IMethodBinding[] getDelegateCandidates(ITypeBinding binding, ITypeBinding hierarchy) {
-		List allMethods= new ArrayList();
+		List<IMethodBinding> allMethods= new ArrayList<IMethodBinding>();
 		boolean isInterface= binding.isInterface();
 		IMethodBinding[] typeMethods= binding.getDeclaredMethods();
 		for (int index= 0; index < typeMethods.length; index++) {
@@ -727,7 +727,7 @@ public final class StubUtility2 {
 					allMethods.add(typeMethods[index]);
 			}
 		}
-		return (IMethodBinding[]) allMethods.toArray(new IMethodBinding[allMethods.size()]);
+		return allMethods.toArray(new IMethodBinding[allMethods.size()]);
 	}
 
 	private static List getImplementationModifiers(AST ast, IMethodBinding method, boolean deferred) {
@@ -751,7 +751,7 @@ public final class StubUtility2 {
 	}
 
 	public static IMethodBinding[] getOverridableMethods(AST ast, ITypeBinding typeBinding, boolean isSubType) {
-		List allMethods= new ArrayList();
+		List<IMethodBinding> allMethods= new ArrayList<IMethodBinding>();
 		IMethodBinding[] typeMethods= typeBinding.getDeclaredMethods();
 		for (int index= 0; index < typeMethods.length; index++) {
 			final int modifiers= typeMethods[index].getModifiers();
@@ -785,16 +785,16 @@ public final class StubUtility2 {
 		int modifiers= 0;
 		if (!typeBinding.isInterface()) {
 			for (int index= allMethods.size() - 1; index >= 0; index--) {
-				IMethodBinding method= (IMethodBinding) allMethods.get(index);
+				IMethodBinding method= allMethods.get(index);
 				modifiers= method.getModifiers();
 				if (Modifier.isFinal(modifiers))
 					allMethods.remove(index);
 			}
 		}
-		return (IMethodBinding[]) allMethods.toArray(new IMethodBinding[allMethods.size()]);
+		return allMethods.toArray(new IMethodBinding[allMethods.size()]);
 	}
 
-	private static void getOverridableMethods(AST ast, ITypeBinding superBinding, List allMethods) {
+	private static void getOverridableMethods(AST ast, ITypeBinding superBinding, List<IMethodBinding> allMethods) {
 		IMethodBinding[] methods= superBinding.getDeclaredMethods();
 		for (int offset= 0; offset < methods.length; offset++) {
 			final int modifiers= methods[offset].getModifiers();
@@ -835,8 +835,8 @@ public final class StubUtility2 {
 	}
 
 	public static IMethodBinding[] getUnimplementedMethods(ITypeBinding typeBinding) {
-		ArrayList allMethods= new ArrayList();
-		ArrayList toImplement= new ArrayList();
+		ArrayList<IMethodBinding> allMethods= new ArrayList<IMethodBinding>();
+		ArrayList<IMethodBinding> toImplement= new ArrayList<IMethodBinding>();
 
 		IMethodBinding[] typeMethods= typeBinding.getDeclaredMethods();
 		for (int i= 0; i < typeMethods.length; i++) {
@@ -863,7 +863,7 @@ public final class StubUtility2 {
 		}
 
 		for (int i= 0; i < allMethods.size(); i++) {
-			IMethodBinding curr= (IMethodBinding) allMethods.get(i);
+			IMethodBinding curr= allMethods.get(i);
 			int modifiers= curr.getModifiers();
 			if ((Modifier.isAbstract(modifiers) || curr.getDeclaringClass().isInterface()) && (typeBinding != curr.getDeclaringClass())) {
 				// implement all abstract methods
@@ -871,7 +871,7 @@ public final class StubUtility2 {
 			}
 		}
 
-		HashSet visited= new HashSet();
+		HashSet<ITypeBinding> visited= new HashSet<ITypeBinding>();
 		ITypeBinding curr= typeBinding;
 		while (curr != null) {
 			ITypeBinding[] superInterfaces= curr.getInterfaces();
@@ -881,18 +881,18 @@ public final class StubUtility2 {
 			curr= curr.getSuperclass();
 		}
 
-		return (IMethodBinding[]) toImplement.toArray(new IMethodBinding[toImplement.size()]);
+		return toImplement.toArray(new IMethodBinding[toImplement.size()]);
 	}
 
 	public static IMethodBinding[] getVisibleConstructors(ITypeBinding binding, boolean accountExisting, boolean proposeDefault) {
-		List constructorMethods= new ArrayList();
-		List existingConstructors= null;
+		List<IMethodBinding> constructorMethods= new ArrayList<IMethodBinding>();
+		List<IMethodBinding> existingConstructors= null;
 		ITypeBinding superType= binding.getSuperclass();
 		if (superType == null)
 			return new IMethodBinding[0];
 		if (accountExisting) {
 			IMethodBinding[] methods= binding.getDeclaredMethods();
-			existingConstructors= new ArrayList(methods.length);
+			existingConstructors= new ArrayList<IMethodBinding>(methods.length);
 			for (int index= 0; index < methods.length; index++) {
 				IMethodBinding method= methods[index];
 				if (method.isConstructor() && !method.isDefaultConstructor())
@@ -920,7 +920,7 @@ public final class StubUtility2 {
 			if ((proposeDefault || (!accountExisting || existingConstructors.isEmpty())) && (!accountExisting || !Bindings.containsSignatureEquivalentConstructor(methods, method)))
 				constructorMethods.add(method);
 		}
-		return (IMethodBinding[]) constructorMethods.toArray(new IMethodBinding[constructorMethods.size()]);
+		return constructorMethods.toArray(new IMethodBinding[constructorMethods.size()]);
 	}
 
 	private static String[] suggestArgumentNames(IJavaProject project, IMethodBinding binding) {

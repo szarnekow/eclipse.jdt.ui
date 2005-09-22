@@ -55,7 +55,7 @@ public final class SuperTypeConstraintsModel {
 	private static class HashedSet extends AbstractSet implements Set {
 
 		/** The backing hash map */
-		private final Map fImplementation= new HashMap();
+		private final Map<Object, Object> fImplementation= new HashMap<Object, Object>();
 
 		/*
 		 * @see java.util.AbstractCollection#add(java.lang.Object)
@@ -102,7 +102,7 @@ public final class SuperTypeConstraintsModel {
 		/*
 		 * @see java.util.AbstractCollection#iterator()
 		 */
-		public final Iterator iterator() {
+		public final Iterator<Object> iterator() {
 			return fImplementation.keySet().iterator();
 		}
 
@@ -164,9 +164,9 @@ public final class SuperTypeConstraintsModel {
 		if (data == null)
 			variable.setData(DATA_USAGE, constraint);
 		else if (data instanceof Collection)
-			((Collection) data).add(constraint);
+			((Collection<ITypeConstraint2>) data).add(constraint);
 		else {
-			final Collection usage= new ArrayList(2);
+			final Collection<Object> usage= new ArrayList<Object>(2);
 			usage.add(data);
 			usage.add(constraint);
 			variable.setData(DATA_USAGE, usage);
@@ -174,7 +174,7 @@ public final class SuperTypeConstraintsModel {
 	}
 
 	/** The cast variables (element type: <code>CastVariable2</code>) */
-	private final Collection fCastVariables= new ArrayList();
+	private final Collection<CastVariable2> fCastVariables= new ArrayList<CastVariable2>();
 
 	/** The compliance level */
 	private int fCompliance= 3;
@@ -183,7 +183,7 @@ public final class SuperTypeConstraintsModel {
 	private final HashedSet fConstraintVariables= new HashedSet();
 
 	/** The covariant type constraints (element type: <code>CovariantTypeConstraint</code>) */
-	private final Collection fCovariantTypeConstraints= new ArrayList();
+	private final Collection<ITypeConstraint2> fCovariantTypeConstraints= new ArrayList<ITypeConstraint2>();
 
 	/** The type environment to use */
 	private TypeEnvironment fEnvironment;
@@ -195,7 +195,7 @@ public final class SuperTypeConstraintsModel {
 	private final TType fSuperType;
 
 	/** The TType cache (element type: <code>&lt;String, ITypeBinding&gt;</code>) */
-	private Map fTTypeCache= new LinkedHashMap(MAX_CACHE, 0.75f, true) {
+	private Map<Object, Object> fTTypeCache= new LinkedHashMap(MAX_CACHE, 0.75f, true) {
 
 		private static final long serialVersionUID= 1L;
 
@@ -205,7 +205,7 @@ public final class SuperTypeConstraintsModel {
 	};
 
 	/** The set of type constraints (element type: <code>ITypeConstraint2</code>) */
-	private final Set fTypeConstraints= new HashSet();
+	private final Set<ITypeConstraint2> fTypeConstraints= new HashSet<ITypeConstraint2>();
 
 	/**
 	 * Creates a new super type constraints model.
@@ -526,7 +526,7 @@ public final class SuperTypeConstraintsModel {
 	 * 
 	 * @return the cast variables (element type: <code>CastVariable2</code>)
 	 */
-	public final Collection getCastVariables() {
+	public final Collection<CastVariable2> getCastVariables() {
 		return Collections.unmodifiableCollection(fCastVariables);
 	}
 
@@ -571,7 +571,7 @@ public final class SuperTypeConstraintsModel {
 	 * 
 	 * @return the type constraints (element type: <code>ITypeConstraint2</code>)
 	 */
-	public final Collection getTypeConstraints() {
+	public final Collection<ITypeConstraint2> getTypeConstraints() {
 		return Collections.unmodifiableCollection(fTypeConstraints);
 	}
 

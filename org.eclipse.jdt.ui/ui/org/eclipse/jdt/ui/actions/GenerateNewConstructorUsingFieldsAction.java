@@ -282,7 +282,7 @@ public class GenerateNewConstructorUsingFieldsAction extends SelectionDispatchAc
 			return;
 
 		IField[] candidates= type.getFields();
-		ArrayList fields= new ArrayList();
+		ArrayList<IField> fields= new ArrayList<IField>();
 		for (int index= 0; index < candidates.length; index++) {
 			boolean isStatic= Flags.isStatic(candidates[index].getFlags());
 			boolean isFinal= Flags.isFinal(candidates[index].getFlags());
@@ -333,7 +333,7 @@ public class GenerateNewConstructorUsingFieldsAction extends SelectionDispatchAc
 			Object[] elements= dialog.getResult();
 			if (elements == null)
 				return;
-			ArrayList result= new ArrayList(elements.length);
+			ArrayList<Object> result= new ArrayList<Object>(elements.length);
 			for (int index= 0; index < elements.length; index++) {
 				if (elements[index] instanceof IVariableBinding)
 					result.add(elements[index]);

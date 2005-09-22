@@ -75,6 +75,7 @@ import org.eclipse.jdt.internal.ui.javaeditor.SemanticHighlighting;
 import org.eclipse.jdt.internal.ui.javaeditor.SemanticHighlightingManager;
 import org.eclipse.jdt.internal.ui.javaeditor.SemanticHighlightings;
 import org.eclipse.jdt.internal.ui.javaeditor.SemanticHighlightingManager.HighlightedRange;
+import org.eclipse.jdt.internal.ui.preferences.OverlayPreferenceStore.OverlayKey;
 import org.eclipse.jdt.internal.ui.text.JavaColorManager;
 import org.eclipse.jdt.internal.ui.text.PreferencesAdapter;
 import org.eclipse.jdt.internal.ui.text.SimpleJavaSourceViewerConfiguration;
@@ -337,7 +338,7 @@ class JavaEditorColoringConfigurationBlock extends AbstractConfigurationBlock {
 	 * Highlighting color list
 	 * @since  3.0
 	 */
-	private final java.util.List fListModel= new ArrayList();
+	private final java.util.List<HighlightingColorListItem> fListModel= new ArrayList<HighlightingColorListItem>();
 	/**
 	 * Highlighting color list viewer
 	 * @since  3.0
@@ -390,10 +391,10 @@ class JavaEditorColoringConfigurationBlock extends AbstractConfigurationBlock {
 
 	private OverlayPreferenceStore.OverlayKey[] createOverlayStoreKeys() {
 		
-		ArrayList overlayKeys= new ArrayList();
+		ArrayList<OverlayKey> overlayKeys= new ArrayList<OverlayKey>();
 		
 		for (int i= 0, n= fListModel.size(); i < n; i++) {
-			HighlightingColorListItem item= (HighlightingColorListItem) fListModel.get(i);
+			HighlightingColorListItem item= fListModel.get(i);
 			overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.STRING, item.getColorKey()));
 			overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, item.getBoldKey()));
 			overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, item.getItalicKey()));
@@ -593,8 +594,8 @@ class JavaEditorColoringConfigurationBlock extends AbstractConfigurationBlock {
 		gd= new GridData(SWT.BEGINNING, SWT.BEGINNING, false, true);
 		gd.heightHint= convertHeightInCharsToPixels(9);
 		int maxWidth= 0;
-		for (Iterator it= fListModel.iterator(); it.hasNext();) {
-			HighlightingColorListItem item= (HighlightingColorListItem) it.next();
+		for (Iterator<HighlightingColorListItem> it= fListModel.iterator(); it.hasNext();) {
+			HighlightingColorListItem item= it.next();
 			maxWidth= Math.max(maxWidth, convertWidthInCharsToPixels(item.getDisplayName().length()));
 		}
 		ScrollBar vBar= ((Scrollable) fListViewer.getControl()).getVerticalBar();

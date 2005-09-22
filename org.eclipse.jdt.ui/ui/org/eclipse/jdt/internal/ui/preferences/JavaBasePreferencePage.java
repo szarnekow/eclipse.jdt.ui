@@ -51,8 +51,8 @@ public class JavaBasePreferencePage extends PreferencePage implements IWorkbench
 	private static final String DOUBLE_CLICK_GOES_INTO= PreferenceConstants.DOUBLE_CLICK_GOES_INTO;
 	private static final String DOUBLE_CLICK_EXPANDS= PreferenceConstants.DOUBLE_CLICK_EXPANDS;
 
-	private ArrayList fCheckBoxes;
-	private ArrayList fRadioButtons;
+	private ArrayList<Button> fCheckBoxes;
+	private ArrayList<Button> fRadioButtons;
 	private ArrayList fTextControls;
 	
 	public JavaBasePreferencePage() {
@@ -60,8 +60,8 @@ public class JavaBasePreferencePage extends PreferencePage implements IWorkbench
 		setPreferenceStore(JavaPlugin.getDefault().getPreferenceStore());
 		setDescription(PreferencesMessages.JavaBasePreferencePage_description); 
 	
-		fRadioButtons= new ArrayList();
-		fCheckBoxes= new ArrayList();
+		fRadioButtons= new ArrayList<Button>();
+		fCheckBoxes= new ArrayList<Button>();
 		fTextControls= new ArrayList();
 	}
 
@@ -170,12 +170,12 @@ public class JavaBasePreferencePage extends PreferencePage implements IWorkbench
 	protected void performDefaults() {
 		IPreferenceStore store= getPreferenceStore();
 		for (int i= 0; i < fCheckBoxes.size(); i++) {
-			Button button= (Button) fCheckBoxes.get(i);
+			Button button= fCheckBoxes.get(i);
 			String key= (String) button.getData();
 			button.setSelection(store.getDefaultBoolean(key));
 		}
 		for (int i= 0; i < fRadioButtons.size(); i++) {
-			Button button= (Button) fRadioButtons.get(i);
+			Button button= fRadioButtons.get(i);
 			String[] info= (String[]) button.getData();
 			button.setSelection(info[1].equals(store.getDefaultString(info[0])));
 		}
@@ -193,12 +193,12 @@ public class JavaBasePreferencePage extends PreferencePage implements IWorkbench
 	public boolean performOk() {
 		IPreferenceStore store= getPreferenceStore();
 		for (int i= 0; i < fCheckBoxes.size(); i++) {
-			Button button= (Button) fCheckBoxes.get(i);
+			Button button= fCheckBoxes.get(i);
 			String key= (String) button.getData();
 			store.setValue(key, button.getSelection());
 		}
 		for (int i= 0; i < fRadioButtons.size(); i++) {
-			Button button= (Button) fRadioButtons.get(i);
+			Button button= fRadioButtons.get(i);
 			if (button.getSelection()) {
 				String[] info= (String[]) button.getData();
 				store.setValue(info[0], info[1]);

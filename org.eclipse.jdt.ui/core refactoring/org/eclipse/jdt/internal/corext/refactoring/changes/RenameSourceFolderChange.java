@@ -131,7 +131,7 @@ public class RenameSourceFolderChange extends AbstractJavaElementRenameChange {
 	}
 
 	public RefactoringDescriptor getRefactoringDescriptor() {
-		final Map arguments= new HashMap();
+		final Map<String, String> arguments= new HashMap<String, String>();
 		arguments.put(ATTRIBUTE_PATH, getResourcePath().toPortableString());
 		arguments.put(ATTRIBUTE_NAME, getNewName());
 		String project= null;

@@ -39,7 +39,7 @@ public final class GenericType extends HierarchyType {
 	}
 	
 	public TypeVariable[] getTypeParameters() {
-		return (TypeVariable[]) fTypeParameters.clone();
+		return fTypeParameters.clone();
 	}
 	
 	public boolean doEquals(TType type) {

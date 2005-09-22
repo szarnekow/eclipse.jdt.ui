@@ -43,7 +43,7 @@ public class VariableNamesProcessor implements IContentAssistProcessor, ISubject
 	private ImageDescriptor fProposalImageDescriptor;
 
 	public VariableNamesProcessor(String[] tempNameProposals) {
-		fTempNameProposals= (String[]) tempNameProposals.clone();
+		fTempNameProposals= tempNameProposals.clone();
 		Arrays.sort(fTempNameProposals);
 		fImageRegistry= JavaPlugin.getImageDescriptorRegistry();
 		fProposalImageDescriptor= JavaPluginImages.DESC_OBJS_LOCAL_VARIABLE;
@@ -113,7 +113,7 @@ public class VariableNamesProcessor implements IContentAssistProcessor, ISubject
 			return null;
 		String input= contentAssistSubject.getDocument().get();
 		
-		ArrayList proposals= new ArrayList();
+		ArrayList<JavaCompletionProposal> proposals= new ArrayList<JavaCompletionProposal>();
 		String prefix= input.substring(0, documentOffset);
 		Image image= fImageRegistry.get(fProposalImageDescriptor);
 		for (int i= 0; i < fTempNameProposals.length; i++) {
@@ -124,7 +124,7 @@ public class VariableNamesProcessor implements IContentAssistProcessor, ISubject
 			proposals.add(proposal);
 		}
 		fErrorMessage= proposals.size() > 0 ? null : JavaUIMessages.JavaEditor_codeassist_noCompletions; 
-		return (ICompletionProposal[]) proposals.toArray(new ICompletionProposal[proposals.size()]);
+		return proposals.toArray(new ICompletionProposal[proposals.size()]);
 	}
 
 }

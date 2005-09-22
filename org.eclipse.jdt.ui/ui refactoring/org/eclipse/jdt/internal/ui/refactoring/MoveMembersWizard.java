@@ -86,7 +86,7 @@ public class MoveMembersWizard extends RefactoringWizard {
 
 		private Combo fDestinationField;
 		private static final int MRU_COUNT= 10;
-		private static List fgMruDestinations= new ArrayList(MRU_COUNT);
+		private static List<String> fgMruDestinations= new ArrayList<String>(MRU_COUNT);
 
 		public MoveMembersInputPage() {
 			super(PAGE_NAME);
@@ -137,7 +137,7 @@ public class MoveMembersWizard extends RefactoringWizard {
 			fDestinationField= new Combo(composite, SWT.SINGLE | SWT.BORDER);
 			fDestinationField.setFocus();
 			fDestinationField.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-			fDestinationField.setItems((String[]) fgMruDestinations.toArray(new String[fgMruDestinations.size()]));
+			fDestinationField.setItems(fgMruDestinations.toArray(new String[fgMruDestinations.size()]));
 			fDestinationField.addModifyListener(new ModifyListener(){
 				public void modifyText(ModifyEvent e) {
 					handleDestinationChanged();

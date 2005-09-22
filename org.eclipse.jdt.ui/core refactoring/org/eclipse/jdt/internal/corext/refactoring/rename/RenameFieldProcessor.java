@@ -30,6 +30,7 @@ import org.eclipse.ltk.core.refactoring.RefactoringDescriptor;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 import org.eclipse.ltk.core.refactoring.participants.CheckConditionsContext;
 import org.eclipse.ltk.core.refactoring.participants.ParticipantManager;
+import org.eclipse.ltk.core.refactoring.participants.RefactoringParticipant;
 import org.eclipse.ltk.core.refactoring.participants.RenameArguments;
 import org.eclipse.ltk.core.refactoring.participants.RenameParticipant;
 import org.eclipse.ltk.core.refactoring.participants.SharableParticipants;
@@ -129,7 +130,7 @@ public class RenameFieldProcessor extends JavaRenameProcessor implements IRefere
 		return new Object[] { fField};
 	}
 	
-	protected void loadDerivedParticipants(RefactoringStatus status, List result, String[] natures, SharableParticipants shared) throws CoreException {
+	protected void loadDerivedParticipants(RefactoringStatus status, List<RefactoringParticipant> result, String[] natures, SharableParticipants shared) throws CoreException {
 		if (fRenameGetter) {
 			IMethod getter= getGetter();
 			if (getter != null) {
@@ -144,7 +145,7 @@ public class RenameFieldProcessor extends JavaRenameProcessor implements IRefere
 		}
 	}
 
-	private void addParticipants(RefactoringStatus status, List result, IMethod method, String methodName, String[] natures, SharableParticipants shared) {
+	private void addParticipants(RefactoringStatus status, List<RefactoringParticipant> result, IMethod method, String methodName, String[] natures, SharableParticipants shared) {
 		RenameArguments args= new RenameArguments(methodName, getUpdateReferences());
 		RenameParticipant[] participants= ParticipantManager.loadRenameParticipants(status, this, method, args, natures, shared);
 		result.addAll(Arrays.asList(participants));
@@ -471,7 +472,7 @@ public class RenameFieldProcessor extends JavaRenameProcessor implements IRefere
 		try {
 			return new DynamicValidationStateChange(RefactoringCoreMessages.Change_javaChanges, fChangeManager.getAllChanges()) {
 				public final RefactoringDescriptor getRefactoringDescriptor() {
-					final Map arguments= new HashMap();
+					final Map<String, String> arguments= new HashMap<String, String>();
 					arguments.put(ATTRIBUTE_HANDLE, fField.getHandleIdentifier());
 					arguments.put(ATTRIBUTE_NAME, getNewElementName());
 					arguments.put(ATTRIBUTE_REFERENCES, Boolean.valueOf(fUpdateReferences).toString());

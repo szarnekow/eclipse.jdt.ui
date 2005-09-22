@@ -63,7 +63,7 @@ public class RemoveFromClasspathOperation extends ClasspathModifierOperation {
      * @param monitor a progress monitor, can be <code>null</code>
      */
     public void run(IProgressMonitor monitor) throws InvocationTargetException {
-        List result= null;
+        List<Object> result= null;
         fException= null;
         try {
             result= removeFromClasspath(fInformationProvider.getRemoveLinkedFolderQuery(), getSelectedElements(), fInformationProvider.getJavaProject(), monitor);

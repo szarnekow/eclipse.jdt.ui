@@ -41,7 +41,7 @@ import org.eclipse.ui.PlatformUI;
 public class ClasspathContainerDefaultPage extends NewElementWizardPage implements IClasspathContainerPage, IClasspathContainerPageExtension {
 
 	private StringDialogField fEntryField;
-	private ArrayList fUsedPaths;
+	private ArrayList<IPath> fUsedPaths;
 
 	/**
 	 * Constructor for ClasspathContainerDefaultPage.
@@ -52,7 +52,7 @@ public class ClasspathContainerDefaultPage extends NewElementWizardPage implemen
 		setDescription(NewWizardMessages.ClasspathContainerDefaultPage_description); 
 		setImageDescriptor(JavaPluginImages.DESC_WIZBAN_ADD_LIBRARY);
 		
-		fUsedPaths= new ArrayList();
+		fUsedPaths= new ArrayList<IPath>();
 		
 		fEntryField= new StringDialogField();
 		fEntryField.setLabelText(NewWizardMessages.ClasspathContainerDefaultPage_path_label); 

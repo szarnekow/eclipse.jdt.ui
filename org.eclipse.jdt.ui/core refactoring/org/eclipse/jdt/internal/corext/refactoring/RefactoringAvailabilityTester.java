@@ -75,12 +75,12 @@ public final class RefactoringAvailabilityTester {
 	}
 
 	public static IJavaElement[] getJavaElements(final Object[] elements) {
-		List result= new ArrayList();
+		List<Object> result= new ArrayList<Object>();
 		for (int index= 0; index < elements.length; index++) {
 			if (elements[index] instanceof IJavaElement)
 				result.add(elements[index]);
 		}
-		return (IJavaElement[]) result.toArray(new IJavaElement[result.size()]);
+		return result.toArray(new IJavaElement[result.size()]);
 	}
 
 	public static IMember[] getPullUpMembers(final IType type) throws JavaModelException {
@@ -119,12 +119,12 @@ public final class RefactoringAvailabilityTester {
 	}
 
 	public static IResource[] getResources(final Object[] elements) {
-		List result= new ArrayList();
+		List<Object> result= new ArrayList<Object>();
 		for (int index= 0; index < elements.length; index++) {
 			if (elements[index] instanceof IResource)
 				result.add(elements[index]);
 		}
-		return (IResource[]) result.toArray(new IResource[result.size()]);
+		return result.toArray(new IResource[result.size()]);
 	}
 
 	public static IType getTopLevelType(final IMember[] members) {
@@ -660,9 +660,9 @@ public final class RefactoringAvailabilityTester {
 				if (!(iterator.next() instanceof IMember))
 					return false;
 			}
-			final Set members= new HashSet();
+			final Set<Object> members= new HashSet<Object>();
 			members.addAll(Arrays.asList(selection.toArray()));
-			return isPullUpAvailable((IMember[]) members.toArray(new IMember[members.size()]));
+			return isPullUpAvailable(members.toArray(new IMember[members.size()]));
 		}
 		return false;
 	}
@@ -719,9 +719,9 @@ public final class RefactoringAvailabilityTester {
 				if (!(iterator.next() instanceof IMember))
 					return false;
 			}
-			final Set members= new HashSet();
+			final Set<Object> members= new HashSet<Object>();
 			members.addAll(Arrays.asList(selection.toArray()));
-			return isPushDownAvailable((IMember[]) members.toArray(new IMember[members.size()]));
+			return isPushDownAvailable(members.toArray(new IMember[members.size()]));
 		}
 		return false;
 	}

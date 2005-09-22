@@ -244,7 +244,7 @@ public class CodeTemplateContextType extends TemplateContextType {
 	 * @see org.eclipse.jdt.internal.corext.template.ContextType#validateVariables(org.eclipse.jdt.internal.corext.template.TemplateVariable[])
 	 */
 	protected void validateVariables(TemplateVariable[] variables) throws TemplateException {
-		ArrayList required=  new ArrayList(5);
+		ArrayList<String> required=  new ArrayList<String>(5);
 		String contextName= getId();
 		if (NEWTYPE_CONTEXTTYPE.equals(contextName)) {
 			required.add(PACKAGE_DECLARATION);
@@ -258,7 +258,7 @@ public class CodeTemplateContextType extends TemplateContextType {
 			required.remove(type);
 		}
 		if (!required.isEmpty()) {
-			String missing= (String) required.get(0);
+			String missing= required.get(0);
 			throw new TemplateException(Messages.format(JavaTemplateMessages.CodeTemplateContextType_validate_missingvariable, missing)); 
 		}
 		super.validateVariables(variables);

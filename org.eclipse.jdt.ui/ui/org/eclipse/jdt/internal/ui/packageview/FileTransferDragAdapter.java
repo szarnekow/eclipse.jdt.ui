@@ -91,12 +91,12 @@ class FileTransferDragAdapter extends DragSourceAdapter implements TransferDragS
 					return false;
 			}
 		}
-		List resources= convertIntoResources(selection);
+		List<IResource> resources= convertIntoResources(selection);
 		return resources.size() == selection.size();
 	}
 	
 	public void dragSetData(DragSourceEvent event){
-		List elements= getResources();
+		List<IResource> elements= getResources();
 		if (elements == null || elements.size() == 0) {
 			event.data= null;
 			return;
@@ -105,8 +105,8 @@ class FileTransferDragAdapter extends DragSourceAdapter implements TransferDragS
 		event.data= getResourceLocations(elements);
 	}
 
-	private static String[] getResourceLocations(List resources) {
-		return Resources.getLocationOSStrings((IResource[]) resources.toArray(new IResource[resources.size()]));
+	private static String[] getResourceLocations(List<IResource> resources) {
+		return Resources.getLocationOSStrings(resources.toArray(new IResource[resources.size()]));
 	}
 	
 	public void dragFinished(DragSourceEvent event) {
@@ -122,7 +122,7 @@ class FileTransferDragAdapter extends DragSourceAdapter implements TransferDragS
 	}
 	
 	/* package */ void handleDropMove(DragSourceEvent event) {
-		final List elements= getResources();
+		final List<IResource> elements= getResources();
 		if (elements == null || elements.size() == 0)
 			return;
 		
@@ -131,9 +131,9 @@ class FileTransferDragAdapter extends DragSourceAdapter implements TransferDragS
 				try {
 					monitor.beginTask(PackagesMessages.DragAdapter_deleting, elements.size()); 
 					MultiStatus status= createMultiStatus();
-					Iterator iter= elements.iterator();
+					Iterator<IResource> iter= elements.iterator();
 					while(iter.hasNext()) {
-						IResource resource= (IResource)iter.next();
+						IResource resource= iter.next();
 						try {
 							monitor.subTask(resource.getFullPath().toOSString());
 							resource.delete(true, null);
@@ -156,16 +156,16 @@ class FileTransferDragAdapter extends DragSourceAdapter implements TransferDragS
 	}
 	
 	private  void handleRefresh(DragSourceEvent event) {
-		final Set roots= collectRoots(getResources());
+		final Set<IResource> roots= collectRoots(getResources());
 		
 		WorkspaceModifyOperation op= new WorkspaceModifyOperation() {
 			public void execute(IProgressMonitor monitor) throws CoreException {
 				try {
 					monitor.beginTask(PackagesMessages.DragAdapter_refreshing, roots.size()); 
 					MultiStatus status= createMultiStatus();
-					Iterator iter= roots.iterator();
+					Iterator<IResource> iter= roots.iterator();
 					while (iter.hasNext()) {
-						IResource r= (IResource)iter.next();
+						IResource r= iter.next();
 						try {
 							r.refreshLocal(IResource.DEPTH_ONE, new SubProgressMonitor(monitor, 1));
 						} catch (CoreException e) {
@@ -184,12 +184,12 @@ class FileTransferDragAdapter extends DragSourceAdapter implements TransferDragS
 		runOperation(op, true, false);
 	}
 
-	protected Set collectRoots(final List elements) {
-		final Set roots= new HashSet(10);
+	protected Set<IResource> collectRoots(final List<IResource> elements) {
+		final Set<IResource> roots= new HashSet<IResource>(10);
 		
-		Iterator iter= elements.iterator();
+		Iterator<IResource> iter= elements.iterator();
 		while (iter.hasNext()) {
-			IResource resource= (IResource)iter.next();
+			IResource resource= iter.next();
 			IResource parent= resource.getParent();
 			if (parent == null) {
 				roots.add(resource);
@@ -200,7 +200,7 @@ class FileTransferDragAdapter extends DragSourceAdapter implements TransferDragS
 		return roots;
 	}
 	
-	private List getResources() {
+	private List<IResource> getResources() {
 		ISelection s= fProvider.getSelection();
 		if (!(s instanceof IStructuredSelection)) 
 			return null;
@@ -208,8 +208,8 @@ class FileTransferDragAdapter extends DragSourceAdapter implements TransferDragS
 		return convertIntoResources((IStructuredSelection)s);
 	}
 
-	private List convertIntoResources(IStructuredSelection selection) {
-		List result= new ArrayList(selection.size());
+	private List<IResource> convertIntoResources(IStructuredSelection selection) {
+		List<IResource> result= new ArrayList<IResource>(selection.size());
 		for (Iterator iter= selection.iterator(); iter.hasNext();) {
 			Object o= iter.next();
 			IResource r= null;

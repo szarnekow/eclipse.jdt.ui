@@ -167,7 +167,7 @@ public class OrganizeImportsAction extends SelectionDispatchAction {
 	}
 	
 	private ICompilationUnit[] getCompilationUnits(IStructuredSelection selection) {
-		HashSet result= new HashSet();
+		HashSet<IJavaElement> result= new HashSet<IJavaElement>();
 		Object[] selected= selection.toArray();
 		for (int i= 0; i < selected.length; i++) {
 			try {
@@ -215,14 +215,14 @@ public class OrganizeImportsAction extends SelectionDispatchAction {
 					JavaPlugin.log(e);
 			}
 		}
-		return (ICompilationUnit[]) result.toArray(new ICompilationUnit[result.size()]);
+		return result.toArray(new ICompilationUnit[result.size()]);
 	}
 	
-	private void collectCompilationUnits(IPackageFragment pack, Collection result) throws JavaModelException {
+	private void collectCompilationUnits(IPackageFragment pack, Collection<IJavaElement> result) throws JavaModelException {
 		result.addAll(Arrays.asList(pack.getCompilationUnits()));
 	}
 
-	private void collectCompilationUnits(IPackageFragmentRoot root, Collection result) throws JavaModelException {
+	private void collectCompilationUnits(IPackageFragmentRoot root, Collection<IJavaElement> result) throws JavaModelException {
 		if (root.getKind() == IPackageFragmentRoot.K_SOURCE) {
 			IJavaElement[] children= root.getChildren();
 			for (int i= 0; i < children.length; i++) {

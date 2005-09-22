@@ -167,16 +167,16 @@ public class SubTypesOfSingleton extends TypeSet {
 			SubTypesSet otherSub= (SubTypesSet) other;
 			TypeSet otherUpperBounds= otherSub.upperBound();
 
-			for(Iterator iter= otherUpperBounds.iterator(); iter.hasNext(); ) {
-				TType t= (TType) iter.next();
+			for(Iterator<TType> iter= otherUpperBounds.iterator(); iter.hasNext(); ) {
+				TType t= iter.next();
 				if (! TTypes.canAssignTo(t, fUpperBound))
 					return false;
 			}
 			return true;
 		}
 		// For now, no more tricks up my sleeve; get an iterator
-		for(Iterator iter= other.iterator(); iter.hasNext(); ) {
-			TType t= (TType) iter.next();
+		for(Iterator<TType> iter= other.iterator(); iter.hasNext(); ) {
+			TType t= iter.next();
 
 			if (! TTypes.canAssignTo(t, fUpperBound))
 				return false;
@@ -187,7 +187,7 @@ public class SubTypesOfSingleton extends TypeSet {
 	/* (non-Javadoc)
 	 * @see org.eclipse.jdt.internal.corext.refactoring.typeconstraints.typesets.TypeSet#iterator()
 	 */
-	public Iterator iterator() {
+	public Iterator<TType> iterator() {
 		return enumerate().iterator();
 //		return new Iterator() {
 //			// First type returned is fUpperBound, then each of the subtypes, in turn

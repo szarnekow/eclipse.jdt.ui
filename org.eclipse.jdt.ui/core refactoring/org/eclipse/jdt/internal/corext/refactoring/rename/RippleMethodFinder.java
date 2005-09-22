@@ -98,13 +98,13 @@ public class RippleMethodFinder {
 	 */
 	private static IMethod[] getAllRippleMethods(IMethod method, IProgressMonitor pm, WorkingCopyOwner owner) throws JavaModelException {
 		pm.beginTask("", 4); //$NON-NLS-1$
-		Set result= new HashSet();
-		Set visitedTypes= new HashSet();
-		List methodQueue= new ArrayList();
-		Set hierarchies= new HashSet();
+		Set<IMethod> result= new HashSet<IMethod>();
+		Set<IType> visitedTypes= new HashSet<IType>();
+		List<IMethod> methodQueue= new ArrayList<IMethod>();
+		Set<ITypeHierarchy> hierarchies= new HashSet<ITypeHierarchy>();
 		methodQueue.add(method);
 		while (! methodQueue.isEmpty()){
-			IMethod m= (IMethod)methodQueue.remove(0);
+			IMethod m= methodQueue.remove(0);
 			
 			/* must check for binary - otherwise will go all the way on all types
 			 * happens on toString() for example */  
@@ -134,13 +134,13 @@ public class RippleMethodFinder {
 			if (pm.isCanceled())
 				throw new OperationCanceledException();
 		}
-		return (IMethod[]) result.toArray(new IMethod[result.size()]);
+		return result.toArray(new IMethod[result.size()]);
 	}
 	
-	private static IType[] getAllSubtypes(IProgressMonitor pm, WorkingCopyOwner owner, IType type, Set cachedHierarchies) throws JavaModelException {
+	private static IType[] getAllSubtypes(IProgressMonitor pm, WorkingCopyOwner owner, IType type, Set<ITypeHierarchy> cachedHierarchies) throws JavaModelException {
 		//first, try in the cached hierarchies
-		for (Iterator iter= cachedHierarchies.iterator(); iter.hasNext();) {
-			ITypeHierarchy hierarchy= (ITypeHierarchy) iter.next();
+		for (Iterator<ITypeHierarchy> iter= cachedHierarchies.iterator(); iter.hasNext();) {
+			ITypeHierarchy hierarchy= iter.next();
 			if (hierarchy.contains(type))
 				return hierarchy.getAllSubtypes(type);
 		}
@@ -150,7 +150,7 @@ public class RippleMethodFinder {
 		return hierarchy.getAllSubtypes(type);
 	}
 	
-	private static IMethod findAppropriateMethod(WorkingCopyOwner owner, Set visitedTypes, List methodQueue, IType type, IMethod method, IProgressMonitor pm) throws JavaModelException{
+	private static IMethod findAppropriateMethod(WorkingCopyOwner owner, Set<IType> visitedTypes, List<IMethod> methodQueue, IType type, IMethod method, IProgressMonitor pm) throws JavaModelException{
 		pm.beginTask(RefactoringCoreMessages.RippleMethodFinder_analizing_hierarchy, 1); 
 		IType[] superTypes= newSupertypeHierarchy(type, owner, new SubProgressMonitor(pm, 1)).getAllSupertypes(type);
 		for (int i= 0; i< superTypes.length; i++){
@@ -169,7 +169,7 @@ public class RippleMethodFinder {
 		return null;
 	}
 	
-	private static IMethod getTopMostMethod(WorkingCopyOwner owner, Set visitedTypes, List methodQueue, IMethod method, IType type, IProgressMonitor pm)throws JavaModelException{
+	private static IMethod getTopMostMethod(WorkingCopyOwner owner, Set<IType> visitedTypes, List<IMethod> methodQueue, IMethod method, IType type, IProgressMonitor pm)throws JavaModelException{
 		pm.beginTask("", 1); //$NON-NLS-1$
 		IMethod methodInThisType= Checks.findSimilarMethod(method, type);
 		Assert.isTrue(methodInThisType != null);

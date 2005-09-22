@@ -192,7 +192,7 @@ class CodeAssistConfigurationBlock extends OptionsConfigurationBlock {
 		addCheckBox(composite, label, PREF_CODEASSIST_SHOW_VISIBLE_PROPOSALS, trueFalse, 0);
 		
 		label= PreferencesMessages.CodeAssistConfigurationBlock_restricted_link;
-		Map targetInfo= new java.util.HashMap(2);
+		Map<String, String> targetInfo= new java.util.HashMap<String, String>(2);
 		targetInfo.put(ProblemSeveritiesPreferencePage.DATA_SELECT_OPTION_KEY,	JavaCore.COMPILER_PB_FORBIDDEN_REFERENCE);
 		targetInfo.put(ProblemSeveritiesPreferencePage.DATA_SELECT_OPTION_QUALIFIER, JavaCore.PLUGIN_ID);
 		createPreferencePageLink(composite, label, targetInfo);
@@ -206,7 +206,7 @@ class CodeAssistConfigurationBlock extends OptionsConfigurationBlock {
 		addCheckBox(composite, label, PREF_CODEASSIST_DISCOURAGED_REFERENCE_CHECK, enabledDisabled, 0);
 	}
 
-	private void createPreferencePageLink(Composite composite, String label, final Map targetInfo) {
+	private void createPreferencePageLink(Composite composite, String label, final Map<String, String> targetInfo) {
 		final Link link= new Link(composite, SWT.NONE);
 		link.setText(label);
 		link.addSelectionListener(new SelectionAdapter() {
@@ -378,28 +378,28 @@ class CodeAssistConfigurationBlock extends OptionsConfigurationBlock {
 	protected void setControlEnabled(Key key, boolean enabled) {
 		Control control= getControl(key);
 		control.setEnabled(enabled);
-		Label label= (Label) fLabels.get(control);
+		Label label= fLabels.get(control);
 		if (label != null)
 			label.setEnabled(enabled);
 	}
 
 	private Control getControl(Key key) {
 		for (int i= fComboBoxes.size() - 1; i >= 0; i--) {
-			Control curr= (Control) fComboBoxes.get(i);
+			Control curr= fComboBoxes.get(i);
 			ControlData data= (ControlData) curr.getData();
 			if (key.equals(data.getKey())) {
 				return curr;
 			}
 		}
 		for (int i= fCheckBoxes.size() - 1; i >= 0; i--) {
-			Control curr= (Control) fCheckBoxes.get(i);
+			Control curr= fCheckBoxes.get(i);
 			ControlData data= (ControlData) curr.getData();
 			if (key.equals(data.getKey())) {
 				return curr;
 			}
 		}
 		for (int i= fTextBoxes.size() - 1; i >= 0; i--) {
-			Control curr= (Control) fTextBoxes.get(i);
+			Control curr= fTextBoxes.get(i);
 			Key currKey= (Key) curr.getData();
 			if (key.equals(currKey)) {
 				return curr;

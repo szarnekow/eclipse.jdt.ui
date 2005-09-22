@@ -19,13 +19,13 @@ import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IType;
 
 class CallSearchResultCollector {
-    private Map fCalledMembers;
+    private Map<Object, MethodCall> fCalledMembers;
 
     public CallSearchResultCollector() {
         this.fCalledMembers = createCalledMethodsData();
     }
 
-    public Map getCallers() {
+    public Map<Object, MethodCall> getCallers() {
         return fCalledMembers;
     }
 
@@ -36,7 +36,7 @@ class CallSearchResultCollector {
     protected void addMember(IMember member, IMember calledMember, int start, int end, int lineNumber) {
         if ((member != null) && (calledMember != null)) {
             if (!isIgnored(calledMember)) {
-                MethodCall methodCall = (MethodCall) fCalledMembers.get(calledMember.getHandleIdentifier());
+                MethodCall methodCall = fCalledMembers.get(calledMember.getHandleIdentifier());
 
                 if (methodCall == null) {
                     methodCall = new MethodCall(calledMember);
@@ -49,8 +49,8 @@ class CallSearchResultCollector {
         }
     }
 
-    protected Map createCalledMethodsData() {
-        return new HashMap();
+    protected Map<Object, MethodCall> createCalledMethodsData() {
+        return new HashMap<Object, MethodCall>();
     }
 
     /**

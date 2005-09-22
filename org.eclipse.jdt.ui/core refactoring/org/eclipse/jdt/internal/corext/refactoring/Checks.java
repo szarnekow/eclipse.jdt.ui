@@ -545,7 +545,7 @@ public class Checks {
 	 * @throws JavaModelException
 	 */	
 	public static SearchResultGroup[] excludeCompilationUnits(SearchResultGroup[] grouped, RefactoringStatus status) throws JavaModelException{
-		List result= new ArrayList();
+		List<SearchResultGroup> result= new ArrayList<SearchResultGroup>();
 		boolean wasEmpty= grouped.length == 0;
 		for (int i= 0; i < grouped.length; i++){	
 			IResource resource= grouped[i].getResource();
@@ -565,7 +565,7 @@ public class Checks {
 		if ((!wasEmpty) && result.isEmpty())
 			status.addFatalError(RefactoringCoreMessages.Checks_all_excluded); 
 		
-		return (SearchResultGroup[])result.toArray(new SearchResultGroup[result.size()]);
+		return result.toArray(new SearchResultGroup[result.size()]);
 	}
 	
 	private static final String getFullPath(ICompilationUnit cu) {

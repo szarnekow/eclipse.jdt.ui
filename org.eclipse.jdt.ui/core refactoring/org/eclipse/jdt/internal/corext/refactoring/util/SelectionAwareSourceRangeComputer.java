@@ -23,7 +23,6 @@ import org.eclipse.jdt.core.compiler.IScanner;
 import org.eclipse.jdt.core.compiler.ITerminalSymbols;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.rewrite.TargetSourceRangeComputer;
-
 import org.eclipse.jdt.internal.corext.dom.TokenScanner;
 import org.eclipse.jdt.internal.corext.util.Strings;
 
@@ -34,7 +33,7 @@ public class SelectionAwareSourceRangeComputer extends TargetSourceRangeComputer
 	private int fSelectionStart;
 	private int fSelectionLength;
 	
-	private Map/*<ASTNode, SourceRange>*/ fRanges;
+	private Map/*<ASTNode, SourceRange>*/<ASTNode, SourceRange> fRanges;
 	
 	public SelectionAwareSourceRangeComputer(ASTNode[] selectedNodes, IDocument document, int selectionStart, int selectionLength) throws BadLocationException, CoreException {
 		fSelectedNodes= selectedNodes;
@@ -47,22 +46,22 @@ public class SelectionAwareSourceRangeComputer extends TargetSourceRangeComputer
 		try {
 			if (fRanges == null)
 				initializeRanges();
-			SourceRange result= (SourceRange)fRanges.get(node);
+			SourceRange result= fRanges.get(node);
 			if (result != null)
 				return result;
 			return super.computeSourceRange(node);
 		} catch (BadLocationException e) {
 			// fall back to standard implementation
-			fRanges= new HashMap();
+			fRanges= new HashMap<ASTNode, SourceRange>();
 		} catch (CoreException e) {
 			// fall back to standard implementation
-			fRanges= new HashMap();
+			fRanges= new HashMap<ASTNode, SourceRange>();
 		}
 		return super.computeSourceRange(node);
 	}
 
 	private void initializeRanges() throws BadLocationException, CoreException {
-		fRanges= new HashMap();
+		fRanges= new HashMap<ASTNode, SourceRange>();
 		if (fSelectedNodes.length == 0)
 			return;
 		
@@ -78,7 +77,7 @@ public class SelectionAwareSourceRangeComputer extends TargetSourceRangeComputer
 		
 		ASTNode currentNode= fSelectedNodes[0];
 		int newStart= Math.min(fSelectionStart + pos, currentNode.getStartPosition());
-		SourceRange range= (SourceRange)fRanges.get(currentNode);
+		SourceRange range= fRanges.get(currentNode);
 		fRanges.put(currentNode, new SourceRange(newStart, range.getLength() + range.getStartPosition() - newStart));
 		
 		currentNode= fSelectedNodes[last];
@@ -102,7 +101,7 @@ public class SelectionAwareSourceRangeComputer extends TargetSourceRangeComputer
 		}
 		
 		int newEnd= Math.max(fSelectionStart + pos, currentNode.getStartPosition() + currentNode.getLength());
-		range= (SourceRange)fRanges.get(currentNode);
+		range= fRanges.get(currentNode);
 		fRanges.put(currentNode, new SourceRange(range.getStartPosition(), newEnd - range.getStartPosition()));
 	}
 }

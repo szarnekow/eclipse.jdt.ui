@@ -60,6 +60,7 @@ import org.eclipse.ui.dialogs.SelectionDialog;
 import org.eclipse.ui.PlatformUI;
 
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.IType;
@@ -615,7 +616,7 @@ class JarManifestWizardPage extends WizardPage implements IJarPackageWizardPage 
 				return false;
 			}
 		}
-		Set selectedPackages= getPackagesForSelectedResources(fJarPackage);
+		Set<IJavaElement> selectedPackages= getPackagesForSelectedResources(fJarPackage);
 		if (fJarPackage.isJarSealed()
 				&& !selectedPackages.containsAll(Arrays.asList(fJarPackage.getPackagesToUnseal()))) {
 			setErrorMessage(JarPackagerMessages.JarManifestWizardPage_error_unsealedPackagesNotInSelection); 
@@ -874,9 +875,9 @@ class JarManifestWizardPage extends WizardPage implements IJarPackageWizardPage 
 	 * @param packageFragments the package fragments
 	 * @return a new selection dialog
 	 */
-	protected SelectionDialog createPackageDialog(Set packageFragments) {
-		List packages= new ArrayList(packageFragments.size());
-		for (Iterator iter= packageFragments.iterator(); iter.hasNext();) {
+	protected SelectionDialog createPackageDialog(Set<IJavaElement> packageFragments) {
+		List<IPackageFragment> packages= new ArrayList<IPackageFragment>(packageFragments.size());
+		for (Iterator<IJavaElement> iter= packageFragments.iterator(); iter.hasNext();) {
 			IPackageFragment fragment= (IPackageFragment)iter.next();
 			boolean containsJavaElements= false;
 			int kind;
@@ -924,7 +925,7 @@ class JarManifestWizardPage extends WizardPage implements IJarPackageWizardPage 
 	 */
 	protected IPackageFragment[] getPackagesFromDialog(SelectionDialog dialog) {
 		if (dialog.getReturnCode() == Window.OK && dialog.getResult().length > 0)
-			return (IPackageFragment[])Arrays.asList(dialog.getResult()).toArray(new IPackageFragment[dialog.getResult().length]);
+			return Arrays.asList(dialog.getResult()).toArray(new IPackageFragment[dialog.getResult().length]);
 		else
 			return new IPackageFragment[0];
 	}
@@ -963,8 +964,8 @@ class JarManifestWizardPage extends WizardPage implements IJarPackageWizardPage 
 	 * Returns the minimal set of packages which contain all the selected Java resources.
 	 * @return	the Set of IPackageFragments which contain all the selected resources
 	 */
-	private Set getPackagesForSelectedResources(JarPackageData jarPackage) {
-		Set packages= new HashSet();
+	private Set<IJavaElement> getPackagesForSelectedResources(JarPackageData jarPackage) {
+		Set<IJavaElement> packages= new HashSet<IJavaElement>();
 		int n= fJarPackage.getElements().length;
 		for (int i= 0; i < n; i++) {
 			Object element= fJarPackage.getElements()[i];

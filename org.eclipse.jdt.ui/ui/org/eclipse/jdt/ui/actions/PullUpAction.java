@@ -158,9 +158,9 @@ public class PullUpAction extends SelectionDispatchAction {
 			if (! (iter.next() instanceof IMember))
 				return null;
 		}
-		Set memberSet= new HashSet();
+		Set<Object> memberSet= new HashSet<Object>();
 		memberSet.addAll(Arrays.asList(selection.toArray()));
-		return (IMember[]) memberSet.toArray(new IMember[memberSet.size()]);
+		return memberSet.toArray(new IMember[memberSet.size()]);
 	}
 		
 	private IMember getSelectedMember() throws JavaModelException {

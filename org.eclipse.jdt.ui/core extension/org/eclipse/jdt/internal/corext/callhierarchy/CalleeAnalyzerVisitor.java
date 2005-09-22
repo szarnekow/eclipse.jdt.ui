@@ -17,6 +17,7 @@ import java.util.Map;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 
+import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.ISourceRange;
@@ -69,7 +70,7 @@ class CalleeAnalyzerVisitor extends ASTVisitor {
      *
      * @return CallerElement
      */
-    public Map getCallees() {
+    public Map<Object, MethodCall> getCallees() {
         return fSearchResults.getCallers();
     }
 
@@ -299,7 +300,7 @@ class CalleeAnalyzerVisitor extends ASTVisitor {
     }
 
     private IMethod findImplementingMethods(IMethod calledMethod) {
-        Collection implementingMethods = CallHierarchy.getDefault()
+        Collection<IJavaElement> implementingMethods = CallHierarchy.getDefault()
                                                         .getImplementingMethods(calledMethod);
 
         if ((implementingMethods.size() == 0) || (implementingMethods.size() > 1)) {

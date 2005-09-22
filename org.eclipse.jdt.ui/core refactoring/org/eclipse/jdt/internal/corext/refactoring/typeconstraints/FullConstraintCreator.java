@@ -19,6 +19,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ArrayCreation;
 import org.eclipse.jdt.core.dom.ArrayInitializer;
 import org.eclipse.jdt.core.dom.Assignment;
@@ -100,8 +101,8 @@ public class FullConstraintCreator extends ConstraintCreator{
 	public ITypeConstraint[] create(ArrayInitializer arrayInitializer){
 		ITypeBinding arrayBinding= arrayInitializer.resolveTypeBinding();
 		Assert.isTrue(arrayBinding.isArray());
-		List expressions= arrayInitializer.expressions();
-		List/*<ITypeConstraint>*/ constraints= new ArrayList();
+		List<ASTNode> expressions= arrayInitializer.expressions();
+		List/*<ITypeConstraint>*/<ITypeConstraint> constraints= new ArrayList<ITypeConstraint>();
 		Type type= getTypeParent(arrayInitializer);
 		ConstraintVariable typeVariable= fConstraintVariableFactory.makeTypeVariable(type);
 		for (int i= 0; i < expressions.size(); i++) {
@@ -111,7 +112,7 @@ public class FullConstraintCreator extends ConstraintCreator{
 					typeVariable);
 			constraints.addAll(Arrays.asList(c));
 		}		
-		return (ITypeConstraint[])constraints.toArray(new ITypeConstraint[constraints.size()]);
+		return constraints.toArray(new ITypeConstraint[constraints.size()]);
 	}
 
 	/* (non-Javadoc)
@@ -139,10 +140,10 @@ public class FullConstraintCreator extends ConstraintCreator{
 				return c2;
 			} else {
 				ITypeConstraint c1 = definesConstraint[0];
-				Collection/*<ITypeConstraint>*/ constraints= new ArrayList();
+				Collection/*<ITypeConstraint>*/<ITypeConstraint> constraints= new ArrayList<ITypeConstraint>();
 				constraints.add(c1);
 				constraints.addAll(Arrays.asList(c2));
-				return (ITypeConstraint[])constraints.toArray(new ITypeConstraint[constraints.size()]);
+				return constraints.toArray(new ITypeConstraint[constraints.size()]);
 			}
 		} else 
 			return definesConstraint;
@@ -152,8 +153,8 @@ public class FullConstraintCreator extends ConstraintCreator{
 	 * @see org.eclipse.jdt.core.dom.ASTVisitor#visit(org.eclipse.jdt.core.dom.ClassInstanceCreation)
 	 */
 	public ITypeConstraint[] create(ClassInstanceCreation instanceCreation){
-		List arguments= instanceCreation.arguments();
-		List result= new ArrayList(arguments.size());
+		List<ASTNode> arguments= instanceCreation.arguments();
+		List<ITypeConstraint> result= new ArrayList<ITypeConstraint>(arguments.size());
 		IMethodBinding methodBinding= instanceCreation.resolveConstructorBinding();
 		result.addAll(Arrays.asList(getArgumentConstraints(arguments, methodBinding)));
 		if (instanceCreation.getAnonymousClassDeclaration() == null){
@@ -161,18 +162,18 @@ public class FullConstraintCreator extends ConstraintCreator{
 			ConstraintVariable typeVar= fConstraintVariableFactory.makeRawBindingVariable(instanceCreation.resolveTypeBinding());
 			result.addAll(Arrays.asList(fTypeConstraintFactory.createDefinesConstraint(constructorVar, typeVar)));
 		}
-		return (ITypeConstraint[]) result.toArray(new ITypeConstraint[result.size()]);		
+		return result.toArray(new ITypeConstraint[result.size()]);		
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.jdt.core.dom.ASTVisitor#visit(org.eclipse.jdt.core.dom.ConstructorInvocation)
 	 */
 	public ITypeConstraint[] create(ConstructorInvocation invocation){
-		List arguments= invocation.arguments();
-		List result= new ArrayList(arguments.size());
+		List<ASTNode> arguments= invocation.arguments();
+		List<ITypeConstraint> result= new ArrayList<ITypeConstraint>(arguments.size());
 		IMethodBinding methodBinding= invocation.resolveConstructorBinding();
 		result.addAll(Arrays.asList(getArgumentConstraints(arguments, methodBinding)));
-		return (ITypeConstraint[]) result.toArray(new ITypeConstraint[result.size()]);
+		return result.toArray(new ITypeConstraint[result.size()]);
 	}
 
 	/* (non-Javadoc)
@@ -192,11 +193,11 @@ public class FullConstraintCreator extends ConstraintCreator{
 	 * @see org.eclipse.jdt.core.dom.ASTVisitor#visit(org.eclipse.jdt.core.dom.FieldDeclaration)
 	 */
 	public ITypeConstraint[] create(FieldDeclaration fd){
-		List result= new ArrayList();
+		List<ITypeConstraint> result= new ArrayList<ITypeConstraint>();
 		result.addAll(Arrays.asList(getConstraintsFromFragmentList(fd.fragments(), fd.getType())));
 		result.addAll(getConstraintsForHiding(fd));
 		result.addAll(getConstraintsForFieldDeclaringTypes(fd));
-		return (ITypeConstraint[]) result.toArray(new ITypeConstraint[result.size()]);
+		return result.toArray(new ITypeConstraint[result.size()]);
 	}
 
 	/* (non-Javadoc)
@@ -217,7 +218,7 @@ public class FullConstraintCreator extends ConstraintCreator{
 	 * @see org.eclipse.jdt.core.dom.ASTVisitor#visit(org.eclipse.jdt.core.dom.ConditionalExpression)
 	 */
 	public ITypeConstraint[] create(ConditionalExpression node) {
-		List result= new ArrayList();
+		List<ITypeConstraint> result= new ArrayList<ITypeConstraint>();
 		Expression thenExpression= node.getThenExpression();
 		Expression elseExpression= node.getElseExpression();
 		ConstraintVariable whole= fConstraintVariableFactory.makeExpressionOrTypeVariable(node, getContext());
@@ -229,14 +230,14 @@ public class FullConstraintCreator extends ConstraintCreator{
 		result.addAll(Arrays.asList(constraints1));
 		result.addAll(Arrays.asList(constraints2));
 		result.addAll(Arrays.asList(constraints3));
-		return (ITypeConstraint[])result.toArray(new ITypeConstraint[result.size()]);
+		return result.toArray(new ITypeConstraint[result.size()]);
 	}
 	
 	/* (non-Javadoc)
 	 * @see org.eclipse.jdt.core.dom.ASTVisitor#visit(org.eclipse.jdt.core.dom.MethodDeclaration)
 	 */
 	public ITypeConstraint[] create(MethodDeclaration declaration){
-		List result= new ArrayList();
+		List<ITypeConstraint> result= new ArrayList<ITypeConstraint>();
 		IMethodBinding methodBinding= declaration.resolveBinding();
 		if (methodBinding == null)
 			return new ITypeConstraint[0];
@@ -260,10 +261,10 @@ public class FullConstraintCreator extends ConstraintCreator{
 			result.addAll(Arrays.asList(constraint));
 		}
 		if (MethodChecks.isVirtual(methodBinding)){
-			Collection constraintsForOverriding = getConstraintsForOverriding(methodBinding);
+			Collection<ITypeConstraint> constraintsForOverriding = getConstraintsForOverriding(methodBinding);
 			result.addAll(constraintsForOverriding);
 		}
-		return (ITypeConstraint[]) result.toArray(new ITypeConstraint[result.size()]);
+		return result.toArray(new ITypeConstraint[result.size()]);
 	}
 
 	/* (non-Javadoc)
@@ -280,8 +281,8 @@ public class FullConstraintCreator extends ConstraintCreator{
 	 * @see org.eclipse.jdt.core.dom.ASTVisitor#visit(org.eclipse.jdt.core.dom.MethodInvocation)
 	 */
 	public ITypeConstraint[] create(MethodInvocation invocation){
-		List arguments= invocation.arguments();
-		List result= new ArrayList(arguments.size());
+		List<ASTNode> arguments= invocation.arguments();
+		List<ITypeConstraint> result= new ArrayList<ITypeConstraint>(arguments.size());
 		IMethodBinding methodBinding= invocation.resolveMethodBinding();
 		if (methodBinding == null)
 			return new ITypeConstraint[0];
@@ -296,13 +297,13 @@ public class FullConstraintCreator extends ConstraintCreator{
 				if (rootDefs.length == 1){
 					result.addAll(Arrays.asList(fTypeConstraintFactory.createSubtypeConstraint(expressionVar, fConstraintVariableFactory.makeDeclaringTypeVariable(rootDefs[0]))));
 				}else{	
-					Collection/*<ITypeConstraint>*/ constraints= new ArrayList(); 
+					Collection/*<ITypeConstraint>*/<ITypeConstraint> constraints= new ArrayList<ITypeConstraint>(); 
 					for (int i= 0; i < rootDefs.length; i++) {
 						ConstraintVariable rootDefTypeVar= fConstraintVariableFactory.makeDeclaringTypeVariable(rootDefs[i]);
 						ITypeConstraint[] tc= fTypeConstraintFactory.createSubtypeConstraint(expressionVar, rootDefTypeVar);
 						constraints.addAll(Arrays.asList(tc));
 					}
-					ITypeConstraint[] constraintsArray= (ITypeConstraint[])constraints.toArray(new ITypeConstraint[constraints.size()]);
+					ITypeConstraint[] constraintsArray= constraints.toArray(new ITypeConstraint[constraints.size()]);
 					if (constraintsArray.length > 0){
 						result.add(fTypeConstraintFactory.createCompositeOrTypeConstraint(constraintsArray));
 					}
@@ -313,7 +314,7 @@ public class FullConstraintCreator extends ConstraintCreator{
 				result.addAll(Arrays.asList(fTypeConstraintFactory.createSubtypeConstraint(expressionVar, typeVar)));
 			}
 		}
-		return (ITypeConstraint[]) result.toArray(new ITypeConstraint[result.size()]);
+		return result.toArray(new ITypeConstraint[result.size()]);
 	}
 
 	/* (non-Javadoc)
@@ -363,7 +364,7 @@ public class FullConstraintCreator extends ConstraintCreator{
 		} else if (constraints.length == 0){
 			return defines;
 		} else {
-			List all= new ArrayList();
+			List<ITypeConstraint> all= new ArrayList<ITypeConstraint>();
 			all.addAll(Arrays.asList(defines));
 			all.addAll(Arrays.asList(constraints));
 			return (ITypeConstraint[])all.toArray();
@@ -374,11 +375,11 @@ public class FullConstraintCreator extends ConstraintCreator{
 	 * @see org.eclipse.jdt.core.dom.ASTVisitor#visit(org.eclipse.jdt.core.dom.SuperConstructorInvocation)
 	 */
 	public ITypeConstraint[] create(SuperConstructorInvocation invocation){
-		List arguments= invocation.arguments();
-		List result= new ArrayList(arguments.size());
+		List<ASTNode> arguments= invocation.arguments();
+		List<ITypeConstraint> result= new ArrayList<ITypeConstraint>(arguments.size());
 		IMethodBinding methodBinding= invocation.resolveConstructorBinding();
 		result.addAll(Arrays.asList(getArgumentConstraints(arguments, methodBinding)));
-		return (ITypeConstraint[]) result.toArray(new ITypeConstraint[result.size()]);
+		return result.toArray(new ITypeConstraint[result.size()]);
 	}
 	
 	/* (non-Javadoc)
@@ -397,13 +398,13 @@ public class FullConstraintCreator extends ConstraintCreator{
 	 * @see org.eclipse.jdt.core.dom.ASTVisitor#visit(org.eclipse.jdt.core.dom.SuperMethodInvocation)
 	 */
 	public ITypeConstraint[] create(SuperMethodInvocation invocation){
-		List arguments= invocation.arguments();
-		List result= new ArrayList(arguments.size());
+		List<ASTNode> arguments= invocation.arguments();
+		List<ITypeConstraint> result= new ArrayList<ITypeConstraint>(arguments.size());
 		IMethodBinding methodBinding= invocation.resolveMethodBinding();
 		ITypeConstraint[] returnTypeConstraint= getReturnTypeConstraint(invocation, methodBinding);
 		result.addAll(Arrays.asList(returnTypeConstraint));
 		result.addAll(Arrays.asList(getArgumentConstraints(arguments, methodBinding)));
-		return (ITypeConstraint[]) result.toArray(new ITypeConstraint[result.size()]);
+		return result.toArray(new ITypeConstraint[result.size()]);
 	}
 
 	/* (non-Javadoc)
@@ -443,9 +444,9 @@ public class FullConstraintCreator extends ConstraintCreator{
 
 	//--------- private helpers ----------------//
 	
-	private Collection getConstraintsForFieldDeclaringTypes(FieldDeclaration fd) {
-		Collection result= new ArrayList(fd.fragments().size());
-		for (Iterator iter= fd.fragments().iterator(); iter.hasNext();) {
+	private Collection<ITypeConstraint> getConstraintsForFieldDeclaringTypes(FieldDeclaration fd) {
+		Collection<ITypeConstraint> result= new ArrayList<ITypeConstraint>(fd.fragments().size());
+		for (Iterator<ASTNode> iter= fd.fragments().iterator(); iter.hasNext();) {
 			VariableDeclarationFragment varDecl= (VariableDeclarationFragment) iter.next();
 			IVariableBinding binding= varDecl.resolveBinding();
 			Assert.isTrue(binding.isField());
@@ -456,22 +457,22 @@ public class FullConstraintCreator extends ConstraintCreator{
 		return result;
 	}
 	
-	private Collection getConstraintsForHiding(FieldDeclaration fd) {
-		Collection result= new ArrayList();
-		for (Iterator iter= fd.fragments().iterator(); iter.hasNext();) {
+	private Collection<ITypeConstraint> getConstraintsForHiding(FieldDeclaration fd) {
+		Collection<ITypeConstraint> result= new ArrayList<ITypeConstraint>();
+		for (Iterator<ASTNode> iter= fd.fragments().iterator(); iter.hasNext();) {
 			result.addAll(getConstraintsForHiding((VariableDeclarationFragment) iter.next()));
 		}
 		return result;
 	}
 	
-	private Collection getConstraintsForHiding(VariableDeclarationFragment fragment) {
-		Collection result= new ArrayList();
+	private Collection<ITypeConstraint> getConstraintsForHiding(VariableDeclarationFragment fragment) {
+		Collection<ITypeConstraint> result= new ArrayList<ITypeConstraint>();
 		IVariableBinding fieldBinding= fragment.resolveBinding();
 		Assert.isTrue(fieldBinding.isField());
-		Set declaringTypes= getDeclaringSuperTypes(fieldBinding);
+		Set<ITypeBinding> declaringTypes= getDeclaringSuperTypes(fieldBinding);
 		ConstraintVariable hiddingFieldVar= fConstraintVariableFactory.makeDeclaringTypeVariable(fieldBinding);
-		for (Iterator iter= declaringTypes.iterator(); iter.hasNext();) {
-			ITypeBinding declaringSuperType= (ITypeBinding) iter.next();
+		for (Iterator<ITypeBinding> iter= declaringTypes.iterator(); iter.hasNext();) {
+			ITypeBinding declaringSuperType= iter.next();
 			IVariableBinding hiddenField= findField(fieldBinding, declaringSuperType);
 			Assert.isTrue(hiddenField.isField());
 			ConstraintVariable hiddenFieldVar= fConstraintVariableFactory.makeDeclaringTypeVariable(hiddenField);
@@ -480,10 +481,10 @@ public class FullConstraintCreator extends ConstraintCreator{
 		return result;
 	}
 	
-	private ITypeConstraint[] getConstraintsFromFragmentList(List fragments, Type type) {
+	private ITypeConstraint[] getConstraintsFromFragmentList(List<ASTNode> fragments, Type type) {
 		int size= fragments.size();
 		ConstraintVariable typeVariable= fConstraintVariableFactory.makeTypeVariable(type);
-		List result= new ArrayList((size * (size - 1))/2);
+		List<ITypeConstraint> result= new ArrayList<ITypeConstraint>((size * (size - 1))/2);
 		for (int i= 0; i < size; i++) {
 			VariableDeclarationFragment fragment1= (VariableDeclarationFragment) fragments.get(i);
 			SimpleName fragment1Name= fragment1.getName();
@@ -497,14 +498,14 @@ public class FullConstraintCreator extends ConstraintCreator{
 						fConstraintVariableFactory.makeExpressionOrTypeVariable(fragment2.getName(), getContext()))));
 			}
 		}
-		return (ITypeConstraint[]) result.toArray(new ITypeConstraint[result.size()]);
+		return result.toArray(new ITypeConstraint[result.size()]);
 	}
 	
-	private Collection getConstraintsForOverriding(IMethodBinding overriddingMethod) {
-		Collection result= new ArrayList();
-		Set declaringSupertypes= getDeclaringSuperTypes(overriddingMethod);
-		for (Iterator iter= declaringSupertypes.iterator(); iter.hasNext();) {
-			ITypeBinding superType= (ITypeBinding) iter.next();
+	private Collection<ITypeConstraint> getConstraintsForOverriding(IMethodBinding overriddingMethod) {
+		Collection<ITypeConstraint> result= new ArrayList<ITypeConstraint>();
+		Set<ITypeBinding> declaringSupertypes= getDeclaringSuperTypes(overriddingMethod);
+		for (Iterator<ITypeBinding> iter= declaringSupertypes.iterator(); iter.hasNext();) {
+			ITypeBinding superType= iter.next();
 			IMethodBinding overriddenMethod= findMethod(overriddingMethod, superType);
 			Assert.isNotNull(overriddenMethod);//because we asked for declaring types
 			if (Bindings.equals(overriddingMethod, overriddenMethod)) continue;
@@ -535,8 +536,8 @@ public class FullConstraintCreator extends ConstraintCreator{
 		return fTypeConstraintFactory.createDefinesConstraint(invocationVariable, returnTypeVariable);
 	}
 	
-	private ITypeConstraint[] getArgumentConstraints(List arguments, IMethodBinding methodBinding){
-		List result= new ArrayList(arguments.size());
+	private ITypeConstraint[] getArgumentConstraints(List<ASTNode> arguments, IMethodBinding methodBinding){
+		List<ITypeConstraint> result= new ArrayList<ITypeConstraint>(arguments.size());
 		for (int i= 0, n= arguments.size(); i < n; i++) {
 			Expression argument= (Expression) arguments.get(i);
 			ConstraintVariable expressionVariable= fConstraintVariableFactory.makeExpressionOrTypeVariable(argument, getContext());
@@ -544,7 +545,7 @@ public class FullConstraintCreator extends ConstraintCreator{
 			ITypeConstraint[] argConstraint= fTypeConstraintFactory.createSubtypeConstraint(expressionVariable, parameterTypeVariable);
 			result.addAll(Arrays.asList(argConstraint));
 		}
-		return (ITypeConstraint[]) result.toArray(new ITypeConstraint[result.size()]);		
+		return result.toArray(new ITypeConstraint[result.size()]);		
 	}
 	
 	private static Type getTypeParent(ArrayInitializer arrayInitializer) {
@@ -608,9 +609,9 @@ public class FullConstraintCreator extends ConstraintCreator{
 	/* 
 	 * return Set of ITypeBindings
 	 */
-	private static Set getDeclaringSuperTypes(IVariableBinding fieldBinding) {
+	private static Set<ITypeBinding> getDeclaringSuperTypes(IVariableBinding fieldBinding) {
 		ITypeBinding[] allSuperTypes= Bindings.getAllSuperTypes(fieldBinding.getDeclaringClass());
-		Set result= new HashSet();
+		Set<ITypeBinding> result= new HashSet<ITypeBinding>();
 		for (int i= 0; i < allSuperTypes.length; i++) {
 			ITypeBinding type= allSuperTypes[i];
 			if (findField(fieldBinding, type) != null)
@@ -621,10 +622,10 @@ public class FullConstraintCreator extends ConstraintCreator{
 	
 	//--- RootDef ----//
 	protected static IMethodBinding[] getRootDefs(IMethodBinding methodBinding) {
-		Set/*<ITypeBinding>*/ declaringSuperTypes= getDeclaringSuperTypes(methodBinding);
-		Set/*<IMethodBinding>*/ result= new LinkedHashSet();
-		for (Iterator iter= declaringSuperTypes.iterator(); iter.hasNext();) {
-			ITypeBinding type= (ITypeBinding) iter.next();
+		Set/*<ITypeBinding>*/<ITypeBinding> declaringSuperTypes= getDeclaringSuperTypes(methodBinding);
+		Set/*<IMethodBinding>*/<IMethodBinding> result= new LinkedHashSet<IMethodBinding>();
+		for (Iterator<ITypeBinding> iter= declaringSuperTypes.iterator(); iter.hasNext();) {
+			ITypeBinding type= iter.next();
 			if (! containsASuperType(type, declaringSuperTypes))
 				result.add(findMethod(methodBinding, type));
 		}
@@ -632,7 +633,7 @@ public class FullConstraintCreator extends ConstraintCreator{
 		if (result.size() == 0){
 			result.add(methodBinding);
 		}
-		return (IMethodBinding[]) result.toArray(new IMethodBinding[result.size()]);
+		return result.toArray(new IMethodBinding[result.size()]);
 	}
 	
 	/* 
@@ -640,9 +641,9 @@ public class FullConstraintCreator extends ConstraintCreator{
 	 * @return <code>true</code> iff <code>declaringSuperTypes</code> contains a type
 	 * 		which is a strict supertype of <code>type</code>
 	 */
-	private static boolean containsASuperType(ITypeBinding type, Set declaringSuperTypes) {
-		for (Iterator iter= declaringSuperTypes.iterator(); iter.hasNext();) {
-			ITypeBinding maybeSuperType= (ITypeBinding) iter.next();
+	private static boolean containsASuperType(ITypeBinding type, Set<ITypeBinding> declaringSuperTypes) {
+		for (Iterator<ITypeBinding> iter= declaringSuperTypes.iterator(); iter.hasNext();) {
+			ITypeBinding maybeSuperType= iter.next();
 			if (! Bindings.equals(maybeSuperType, type) && Bindings.isSuperType(maybeSuperType, type))
 				return true;
 		}
@@ -652,15 +653,15 @@ public class FullConstraintCreator extends ConstraintCreator{
 	/* 
 	 * return Set of ITypeBindings
 	 */
-	protected static Set getDeclaringSuperTypes(IMethodBinding methodBinding) {
+	protected static Set<ITypeBinding> getDeclaringSuperTypes(IMethodBinding methodBinding) {
 		ITypeBinding superClass = methodBinding.getDeclaringClass();
-		Set allSuperTypes= new LinkedHashSet();
+		Set<ITypeBinding> allSuperTypes= new LinkedHashSet<ITypeBinding>();
 		allSuperTypes.addAll(Arrays.asList(Bindings.getAllSuperTypes(superClass)));
 		if (allSuperTypes.isEmpty())
 			allSuperTypes.add(methodBinding.getDeclaringClass()); //TODO: Why only iff empty? The declaring class is not a supertype ...
-		Set result= new HashSet();
-		for (Iterator iter= allSuperTypes.iterator(); iter.hasNext();) {
-			ITypeBinding type= (ITypeBinding) iter.next();
+		Set<ITypeBinding> result= new HashSet<ITypeBinding>();
+		for (Iterator<ITypeBinding> iter= allSuperTypes.iterator(); iter.hasNext();) {
+			ITypeBinding type= iter.next();
 			if (findMethod(methodBinding, type) != null)
 				result.add(type);
 		}

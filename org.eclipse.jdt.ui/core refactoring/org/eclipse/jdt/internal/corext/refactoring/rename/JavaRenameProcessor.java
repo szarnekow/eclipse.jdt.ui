@@ -34,13 +34,13 @@ public abstract class JavaRenameProcessor extends RenameProcessor implements INa
 	public final RefactoringParticipant[] loadParticipants(RefactoringStatus status, SharableParticipants sharedParticipants) throws CoreException {
 		RenameArguments arguments= new RenameArguments(getNewElementName(), getUpdateReferences());
 		String[] natures= getAffectedProjectNatures();
-		List result= new ArrayList();
+		List<RefactoringParticipant> result= new ArrayList<RefactoringParticipant>();
 		loadElementParticipants(status, result, arguments, natures, sharedParticipants);
 		loadDerivedParticipants(status, result, natures, sharedParticipants);
-		return (RefactoringParticipant[])result.toArray(new RefactoringParticipant[result.size()]);
+		return result.toArray(new RefactoringParticipant[result.size()]);
 	}
 	
-	protected void loadElementParticipants(RefactoringStatus status, List result, RenameArguments arguments, String[] natures, SharableParticipants shared) throws CoreException {
+	protected void loadElementParticipants(RefactoringStatus status, List<RefactoringParticipant> result, RenameArguments arguments, String[] natures, SharableParticipants shared) throws CoreException {
 		Object[] elements= getElements();
 		for (int i= 0; i < elements.length; i++) {
 			result.addAll(Arrays.asList(ParticipantManager.loadRenameParticipants(status, 
@@ -49,9 +49,9 @@ public abstract class JavaRenameProcessor extends RenameProcessor implements INa
 		}
 	}
 	
-	protected abstract void loadDerivedParticipants(RefactoringStatus status, List result, String[] natures, SharableParticipants shared) throws CoreException;
+	protected abstract void loadDerivedParticipants(RefactoringStatus status, List<RefactoringParticipant> result, String[] natures, SharableParticipants shared) throws CoreException;
 	
-	protected void loadDerivedParticipants(RefactoringStatus status, List result, Object[] derivedElements, 
+	protected void loadDerivedParticipants(RefactoringStatus status, List<RefactoringParticipant> result, Object[] derivedElements, 
 			RenameArguments arguments, ResourceModifications resourceModifications, String[] natures, SharableParticipants shared) throws CoreException {
 		if (derivedElements != null) {
 			for (int i= 0; i < derivedElements.length; i++) {

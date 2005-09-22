@@ -36,11 +36,12 @@ class ChangeTypeContentProvider implements ITreeContentProvider {
 		if (element instanceof RootType){
 			return ((RootType)element).getChildren();
 		}	
-		Object[] superTypes = getDirectSuperTypes((ITypeBinding)element).toArray();
-		Arrays.sort(superTypes, new Comparator(){
-			public int compare(Object o1, Object o2) {
-				String name1 = ((ITypeBinding)o1).getQualifiedName();
-				String name2 = ((ITypeBinding)o2).getQualifiedName();
+		Set<ITypeBinding> directSuperTypes= getDirectSuperTypes((ITypeBinding)element);
+		ITypeBinding[] superTypes = directSuperTypes.toArray(new ITypeBinding[directSuperTypes.size()]); 
+		Arrays.sort(superTypes, new Comparator<ITypeBinding>(){
+			public int compare(ITypeBinding o1, ITypeBinding o2) {
+				String name1 = o1.getQualifiedName();
+				String name2 = o2.getQualifiedName();
 				return name1.compareTo(name2);
 			}	
 		});
@@ -52,8 +53,8 @@ class ChangeTypeContentProvider implements ITreeContentProvider {
 	 * included in the result if the root of the hierarchy is a top-level
 	 * interface. 
 	 */
-	public Set/*<ITypeBinding>*/ getDirectSuperTypes(ITypeBinding type){
-		Set/*<ITypeBinding>*/ result= new HashSet();
+	public Set<ITypeBinding> getDirectSuperTypes(ITypeBinding type){
+		Set<ITypeBinding> result= new HashSet<ITypeBinding>();
 		if (type.getSuperclass() != null){
 			result.add(type.getSuperclass());
 		}	

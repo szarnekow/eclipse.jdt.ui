@@ -127,8 +127,8 @@ public class JavadocWriter {
 
 
 		//set the packages and source files
-		List packages= new ArrayList();
-		List sourcefiles= new ArrayList();
+		List<String> packages= new ArrayList<String>();
+		List<String> sourcefiles= new ArrayList<String>();
 		sortSourceElement(store.getSourceElements(), sourcefiles, packages);
 		if (!packages.isEmpty())
 			xmlJavadocDesc.setAttribute(store.PACKAGENAMES, toSeparatedList(packages));
@@ -167,7 +167,7 @@ public class JavadocWriter {
 		}
 	}
 
-	private void sortSourceElement(IJavaElement[] iJavaElements, List sourcefiles, List packages) {
+	private void sortSourceElement(IJavaElement[] iJavaElements, List<String> sourcefiles, List<String> packages) {
 		for (int i= 0; i < iJavaElements.length; i++) {
 			IJavaElement element= iJavaElements[i];
 			IPath p= element.getResource().getLocation();
@@ -251,8 +251,8 @@ public class JavadocWriter {
 	private void xmlWriteDoclet(JavadocOptionsManager store, Document document, Element xmlJavadocDesc) throws DOMException {
 
 		//set the packages and source files
-		List packages= new ArrayList();
-		List sourcefiles= new ArrayList();
+		List<String> packages= new ArrayList<String>();
+		List<String> sourcefiles= new ArrayList<String>();
 		sortSourceElement(store.getSourceElements(), sourcefiles, packages);
 		if (!packages.isEmpty())
 			xmlJavadocDesc.setAttribute(store.PACKAGENAMES, toSeparatedList(packages));
@@ -279,16 +279,16 @@ public class JavadocWriter {
 
 	}
 
-	private String toSeparatedList(List packages) {
+	private String toSeparatedList(List<String> packages) {
 		StringBuffer buf= new StringBuffer();
-		Iterator iter= packages.iterator();
+		Iterator<String> iter= packages.iterator();
 		int nAdded= 0;
 		while (iter.hasNext()) {
 			if (nAdded > 0) {
 				buf.append(',');
 			}
 			nAdded++;
-			String curr= (String) iter.next();
+			String curr= iter.next();
 			buf.append(curr);
 		}
 		return buf.toString();

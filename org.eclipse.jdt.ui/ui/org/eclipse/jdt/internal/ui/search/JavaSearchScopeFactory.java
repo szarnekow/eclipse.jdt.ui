@@ -56,7 +56,7 @@ public class JavaSearchScopeFactory {
 
 	private static JavaSearchScopeFactory fgInstance;
 	private static final IJavaSearchScope EMPTY_SCOPE= SearchEngine.createJavaSearchScope(new IJavaElement[] {});
-	private static final Set EMPTY_SET= new HashSet(0);
+	private static final Set<IJavaElement> EMPTY_SET= new HashSet<IJavaElement>(0);
 	
 	private JavaSearchScopeFactory() {
 	}
@@ -84,14 +84,14 @@ public class JavaSearchScopeFactory {
 		if (workingSets == null || workingSets.length < 1)
 			return EMPTY_SCOPE;
 
-		Set javaElements= new HashSet(workingSets.length * 10);
+		Set<IJavaElement> javaElements= new HashSet<IJavaElement>(workingSets.length * 10);
 		for (int i= 0; i < workingSets.length; i++)
 			addJavaElements(javaElements, workingSets[i]);
 		return createJavaSearchScope(javaElements, includeJRE);
 	}
 	
 	public IJavaSearchScope createJavaSearchScope(IWorkingSet workingSet, boolean includeJRE) {
-		Set javaElements= new HashSet(10);
+		Set<IJavaElement> javaElements= new HashSet<IJavaElement>(10);
 		addJavaElements(javaElements, workingSet);
 		return createJavaSearchScope(javaElements, includeJRE);
 	}
@@ -99,7 +99,7 @@ public class JavaSearchScopeFactory {
 	public IJavaSearchScope createJavaSearchScope(IResource[] resources, boolean includeJRE) {
 		if (resources == null)
 			return EMPTY_SCOPE;
-		Set javaElements= new HashSet(resources.length);
+		Set<IJavaElement> javaElements= new HashSet<IJavaElement>(resources.length);
 		addJavaElements(javaElements, resources);
 		return createJavaSearchScope(javaElements, includeJRE);
 	}
@@ -109,7 +109,7 @@ public class JavaSearchScopeFactory {
 	}
 	
 	private IJavaSearchScope internalCreateProjectScope(ISelection selection, boolean includeJRE) {
-		Set javaProjects= getJavaProjects(selection);
+		Set<IJavaElement> javaProjects= getJavaProjects(selection);
 		return createJavaSearchScope(javaProjects, includeJRE);
 	}
 	
@@ -175,11 +175,11 @@ public class JavaSearchScopeFactory {
 		return inputElement;
 	}
 
-	private Set getJavaProjects(ISelection selection) {
-		Set javaProjects;
+	private Set<IJavaElement> getJavaProjects(ISelection selection) {
+		Set<IJavaElement> javaProjects;
 		if (selection instanceof IStructuredSelection && !selection.isEmpty()) {
 			Iterator iter= ((IStructuredSelection) selection).iterator();
-			javaProjects= new HashSet(((IStructuredSelection) selection).size());
+			javaProjects= new HashSet<IJavaElement>(((IStructuredSelection) selection).size());
 			while (iter.hasNext()) {
 				Object selectedElement= iter.next();
 				if (selectedElement instanceof LogicalPackage)
@@ -224,16 +224,16 @@ public class JavaSearchScopeFactory {
 	
 	public IProject[] getProjects(IJavaSearchScope scope) {
 		IPath[] paths= scope.enclosingProjectsAndJars();
-		HashSet temp= new HashSet();
+		HashSet<IResource> temp= new HashSet<IResource>();
 		for (int i= 0; i < paths.length; i++) {
 			IResource resource= ResourcesPlugin.getWorkspace().getRoot().findMember(paths[i]);
 			if (resource != null && resource.getType() == IResource.PROJECT)
 				temp.add(resource);
 		}
-		return (IProject[]) temp.toArray(new IProject[temp.size()]);
+		return temp.toArray(new IProject[temp.size()]);
 	}
 
-	private Set getJavaElements(ISelection selection) {
+	private Set<IJavaElement> getJavaElements(ISelection selection) {
 		if (selection instanceof IStructuredSelection && !selection.isEmpty()) {
 			return getJavaElements(((IStructuredSelection)selection).toArray());
 		} else {
@@ -241,11 +241,11 @@ public class JavaSearchScopeFactory {
 		}
 	}
 
-	private Set getJavaElements(Object[] elements) {
+	private Set<IJavaElement> getJavaElements(Object[] elements) {
 		if (elements.length == 0)
 			return EMPTY_SET;
 		
-		Set result= new HashSet(elements.length);
+		Set<IJavaElement> result= new HashSet<IJavaElement>(elements.length);
 		for (int i= 0; i < elements.length; i++) {
 			Object selectedElement= elements[i];
 			if (selectedElement instanceof IJavaElement) {
@@ -267,10 +267,10 @@ public class JavaSearchScopeFactory {
 		return result;
 	}
 
-	private IJavaSearchScope createJavaSearchScope(Set javaElements, boolean includeJRE) {
+	private IJavaSearchScope createJavaSearchScope(Set<IJavaElement> javaElements, boolean includeJRE) {
 		if (javaElements.isEmpty())
 			return EMPTY_SCOPE;
-		IJavaElement[] elementArray= (IJavaElement[])javaElements.toArray(new IJavaElement[javaElements.size()]);
+		IJavaElement[] elementArray= javaElements.toArray(new IJavaElement[javaElements.size()]);
 		return SearchEngine.createJavaSearchScope(elementArray, getSearchFlags(includeJRE));
 	}
 	
@@ -281,12 +281,12 @@ public class JavaSearchScopeFactory {
 		return flags;
 	}
 
-	private void addJavaElements(Set javaElements, IResource[] resources) {
+	private void addJavaElements(Set<IJavaElement> javaElements, IResource[] resources) {
 		for (int i= 0; i < resources.length; i++)
 			addJavaElements(javaElements, resources[i]);
 	}
 
-	private void addJavaElements(Set javaElements, IResource resource) {
+	private void addJavaElements(Set<IJavaElement> javaElements, IResource resource) {
 		IJavaElement javaElement= (IJavaElement)resource.getAdapter(IJavaElement.class);
 		if (javaElement == null)
 			// not a Java resource
@@ -304,11 +304,11 @@ public class JavaSearchScopeFactory {
 		javaElements.add(javaElement);
 	}
 
-	private void addJavaElements(Set javaElements, IJavaElement javaElement) {
+	private void addJavaElements(Set<IJavaElement> javaElements, IJavaElement javaElement) {
 		javaElements.add(javaElement);
 	}
 	
-	private void addJavaElements(Set javaElements, IWorkingSet workingSet) {
+	private void addJavaElements(Set<IJavaElement> javaElements, IWorkingSet workingSet) {
 		if (workingSet == null)
 			return;
 		
@@ -328,7 +328,7 @@ public class JavaSearchScopeFactory {
 		}
 	}
 
-	public void addJavaElements(Set javaElements, LogicalPackage selectedElement) {
+	public void addJavaElements(Set<IJavaElement> javaElements, LogicalPackage selectedElement) {
 		IPackageFragment[] packages= selectedElement.getFragments();
 		for (int i= 0; i < packages.length; i++)
 			addJavaElements(javaElements, packages[i]);

@@ -97,13 +97,13 @@ public class PackageSelectionDialog extends ElementListSelectionDialog {
 	 * @see org.eclipse.jface.window.Window#open()
 	 */
 	public int open() {
-		final ArrayList packageList= new ArrayList();
+		final ArrayList<IJavaElement> packageList= new ArrayList<IJavaElement>();
 		
 		IRunnableWithProgress runnable= new IRunnableWithProgress() {
 			public void run(final IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
 				try {
 					SearchRequestor requestor= new SearchRequestor() {
-						private HashSet fSet= new HashSet();
+						private HashSet<String> fSet= new HashSet<String>();
 						private final boolean fAddDefault= (fFlags & F_HIDE_DEFAULT_PACKAGE) == 0;
 						private final boolean fDuplicates= (fFlags & F_REMOVE_DUPLICATES) == 0;
 						private final boolean fIncludeParents= (fFlags & F_SHOW_PARENTS) != 0;

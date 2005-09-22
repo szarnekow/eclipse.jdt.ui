@@ -81,7 +81,7 @@ public class EditOutputFolderOperation extends ClasspathModifierOperation {
 			fException= e;
 			result= null;
 		}
-		List resultList= new ArrayList();
+		List<Object> resultList= new ArrayList<Object>();
 		if (result != null)
 			resultList.add(result);
 		super.handleResult(resultList, monitor);

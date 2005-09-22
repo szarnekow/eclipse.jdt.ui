@@ -61,7 +61,7 @@ public class TypeMismatchSubProcessor {
 	private TypeMismatchSubProcessor() {
 	}
 
-	public static void addTypeMismatchProposals(IInvocationContext context, IProblemLocation problem, Collection proposals) throws CoreException {
+	public static void addTypeMismatchProposals(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) throws CoreException {
 		String[] args= problem.getProblemArguments();
 		if (args.length != 2) {
 			return;
@@ -170,7 +170,7 @@ public class TypeMismatchSubProcessor {
 		}
 	}
 
-	public static void addChangeSenderTypeProposals(IInvocationContext context, Expression nodeToCast, ITypeBinding castTypeBinding, boolean isAssignedNode, int relevance, Collection proposals) throws JavaModelException {
+	public static void addChangeSenderTypeProposals(IInvocationContext context, Expression nodeToCast, ITypeBinding castTypeBinding, boolean isAssignedNode, int relevance, Collection<ICommandAccess> proposals) throws JavaModelException {
 		IBinding callerBinding= null;
 		switch (nodeToCast.getNodeType()) {
 			case ASTNode.METHOD_INVOCATION:
@@ -246,7 +246,7 @@ public class TypeMismatchSubProcessor {
 		return new CastCompletionProposal(label, cu, nodeToCast, castTypeBinding, relevance);
 	}
 
-	public static void addIncompatibleReturnTypeProposals(IInvocationContext context, IProblemLocation problem, Collection proposals) throws JavaModelException {
+	public static void addIncompatibleReturnTypeProposals(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) throws JavaModelException {
 		CompilationUnit astRoot= context.getASTRoot();
 		ASTNode selectedNode= problem.getCoveringNode(astRoot);
 		if (!(selectedNode instanceof MethodDeclaration)) {
@@ -288,7 +288,7 @@ public class TypeMismatchSubProcessor {
 		}
 	}
 
-	public static void addIncompatibleThrowsProposals(IInvocationContext context, IProblemLocation problem, Collection proposals) throws JavaModelException {
+	public static void addIncompatibleThrowsProposals(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) throws JavaModelException {
 		CompilationUnit astRoot= context.getASTRoot();
 		ASTNode selectedNode= problem.getCoveringNode(astRoot);
 		if (!(selectedNode instanceof MethodDeclaration)) {
@@ -310,7 +310,7 @@ public class TypeMismatchSubProcessor {
 		ITypeBinding[] methodExceptions= methodDeclBinding.getExceptionTypes();
 		ITypeBinding[] definedExceptions= overridden.getExceptionTypes();
 
-		ArrayList undeclaredExceptions= new ArrayList();
+		ArrayList<ITypeBinding> undeclaredExceptions= new ArrayList<ITypeBinding>();
 		{
 			ChangeDescription[] changes= new ChangeDescription[methodExceptions.length];
 
@@ -334,7 +334,7 @@ public class TypeMismatchSubProcessor {
 			ChangeDescription[] changes= new ChangeDescription[definedExceptions.length + undeclaredExceptions.size()];
 
 			for (int i= 0; i < undeclaredExceptions.size(); i++) {
-				changes[i + definedExceptions.length]= new InsertDescription((ITypeBinding) undeclaredExceptions.get(i), ""); //$NON-NLS-1$
+				changes[i + definedExceptions.length]= new InsertDescription(undeclaredExceptions.get(i), ""); //$NON-NLS-1$
 			}
 			IMethodBinding overriddenDecl= overridden.getMethodDeclaration();
 			String[] args= {  declaringType.getName(), overridden.getName() };

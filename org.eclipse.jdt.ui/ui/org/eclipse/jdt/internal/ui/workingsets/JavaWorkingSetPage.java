@@ -243,15 +243,15 @@ public class JavaWorkingSetPage extends WizardPage implements IWorkingSetPage {
 	 */
 	public void finish() {
 		String workingSetName= fWorkingSetName.getText();
-		ArrayList elements= new ArrayList(10);
+		ArrayList<Object> elements= new ArrayList<Object>(10);
 		findCheckedElements(elements, fTree.getInput());
 		if (fWorkingSet == null) {
 			IWorkingSetManager workingSetManager= PlatformUI.getWorkbench().getWorkingSetManager();
-			fWorkingSet= workingSetManager.createWorkingSet(workingSetName, (IAdaptable[])elements.toArray(new IAdaptable[elements.size()]));
+			fWorkingSet= workingSetManager.createWorkingSet(workingSetName, elements.toArray(new IAdaptable[elements.size()]));
 		} else {
 			// Add inaccessible resources
 			IAdaptable[] oldItems= fWorkingSet.getElements();
-			ArrayList closedWithChildren= new ArrayList(elements.size());
+			ArrayList<IProject> closedWithChildren= new ArrayList<IProject>(elements.size());
 			for (int i= 0; i < oldItems.length; i++) {
 				IResource oldResource= null;
 				if (oldItems[i] instanceof IResource) {
@@ -269,7 +269,7 @@ public class JavaWorkingSetPage extends WizardPage implements IWorkingSetPage {
 				}
 			}
 			fWorkingSet.setName(workingSetName);
-			fWorkingSet.setElements((IAdaptable[]) elements.toArray(new IAdaptable[elements.size()]));
+			fWorkingSet.setElements(elements.toArray(new IAdaptable[elements.size()]));
 		}
 	}
 
@@ -315,7 +315,7 @@ public class JavaWorkingSetPage extends WizardPage implements IWorkingSetPage {
 		return false;
 	}
 	
-	private void findCheckedElements(List checkedResources, Object parent) {
+	private void findCheckedElements(List<Object> checkedResources, Object parent) {
 		Object[] children= fTreeContentProvider.getChildren(parent);
 		for (int i= 0; i < children.length; i++) {
 			if (fTree.getGrayed(children[i]))

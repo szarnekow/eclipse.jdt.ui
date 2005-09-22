@@ -12,6 +12,8 @@ package org.eclipse.jdt.internal.ui.refactoring.reorg;
 
 import java.util.ArrayList;
 
+import org.eclipse.core.runtime.IAdaptable;
+
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 
@@ -59,7 +61,7 @@ public final class DestinationContentProvider extends StandardJavaElementContent
 				return concatenate(getJavaProjects((IJavaModel)parentElement), getOpenNonJavaProjects((IJavaModel)parentElement));
 			} else {
 				Object[] children= super.getChildren(parentElement);
-				ArrayList result= new ArrayList(children.length);
+				ArrayList<IAdaptable> result= new ArrayList<IAdaptable>(children.length);
 				for (int i= 0; i < children.length; i++) {
 					if (children[i] instanceof IJavaElement) {
 						IJavaElement javaElement= (IJavaElement) children[i];
@@ -81,7 +83,7 @@ public final class DestinationContentProvider extends StandardJavaElementContent
 
 	private static Object[] getOpenNonJavaProjects(IJavaModel model) throws JavaModelException {
 		Object[] nonJavaProjects= model.getNonJavaResources();
-		ArrayList result= new ArrayList(nonJavaProjects.length);
+		ArrayList<IProject> result= new ArrayList<IProject>(nonJavaProjects.length);
 		for (int i= 0; i < nonJavaProjects.length; i++) {
 			IProject project = (IProject) nonJavaProjects[i];
 			if (project.isOpen())

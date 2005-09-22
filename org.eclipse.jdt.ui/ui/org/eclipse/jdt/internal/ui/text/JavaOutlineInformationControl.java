@@ -95,7 +95,7 @@ public class JavaOutlineInformationControl extends AbstractInformationControl {
 	private LexicalSortingAction fLexicalSortingAction;
 	private SortByDefiningTypeAction fSortByDefiningTypeAction;
 	private ShowOnlyMainTypeAction fShowOnlyMainTypeAction;
-	private Map fTypeHierarchies= new HashMap();
+	private Map<IType, ITypeHierarchy> fTypeHierarchies= new HashMap<IType, ITypeHierarchy>();
 
 
 	private class OutlineLabelProvider extends AppearanceAwareLabelProvider {
@@ -782,7 +782,7 @@ public class JavaOutlineInformationControl extends AbstractInformationControl {
 	}
 
 	private ITypeHierarchy getSuperTypeHierarchy(IType type) {
-		ITypeHierarchy th= (ITypeHierarchy)fTypeHierarchies.get(type);
+		ITypeHierarchy th= fTypeHierarchies.get(type);
 		if (th == null) {
 			try {
 				th= SuperTypeHierarchyCache.getTypeHierarchy(type, getProgressMonitor());

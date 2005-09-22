@@ -158,8 +158,8 @@ public class SuperTypesOfSingleton extends TypeSet {
 			SuperTypesSet otherSuper= (SuperTypesSet) other;
 			TypeSet otherLowerBounds= otherSuper.lowerBound();
 
-			for(Iterator iter= otherLowerBounds.iterator(); iter.hasNext(); ) {
-				TType t= (TType) iter.next();
+			for(Iterator<TType> iter= otherLowerBounds.iterator(); iter.hasNext(); ) {
+				TType t= iter.next();
 				if (! TTypes.canAssignTo(fLowerBound, t))
 					return false;
 			}
@@ -169,8 +169,8 @@ public class SuperTypesOfSingleton extends TypeSet {
 			return false;
 		}
 		// For now, no more tricks up my sleeve; get an iterator
-		for(Iterator iter= other.iterator(); iter.hasNext(); ) {
-			TType t= (TType) iter.next();
+		for(Iterator<TType> iter= other.iterator(); iter.hasNext(); ) {
+			TType t= iter.next();
 
 			if (! TTypes.canAssignTo(fLowerBound, t))
 				return false;
@@ -181,7 +181,7 @@ public class SuperTypesOfSingleton extends TypeSet {
 	/* (non-Javadoc)
 	 * @see org.eclipse.jdt.internal.corext.refactoring.typeconstraints.typesets.TypeSet#iterator()
 	 */
-	public Iterator iterator() {
+	public Iterator<TType> iterator() {
 		return enumerate().iterator();
 //		return new Iterator() {
 //			// First type returned is fLowerBound, then each of the supertypes, in turn

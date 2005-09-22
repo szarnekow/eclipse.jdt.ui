@@ -48,7 +48,7 @@ import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 	protected boolean fNeedsImport;
 	// TW: MoveStaticMemberAnalyzer#rewrite... should use ImportRewrite (result of addImport(..) must be used as type qualifier)
 
-	protected Set fProcessed;
+	protected Set<SimpleName> fProcessed;
 	
 	protected static final String REFERENCE_UPDATE= RefactoringCoreMessages.MoveMembersRefactoring_referenceUpdate; 
 	
@@ -59,7 +59,7 @@ import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 		fMembers= members;
 		fSource= source;
 		fTarget= target;
-		fProcessed= new HashSet();
+		fProcessed= new HashSet<SimpleName>();
 	}
 	
 	public RefactoringStatus getStatus() {

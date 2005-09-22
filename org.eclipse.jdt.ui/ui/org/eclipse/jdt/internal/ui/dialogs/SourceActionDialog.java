@@ -67,8 +67,8 @@ import org.eclipse.jdt.internal.ui.refactoring.IVisibilityChangeListener;
  */
 public class SourceActionDialog extends CheckedTreeSelectionDialog {
 	
-	private List fInsertPositions;
-	private List fLabels;
+	private List<IJavaElement> fInsertPositions;
+	private List<String> fLabels;
 	private int fCurrentPositionIndex;
 	
 	private IDialogSettings fSettings;
@@ -120,8 +120,8 @@ public class SourceActionDialog extends CheckedTreeSelectionDialog {
 		fSynchronized= asBoolean(fSettings.get(SETTINGS_SYNCHRONIZED_MODIFIER), false);
 		fCurrentPositionIndex= asInt(fSettings.get(SETTINGS_INSERTPOSITION), insertionDefault);
 		fGenerateComment= asBoolean(fSettings.get(SETTINGS_COMMENTS), generateCommentsDefault);
-		fInsertPositions= new ArrayList();
-		fLabels= new ArrayList(); 
+		fInsertPositions= new ArrayList<IJavaElement>();
+		fLabels= new ArrayList<String>(); 
 		
 		IJavaElement[] members= fType.getChildren();
 		IMethod[] methods= fType.getMethods();
@@ -181,7 +181,7 @@ public class SourceActionDialog extends CheckedTreeSelectionDialog {
 		return null;
 	}
 
-	private boolean hasCursorPositionElement(CompilationUnitEditor editor, IJavaElement[] members, List insertPositions) throws JavaModelException {
+	private boolean hasCursorPositionElement(CompilationUnitEditor editor, IJavaElement[] members, List<IJavaElement> insertPositions) throws JavaModelException {
 		if (editor == null) {
 			return false;
 		}
@@ -373,7 +373,7 @@ public class SourceActionDialog extends CheckedTreeSelectionDialog {
 	}
 	
 	protected void openCodeTempatePage(String id) {
-		HashMap arg= new HashMap();
+		HashMap<String, String> arg= new HashMap<String, String>();
 		arg.put(CodeTemplatePreferencePage.DATA_SELECT_TEMPLATE, id);
 		PreferencesUtil.createPropertyDialogOn(getShell(), fType.getJavaProject().getProject(), CodeTemplatePreferencePage.PROP_ID, null, arg).open();
 	}
@@ -437,8 +437,8 @@ public class SourceActionDialog extends CheckedTreeSelectionDialog {
 		return visibilityComposite;				
 	}
 	
-	private List convertToIntegerList(int[] array) {
-		List result= new ArrayList(array.length);
+	private List<Integer> convertToIntegerList(int[] array) {
+		List<Integer> result= new ArrayList<Integer>(array.length);
 		for (int i= 0; i < array.length; i++) {
 			result.add(new Integer(array[i]));
 		}
@@ -469,7 +469,7 @@ public class SourceActionDialog extends CheckedTreeSelectionDialog {
 	}
 	
 	protected Composite createVisibilityControl(Composite parent, final IVisibilityChangeListener visibilityChangeListener, int[] availableVisibilities, int correctVisibility) {
-		List allowedVisibilities= convertToIntegerList(availableVisibilities);
+		List<Integer> allowedVisibilities= convertToIntegerList(availableVisibilities);
 		if (allowedVisibilities.size() == 1)
 			return null;
 		
@@ -590,7 +590,7 @@ public class SourceActionDialog extends CheckedTreeSelectionDialog {
 	}
 
 	private void fillWithPossibleInsertPositions(Combo combo) {
-		combo.setItems((String[]) fLabels.toArray(new String[fLabels.size()]));
+		combo.setItems(fLabels.toArray(new String[fLabels.size()]));
 		combo.select(fCurrentPositionIndex);
 	}
 	
@@ -622,6 +622,6 @@ public class SourceActionDialog extends CheckedTreeSelectionDialog {
 	 * Determine where in the file to enter the newly created methods.
 	 */
 	public IJavaElement getElementPosition() {
-		return (IJavaElement) fInsertPositions.get(fCurrentPositionIndex);	
+		return fInsertPositions.get(fCurrentPositionIndex);	
 	}
 }

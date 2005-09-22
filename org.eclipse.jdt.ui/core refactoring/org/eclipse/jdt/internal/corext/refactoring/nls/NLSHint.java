@@ -77,7 +77,7 @@ public class NLSHint {
 		
 		if (accessClassRef == null) {
 			// Look for Eclipse NLS approach
-			List eclipseNLSLines= new ArrayList();
+			List<NLSLine> eclipseNLSLines= new ArrayList<NLSLine>();
 			accessClassRef= createEclipseNLSLines(getDocument(cu), astRoot, eclipseNLSLines);
 			if (!eclipseNLSLines.isEmpty()) {
 				NLSLine[] rawLines= lines;
@@ -87,7 +87,7 @@ public class NLSHint {
 				for (int i= 0; i < rawLinesLength; i++)
 					lines[i]= rawLines[i];
 				for (int i= 0; i < eclipseLinesLength; i++)
-					lines[i+rawLinesLength]= (NLSLine)eclipseNLSLines.get(i);
+					lines[i+rawLinesLength]= eclipseNLSLines.get(i);
 			}
 		}
 		
@@ -125,10 +125,10 @@ public class NLSHint {
 		}
 	}
 	
-	private AccessorClassReference createEclipseNLSLines(final IDocument document, CompilationUnit astRoot, List nlsLines) {
+	private AccessorClassReference createEclipseNLSLines(final IDocument document, CompilationUnit astRoot, List<NLSLine> nlsLines) {
 		
 		final AccessorClassReference[] firstAccessor= new AccessorClassReference[1];
-		final Map lineToNLSLine= new HashMap();
+		final Map<Integer, NLSLine> lineToNLSLine= new HashMap<Integer, NLSLine>();
 		
 		astRoot.accept(new ASTVisitor() {
 			
@@ -146,7 +146,7 @@ public class NLSHint {
 						} catch (BadLocationException e) {
 							return true; // ignore and continue
 						}
-						NLSLine nlsLine= (NLSLine)lineToNLSLine.get(line);
+						NLSLine nlsLine= lineToNLSLine.get(line);
 						if (nlsLine == null) {
 							nlsLine=  new NLSLine(line.intValue());
 							lineToNLSLine.put(line, nlsLine);
@@ -210,7 +210,7 @@ public class NLSHint {
 	}
 
 	private NLSSubstitution[] createSubstitutions(NLSLine[] lines, Properties props, CompilationUnit astRoot) {
-		List result= new ArrayList();
+		List<NLSSubstitution> result= new ArrayList<NLSSubstitution>();
 		
 		for (int i= 0; i < lines.length; i++) {
 			NLSElement[] elements= lines[i].getElements();
@@ -234,7 +234,7 @@ public class NLSHint {
 				}
 			}
 		}
-		return (NLSSubstitution[]) result.toArray(new NLSSubstitution[result.size()]);
+		return result.toArray(new NLSSubstitution[result.size()]);
 	}
 	
 	private static AccessorClassReference findFirstAccessorReference(NLSLine[] lines, CompilationUnit astRoot) {

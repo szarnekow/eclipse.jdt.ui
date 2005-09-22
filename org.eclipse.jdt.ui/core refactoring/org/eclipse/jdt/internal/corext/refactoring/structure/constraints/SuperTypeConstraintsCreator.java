@@ -86,7 +86,7 @@ public final class SuperTypeConstraintsCreator extends HierarchicalASTVisitor {
 	 * @param originals the original methods which have already been found (element type: <code>IMethodBinding</code>)
 	 * @param implementations <code>true</code> to favor implementation methods, <code>false</code> otherwise
 	 */
-	private static void getOriginalMethods(final IMethodBinding binding, final ITypeBinding type, final Collection originals, final boolean implementations) {
+	private static void getOriginalMethods(final IMethodBinding binding, final ITypeBinding type, final Collection<IMethodBinding> originals, final boolean implementations) {
 		final ITypeBinding ancestor= type.getSuperclass();
 		if (!implementations) {
 			final ITypeBinding[] types= type.getInterfaces();
@@ -104,8 +104,8 @@ public final class SuperTypeConstraintsCreator extends HierarchicalASTVisitor {
 			if (!binding.getKey().equals(method.getKey())) {
 				boolean match= false;
 				IMethodBinding current= null;
-				for (final Iterator iterator= originals.iterator(); iterator.hasNext();) {
-					current= (IMethodBinding) iterator.next();
+				for (final Iterator<IMethodBinding> iterator= originals.iterator(); iterator.hasNext();) {
+					current= iterator.next();
 					if (Bindings.areOverriddenMethods(method, current))
 						match= true;
 				}
@@ -116,7 +116,7 @@ public final class SuperTypeConstraintsCreator extends HierarchicalASTVisitor {
 	}
 
 	/** The current method declarations being processed (element type: <code>MethodDeclaration</code>) */
-	private final Stack fCurrentMethods= new Stack();
+	private final Stack<MethodDeclaration> fCurrentMethods= new Stack<MethodDeclaration>();
 
 	/** Should instanceof expressions be rewritten? */
 	private final boolean fInstanceOf;
@@ -168,7 +168,7 @@ public final class SuperTypeConstraintsCreator extends HierarchicalASTVisitor {
 			node.setProperty(PROPERTY_CONSTRAINT_VARIABLE, ancestor);
 			Expression expression= null;
 			ConstraintVariable2 descendant= null;
-			final List expressions= node.expressions();
+			final List<ASTNode> expressions= node.expressions();
 			for (int index= 0; index < expressions.size(); index++) {
 				expression= (Expression) expressions.get(index);
 				descendant= (ConstraintVariable2) expression.getProperty(PROPERTY_CONSTRAINT_VARIABLE);
@@ -322,9 +322,9 @@ public final class SuperTypeConstraintsCreator extends HierarchicalASTVisitor {
 		ConstraintVariable2 ancestor= null;
 		final ConstraintVariable2 descendant= fModel.createReturnTypeVariable(binding);
 		if (descendant != null) {
-			final Collection originals= getOriginalMethods(binding);
-			for (final Iterator iterator= originals.iterator(); iterator.hasNext();) {
-				method= (IMethodBinding) iterator.next();
+			final Collection<IMethodBinding> originals= getOriginalMethods(binding);
+			for (final Iterator<IMethodBinding> iterator= originals.iterator(); iterator.hasNext();) {
+				method= iterator.next();
 				if (!method.getKey().equals(binding.getKey())) {
 					ancestor= fModel.createReturnTypeVariable(method);
 					if (ancestor != null)
@@ -343,9 +343,9 @@ public final class SuperTypeConstraintsCreator extends HierarchicalASTVisitor {
 	private void endVisit(final IMethodBinding binding, final ConstraintVariable2 descendant) {
 		ITypeBinding declaring= null;
 		IMethodBinding method= null;
-		final Collection originals= getOriginalMethods(binding);
-		for (final Iterator iterator= originals.iterator(); iterator.hasNext();) {
-			method= (IMethodBinding) iterator.next();
+		final Collection<IMethodBinding> originals= getOriginalMethods(binding);
+		for (final Iterator<IMethodBinding> iterator= originals.iterator(); iterator.hasNext();) {
+			method= iterator.next();
 			declaring= method.getDeclaringClass();
 			if (declaring != null) {
 				final ConstraintVariable2 ancestor= fModel.createDeclaringTypeVariable(declaring);
@@ -396,7 +396,7 @@ public final class SuperTypeConstraintsCreator extends HierarchicalASTVisitor {
 	 * @param arguments the arguments (element type: <code>Expression</code>)
 	 * @param binding the method binding
 	 */
-	private void endVisit(final List arguments, final IMethodBinding binding) {
+	private void endVisit(final List<ASTNode> arguments, final IMethodBinding binding) {
 		Expression expression= null;
 		ConstraintVariable2 ancestor= null;
 		ConstraintVariable2 descendant= null;
@@ -416,7 +416,7 @@ public final class SuperTypeConstraintsCreator extends HierarchicalASTVisitor {
 	 * @param type the type of the fragments
 	 * @param parent the parent of the fragment list
 	 */
-	private void endVisit(final List fragments, final Type type, final ASTNode parent) {
+	private void endVisit(final List<ASTNode> fragments, final Type type, final ASTNode parent) {
 		final ConstraintVariable2 ancestor= (ConstraintVariable2) type.getProperty(PROPERTY_CONSTRAINT_VARIABLE);
 		if (ancestor != null) {
 			IVariableBinding binding= null;
@@ -460,9 +460,9 @@ public final class SuperTypeConstraintsCreator extends HierarchicalASTVisitor {
 			ConstraintVariable2 ancestor= null;
 			ConstraintVariable2 descendant= null;
 			IVariableBinding variable= null;
-			final List parameters= node.parameters();
+			final List<ASTNode> parameters= node.parameters();
 			if (!parameters.isEmpty()) {
-				final Collection originals= getOriginalMethods(binding);
+				final Collection<IMethodBinding> originals= getOriginalMethods(binding);
 				SingleVariableDeclaration declaration= null;
 				for (int index= 0; index < parameters.size(); index++) {
 					declaration= (SingleVariableDeclaration) parameters.get(index);
@@ -478,8 +478,8 @@ public final class SuperTypeConstraintsCreator extends HierarchicalASTVisitor {
 								fModel.createEqualityConstraint(ancestor, descendant);
 						}
 						IMethodBinding method= null;
-						for (final Iterator iterator= originals.iterator(); iterator.hasNext();) {
-							method= (IMethodBinding) iterator.next();
+						for (final Iterator<IMethodBinding> iterator= originals.iterator(); iterator.hasNext();) {
+							method= iterator.next();
 							if (!method.getKey().equals(binding.getKey())) {
 								descendant= fModel.createMethodParameterVariable(method, index);
 								if (descendant != null)
@@ -489,7 +489,7 @@ public final class SuperTypeConstraintsCreator extends HierarchicalASTVisitor {
 					}
 				}
 			}
-			final List exceptions= node.thrownExceptions();
+			final List<ASTNode> exceptions= node.thrownExceptions();
 			if (!exceptions.isEmpty()) {
 				final ITypeBinding throwable= node.getAST().resolveWellKnownType("java.lang.Throwable"); //$NON-NLS-1$
 				if (throwable != null) {
@@ -580,7 +580,7 @@ public final class SuperTypeConstraintsCreator extends HierarchicalASTVisitor {
 		if (expression != null) {
 			final ConstraintVariable2 descendant= (ConstraintVariable2) expression.getProperty(PROPERTY_CONSTRAINT_VARIABLE);
 			if (descendant != null) {
-				final MethodDeclaration declaration= (MethodDeclaration) fCurrentMethods.peek();
+				final MethodDeclaration declaration= fCurrentMethods.peek();
 				if (declaration != null) {
 					final IMethodBinding binding= declaration.resolveBinding();
 					if (binding != null) {
@@ -651,7 +651,7 @@ public final class SuperTypeConstraintsCreator extends HierarchicalASTVisitor {
 		final IMethodBinding superBinding= node.resolveMethodBinding();
 		if (superBinding != null) {
 			endVisit(node.arguments(), superBinding);
-			final MethodDeclaration declaration= (MethodDeclaration) fCurrentMethods.peek();
+			final MethodDeclaration declaration= fCurrentMethods.peek();
 			if (declaration != null) {
 				final IMethodBinding subBinding= declaration.resolveBinding();
 				if (subBinding != null) {
@@ -714,8 +714,8 @@ public final class SuperTypeConstraintsCreator extends HierarchicalASTVisitor {
 	 * @param binding the method binding
 	 * @return the original methods (element type: <code>IMethodBinding</code>)
 	 */
-	private Collection getOriginalMethods(final IMethodBinding binding) {
-		final Collection originals= new ArrayList();
+	private Collection<IMethodBinding> getOriginalMethods(final IMethodBinding binding) {
+		final Collection<IMethodBinding> originals= new ArrayList<IMethodBinding>();
 		final ITypeBinding type= binding.getDeclaringClass();
 		getOriginalMethods(binding, type, originals, false);
 		getOriginalMethods(binding, type, originals, true);

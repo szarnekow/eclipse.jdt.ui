@@ -54,8 +54,8 @@ public class MethodExitsFinder extends ASTVisitor {
 	
 	private AST fAST;
 	private MethodDeclaration fMethodDeclaration;
-	private List fResult;
-	private List fCatchedExceptions;
+	private List<ASTNode> fResult;
+	private List<ITypeBinding> fCatchedExceptions;
 
 	public String initialize(CompilationUnit root, int offset, int length) {
 		fAST= root.getAST();
@@ -78,8 +78,8 @@ public class MethodExitsFinder extends ASTVisitor {
 		return null;
 	}
 
-	public List perform() {
-		fResult= new ArrayList();
+	public List<ASTNode> perform() {
+		fResult= new ArrayList<ASTNode>();
 		markReferences();
 		if (fResult.size() > 0) {
 			fResult.add(fMethodDeclaration.getReturnType2());
@@ -88,7 +88,7 @@ public class MethodExitsFinder extends ASTVisitor {
 	}
 	
 	private void markReferences() {
-		fCatchedExceptions= new ArrayList();
+		fCatchedExceptions= new ArrayList<ITypeBinding>();
 		boolean isVoid= true;
 		Type returnType= fMethodDeclaration.getReturnType2();
 		if (returnType != null) {
@@ -98,7 +98,7 @@ public class MethodExitsFinder extends ASTVisitor {
 		fMethodDeclaration.accept(this);
 		Block block= fMethodDeclaration.getBody();
 		if (block != null) {
-			List statements= block.statements();
+			List<ASTNode> statements= block.statements();
 			if (statements.size() > 0) {
 				Statement last= (Statement)statements.get(statements.size() - 1);
 				int maxVariableId= LocalVariableIndex.perform(fMethodDeclaration);
@@ -145,9 +145,9 @@ public class MethodExitsFinder extends ASTVisitor {
 	
 	public boolean visit(TryStatement node) {
 		int currentSize= fCatchedExceptions.size();
-		List catchClauses= node.catchClauses();
-		for (Iterator iter= catchClauses.iterator(); iter.hasNext();) {
-			IVariableBinding variable= ((CatchClause)iter.next()).getException().resolveBinding();
+		List<CatchClause> catchClauses= node.catchClauses();
+		for (Iterator<CatchClause> iter= catchClauses.iterator(); iter.hasNext();) {
+			IVariableBinding variable= iter.next().getException().resolveBinding();
 			if (variable != null && variable.getType() != null) {
 				fCatchedExceptions.add(variable.getType());
 			}
@@ -159,8 +159,8 @@ public class MethodExitsFinder extends ASTVisitor {
 		}
 		
 		// visit catch and finally
-		for (Iterator iter= catchClauses.iterator(); iter.hasNext(); ) {
-			((CatchClause)iter.next()).accept(this);
+		for (Iterator<CatchClause> iter= catchClauses.iterator(); iter.hasNext(); ) {
+			iter.next().accept(this);
 		}
 		if (node.getFinally() != null)
 			node.getFinally().accept(this);
@@ -237,8 +237,8 @@ public class MethodExitsFinder extends ASTVisitor {
 	}
 	
 	private boolean isCatched(ITypeBinding binding) {
-		for (Iterator iter= fCatchedExceptions.iterator(); iter.hasNext();) {
-			ITypeBinding catchException= (ITypeBinding)iter.next();
+		for (Iterator<ITypeBinding> iter= fCatchedExceptions.iterator(); iter.hasNext();) {
+			ITypeBinding catchException= iter.next();
 			if (catches(catchException, binding))
 				return true;
 		}

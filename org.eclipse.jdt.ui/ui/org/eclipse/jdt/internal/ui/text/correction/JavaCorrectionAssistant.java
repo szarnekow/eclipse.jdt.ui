@@ -147,7 +147,7 @@ public class JavaCorrectionAssistant extends ContentAssistant {
 			return super.showPossibleCompletions();
 
 
-		ArrayList resultingAnnotations= new ArrayList(20);
+		ArrayList<Annotation> resultingAnnotations= new ArrayList<Annotation>(20);
 		try {
 			Point selectedRange= fViewer.getSelectedRange();
 			int currOffset= selectedRange.x;
@@ -163,7 +163,7 @@ public class JavaCorrectionAssistant extends ContentAssistant {
 		} catch (BadLocationException e) {
 			JavaPlugin.log(e);
 		}
-		fCurrentAnnotations= (Annotation[]) resultingAnnotations.toArray(new Annotation[resultingAnnotations.size()]);
+		fCurrentAnnotations= resultingAnnotations.toArray(new Annotation[resultingAnnotations.size()]);
 
 		return super.showPossibleCompletions();
 	}
@@ -181,7 +181,7 @@ public class JavaCorrectionAssistant extends ContentAssistant {
 		return document.getLineInformationOfOffset(invocationLocation);
 	}
 	
-	public static int collectQuickFixableAnnotations(ITextEditor editor, int invocationLocation, boolean goToClosest, ArrayList resultingAnnotations) throws BadLocationException {
+	public static int collectQuickFixableAnnotations(ITextEditor editor, int invocationLocation, boolean goToClosest, ArrayList<Annotation> resultingAnnotations) throws BadLocationException {
 		IAnnotationModel model= JavaUI.getDocumentProvider().getAnnotationModel(editor.getEditorInput());
 		if (model == null) {
 			return invocationLocation;
@@ -195,8 +195,8 @@ public class JavaCorrectionAssistant extends ContentAssistant {
 			int rangeStart= lineInfo.getOffset();
 			int rangeEnd= rangeStart + lineInfo.getLength();
 			
-			ArrayList allAnnotations= new ArrayList();
-			ArrayList allPositions= new ArrayList();
+			ArrayList<Annotation> allAnnotations= new ArrayList<Annotation>();
+			ArrayList<Position> allPositions= new ArrayList<Position>();
 			int bestOffset= Integer.MAX_VALUE;
 			while (iter.hasNext()) {
 				Annotation annot= (Annotation) iter.next();
@@ -213,7 +213,7 @@ public class JavaCorrectionAssistant extends ContentAssistant {
 				return invocationLocation;
 			}
 			for (int i= 0; i < allPositions.size(); i++) {
-				Position pos= (Position) allPositions.get(i);
+				Position pos= allPositions.get(i);
 				if (isInside(bestOffset, pos.offset, pos.offset + pos.length)) {
 					resultingAnnotations.add(allAnnotations.get(i));
 				}

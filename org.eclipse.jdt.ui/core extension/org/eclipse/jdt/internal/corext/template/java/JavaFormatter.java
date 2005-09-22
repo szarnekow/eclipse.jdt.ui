@@ -158,7 +158,7 @@ public class JavaFormatter {
 			(caretOffset < string.length()) && Character.isWhitespace(string.charAt(caretOffset)) &&
 			! isInsideCommentOrString(string, caretOffset))
 		{
-			List positions= variablesToPositions(variables);
+			List<RangeMarker> positions= variablesToPositions(variables);
 
 		    TextEdit insert= new InsertEdit(caretOffset, MARKER);
 		    string= edit(string, positions, insert);
@@ -193,7 +193,7 @@ public class JavaFormatter {
 		
 		TemplateVariable[] variables= templateBuffer.getVariables();
 		
-		List offsets= variablesToPositions(variables);
+		List<RangeMarker> offsets= variablesToPositions(variables);
 		
 		Map options;
 		if (context.getCompilationUnit() != null)
@@ -218,8 +218,8 @@ public class JavaFormatter {
 			root= new MultiTextEdit(0, doc.getLength());
 			root.addChild(edit);
 		}
-		for (Iterator it= offsets.iterator(); it.hasNext();) {
-			TextEdit position= (TextEdit) it.next();
+		for (Iterator<RangeMarker> it= offsets.iterator(); it.hasNext();) {
+			TextEdit position= it.next();
 			try {
 				root.addChild(position);
 			} catch (MalformedTreeException e) {
@@ -238,11 +238,11 @@ public class JavaFormatter {
 	private void indent(TemplateBuffer templateBuffer) throws BadLocationException, MalformedTreeException {
 
 		TemplateVariable[] variables= templateBuffer.getVariables();
-		List positions= variablesToPositions(variables);
+		List<RangeMarker> positions= variablesToPositions(variables);
 		
 		IDocument document= new Document(templateBuffer.getString());
 		MultiTextEdit root= new MultiTextEdit(0, document.getLength());
-		root.addChildren((TextEdit[]) positions.toArray(new TextEdit[positions.size()]));
+		root.addChildren(positions.toArray(new TextEdit[positions.size()]));
 		
 		// first line
 		int offset= document.getLineOffset(0);
@@ -303,7 +303,7 @@ public class JavaFormatter {
 		String string= templateBuffer.getString();
 		TemplateVariable[] variables= templateBuffer.getVariables();
 
-		List positions= variablesToPositions(variables);
+		List<RangeMarker> positions= variablesToPositions(variables);
 
 		int i= 0;
 		while ((i != string.length()) && Character.isWhitespace(string.charAt(i)))
@@ -316,9 +316,9 @@ public class JavaFormatter {
 	}
 	
 	
-	private static String edit(String string, List positions, TextEdit edit) throws BadLocationException {
+	private static String edit(String string, List<RangeMarker> positions, TextEdit edit) throws BadLocationException {
 		MultiTextEdit root= new MultiTextEdit(0, string.length());
-		root.addChildren((TextEdit[]) positions.toArray(new TextEdit[positions.size()]));
+		root.addChildren(positions.toArray(new TextEdit[positions.size()]));
 		root.addChild(edit);
 		IDocument document= new Document(string);
 		root.apply(document);
@@ -326,8 +326,8 @@ public class JavaFormatter {
 		return document.get();
 	}
 	
-	private static List variablesToPositions(TemplateVariable[] variables) {
-   		List positions= new ArrayList(5);
+	private static List<RangeMarker> variablesToPositions(TemplateVariable[] variables) {
+   		List<RangeMarker> positions= new ArrayList<RangeMarker>(5);
 		for (int i= 0; i != variables.length; i++) {
 		    int[] offsets= variables[i].getOffsets();
 		    
@@ -347,15 +347,15 @@ public class JavaFormatter {
 		return positions;	    
 	}
 	
-	private static void positionsToVariables(List positions, TemplateVariable[] variables) {
-		Iterator iterator= positions.iterator();
+	private static void positionsToVariables(List<RangeMarker> positions, TemplateVariable[] variables) {
+		Iterator<RangeMarker> iterator= positions.iterator();
 		
 		for (int i= 0; i != variables.length; i++) {
 		    TemplateVariable variable= variables[i];
 		    
 			int[] offsets= new int[variable.getOffsets().length];
 			for (int j= 0; j != offsets.length; j++)
-				offsets[j]= ((TextEdit) iterator.next()).getOffset();
+				offsets[j]= iterator.next().getOffset();
 			
 		 	variable.setOffsets(offsets);   
 		}

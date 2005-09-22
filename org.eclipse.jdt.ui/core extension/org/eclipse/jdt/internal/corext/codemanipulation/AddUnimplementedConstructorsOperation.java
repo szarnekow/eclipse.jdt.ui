@@ -72,7 +72,7 @@ public final class AddUnimplementedConstructorsOperation implements IWorkspaceRu
 	private String[] fCreatedImports;
 
 	/** The method binding keys for which a constructor was generated */
-	private final List fCreatedMethods= new ArrayList();
+	private final List<String> fCreatedMethods= new ArrayList<String>();
 
 	/** The resulting text edit */
 	private TextEdit fEdit= null;

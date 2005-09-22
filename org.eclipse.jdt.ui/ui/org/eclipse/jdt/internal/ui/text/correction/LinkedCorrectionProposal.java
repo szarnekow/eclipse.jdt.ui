@@ -76,14 +76,14 @@ import org.eclipse.jdt.internal.ui.viewsupport.BindingLabelProvider;
 public class LinkedCorrectionProposal extends ASTRewriteCorrectionProposal {
 
 	public static class LinkedModeGroup {
-		final List fPositions= new ArrayList(); // list of ITrackedNodePosition
-		final List fProposals= new ArrayList(); // list of IJavaCompletionProposal
+		final List<ITrackedNodePosition> fPositions= new ArrayList<ITrackedNodePosition>(); // list of ITrackedNodePosition
+		final List<IJavaCompletionProposal> fProposals= new ArrayList<IJavaCompletionProposal>(); // list of IJavaCompletionProposal
 
 		public ITrackedNodePosition[] getPositions() {
-			return (ITrackedNodePosition[])fPositions.toArray(new ITrackedNodePosition[fPositions.size()]);
+			return fPositions.toArray(new ITrackedNodePosition[fPositions.size()]);
 		}
 		public IJavaCompletionProposal[] getProposals() {
-			return (IJavaCompletionProposal[])fProposals.toArray(new IJavaCompletionProposal[fProposals.size()]);
+			return fProposals.toArray(new IJavaCompletionProposal[fProposals.size()]);
 		}
 	}
 	
@@ -110,8 +110,8 @@ public class LinkedCorrectionProposal extends ASTRewriteCorrectionProposal {
 	}
 
 	private ITrackedNodePosition fSelectionDescription;
-	private Map/*<String, LinkModeGroup>*/ fLinkGroups;
-	private List fPositionOrder;
+	private Map/*<String, LinkModeGroup>*/<String, LinkedModeGroup> fLinkGroups;
+	private List<ITrackedNodePosition> fPositionOrder;
 
 	/**
 	 * Constructs a linked correction proposal.
@@ -140,7 +140,7 @@ public class LinkedCorrectionProposal extends ASTRewriteCorrectionProposal {
 	public void addLinkedPosition(ITrackedNodePosition position, boolean isFirst, String groupID) {
 		getLinkedModeGroup(groupID).fPositions.add(position);
 		if (fPositionOrder == null) {
-			fPositionOrder= new ArrayList();
+			fPositionOrder= new ArrayList<ITrackedNodePosition>();
 		}
 		if (isFirst) {
 			fPositionOrder.add(0, position);
@@ -206,16 +206,16 @@ public class LinkedCorrectionProposal extends ASTRewriteCorrectionProposal {
 	public LinkedModeGroup[] getLinkedModeGroups() {
 		if (fLinkGroups == null)
 			return new LinkedModeGroup[0];
-		Collection values= fLinkGroups.values();
-		return (LinkedModeGroup[])values.toArray(new LinkedModeGroup[values.size()]);
+		Collection<LinkedModeGroup> values= fLinkGroups.values();
+		return values.toArray(new LinkedModeGroup[values.size()]);
 	}
 
 
 	private LinkedModeGroup getLinkedModeGroup(String name) {
 		if (fLinkGroups == null) {
-			fLinkGroups= new HashMap();
+			fLinkGroups= new HashMap<String, LinkedModeGroup>();
 		}
-		LinkedModeGroup linkedGroup= (LinkedModeGroup) fLinkGroups.get(name);
+		LinkedModeGroup linkedGroup= fLinkGroups.get(name);
 		if (linkedGroup == null) {
 			linkedGroup= new LinkedModeGroup();
 			fLinkGroups.put(name, linkedGroup);
@@ -254,24 +254,24 @@ public class LinkedCorrectionProposal extends ASTRewriteCorrectionProposal {
 		LinkedModeModel model= new LinkedModeModel();
 		boolean added= false;
 
-		Iterator iterator= fLinkGroups.values().iterator();
+		Iterator<LinkedModeGroup> iterator= fLinkGroups.values().iterator();
 		while (iterator.hasNext()) {
-			LinkedModeGroup curr= (LinkedModeGroup) iterator.next();
+			LinkedModeGroup curr= iterator.next();
 			LinkedPositionGroup group= new LinkedPositionGroup();
 			
-			List positions= curr.fPositions;
+			List<ITrackedNodePosition> positions= curr.fPositions;
 			if (!positions.isEmpty()) {
 				IJavaCompletionProposal[] linkedModeProposals= curr.getProposals();
 				if (linkedModeProposals.length <= 1) {
 					for (int i= 0; i < positions.size(); i++) {
-						ITrackedNodePosition pos= (ITrackedNodePosition) positions.get(i);
+						ITrackedNodePosition pos= positions.get(i);
 						if (pos.getStartPosition() != -1) {
 							group.addPosition(new LinkedPosition(document, pos.getStartPosition(), pos.getLength(), fPositionOrder.indexOf(pos)));
 						}
 					}
 				} else {
 					for (int i= 0; i < positions.size(); i++) {
-						ITrackedNodePosition pos= (ITrackedNodePosition) positions.get(i);
+						ITrackedNodePosition pos= positions.get(i);
 						if (pos.getStartPosition() != -1) {
 							group.addPosition(new ProposalPosition(document, pos.getStartPosition(), pos.getLength(), fPositionOrder.indexOf(pos), linkedModeProposals));
 						}

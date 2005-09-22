@@ -111,13 +111,13 @@ public class RemoveFromClasspathAction extends SelectionDispatchAction {
 	}
 	
 	private static IPackageFragmentRoot[] getRootsToRemove(IStructuredSelection selection){
-		List result= new ArrayList(selection.size()); 
+		List<Object> result= new ArrayList<Object>(selection.size()); 
 		for (Iterator iter= selection.iterator(); iter.hasNext();) {
 			Object element= iter.next();
 			if (canRemove(element))
 				result.add(element);
 		}
-		return (IPackageFragmentRoot[]) result.toArray(new IPackageFragmentRoot[result.size()]);
+		return result.toArray(new IPackageFragmentRoot[result.size()]);
 	}	
 
 	private static boolean canRemove(Object element){

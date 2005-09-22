@@ -51,13 +51,13 @@ public class ImportRemover {
 		}
 	}
 
-	private Set/* <String> */fAddedImports= new HashSet();
+	private Set/* <String> */<String>fAddedImports= new HashSet<String>();
 
-	private Set/* <StaticImportData> */fAddedStaticImports= new HashSet();
+	private Set/* <StaticImportData> */<StaticImportData>fAddedStaticImports= new HashSet<StaticImportData>();
 
 	private final IJavaProject fProject;
 
-	private List/* <ASTNode> */fRemovedNodes= new ArrayList();
+	private List/* <ASTNode> */<ASTNode>fRemovedNodes= new ArrayList<ASTNode>();
 
 	private final CompilationUnit fRoot;
 
@@ -66,10 +66,10 @@ public class ImportRemover {
 		fRoot= root;
 	}
 
-	private void divideTypeRefs(List/* <SimpleName> */importNames, List/* <SimpleName> */staticNames, List/* <SimpleName> */removedRefs, List/* <SimpleName> */unremovedRefs) {
+	private void divideTypeRefs(List/* <SimpleName> */importNames, List/* <SimpleName> */staticNames, List/* <SimpleName> */<SimpleName>removedRefs, List/* <SimpleName> */<SimpleName>unremovedRefs) {
 		int[] removedStartsEnds= new int[2 * fRemovedNodes.size()];
 		for (int index= 0; index < fRemovedNodes.size(); index++) {
-			ASTNode node= (ASTNode) fRemovedNodes.get(index);
+			ASTNode node= fRemovedNodes.get(index);
 			int start= node.getStartPosition();
 			removedStartsEnds[2 * index]= start;
 			removedStartsEnds[2 * index + 1]= start + node.getLength();
@@ -94,26 +94,26 @@ public class ImportRemover {
 		ArrayList/* <SimpleName> */importNames= new ArrayList();
 		ArrayList/* <SimpleName> */staticNames= new ArrayList();
 		fRoot.accept(new ImportReferencesCollector(fProject, null, importNames, staticNames));
-		List/* <SimpleName> */removedRefs= new ArrayList();
-		List/* <SimpleName> */unremovedRefs= new ArrayList();
+		List/* <SimpleName> */<SimpleName>removedRefs= new ArrayList<SimpleName>();
+		List/* <SimpleName> */<SimpleName>unremovedRefs= new ArrayList<SimpleName>();
 		divideTypeRefs(importNames, staticNames, removedRefs, unremovedRefs);
 		if (removedRefs.size() == 0)
 			return new IBinding[0];
 
-		HashMap/* <String, IBinding> */potentialRemoves= getPotentialRemoves(removedRefs);
-		for (Iterator iterator= unremovedRefs.iterator(); iterator.hasNext();) {
-			SimpleName name= (SimpleName) iterator.next();
+		HashMap/* <String, IBinding> */<String, IBinding>potentialRemoves= getPotentialRemoves(removedRefs);
+		for (Iterator<SimpleName> iterator= unremovedRefs.iterator(); iterator.hasNext();) {
+			SimpleName name= iterator.next();
 			potentialRemoves.remove(name.getIdentifier());
 		}
 
-		Collection importsToRemove= potentialRemoves.values();
-		return (IBinding[]) importsToRemove.toArray(new IBinding[importsToRemove.size()]);
+		Collection<IBinding> importsToRemove= potentialRemoves.values();
+		return importsToRemove.toArray(new IBinding[importsToRemove.size()]);
 	}
 
-	private HashMap getPotentialRemoves(List removedRefs) {
-		HashMap/* <String, IBinding> */potentialRemoves= new HashMap();
-		for (Iterator iterator= removedRefs.iterator(); iterator.hasNext();) {
-			SimpleName name= (SimpleName) iterator.next();
+	private HashMap<String, IBinding> getPotentialRemoves(List<SimpleName> removedRefs) {
+		HashMap/* <String, IBinding> */<String, IBinding>potentialRemoves= new HashMap<String, IBinding>();
+		for (Iterator<SimpleName> iterator= removedRefs.iterator(); iterator.hasNext();) {
+			SimpleName name= iterator.next();
 			if (fAddedImports.contains(name.getIdentifier()) || hasAddedStaticImport(name))
 				continue;
 			IBinding binding= name.resolveBinding();
@@ -137,8 +137,8 @@ public class ImportRemover {
 
 	private boolean hasAddedStaticImport(String qualifier, String member, boolean field) {
 		StaticImportData data= null;
-		for (final Iterator iterator= fAddedStaticImports.iterator(); iterator.hasNext();) {
-			data= (StaticImportData) iterator.next();
+		for (final Iterator<StaticImportData> iterator= fAddedStaticImports.iterator(); iterator.hasNext();) {
+			data= iterator.next();
 			if (data.fQualifier.equals(qualifier) && data.fMember.equals(member) && data.fField == field)
 				return true;
 		}

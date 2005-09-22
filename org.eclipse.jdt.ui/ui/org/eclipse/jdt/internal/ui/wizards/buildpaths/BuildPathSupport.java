@@ -239,7 +239,7 @@ public class BuildPathSupport {
 	private static void updateProjectClasspath(Shell shell, IJavaProject jproject, IClasspathEntry newEntry, String[] changedAttributes, IProgressMonitor monitor) throws JavaModelException {
 		IClasspathEntry[] oldClasspath= jproject.getRawClasspath();
 		int nEntries= oldClasspath.length;
-		ArrayList newEntries= new ArrayList(nEntries + 1);
+		ArrayList<IClasspathEntry> newEntries= new ArrayList<IClasspathEntry>(nEntries + 1);
 		int entryKind= newEntry.getEntryKind();
 		IPath jarPath= newEntry.getPath();
 		boolean found= false;
@@ -260,7 +260,7 @@ public class BuildPathSupport {
 			// add new
 			newEntries.add(newEntry);			
 		}
-		IClasspathEntry[] newClasspath= (IClasspathEntry[]) newEntries.toArray(new IClasspathEntry[newEntries.size()]);
+		IClasspathEntry[] newClasspath= newEntries.toArray(new IClasspathEntry[newEntries.size()]);
 		jproject.setRawClasspath(newClasspath, monitor);
 	}
 	

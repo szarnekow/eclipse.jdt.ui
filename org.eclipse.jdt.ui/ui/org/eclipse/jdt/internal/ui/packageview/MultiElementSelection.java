@@ -30,7 +30,7 @@ public class MultiElementSelection extends StructuredSelection {
 	private TreePath[] fAllTreePaths;
 	private CustomHashtable fElement2TreePaths;
 	
-	public MultiElementSelection(StructuredViewer viewer, List elements, TreePath[] treePaths) {
+	public MultiElementSelection(StructuredViewer viewer, List<Object> elements, TreePath[] treePaths) {
 		super(elements);
 		fAllTreePaths= treePaths;
 		fElement2TreePaths= createTreePathMap(viewer.getComparer());
@@ -80,12 +80,12 @@ public class MultiElementSelection extends StructuredSelection {
 				if (value == null) {
 					result.put(key, path);
 				} else if (value instanceof TreePath) {
-					List l= new ArrayList();
+					List<Object> l= new ArrayList<Object>();
 					l.add(value);
 					l.add(path);
 					result.put(key, l);
 				} else if (value instanceof List) {
-					((List)value).add(path);
+					((List<TreePath>)value).add(path);
 				} else {
 					Assert.isTrue(false, "Should not happen"); //$NON-NLS-1$
 				}

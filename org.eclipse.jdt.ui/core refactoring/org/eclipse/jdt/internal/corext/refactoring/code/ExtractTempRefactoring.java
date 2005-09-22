@@ -117,11 +117,11 @@ public class ExtractTempRefactoring extends Refactoring {
 
 	private static final class ForStatementChecker extends ASTVisitor {
 
-		private final Collection fForInitializerVariables;
+		private final Collection<IVariableBinding> fForInitializerVariables;
 
 		private boolean fReferringToForVariable= false;
 
-		public ForStatementChecker(Collection forInitializerVariables) {
+		public ForStatementChecker(Collection<IVariableBinding> forInitializerVariables) {
 			Assert.isNotNull(forInitializerVariables);
 			fForInitializerVariables= forInitializerVariables;
 		}
@@ -191,9 +191,9 @@ public class ExtractTempRefactoring extends Refactoring {
 	}
 
 	// return List<IVariableBinding>
-	private static List getForInitializedVariables(VariableDeclarationExpression variableDeclarations) {
-		List forInitializerVariables= new ArrayList(1);
-		for (Iterator iter= variableDeclarations.fragments().iterator(); iter.hasNext();) {
+	private static List<IVariableBinding> getForInitializedVariables(VariableDeclarationExpression variableDeclarations) {
+		List<IVariableBinding> forInitializerVariables= new ArrayList<IVariableBinding>(1);
+		for (Iterator<ASTNode> iter= variableDeclarations.fragments().iterator(); iter.hasNext();) {
 			VariableDeclarationFragment fragment= (VariableDeclarationFragment) iter.next();
 			IVariableBinding binding= fragment.resolveBinding();
 			if (binding != null)
@@ -222,13 +222,13 @@ public class ExtractTempRefactoring extends Refactoring {
 
 	private static ASTNode[] getParents(ASTNode node) {
 		ASTNode current= node;
-		List parents= new ArrayList();
+		List<ASTNode> parents= new ArrayList<ASTNode>();
 		do {
 			parents.add(current.getParent());
 			current= current.getParent();
 		} while (current.getParent() != null);
 		Collections.reverse(parents);
-		return (ASTNode[]) parents.toArray(new ASTNode[parents.size()]);
+		return parents.toArray(new ASTNode[parents.size()]);
 	}
 
 	private static String getQualifiedName(ITypeBinding typeBinding) {
@@ -271,9 +271,9 @@ public class ExtractTempRefactoring extends Refactoring {
 			if (parent instanceof ForStatement) {
 				ForStatement forStmt= (ForStatement) parent;
 				if (forStmt.initializers().contains(current) || forStmt.updaters().contains(current) || forStmt.getExpression() == current) {
-					List initializers= forStmt.initializers();
+					List<ASTNode> initializers= forStmt.initializers();
 					if (initializers.size() == 1 && initializers.get(0) instanceof VariableDeclarationExpression) {
-						List forInitializerVariables= getForInitializedVariables((VariableDeclarationExpression) initializers.get(0));
+						List<IVariableBinding> forInitializerVariables= getForInitializedVariables((VariableDeclarationExpression) initializers.get(0));
 						ForStatementChecker checker= new ForStatementChecker(forInitializerVariables);
 						expression.accept(checker);
 						if (checker.isReferringToForVariable())
@@ -309,12 +309,12 @@ public class ExtractTempRefactoring extends Refactoring {
 	}
 
 	private static IASTFragment[] retainOnlyReplacableMatches(IASTFragment[] allMatches) {
-		List result= new ArrayList(allMatches.length);
+		List<IASTFragment> result= new ArrayList<IASTFragment>(allMatches.length);
 		for (int i= 0; i < allMatches.length; i++) {
 			if (canReplace(allMatches[i]))
 				result.add(allMatches[i]);
 		}
-		return (IASTFragment[]) result.toArray(new IASTFragment[result.size()]);
+		return result.toArray(new IASTFragment[result.size()]);
 	}
 
 	private CompilationUnit fCompilationUnitNode;
@@ -615,8 +615,8 @@ public class ExtractTempRefactoring extends Refactoring {
 		for (int i= 0; i < matchNodes.length; i++) {
 			matchingNodesParents[i]= getParents(matchNodes[i]);
 		}
-		List l= Arrays.asList(getLongestArrayPrefix(matchingNodesParents));
-		return (ASTNode[]) l.toArray(new ASTNode[l.size()]);
+		List<Object> l= Arrays.asList(getLongestArrayPrefix(matchingNodesParents));
+		return l.toArray(new ASTNode[l.size()]);
 	}
 
 	private Block getEnclosingBodyNode() throws JavaModelException {
@@ -673,7 +673,7 @@ public class ExtractTempRefactoring extends Refactoring {
 		Block block= (Block) ASTNodes.getParent(node, Block.class);
 		if (block == null)
 			return null;
-		for (Iterator iter= block.statements().iterator(); iter.hasNext();) {
+		for (Iterator<ASTNode> iter= block.statements().iterator(); iter.hasNext();) {
 			Statement statement= (Statement) iter.next();
 			if (ASTNodes.isParent(node, statement))
 				return statement;

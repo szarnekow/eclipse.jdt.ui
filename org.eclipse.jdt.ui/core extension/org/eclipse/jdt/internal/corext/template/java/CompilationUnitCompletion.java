@@ -211,7 +211,7 @@ final class CompilationUnitCompletion extends CompletionRequestor {
 			
 			for (int i= 0; i < signatures.length; i++) {
 				String sig= signatures[i];
-				String local= (String) fLocalTypes.get(Signature.getElementType(sig));
+				String local= fLocalTypes.get(Signature.getElementType(sig));
 				int dim= Signature.getArrayCount(sig);
 				if (local != null && dim > 0) {
 					StringBuffer array= new StringBuffer(local);
@@ -262,7 +262,7 @@ final class CompilationUnitCompletion extends CompletionRequestor {
 		private final ITypeHierarchy fHierarchy;
 		private final LocalVariable fVariable;
 		private final IType fType;
-		private final List fBounds= new ArrayList();
+		private final List<String> fBounds= new ArrayList<String>();
 
 		/**
 		 * Creates a new type parameter resolver to compute the bindings of type
@@ -324,7 +324,7 @@ final class CompilationUnitCompletion extends CompletionRequestor {
 		public String[] computeBinding(IType superType, int index) throws JavaModelException {
 			initBounds();
 			computeTypeParameterBinding(superType, index);
-			return (String[]) fBounds.toArray(new String[fBounds.size()]);
+			return fBounds.toArray(new String[fBounds.size()]);
 		}
 		
 		/**
@@ -505,8 +505,8 @@ final class CompilationUnitCompletion extends CompletionRequestor {
 				return;
 			
 			boolean found= false;
-			for (ListIterator it= fBounds.listIterator(); it.hasNext();) {
-				String old= (String) it.next();
+			for (ListIterator<String> it= fBounds.listIterator(); it.hasNext();) {
+				String old= it.next();
 				if (isTrueSubtypeOf(boundSignature, old)) {
 					if (!found) {
 						it.set(boundSignature);
@@ -596,8 +596,8 @@ final class CompilationUnitCompletion extends CompletionRequestor {
 	
 	private ICompilationUnit fUnit;
 
-	private List fLocalVariables= new ArrayList();
-	private Map fLocalTypes= new HashMap();
+	private List<LocalVariable> fLocalVariables= new ArrayList<LocalVariable>();
+	private Map<String, String> fLocalTypes= new HashMap<String, String>();
 
 	private boolean fError;
 
@@ -689,8 +689,8 @@ final class CompilationUnitCompletion extends CompletionRequestor {
 	 * @return <code>true</code> if <code>name</code> is already used, <code>false</code> otherwise
 	 */
 	public boolean existsLocalName(String name) {
-		for (Iterator iterator = fLocalVariables.iterator(); iterator.hasNext();) {
-			LocalVariable localVariable = (LocalVariable) iterator.next();
+		for (Iterator<LocalVariable> iterator = fLocalVariables.iterator(); iterator.hasNext();) {
+			LocalVariable localVariable = iterator.next();
 
 			if (localVariable.getName().equals(name))
 				return true;
@@ -707,8 +707,8 @@ final class CompilationUnitCompletion extends CompletionRequestor {
 	public String[] getLocalVariableNames() {
 		String[] names= new String[fLocalVariables.size()];
 		int i= 0;
-		for (ListIterator iterator= fLocalVariables.listIterator(fLocalVariables.size()); iterator.hasPrevious();) {
-			LocalVariable localVariable= (LocalVariable) iterator.previous();
+		for (ListIterator<LocalVariable> iterator= fLocalVariables.listIterator(fLocalVariables.size()); iterator.hasPrevious();) {
+			LocalVariable localVariable= iterator.previous();
 			names[i++]= localVariable.getName();
 		}		
 		return names;
@@ -720,16 +720,16 @@ final class CompilationUnitCompletion extends CompletionRequestor {
 	 * @return all local arrays
 	 */
 	public LocalVariable[] findLocalArrays() {
-		List arrays= new ArrayList();
+		List<LocalVariable> arrays= new ArrayList<LocalVariable>();
 
-		for (ListIterator iterator= fLocalVariables.listIterator(fLocalVariables.size()); iterator.hasPrevious();) {
-			LocalVariable localVariable= (LocalVariable) iterator.previous();
+		for (ListIterator<LocalVariable> iterator= fLocalVariables.listIterator(fLocalVariables.size()); iterator.hasPrevious();) {
+			LocalVariable localVariable= iterator.previous();
 
 			if (localVariable.isArray())
 				arrays.add(localVariable);
 		}
 
-		return (LocalVariable[]) arrays.toArray(new LocalVariable[arrays.size()]);
+		return arrays.toArray(new LocalVariable[arrays.size()]);
 	}
 	
 	/**
@@ -739,16 +739,16 @@ final class CompilationUnitCompletion extends CompletionRequestor {
 	 * @return all local <code>Collection</code>s
 	 */
 	public LocalVariable[] findLocalCollections() {
-		List collections= new ArrayList();
+		List<LocalVariable> collections= new ArrayList<LocalVariable>();
 
-		for (ListIterator iterator= fLocalVariables.listIterator(fLocalVariables.size()); iterator.hasPrevious();) {
-			LocalVariable localVariable= (LocalVariable) iterator.previous();
+		for (ListIterator<LocalVariable> iterator= fLocalVariables.listIterator(fLocalVariables.size()); iterator.hasPrevious();) {
+			LocalVariable localVariable= iterator.previous();
 
 			if (localVariable.isCollection())
 				collections.add(localVariable);
 		}
 
-		return (LocalVariable[]) collections.toArray(new LocalVariable[collections.size()]);
+		return collections.toArray(new LocalVariable[collections.size()]);
 	}
 
 	/**
@@ -760,16 +760,16 @@ final class CompilationUnitCompletion extends CompletionRequestor {
 	 * @return all local <code>Iterable</code>s and arrays
 	 */
 	public LocalVariable[] findLocalIterables() {
-		List iterables= new ArrayList();
+		List<LocalVariable> iterables= new ArrayList<LocalVariable>();
 
-		for (ListIterator iterator= fLocalVariables.listIterator(fLocalVariables.size()); iterator.hasPrevious();) {
-			LocalVariable localVariable= (LocalVariable) iterator.previous();
+		for (ListIterator<LocalVariable> iterator= fLocalVariables.listIterator(fLocalVariables.size()); iterator.hasPrevious();) {
+			LocalVariable localVariable= iterator.previous();
 
 			if (localVariable.isArray() || localVariable.isIterable())			
 				iterables.add(localVariable);
 		}
 
-		return (LocalVariable[]) iterables.toArray(new LocalVariable[iterables.size()]);
+		return iterables.toArray(new LocalVariable[iterables.size()]);
 	}
 
 }

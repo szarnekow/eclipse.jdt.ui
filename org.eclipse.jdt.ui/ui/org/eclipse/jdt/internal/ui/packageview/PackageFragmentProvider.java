@@ -69,7 +69,7 @@ public class PackageFragmentProvider implements IPropertyChangeListener {
 						IJavaProject project= (IJavaProject)iJavaElement;
 						IProject proj= project.getProject();					
 												
-						List children= new ArrayList();
+						List<IJavaElement> children= new ArrayList<IJavaElement>();
 						
 						IPackageFragmentRoot defaultroot= project.getPackageFragmentRoot(proj);
 						if(defaultroot.exists()) {
@@ -91,7 +91,7 @@ public class PackageFragmentProvider implements IPropertyChangeListener {
 									IFolder folder= (IFolder) resource;
 									IResource[] reses= folder.members();
 
-									List children= getFolders(reses);
+									List<IJavaElement> children= getFolders(reses);
 									IPackageFragment defaultPackage= root.getPackageFragment(""); //$NON-NLS-1$
 									if(defaultPackage.exists())
 										children.add(defaultPackage);
@@ -174,7 +174,7 @@ public class PackageFragmentProvider implements IPropertyChangeListener {
 
 	
 	private Object[] findNextLevelChildrenByElementName(IPackageFragmentRoot parent, IPackageFragment fragment) {
-		List list= new ArrayList();
+		List<IPackageFragment> list= new ArrayList<IPackageFragment>();
 		try {
 
 			IJavaElement[] children= parent.getChildren();
@@ -201,8 +201,8 @@ public class PackageFragmentProvider implements IPropertyChangeListener {
 
 	}
 	
-	private List getTopLevelChildrenByElementName(IJavaElement[] elements){
-		List topLevelElements= new ArrayList();
+	private List<IJavaElement> getTopLevelChildrenByElementName(IJavaElement[] elements){
+		List<IJavaElement> topLevelElements= new ArrayList<IJavaElement>();
 		for (int i= 0; i < elements.length; i++) {
 			IJavaElement iJavaElement= elements[i];
 			//if the name of the PackageFragment is the top level package it will contain no "." separators
@@ -213,8 +213,8 @@ public class PackageFragmentProvider implements IPropertyChangeListener {
 		return topLevelElements;
 	}
 
-	private List getFolders(IResource[] resources) throws JavaModelException {
-		List list= new ArrayList();
+	private List<IJavaElement> getFolders(IResource[] resources) throws JavaModelException {
+		List<IJavaElement> list= new ArrayList<IJavaElement>();
 		for (int i= 0; i < resources.length; i++) {
 			IResource resource= resources[i];
 			

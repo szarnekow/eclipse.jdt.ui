@@ -18,6 +18,7 @@ import org.eclipse.jface.preference.IPreferenceStore;
 
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IRegion;
+import org.eclipse.jface.text.rules.IRule;
 import org.eclipse.jface.text.rules.IToken;
 import org.eclipse.jface.text.rules.IWordDetector;
 import org.eclipse.jface.text.rules.WhitespaceRule;
@@ -95,9 +96,9 @@ public final class PropertyValueScanner extends AbstractJavaScanner {
 	/*
 	 * @see org.eclipse.jdt.internal.ui.text.AbstractJavaScanner#createRules()
 	 */
-	protected List createRules() {
+	protected List<IRule> createRules() {
 		setDefaultReturnToken(getToken(PreferenceConstants.PROPERTIES_FILE_COLORING_VALUE));
-		List rules= new ArrayList();
+		List<IRule> rules= new ArrayList<IRule>();
 
 		// Add rule for arguments.
 		IToken token= getToken(PreferenceConstants.PROPERTIES_FILE_COLORING_ARGUMENT);

@@ -29,18 +29,18 @@ import org.eclipse.jdt.internal.ui.JavaPlugin;
 
 public class SearchParticipantsExtensionPoint {
 
-	private Set fActiveParticipants= null;
+	private Set<SearchParticipantDescriptor> fActiveParticipants= null;
 	private static SearchParticipantsExtensionPoint fgInstance;
 
 	public boolean hasAnyParticipants() {
 		return Platform.getExtensionRegistry().getConfigurationElementsFor(JavaSearchPage.PARTICIPANT_EXTENSION_POINT).length > 0;
 	}
 
-	private synchronized Set getAllParticipants() {
+	private synchronized Set<SearchParticipantDescriptor> getAllParticipants() {
 		if (fActiveParticipants != null)
 			return fActiveParticipants;
 		IConfigurationElement[] allParticipants= Platform.getExtensionRegistry().getConfigurationElementsFor(JavaSearchPage.PARTICIPANT_EXTENSION_POINT);
-		fActiveParticipants= new HashSet(allParticipants.length);
+		fActiveParticipants= new HashSet<SearchParticipantDescriptor>(allParticipants.length);
 		for (int i= 0; i < allParticipants.length; i++) {
 			SearchParticipantDescriptor descriptor= new SearchParticipantDescriptor(allParticipants[i]);
 			IStatus status= descriptor.checkSyntax();
@@ -53,11 +53,11 @@ public class SearchParticipantsExtensionPoint {
 		return fActiveParticipants;
 	}
 
-	private void collectParticipants(Set participants, IProject[] projects) {
-		Iterator activeParticipants= getAllParticipants().iterator();
-		Set seenParticipants= new HashSet();
+	private void collectParticipants(Set<SearchParticipantRecord> participants, IProject[] projects) {
+		Iterator<SearchParticipantDescriptor> activeParticipants= getAllParticipants().iterator();
+		Set<String> seenParticipants= new HashSet<String>();
 		while (activeParticipants.hasNext()) {
-			SearchParticipantDescriptor participant= (SearchParticipantDescriptor) activeParticipants.next();
+			SearchParticipantDescriptor participant= activeParticipants.next();
 			if (participant.isEnabled()) {
 				String id= participant.getID();
 				for (int i= 0; i < projects.length; i++) {
@@ -80,10 +80,10 @@ public class SearchParticipantsExtensionPoint {
 
 
 	public SearchParticipantRecord[] getSearchParticipants(IProject[] concernedProjects) throws CoreException {
-		Set participantSet= new HashSet();
+		Set<SearchParticipantRecord> participantSet= new HashSet<SearchParticipantRecord>();
 		collectParticipants(participantSet, concernedProjects);
 		SearchParticipantRecord[] participants= new SearchParticipantRecord[participantSet.size()];
-		return (SearchParticipantRecord[]) participantSet.toArray(participants);
+		return participantSet.toArray(participants);
 	}
 
 	public static SearchParticipantsExtensionPoint getInstance() {

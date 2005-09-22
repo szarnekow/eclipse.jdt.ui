@@ -176,7 +176,7 @@ public class FindStringsToExternalizeAction extends SelectionDispatchAction {
 		pm.beginTask(ActionMessages.FindStringsToExternalizeAction_find_strings, elements.size()); 
 					
 		try{
-			List l= new ArrayList();	
+			List<NonNLSElement> l= new ArrayList<NonNLSElement>();	
 			for (Iterator iter= elements.iterator(); iter.hasNext();) {
 				IJavaElement element= (IJavaElement) iter.next();
 				if (element.getElementType() == IJavaElement.PACKAGE_FRAGMENT)
@@ -186,7 +186,7 @@ public class FindStringsToExternalizeAction extends SelectionDispatchAction {
 				if (element.getElementType() == IJavaElement.JAVA_PROJECT)
 					l.addAll(analyze((IJavaProject) element, new SubProgressMonitor(pm, 1)));
 			}
-			return (NonNLSElement[]) l.toArray(new NonNLSElement[l.size()]);
+			return l.toArray(new NonNLSElement[l.size()]);
 		} finally{
 			pm.done();
 		}
@@ -212,17 +212,17 @@ public class FindStringsToExternalizeAction extends SelectionDispatchAction {
 	/*
 	 * returns List of Strings
 	 */
-	private List analyze(IPackageFragment pack, IProgressMonitor pm) throws CoreException {
+	private List<NonNLSElement> analyze(IPackageFragment pack, IProgressMonitor pm) throws CoreException {
 		try{
 			if (pack == null)
-				return new ArrayList(0);
+				return new ArrayList<NonNLSElement>(0);
 				
 			ICompilationUnit[] cus= pack.getCompilationUnits();
 	
 			pm.beginTask("", cus.length); //$NON-NLS-1$
 			pm.setTaskName(pack.getElementName());
 			
-			List l= new ArrayList(cus.length);
+			List<NonNLSElement> l= new ArrayList<NonNLSElement>(cus.length);
 			for (int i= 0; i < cus.length; i++){
 				pm.subTask(cus[i].getElementName());
 				NonNLSElement element= analyze(cus[i]);
@@ -241,12 +241,12 @@ public class FindStringsToExternalizeAction extends SelectionDispatchAction {
 	/*
 	 * returns List of Strings
 	 */	
-	private List analyze(IPackageFragmentRoot sourceFolder, IProgressMonitor pm) throws CoreException {
+	private List<NonNLSElement> analyze(IPackageFragmentRoot sourceFolder, IProgressMonitor pm) throws CoreException {
 		try{
 			IJavaElement[] children= sourceFolder.getChildren();
 			pm.beginTask("", children.length); //$NON-NLS-1$
 			pm.setTaskName(sourceFolder.getElementName());
-			List result= new ArrayList();
+			List<NonNLSElement> result= new ArrayList<NonNLSElement>();
 			for (int i= 0; i < children.length; i++) {
 				IJavaElement iJavaElement= children[i];
 				if (iJavaElement.getElementType() == IJavaElement.PACKAGE_FRAGMENT){
@@ -267,11 +267,11 @@ public class FindStringsToExternalizeAction extends SelectionDispatchAction {
 	/*
 	 * returns List of Strings
 	 */
-	private List analyze(IJavaProject project, IProgressMonitor pm) throws CoreException {
+	private List<NonNLSElement> analyze(IJavaProject project, IProgressMonitor pm) throws CoreException {
 		try{
 			IPackageFragment[] packs= project.getPackageFragments();
 			pm.beginTask("", packs.length); //$NON-NLS-1$
-			List result= new ArrayList();
+			List<NonNLSElement> result= new ArrayList<NonNLSElement>();
 			for (int i= 0; i < packs.length; i++) {
 				if (! packs[i].isReadOnly())
 					result.addAll(analyze(packs[i], new SubProgressMonitor(pm, 1)));

@@ -27,7 +27,7 @@ import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 
 public class LevelTreeContentProvider extends JavaSearchContentProvider implements ITreeContentProvider {
-	private Map fChildrenMap;
+	private Map<Object, Set> fChildrenMap;
 	private StandardJavaElementContentProvider fContentProvider;
 	
 	public static final int LEVEL_TYPE= 1;
@@ -101,7 +101,7 @@ public class LevelTreeContentProvider extends JavaSearchContentProvider implemen
 
 	protected synchronized void initialize(JavaSearchResult result) {
 		super.initialize(result);
-		fChildrenMap= new HashMap();
+		fChildrenMap= new HashMap<Object, Set>();
 		if (result != null) {
 			Object[] elements= result.getElements();
 			for (int i= 0; i < elements.length; i++) {
@@ -112,7 +112,7 @@ public class LevelTreeContentProvider extends JavaSearchContentProvider implemen
 		}
 	}
 
-	protected void insert(Map toAdd, Set toUpdate, Object child) {
+	protected void insert(Map<Object, Set> toAdd, Set<Object> toUpdate, Object child) {
 		Object parent= getParent(child);
 		while (parent != null) {
 			if (insertChild(parent, child)) {
@@ -136,16 +136,16 @@ public class LevelTreeContentProvider extends JavaSearchContentProvider implemen
 		return insertInto(parent, child, fChildrenMap);
 	}
 
-	private boolean insertInto(Object parent, Object child, Map map) {
-		Set children= (Set) map.get(parent);
+	private boolean insertInto(Object parent, Object child, Map<Object, Set> map) {
+		Set<Object> children= map.get(parent);
 		if (children == null) {
-			children= new HashSet();
+			children= new HashSet<Object>();
 			map.put(parent, children);
 		}
 		return children.add(child);
 	}
 
-	protected void remove(Set toRemove, Set toUpdate, Object element) {
+	protected void remove(Set<Object> toRemove, Set<Object> toUpdate, Object element) {
 		// precondition here:  fResult.getMatchCount(child) <= 0
 	
 		if (hasChildren(element)) {
@@ -179,7 +179,7 @@ public class LevelTreeContentProvider extends JavaSearchContentProvider implemen
 	 * @return returns true if it really was a remove (i.e. element was a child of parent).
 	 */
 	private boolean removeFromSiblings(Object element, Object parent) {
-		Set siblings= (Set) fChildrenMap.get(parent);
+		Set siblings= fChildrenMap.get(parent);
 		if (siblings != null) {
 			return siblings.remove(element);
 		} else {
@@ -188,7 +188,7 @@ public class LevelTreeContentProvider extends JavaSearchContentProvider implemen
 	}
 
 	public Object[] getChildren(Object parentElement) {
-		Set children= (Set) fChildrenMap.get(parentElement);
+		Set children= fChildrenMap.get(parentElement);
 		if (children == null)
 			return EMPTY_ARR;
 		return children.toArray();
@@ -202,9 +202,9 @@ public class LevelTreeContentProvider extends JavaSearchContentProvider implemen
 		AbstractTreeViewer viewer= (AbstractTreeViewer) getPage().getViewer();
 		if (fResult == null)
 			return;
-		Set toRemove= new HashSet();
-		Set toUpdate= new HashSet();
-		Map toAdd= new HashMap();
+		Set<Object> toRemove= new HashSet<Object>();
+		Set<Object> toUpdate= new HashSet<Object>();
+		Map<Object, Set> toAdd= new HashMap<Object, Set>();
 		for (int i= 0; i < updatedElements.length; i++) {
 			if (getPage().getDisplayedMatchCount(updatedElements[i]) > 0)
 				insert(toAdd, toUpdate, updatedElements[i]);
@@ -213,12 +213,12 @@ public class LevelTreeContentProvider extends JavaSearchContentProvider implemen
 		}
 		
 		viewer.remove(toRemove.toArray());
-		for (Iterator iter= toAdd.keySet().iterator(); iter.hasNext();) {
+		for (Iterator<Object> iter= toAdd.keySet().iterator(); iter.hasNext();) {
 			Object parent= iter.next();
 			HashSet children= (HashSet) toAdd.get(parent);
 			viewer.add(parent, children.toArray());
 		}
-		for (Iterator elementsToUpdate= toUpdate.iterator(); elementsToUpdate.hasNext();) {
+		for (Iterator<Object> elementsToUpdate= toUpdate.iterator(); elementsToUpdate.hasNext();) {
 			viewer.refresh(elementsToUpdate.next());
 		}
 		

@@ -98,7 +98,7 @@ public class TypeSetUnion extends TypeSet {
 	/* (non-Javadoc)
 	 * @see org.eclipse.jdt.internal.corext.refactoring.typeconstraints.typesets.TypeSet#iterator()
 	 */
-	public Iterator iterator() {
+	public Iterator<TType> iterator() {
 		throw new IllegalStateException("unimplemented"); //$NON-NLS-1$
 	}
 	/* (non-Javadoc)

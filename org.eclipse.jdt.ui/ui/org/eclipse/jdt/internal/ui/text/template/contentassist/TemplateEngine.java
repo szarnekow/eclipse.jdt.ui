@@ -39,7 +39,7 @@ public class TemplateEngine {
 	/** The context type. */
 	private TemplateContextType fContextType;
 	/** The result proposals. */
-	private ArrayList fProposals= new ArrayList();
+	private ArrayList<TemplateProposal> fProposals= new ArrayList<TemplateProposal>();
 
 	/**
 	 * Creates the template engine for a particular context type.
@@ -61,7 +61,7 @@ public class TemplateEngine {
 	 * Returns the array of matching templates.
 	 */
 	public TemplateProposal[] getResults() {
-		return (TemplateProposal[]) fProposals.toArray(new TemplateProposal[fProposals.size()]);
+		return fProposals.toArray(new TemplateProposal[fProposals.size()]);
 	}
 
 	/**

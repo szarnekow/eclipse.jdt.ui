@@ -519,7 +519,7 @@ public class DefaultJavaFoldingStructureProvider implements IProjectionListener,
 						}
 					}
 
-					Map additions= computeAdditions((IParent) fInput);
+					Map<Object, Position> additions= computeAdditions((IParent) fInput);
 					/*
 					 *  Minimize the events being sent out - as this happens in the
 					 *  UI thread merge everything into one call.
@@ -551,8 +551,8 @@ public class DefaultJavaFoldingStructureProvider implements IProjectionListener,
 		fCollapseHeaderComments= store.getBoolean(PreferenceConstants.EDITOR_FOLDING_HEADERS);
 	}
 
-	private Map computeAdditions(IParent parent) {
-		Map map= new LinkedHashMap(); // use a linked map to maintain ordering of comments
+	private Map<Object, Position> computeAdditions(IParent parent) {
+		Map<Object, Position> map= new LinkedHashMap<Object, Position>(); // use a linked map to maintain ordering of comments
 		try {
 			computeAdditions(parent.getChildren(), map);
 		} catch (JavaModelException x) {
@@ -560,7 +560,7 @@ public class DefaultJavaFoldingStructureProvider implements IProjectionListener,
 		return map;
 	}
 
-	private void computeAdditions(IJavaElement[] elements, Map map) throws JavaModelException {
+	private void computeAdditions(IJavaElement[] elements, Map<Object, Position> map) throws JavaModelException {
 		for (int i= 0; i < elements.length; i++) {
 			IJavaElement element= elements[i];
 
@@ -573,7 +573,7 @@ public class DefaultJavaFoldingStructureProvider implements IProjectionListener,
 		}
 	}
 
-	private void computeAdditions(IJavaElement element, Map map) {
+	private void computeAdditions(IJavaElement element, Map<Object, Position> map) {
 
 		boolean createProjection= false;
 
@@ -647,7 +647,7 @@ public class DefaultJavaFoldingStructureProvider implements IProjectionListener,
 				if (contents == null)
 					return null;
 
-				List regions= new ArrayList();
+				List<IRegion> regions= new ArrayList<IRegion>();
 				if (fFirstType == null && element instanceof IType) {
 					fFirstType= (IType) element;
 					IRegion headerComment= computeHeaderComment(fFirstType);
@@ -802,19 +802,19 @@ public class DefaultJavaFoldingStructureProvider implements IProjectionListener,
 			fFirstType= null;
 			fHasHeaderComment= false;
 
-			Map additions= new HashMap();
-			List deletions= new ArrayList();
-			List updates= new ArrayList();
+			Map<JavaProjectionAnnotation, Position> additions= new HashMap<JavaProjectionAnnotation, Position>();
+			List<JavaProjectionAnnotation> deletions= new ArrayList<JavaProjectionAnnotation>();
+			List<JavaProjectionAnnotation> updates= new ArrayList<JavaProjectionAnnotation>();
 
-			Map updated= computeAdditions((IParent) fInput);
-			Map previous= createAnnotationMap(model);
+			Map<Object, Position> updated= computeAdditions((IParent) fInput);
+			Map<IJavaElement, Object> previous= createAnnotationMap(model);
 
 
-			Iterator e= updated.keySet().iterator();
+			Iterator<Object> e= updated.keySet().iterator();
 			while (e.hasNext()) {
 				JavaProjectionAnnotation newAnnotation= (JavaProjectionAnnotation) e.next();
 				IJavaElement element= newAnnotation.getElement();
-				Position newPosition= (Position) updated.get(newAnnotation);
+				Position newPosition= updated.get(newAnnotation);
 
 				List annotations= (List) previous.get(element);
 				if (annotations == null) {
@@ -881,16 +881,16 @@ public class DefaultJavaFoldingStructureProvider implements IProjectionListener,
 	 * result is that more annotations are changed and fewer get
 	 * deleted/re-added.
 	 */
-	private void match(List deletions, Map additions, List changes) {
+	private void match(List<JavaProjectionAnnotation> deletions, Map<JavaProjectionAnnotation, Position> additions, List<JavaProjectionAnnotation> changes) {
 		if (deletions.isEmpty() || (additions.isEmpty() && changes.isEmpty()))
 			return;
 
-		List newDeletions= new ArrayList();
-		List newChanges= new ArrayList();
+		List<JavaProjectionAnnotation> newDeletions= new ArrayList<JavaProjectionAnnotation>();
+		List<JavaProjectionAnnotation> newChanges= new ArrayList<JavaProjectionAnnotation>();
 
-		Iterator deletionIterator= deletions.iterator();
+		Iterator<JavaProjectionAnnotation> deletionIterator= deletions.iterator();
 		while (deletionIterator.hasNext()) {
-			JavaProjectionAnnotation deleted= (JavaProjectionAnnotation) deletionIterator.next();
+			JavaProjectionAnnotation deleted= deletionIterator.next();
 			Position deletedPosition= fCachedModel.getPosition(deleted);
 			if (deletedPosition == null)
 				continue;
@@ -948,12 +948,12 @@ public class DefaultJavaFoldingStructureProvider implements IProjectionListener,
 	 *        or <code>null</code>
 	 * @return a matching tuple or <code>null</code> for no match
 	 */
-	private Tuple findMatch(Tuple tuple, Collection annotations, Map positionMap) {
-		Iterator it= annotations.iterator();
+	private Tuple findMatch(Tuple tuple, Collection<JavaProjectionAnnotation> annotations, Map<JavaProjectionAnnotation, Position> positionMap) {
+		Iterator<JavaProjectionAnnotation> it= annotations.iterator();
 		while (it.hasNext()) {
-			JavaProjectionAnnotation annotation= (JavaProjectionAnnotation) it.next();
+			JavaProjectionAnnotation annotation= it.next();
 			if (tuple.annotation.isComment() == annotation.isComment()) {
-				Position position= positionMap == null ? fCachedModel.getPosition(annotation) : (Position) positionMap.get(annotation);
+				Position position= positionMap == null ? fCachedModel.getPosition(annotation) : positionMap.get(annotation);
 				if (position == null)
 					continue;
 
@@ -967,8 +967,8 @@ public class DefaultJavaFoldingStructureProvider implements IProjectionListener,
 		return null;
 	}
 
-	private Map createAnnotationMap(IAnnotationModel model) {
-		Map map= new HashMap();
+	private Map<IJavaElement, Object> createAnnotationMap(IAnnotationModel model) {
+		Map<IJavaElement, Object> map= new HashMap<IJavaElement, Object>();
 		Iterator e= model.getAnnotationIterator();
 		while (e.hasNext()) {
 			Object annotation= e.next();
@@ -976,9 +976,9 @@ public class DefaultJavaFoldingStructureProvider implements IProjectionListener,
 				JavaProjectionAnnotation java= (JavaProjectionAnnotation) annotation;
 				Position position= model.getPosition(java);
 				Assert.isNotNull(position);
-				List list= (List) map.get(java.getElement());
+				List<Tuple> list= (List<Tuple>) map.get(java.getElement());
 				if (list == null) {
-					list= new ArrayList(2);
+					list= new ArrayList<Tuple>(2);
 					map.put(java.getElement(), list);
 				}
 				list.add(new Tuple(java, position));
@@ -990,7 +990,7 @@ public class DefaultJavaFoldingStructureProvider implements IProjectionListener,
 				return ((Tuple) o1).position.getOffset() - ((Tuple) o2).position.getOffset();
 			}
 		};
-		for (Iterator it= map.values().iterator(); it.hasNext();) {
+		for (Iterator<Object> it= map.values().iterator(); it.hasNext();) {
 			List list= (List) it.next();
 			Collections.sort(list, comparator);
 		}
@@ -1027,7 +1027,7 @@ public class DefaultJavaFoldingStructureProvider implements IProjectionListener,
 		if (model == null)
 			return;
 		
-		List modified= new ArrayList();
+		List<JavaProjectionAnnotation> modified= new ArrayList<JavaProjectionAnnotation>();
 		Iterator iter= model.getAnnotationIterator();
 		while (iter.hasNext()) {
 			Object annotation= iter.next();
@@ -1040,6 +1040,6 @@ public class DefaultJavaFoldingStructureProvider implements IProjectionListener,
 			}
 		}
 		
-		model.modifyAnnotations(null, null, (Annotation[]) modified.toArray(new Annotation[modified.size()]));
+		model.modifyAnnotations(null, null, modified.toArray(new Annotation[modified.size()]));
 	}
 }

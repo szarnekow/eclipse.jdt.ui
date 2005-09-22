@@ -39,7 +39,7 @@ class ProjectAndSourceFolderContentProvider extends JavaBrowsingContentProvider 
 			if (element instanceof IStructuredSelection) {
 				Assert.isLegal(false);
 				Object[] result= new Object[0];
-				Class clazz= null;
+				Class<? extends Object> clazz= null;
 				Iterator iter= ((IStructuredSelection)element).iterator();
 				while (iter.hasNext()) {
 					Object item=  iter.next();
@@ -79,7 +79,7 @@ class ProjectAndSourceFolderContentProvider extends JavaBrowsingContentProvider 
 			return NO_CHILDREN;
 
 		IPackageFragmentRoot[] roots= project.getPackageFragmentRoots();
-		List list= new ArrayList(roots.length);
+		List<IPackageFragmentRoot> list= new ArrayList<IPackageFragmentRoot>(roots.length);
 		// filter out package fragments that correspond to projects and
 		// replace them with the package fragments directly
 		for (int i= 0; i < roots.length; i++) {

@@ -25,7 +25,7 @@ import org.eclipse.jdt.ui.text.java.IProblemLocation;
 
 public class TypeParameterMismatchSubProcessor {
 
-	public static void getTypeParameterMismatchProposals(IInvocationContext context, IProblemLocation problem, Collection proposals) {
+	public static void getTypeParameterMismatchProposals(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) {
 		CompilationUnit astRoot= context.getASTRoot();
 		ASTNode selectedNode= problem.getCoveredNode(astRoot);
 		if (!(selectedNode instanceof SimpleName)) {

@@ -90,10 +90,10 @@ public class AddToClasspathChange extends JDTChange {
 	
 	private IClasspathEntry[] getNewClasspathEntries() throws JavaModelException{
 		IClasspathEntry[] entries= getJavaProject().getRawClasspath();
-		List cp= new ArrayList(entries.length + 1);
+		List<IClasspathEntry> cp= new ArrayList<IClasspathEntry>(entries.length + 1);
 		cp.addAll(Arrays.asList(entries));
 		cp.add(fEntryToAdd);
-		return (IClasspathEntry[])cp.toArray(new IClasspathEntry[cp.size()]);
+		return cp.toArray(new IClasspathEntry[cp.size()]);
 	}
 	
 	private static IClasspathEntry createNewClasspathEntry(int kind, IPath path, IPath sourceAttach, IPath sourceAttachRoot){

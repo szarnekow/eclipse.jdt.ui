@@ -70,11 +70,11 @@ public class RemoveWorkingSetElementAction extends SelectionDispatchAction {
 		IWorkingSet ws= getWorkingSet(selection);
 		if (ws == null)
 			return;
-		List elements= new ArrayList(Arrays.asList(ws.getElements()));
+		List<IAdaptable> elements= new ArrayList<IAdaptable>(Arrays.asList(ws.getElements()));
 		List selectedElements= selection.toList();
 		for (Iterator iter= selectedElements.iterator(); iter.hasNext();) {
 			elements.remove(iter.next());
 		}
-		ws.setElements((IAdaptable[])elements.toArray(new IAdaptable[elements.size()]));
+		ws.setElements(elements.toArray(new IAdaptable[elements.size()]));
 	}
 }

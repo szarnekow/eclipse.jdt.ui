@@ -385,7 +385,7 @@ public final class ASTProvider {
 		if (ast == null)
 			return "null"; //$NON-NLS-1$
 
-		List types= ast.types();
+		List<ASTNode> types= ast.types();
 		if (types != null && types.size() > 0)
 			return ((AbstractTypeDeclaration)types.get(0)).getName().getIdentifier();
 		else

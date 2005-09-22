@@ -374,7 +374,7 @@ public class ProjectsWorkbookPage extends BuildPathBasePage {
 	private CPListElement[] openProjectDialog(CPListElement elem) {
 		
 		try {
-			ArrayList selectable= new ArrayList();
+			ArrayList<IJavaProject> selectable= new ArrayList<IJavaProject>();
 			selectable.addAll(Arrays.asList(fCurrJProject.getJavaModel().getJavaProjects()));
 			selectable.remove(fCurrJProject);
 			

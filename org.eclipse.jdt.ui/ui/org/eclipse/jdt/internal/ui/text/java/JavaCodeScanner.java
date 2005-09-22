@@ -362,7 +362,7 @@ public final class JavaCodeScanner extends AbstractJavaScanner {
 		IJavaColorConstants.JAVA_ANNOTATION,
 	};
 
-	private List fVersionDependentRules= new ArrayList(3);
+	private List<ISourceVersionDependent> fVersionDependentRules= new ArrayList<ISourceVersionDependent>(3);
 
 	/**
 	 * Creates a Java code scanner
@@ -385,9 +385,9 @@ public final class JavaCodeScanner extends AbstractJavaScanner {
 	/*
 	 * @see AbstractJavaScanner#createRules()
 	 */
-	protected List createRules() {
+	protected List<IRule> createRules() {
 
-		List rules= new ArrayList();
+		List<IRule> rules= new ArrayList<IRule>();
 
 		// Add rule for character constants.
 		Token token= getToken(IJavaColorConstants.JAVA_STRING);
@@ -474,8 +474,8 @@ public final class JavaCodeScanner extends AbstractJavaScanner {
 			if (value instanceof String) {
 				String s= (String) value;
 
-				for (Iterator it= fVersionDependentRules.iterator(); it.hasNext();) {
-					ISourceVersionDependent dependent= (ISourceVersionDependent) it.next();
+				for (Iterator<ISourceVersionDependent> it= fVersionDependentRules.iterator(); it.hasNext();) {
+					ISourceVersionDependent dependent= it.next();
 					dependent.setSourceVersion(s);
 				}
 			}

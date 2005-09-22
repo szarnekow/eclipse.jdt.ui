@@ -26,7 +26,7 @@ class MethodReferencesSearchRequestor extends SearchRequestor {
         fSearchResults = new CallSearchResultCollector();
     }
 
-    public Map getCallers() {
+    public Map<Object, MethodCall> getCallers() {
         return fSearchResults.getCallers();
     }
 

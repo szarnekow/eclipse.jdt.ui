@@ -74,16 +74,16 @@ public class ScopeAnalyzer {
 	 */		
 	public static final int CHECK_VISIBILITY= 16;
 		
-	private ArrayList fRequestor;
-	private HashSet fNamesAdded;
-	private HashSet fTypesVisited;
+	private ArrayList<IBinding> fRequestor;
+	private HashSet<String> fNamesAdded;
+	private HashSet<ITypeBinding> fTypesVisited;
 	
 	private CompilationUnit fRoot;
 	
 	public ScopeAnalyzer(CompilationUnit root) {
-		fRequestor= new ArrayList();
-		fNamesAdded= new HashSet();
-		fTypesVisited= new HashSet();
+		fRequestor= new ArrayList<IBinding>();
+		fNamesAdded= new HashSet<String>();
+		fTypesVisited= new HashSet<ITypeBinding>();
 		fRoot= root;
 	}
 	
@@ -204,7 +204,7 @@ public class ScopeAnalyzer {
 				addTypeDeclarations(declaringClass, flags); // Recursively add inherited 
 			} else if (hasFlag(TYPES, flags)) {
 				if (fRoot.findDeclaringNode(binding) != null) {
-					List types= fRoot.types();
+					List<ASTNode> types= fRoot.types();
 					for (int i= 0; i < types.size(); i++) {
 						addResult(((AbstractTypeDeclaration) types.get(i)).resolveBinding());
 					}
@@ -298,7 +298,7 @@ public class ScopeAnalyzer {
 			if (hasFlag(CHECK_VISIBILITY, flags)) {
 				filterNonVisible(parentTypeBinding);
 			}
-			return (IBinding[]) fRequestor.toArray(new IBinding[fRequestor.size()]);
+			return fRequestor.toArray(new IBinding[fRequestor.size()]);
 		} finally {
 			clearLists();			
 		}
@@ -306,14 +306,14 @@ public class ScopeAnalyzer {
 	
 	private IVariableBinding[] getEnumContants(ITypeBinding binding) {
 		IVariableBinding[] declaredFields= binding.getDeclaredFields();
-		ArrayList res= new ArrayList(declaredFields.length);
+		ArrayList<IVariableBinding> res= new ArrayList<IVariableBinding>(declaredFields.length);
 		for (int i= 0; i < declaredFields.length; i++) {
 			IVariableBinding curr= declaredFields[i];
 			if (curr.isEnumConstant()) {
 				res.add(curr);
 			}
 		}
-		return (IVariableBinding[]) res.toArray(new IVariableBinding[res.size()]);
+		return res.toArray(new IVariableBinding[res.size()]);
 	}
 
 	public IBinding[] getDeclarationsInScope(int offset, int flags) {
@@ -338,7 +338,7 @@ public class ScopeAnalyzer {
 			if (hasFlag(CHECK_VISIBILITY, flags)) {
 				filterNonVisible(binding);
 			}
-			return (IBinding[]) fRequestor.toArray(new IBinding[fRequestor.size()]);
+			return fRequestor.toArray(new IBinding[fRequestor.size()]);
 		} finally {
 			clearLists();			
 		}
@@ -347,7 +347,7 @@ public class ScopeAnalyzer {
 	private void filterNonVisible(ITypeBinding binding) {
 		// remove non-visible declarations
 		for (int i= fRequestor.size() - 1; i >= 0; i--) {
-			if (!isVisible((IBinding) fRequestor.get(i), binding)) {
+			if (!isVisible(fRequestor.get(i), binding)) {
 				fRequestor.remove(i);
 			}
 		}
@@ -427,7 +427,7 @@ public class ScopeAnalyzer {
 				DeclarationsAfterVisitor visitor= new DeclarationsAfterVisitor(node.getStartPosition(), flags);
 				declaration.accept(visitor);
 			}
-			return (IBinding[]) fRequestor.toArray(new IBinding[fRequestor.size()]);
+			return fRequestor.toArray(new IBinding[fRequestor.size()]);
 		} finally {
 			clearLists();			
 		}
@@ -558,9 +558,9 @@ public class ScopeAnalyzer {
 			return isInside(node);
 		}
 		
-		private void visitBackwards(List list) {
+		private void visitBackwards(List<ASTNode> list) {
 			for (int i= list.size() - 1; i >= 0; i--) {
-				ASTNode curr= (ASTNode) list.get(i);
+				ASTNode curr= list.get(i);
 				if (curr.getStartPosition() <  fPosition) {
 					curr.accept(this);
 				}

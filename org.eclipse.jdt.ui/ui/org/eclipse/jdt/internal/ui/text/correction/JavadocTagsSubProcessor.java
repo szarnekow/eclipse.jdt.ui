@@ -140,15 +140,15 @@ public class JavadocTagsSubProcessor {
 				String name= ((SimpleName) missingNode).getIdentifier();
 				newTag= ast.newTagElement();
 				newTag.setTagName(TagElement.TAG_PARAM);
-				List fragments= newTag.fragments();
+				List<ASTNode> fragments= newTag.fragments();
 				fragments.add(ast.newSimpleName(name));
 
 				MethodDeclaration methodDeclaration= (MethodDeclaration) bodyDecl;
-				List params= methodDeclaration.parameters();
+				List<ASTNode> params= methodDeclaration.parameters();
 
-				Set sameKindLeadingNames= getPreviousParamNames(params, decl);
+				Set<String> sameKindLeadingNames= getPreviousParamNames(params, decl);
 
-				List typeParams= methodDeclaration.typeParameters();
+				List<ASTNode> typeParams= methodDeclaration.typeParameters();
 				for (int i= 0; i < typeParams.size(); i++) {
 					String curr= '<' + ((TypeParameter) typeParams.get(i)).getName().getIdentifier() + '>';
 					sameKindLeadingNames.add(curr);
@@ -164,7 +164,7 @@ public class JavadocTagsSubProcessor {
 				TextElement text= ast.newTextElement();
 				text.setText(name);
 				newTag.fragments().add(text);
-				List params;
+				List<ASTNode> params;
 				if (bodyDecl instanceof TypeDeclaration) {
 					params= ((TypeDeclaration) bodyDecl).typeParameters();
 				} else {
@@ -181,7 +181,7 @@ public class JavadocTagsSubProcessor {
 				TextElement excNode= ast.newTextElement();
 				excNode.setText(ASTNodes.asString(missingNode));
 				newTag.fragments().add(excNode);
-				List exceptions= ((MethodDeclaration) bodyDecl).thrownExceptions();
+				List<ASTNode> exceptions= ((MethodDeclaration) bodyDecl).thrownExceptions();
 				insertTag(tagsRewriter, newTag, getPreviousExceptionNames(exceptions, missingNode));
 		 	} else {
 		 		Assert.isTrue(false, "AddMissingJavadocTagProposal: unexpected node location"); //$NON-NLS-1$
@@ -219,8 +219,8 @@ public class JavadocTagsSubProcessor {
 		 	Javadoc javadoc= methodDecl.getJavadoc();
 		 	ListRewrite tagsRewriter= rewriter.getListRewrite(javadoc, Javadoc.TAGS_PROPERTY);
 
-		 	List typeParams= methodDecl.typeParameters();
-		 	List typeParamNames= new ArrayList();
+		 	List<ASTNode> typeParams= methodDecl.typeParameters();
+		 	List<String> typeParamNames= new ArrayList<String>();
 		 	for (int i= typeParams.size() - 1; i >= 0 ; i--) {
 		 		TypeParameter decl= (TypeParameter) typeParams.get(i);
 		 		String name= '<' + decl.getName().getIdentifier() + '>';
@@ -235,7 +235,7 @@ public class JavadocTagsSubProcessor {
 		 		}
 				typeParamNames.add(name);
 		 	}
-		 	List params= methodDecl.parameters();
+		 	List<ASTNode> params= methodDecl.parameters();
 		 	for (int i= params.size() - 1; i >= 0 ; i--) {
 		 		SingleVariableDeclaration decl= (SingleVariableDeclaration) params.get(i);
 		 		String name= decl.getName().getIdentifier();
@@ -244,7 +244,7 @@ public class JavadocTagsSubProcessor {
 		 			newTag.setTagName(TagElement.TAG_PARAM);
 		 			newTag.fragments().add(ast.newSimpleName(name));
 					insertTabStop(rewriter, newTag.fragments(), "methParam" + i); //$NON-NLS-1$
-		 			Set sameKindLeadingNames= getPreviousParamNames(params, decl);
+		 			Set<String> sameKindLeadingNames= getPreviousParamNames(params, decl);
 		 			sameKindLeadingNames.addAll(typeParamNames);
 		 			insertTag(tagsRewriter, newTag, sameKindLeadingNames);
 		 		}
@@ -260,7 +260,7 @@ public class JavadocTagsSubProcessor {
 		 			}
 		 		}
 		 	}
-		 	List thrownExceptions= methodDecl.thrownExceptions();
+		 	List<ASTNode> thrownExceptions= methodDecl.thrownExceptions();
 		 	for (int i= thrownExceptions.size() - 1; i >= 0 ; i--) {
 		 		Name exception= (Name) thrownExceptions.get(i);
 		 		ITypeBinding binding= exception.resolveTypeBinding();
@@ -284,7 +284,7 @@ public class JavadocTagsSubProcessor {
 			Javadoc javadoc= typeDecl.getJavadoc();
 			ListRewrite tagsRewriter= rewriter.getListRewrite(javadoc, Javadoc.TAGS_PROPERTY);
 
-			List typeParams= typeDecl.typeParameters();
+			List<ASTNode> typeParams= typeDecl.typeParameters();
 			for (int i= typeParams.size() - 1; i >= 0; i--) {
 				TypeParameter decl= (TypeParameter) typeParams.get(i);
 				String name= '<' + decl.getName().getIdentifier() + '>';
@@ -300,7 +300,7 @@ public class JavadocTagsSubProcessor {
 			}
 		}
 
-		private void insertTabStop(ASTRewrite rewriter, List fragments, String linkedName) {
+		private void insertTabStop(ASTRewrite rewriter, List<ASTNode> fragments, String linkedName) {
 			TextElement textElement= rewriter.getAST().newTextElement();
 			textElement.setText(""); //$NON-NLS-1$
 			fragments.add(textElement);
@@ -309,7 +309,7 @@ public class JavadocTagsSubProcessor {
 
 	}
 
-	public static void getMissingJavadocTagProposals(IInvocationContext context, IProblemLocation problem, Collection proposals) {
+	public static void getMissingJavadocTagProposals(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) {
 	 	ASTNode node= problem.getCoveringNode(context.getASTRoot());
 	 	if (node == null) {
 	 		return;
@@ -353,7 +353,7 @@ public class JavadocTagsSubProcessor {
 	 	proposals.add(addAllMissing);
 	}
 
-	public static void getMissingJavadocCommentProposals(IInvocationContext context, IProblemLocation problem, Collection proposals) throws CoreException {
+	public static void getMissingJavadocCommentProposals(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) throws CoreException {
 		ASTNode node= problem.getCoveringNode(context.getASTRoot());
 		if (node == null) {
 			return;
@@ -384,7 +384,7 @@ public class JavadocTagsSubProcessor {
 			String typeQualifiedName= Bindings.getTypeQualifiedName(binding);
 			String[] typeParamNames;
 			if (declaration instanceof TypeDeclaration) {
-				List typeParams= ((TypeDeclaration) declaration).typeParameters();
+				List<ASTNode> typeParams= ((TypeDeclaration) declaration).typeParameters();
 				typeParamNames= new String[typeParams.size()];
 				for (int i= 0; i < typeParamNames.length; i++) {
 					typeParamNames[i]= ((TypeParameter) typeParams.get(i)).getName().getIdentifier();
@@ -399,7 +399,7 @@ public class JavadocTagsSubProcessor {
 			}
 		} else if (declaration instanceof FieldDeclaration) {
 			String comment= "/**\n *\n */\n"; //$NON-NLS-1$
-			List fragments= ((FieldDeclaration)declaration).fragments();
+			List<ASTNode> fragments= ((FieldDeclaration)declaration).fragments();
 			if (fragments != null && fragments.size() > 0) {
 				VariableDeclaration decl= (VariableDeclaration)fragments.get(0);
 				String fieldName= decl.getName().getIdentifier();
@@ -419,8 +419,8 @@ public class JavadocTagsSubProcessor {
 		}
 	}
 
-	public static Set getPreviousTypeParamNames(List typeParams, ASTNode missingNode) {
-		Set previousNames=  new HashSet();
+	public static Set<String> getPreviousTypeParamNames(List<ASTNode> typeParams, ASTNode missingNode) {
+		Set<String> previousNames=  new HashSet<String>();
 		for (int i = 0; i < typeParams.size(); i++) {
 			TypeParameter curr= (TypeParameter) typeParams.get(i);
 			if (curr == missingNode) {
@@ -431,8 +431,8 @@ public class JavadocTagsSubProcessor {
 		return previousNames;
 	}
 
-	private static Set getPreviousParamNames(List params, ASTNode missingNode) {
-		Set previousNames=  new HashSet();
+	private static Set<String> getPreviousParamNames(List<ASTNode> params, ASTNode missingNode) {
+		Set<String> previousNames=  new HashSet<String>();
 		for (int i = 0; i < params.size(); i++) {
 			SingleVariableDeclaration curr= (SingleVariableDeclaration) params.get(i);
 			if (curr == missingNode) {
@@ -443,8 +443,8 @@ public class JavadocTagsSubProcessor {
 		return previousNames;
 	}
 
-	private static Set getPreviousExceptionNames(List list, ASTNode missingNode) {
-		Set previousNames=  new HashSet();
+	private static Set<String> getPreviousExceptionNames(List<ASTNode> list, ASTNode missingNode) {
+		Set<String> previousNames=  new HashSet<String>();
 		for (int i= 0; i < list.size() && missingNode != list.get(i); i++) {
 			Name curr= (Name) list.get(i);
 			previousNames.add(ASTNodes.getSimpleNameIdentifier(curr));
@@ -453,7 +453,7 @@ public class JavadocTagsSubProcessor {
 	}
 
 	public static TagElement findTag(Javadoc javadoc, String name, String arg) {
-		List tags= javadoc.tags();
+		List<ASTNode> tags= javadoc.tags();
 		int nTags= tags.size();
 		for (int i= 0; i < nTags; i++) {
 			TagElement curr= (TagElement) tags.get(i);
@@ -472,7 +472,7 @@ public class JavadocTagsSubProcessor {
 	}
 
 	public static TagElement findParamTag(Javadoc javadoc, String arg) {
-		List tags= javadoc.tags();
+		List<ASTNode> tags= javadoc.tags();
 		int nTags= tags.size();
 		for (int i= 0; i < nTags; i++) {
 			TagElement curr= (TagElement) tags.get(i);
@@ -489,7 +489,7 @@ public class JavadocTagsSubProcessor {
 
 
 	public static TagElement findThrowsTag(Javadoc javadoc, String arg) {
-		List tags= javadoc.tags();
+		List<ASTNode> tags= javadoc.tags();
 		int nTags= tags.size();
 		for (int i= 0; i < nTags; i++) {
 			TagElement curr= (TagElement) tags.get(i);
@@ -504,12 +504,12 @@ public class JavadocTagsSubProcessor {
 		return null;
 	}
 
-	public static void insertTag(ListRewrite rewriter, TagElement newElement, Set sameKindLeadingNames) {
+	public static void insertTag(ListRewrite rewriter, TagElement newElement, Set<String> sameKindLeadingNames) {
 		insertTag(rewriter, newElement, sameKindLeadingNames, null);
 	}
 
-	public static void insertTag(ListRewrite rewriter, TagElement newElement, Set sameKindLeadingNames, TextEditGroup groupDescription) {
-		List tags= rewriter.getRewrittenList();
+	public static void insertTag(ListRewrite rewriter, TagElement newElement, Set<String> sameKindLeadingNames, TextEditGroup groupDescription) {
+		List<ASTNode> tags= rewriter.getRewrittenList();
 
 		String insertedTagName= newElement.getTagName();
 
@@ -572,7 +572,7 @@ public class JavadocTagsSubProcessor {
 	}
 
 	private static String getArgument(TagElement curr) {
-		List fragments= curr.fragments();
+		List<ASTNode> fragments= curr.fragments();
 		if (!fragments.isEmpty()) {
 			Object first= fragments.get(0);
 			if (first instanceof Name) {
@@ -593,7 +593,7 @@ public class JavadocTagsSubProcessor {
 		return null;
 	}
 
-	public static void getRemoveJavadocTagProposals(IInvocationContext context, IProblemLocation problem, Collection proposals) {
+	public static void getRemoveJavadocTagProposals(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) {
 		ASTNode node= problem.getCoveringNode(context.getASTRoot());
 		while (node != null && !(node instanceof TagElement)) {
 			node= node.getParent();

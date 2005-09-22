@@ -365,7 +365,7 @@ class JavaCompareUtilities {
 		try {
 			reader= new BufferedReader(new InputStreamReader(is2, encoding));
 			StringBuffer sb= new StringBuffer();
-			List list= new ArrayList();
+			List<String> list= new ArrayList<String>();
 			while (true) {
 				int c= reader.read();
 				if (c == -1)
@@ -387,7 +387,7 @@ class JavaCompareUtilities {
 			}
 			if (sb.length() > 0)
 				list.add(sb.toString());
-			return (String[]) list.toArray(new String[list.size()]);
+			return list.toArray(new String[list.size()]);
 
 		} catch (IOException ex) {
 			return null;

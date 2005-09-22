@@ -105,8 +105,8 @@ public class NewVariableCompletionProposal extends LinkedCorrectionProposal {
 			// add javadoc tag
 			Javadoc javadoc= methodDeclaration.getJavadoc();
 			if (javadoc != null) {
-				HashSet leadingNames= new HashSet();
-				for (Iterator iter= methodDeclaration.parameters().iterator(); iter.hasNext();) {
+				HashSet<String> leadingNames= new HashSet<String>();
+				for (Iterator<ASTNode> iter= methodDeclaration.parameters().iterator(); iter.hasNext();) {
 					SingleVariableDeclaration curr= (SingleVariableDeclaration) iter.next();
 					leadingNames.add(curr.getName().getIdentifier());
 				}
@@ -144,7 +144,7 @@ public class NewVariableCompletionProposal extends LinkedCorrectionProposal {
 	private boolean isForStatementInit(Statement statement, SimpleName name) {
 		if (statement instanceof ForStatement) {
 			ForStatement forStatement= (ForStatement) statement;
-			List list = forStatement.initializers();
+			List<ASTNode> list = forStatement.initializers();
 			if (list.size() == 1 && list.get(0) instanceof Assignment) {
 				Assignment assignment= (Assignment) list.get(0);
 				return assignment.getLeftHandSide() == name;
@@ -338,7 +338,7 @@ public class NewVariableCompletionProposal extends LinkedCorrectionProposal {
 			}
 
 			ChildListPropertyDescriptor property= ASTNodes.getBodyDeclarationsProperty(newTypeDecl);
-			List decls= (List) newTypeDecl.getStructuralProperty(property);
+			List<ASTNode> decls= (List<ASTNode>) newTypeDecl.getStructuralProperty(property);
 
 			int maxOffset= isInDifferentCU ? -1 : node.getStartPosition();
 			
@@ -363,10 +363,10 @@ public class NewVariableCompletionProposal extends LinkedCorrectionProposal {
 		return null;
 	}
 
-	private int findFieldInsertIndex(List decls, FieldDeclaration newDecl, int maxOffset) {
+	private int findFieldInsertIndex(List<ASTNode> decls, FieldDeclaration newDecl, int maxOffset) {
 		if (maxOffset != -1) {
 			for (int i= decls.size() - 1; i >= 0; i--) {
-				ASTNode curr= (ASTNode) decls.get(i);
+				ASTNode curr= decls.get(i);
 				if (maxOffset > curr.getStartPosition() + curr.getLength()) {
 					return ASTNodes.getInsertionIndex(newDecl, decls.subList(0, i + 1));
 				}

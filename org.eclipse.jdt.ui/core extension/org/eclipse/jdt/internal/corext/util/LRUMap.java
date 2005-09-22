@@ -16,7 +16,7 @@ import java.util.LinkedHashMap;
 /**
  * 
  */
-public class LRUMap extends LinkedHashMap {
+public class LRUMap<K, V> extends LinkedHashMap<K, V> {
 	
 	private static final long serialVersionUID= 1L;
 	private final int fMaxSize;
@@ -26,7 +26,7 @@ public class LRUMap extends LinkedHashMap {
 		fMaxSize= maxSize;
 	}
 	
-	protected boolean removeEldestEntry(java.util.Map.Entry eldest) {
+	protected boolean removeEldestEntry(java.util.Map.Entry<K, V> eldest) {
 		return size() > fMaxSize;
 	}
 }

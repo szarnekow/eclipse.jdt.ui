@@ -233,7 +233,7 @@ public class NLSRefactoring extends Refactoring {
 
 	private IFile[] getAllFilesToModify() {
 
-		List files= new ArrayList(2);
+		List<IResource> files= new ArrayList<IResource>(2);
 		if (willModifySource()) {
 			IResource resource= fCu.getResource();
 			if (resource.exists()) {
@@ -255,7 +255,7 @@ public class NLSRefactoring extends Refactoring {
 			}
 		}
 		
-		return (IFile[]) files.toArray(new IFile[files.size()]);
+		return files.toArray(new IFile[files.size()]);
 	}
 
 	public IFile getPropertyFileHandle() {

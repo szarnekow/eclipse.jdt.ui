@@ -34,6 +34,7 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.contexts.IContextActivation;
 import org.eclipse.ui.contexts.IContextService;
+import org.eclipse.ui.handlers.IHandlerActivation;
 import org.eclipse.ui.handlers.IHandlerService;
 import org.eclipse.ui.texteditor.ITextEditorActionDefinitionIds;
 
@@ -180,7 +181,7 @@ public class TextFieldNavigationHandler {
 	private static class FocusHandler implements FocusListener {
 	
 		private final JavaWordIterator fIterator;
-		private List fHandlerActivations;
+		private List<IHandlerActivation> fHandlerActivations;
 		private IContextActivation fContextActivation;
 		protected final Navigable fNavigable;
 		
@@ -221,7 +222,7 @@ public class TextFieldNavigationHandler {
 			IHandlerService handlerService= (IHandlerService)PlatformUI.getWorkbench().getAdapter(IHandlerService.class);
 			if (handlerService == null)
 				return;
-			fHandlerActivations= new ArrayList();
+			fHandlerActivations= new ArrayList<IHandlerActivation>();
 			
 			//TODO: DELETE_PREVIOUS/NEXT_WORD
 			fHandlerActivations.add(handlerService.activateHandler(ITextEditorActionDefinitionIds.SELECT_WORD_NEXT, new AbstractHandler() {

@@ -403,8 +403,8 @@ public class ExtractMethodInputPage extends UserInputWizardPage {
 	
 	private RefactoringStatus validateParameters() {
 		RefactoringStatus result= new RefactoringStatus();
-		List parameters= fRefactoring.getParameterInfos();
-		for (Iterator iter= parameters.iterator(); iter.hasNext();) {
+		List<Object> parameters= fRefactoring.getParameterInfos();
+		for (Iterator<Object> iter= parameters.iterator(); iter.hasNext();) {
 			ParameterInfo info= (ParameterInfo) iter.next();
 			if ("".equals(info.getNewName())) { //$NON-NLS-1$
 				result.addFatalError(RefactoringMessages.ExtractMethodInputPage_validation_emptyParameterName); 

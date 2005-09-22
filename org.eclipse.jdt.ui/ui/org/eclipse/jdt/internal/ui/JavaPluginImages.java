@@ -39,7 +39,7 @@ public class JavaPluginImages {
 	
 	// The plug-in registry
 	private static ImageRegistry fgImageRegistry= null;
-	private static HashMap fgAvoidSWTErrorMap= null;
+	private static HashMap<String, ImageDescriptor> fgAvoidSWTErrorMap= null;
 
 	private static final String T_OBJ= "obj16"; 		//$NON-NLS-1$
 	private static final String T_OVR= "ovr16"; 		//$NON-NLS-1$
@@ -447,7 +447,7 @@ public class JavaPluginImages {
 	 */ 
 	public static ImageDescriptor getDescriptor(String key) {
 		if (fgImageRegistry == null) {
-			return (ImageDescriptor) fgAvoidSWTErrorMap.get(key);
+			return fgAvoidSWTErrorMap.get(key);
 		}
 		return getImageRegistry().getDescriptor(key);
 	}
@@ -480,9 +480,9 @@ public class JavaPluginImages {
 	/* package */ static ImageRegistry getImageRegistry() {
 		if (fgImageRegistry == null) {
 			fgImageRegistry= new ImageRegistry();
-			for (Iterator iter= fgAvoidSWTErrorMap.keySet().iterator(); iter.hasNext();) {
-				String key= (String) iter.next();
-				fgImageRegistry.put(key, (ImageDescriptor) fgAvoidSWTErrorMap.get(key));
+			for (Iterator<String> iter= fgAvoidSWTErrorMap.keySet().iterator(); iter.hasNext();) {
+				String key= iter.next();
+				fgImageRegistry.put(key, fgAvoidSWTErrorMap.get(key));
 			}
 			fgAvoidSWTErrorMap= null;
 		}
@@ -515,7 +515,7 @@ public class JavaPluginImages {
 		ImageDescriptor result= create(prefix, name, true);
 		
 		if (fgAvoidSWTErrorMap == null) {
-			fgAvoidSWTErrorMap= new HashMap();
+			fgAvoidSWTErrorMap= new HashMap<String, ImageDescriptor>();
 		}
 		fgAvoidSWTErrorMap.put(key, result);
 		if (fgImageRegistry != null) {

@@ -21,10 +21,10 @@ import org.eclipse.jdt.internal.corext.refactoring.typeconstraints.types.TypeVar
 public class TTypes {
 	
 	private static class AllSupertypesIterator implements Iterator {
-		private final Stack fWorklist;
+		private final Stack<TType> fWorklist;
 		
 		public AllSupertypesIterator(TType type) {
-			fWorklist= new Stack();
+			fWorklist= new Stack<TType>();
 			pushSupertypes(type);
 		}
 	
@@ -33,7 +33,7 @@ public class TTypes {
 		}
 	
 		public Object next() {
-			TType result= (TType) fWorklist.pop();
+			TType result= fWorklist.pop();
 			pushSupertypes(result);
 			return result;
 		}
@@ -67,10 +67,10 @@ public class TTypes {
 	}
 	
 	private static class AllSubtypesIterator implements Iterator {
-		private final Stack fWorklist;
+		private final Stack<TType> fWorklist;
 		
 		public AllSubtypesIterator(TType type) {
-			fWorklist= new Stack();
+			fWorklist= new Stack<TType>();
 			fWorklist.push(type.getTypeDeclaration());
 		}
 	
@@ -79,7 +79,7 @@ public class TTypes {
 		}
 	
 		public Object next() {
-			TType result= (TType) fWorklist.pop();
+			TType result= fWorklist.pop();
 			TType[] subTypes= result.getSubTypes();
 			for (int i= 0; i < subTypes.length; i++)
 				fWorklist.push(subTypes[i].getTypeDeclaration());

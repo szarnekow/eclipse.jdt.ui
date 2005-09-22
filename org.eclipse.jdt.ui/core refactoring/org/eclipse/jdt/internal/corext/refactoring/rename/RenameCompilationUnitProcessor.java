@@ -22,6 +22,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 import org.eclipse.ltk.core.refactoring.participants.CheckConditionsContext;
+import org.eclipse.ltk.core.refactoring.participants.RefactoringParticipant;
 import org.eclipse.ltk.core.refactoring.participants.RenameArguments;
 import org.eclipse.ltk.core.refactoring.participants.SharableParticipants;
 import org.eclipse.ltk.core.refactoring.participants.ValidateEditChecker;
@@ -88,7 +89,7 @@ public class RenameCompilationUnitProcessor extends JavaRenameProcessor implemen
 		return new Object[] {fCu};
 	}
 
-	protected void loadDerivedParticipants(RefactoringStatus status, List result, String[] natures, SharableParticipants shared) throws CoreException {
+	protected void loadDerivedParticipants(RefactoringStatus status, List<RefactoringParticipant> result, String[] natures, SharableParticipants shared) throws CoreException {
 		String newTypeName= removeFileNameExtension(getNewElementName());
 		RenameArguments arguments= new RenameArguments(newTypeName, getUpdateReferences());
 		loadDerivedParticipants(status, result, 

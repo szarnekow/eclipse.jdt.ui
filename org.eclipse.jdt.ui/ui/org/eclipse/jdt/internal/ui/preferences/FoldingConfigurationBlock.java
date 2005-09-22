@@ -50,6 +50,7 @@ import org.eclipse.jdt.ui.PreferenceConstants;
 import org.eclipse.jdt.ui.text.folding.IJavaFoldingPreferenceBlock;
 
 import org.eclipse.jdt.internal.ui.JavaPlugin;
+import org.eclipse.jdt.internal.ui.preferences.OverlayPreferenceStore.OverlayKey;
 import org.eclipse.jdt.internal.ui.text.folding.JavaFoldingStructureProviderDescriptor;
 import org.eclipse.jdt.internal.ui.text.folding.JavaFoldingStructureProviderRegistry;
 import org.eclipse.jdt.internal.ui.util.PixelConverter;
@@ -106,9 +107,9 @@ class FoldingConfigurationBlock implements IPreferenceConfigurationBlock {
 	private StackLayout fStackLayout;
 	
 	/* the model */
-	private final Map fProviderDescriptors;
-	private final Map fProviderPreferences;
-	private final Map fProviderControls;
+	private final Map<String, JavaFoldingStructureProviderDescriptor> fProviderDescriptors;
+	private final Map<String, IJavaFoldingPreferenceBlock> fProviderPreferences;
+	private final Map<String, Control> fProviderControls;
 	
 
 	public FoldingConfigurationBlock(OverlayPreferenceStore store) {
@@ -116,15 +117,15 @@ class FoldingConfigurationBlock implements IPreferenceConfigurationBlock {
 		fStore= store;
 		fStore.addKeys(createOverlayStoreKeys());
 		fProviderDescriptors= createListModel();
-		fProviderPreferences= new HashMap();
-		fProviderControls= new HashMap();
+		fProviderPreferences= new HashMap<String, IJavaFoldingPreferenceBlock>();
+		fProviderControls= new HashMap<String, Control>();
 	}
 
-	private Map createListModel() {
+	private Map<String, JavaFoldingStructureProviderDescriptor> createListModel() {
 		JavaFoldingStructureProviderRegistry reg= JavaPlugin.getDefault().getFoldingStructureProviderRegistry();
 		reg.reloadExtensions();
 		JavaFoldingStructureProviderDescriptor[] descs= reg.getFoldingProviderDescriptors();
-		Map map= new HashMap();
+		Map<String, JavaFoldingStructureProviderDescriptor> map= new HashMap<String, JavaFoldingStructureProviderDescriptor>();
 		for (int i= 0; i < descs.length; i++) {
 			map.put(descs[i].getId(), descs[i]);
 		}
@@ -133,7 +134,7 @@ class FoldingConfigurationBlock implements IPreferenceConfigurationBlock {
 
 	private OverlayPreferenceStore.OverlayKey[] createOverlayStoreKeys() {
 		
-		ArrayList overlayKeys= new ArrayList();
+		ArrayList<OverlayKey> overlayKeys= new ArrayList<OverlayKey>();
 
 		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, PreferenceConstants.EDITOR_FOLDING_ENABLED));
 		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.STRING, PreferenceConstants.EDITOR_FOLDING_PROVIDER));
@@ -284,7 +285,7 @@ class FoldingConfigurationBlock implements IPreferenceConfigurationBlock {
 
 	void updateListDependencies() {
 		String id= fStore.getString(PreferenceConstants.EDITOR_FOLDING_PROVIDER);
-		JavaFoldingStructureProviderDescriptor desc= (JavaFoldingStructureProviderDescriptor) fProviderDescriptors.get(id);
+		JavaFoldingStructureProviderDescriptor desc= fProviderDescriptors.get(id);
 		IJavaFoldingPreferenceBlock prefs;
 		
 		if (desc == null) {
@@ -293,7 +294,7 @@ class FoldingConfigurationBlock implements IPreferenceConfigurationBlock {
 			JavaPlugin.log(new Status(IStatus.WARNING, JavaPlugin.getPluginId(), IStatus.OK, message, null));
 			prefs= new ErrorPreferences(message);
 		} else {
-			prefs= (IJavaFoldingPreferenceBlock) fProviderPreferences.get(id);
+			prefs= fProviderPreferences.get(id);
 			if (prefs == null) {
 				try {
 					prefs= desc.createPreferences();
@@ -305,7 +306,7 @@ class FoldingConfigurationBlock implements IPreferenceConfigurationBlock {
 			}
 		}
 		
-		Control control= (Control) fProviderControls.get(id);
+		Control control= fProviderControls.get(id);
 		if (control == null) {
 			control= prefs.createControl(fGroup);
 			if (control == null) {
@@ -329,23 +330,23 @@ class FoldingConfigurationBlock implements IPreferenceConfigurationBlock {
 	}
 
 	public void performOk() {
-		for (Iterator it= fProviderPreferences.values().iterator(); it.hasNext();) {
-			IJavaFoldingPreferenceBlock prefs= (IJavaFoldingPreferenceBlock) it.next();
+		for (Iterator<IJavaFoldingPreferenceBlock> it= fProviderPreferences.values().iterator(); it.hasNext();) {
+			IJavaFoldingPreferenceBlock prefs= it.next();
 			prefs.performOk();
 		}
 	}
 	
 	public void performDefaults() {
 		restoreFromPreferences();
-		for (Iterator it= fProviderPreferences.values().iterator(); it.hasNext();) {
-			IJavaFoldingPreferenceBlock prefs= (IJavaFoldingPreferenceBlock) it.next();
+		for (Iterator<IJavaFoldingPreferenceBlock> it= fProviderPreferences.values().iterator(); it.hasNext();) {
+			IJavaFoldingPreferenceBlock prefs= it.next();
 			prefs.performDefaults();
 		}
 	}
 	
 	public void dispose() {
-		for (Iterator it= fProviderPreferences.values().iterator(); it.hasNext();) {
-			IJavaFoldingPreferenceBlock prefs= (IJavaFoldingPreferenceBlock) it.next();
+		for (Iterator<IJavaFoldingPreferenceBlock> it= fProviderPreferences.values().iterator(); it.hasNext();) {
+			IJavaFoldingPreferenceBlock prefs= it.next();
 			prefs.dispose();
 		}
 	}

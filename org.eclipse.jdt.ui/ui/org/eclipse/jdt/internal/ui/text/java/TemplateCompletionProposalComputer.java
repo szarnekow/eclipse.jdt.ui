@@ -100,7 +100,7 @@ public final class TemplateCompletionProposalComputer implements ICompletionProp
 
 			CompletionProposalCollector collector= javaContext.getCollector();
 			if (collector != null) {
-				List removals= new ArrayList();
+				List<TemplateProposal> removals= new ArrayList<TemplateProposal>();
 				
 				// update relevance of template proposals that match with a keyword
 				// give those templates slightly more relevance than the keyword to
@@ -139,9 +139,9 @@ public final class TemplateCompletionProposalComputer implements ICompletionProp
 		return Collections.EMPTY_LIST;
 	}
 
-	private static final Set KEYWORDS;
+	private static final Set<String> KEYWORDS;
 	static {
-		Set keywords= new HashSet(42);
+		Set<String> keywords= new HashSet<String>(42);
 		keywords.add("abstract"); //$NON-NLS-1$
 		keywords.add("assert"); //$NON-NLS-1$
 		keywords.add("break"); //$NON-NLS-1$

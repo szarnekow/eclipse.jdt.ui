@@ -28,13 +28,13 @@ import org.eclipse.jdt.internal.ui.wizards.dialogfields.StringDialogField;
 public class RenameKeysDialog extends StatusDialog {
 
 	private StringDialogField fNameField;
-	private List fSelectedSubstitutions;
+	private List<NLSSubstitution> fSelectedSubstitutions;
 	private int fCommonPrefixLength;
 	
 	/**
 	 * @param parent
 	 */
-	public RenameKeysDialog(Shell parent, List selectedSubstitutions) {
+	public RenameKeysDialog(Shell parent, List<NLSSubstitution> selectedSubstitutions) {
 		super(parent);
 		setTitle(NLSUIMessages.RenameKeysDialog_title); 
 
@@ -69,17 +69,17 @@ public class RenameKeysDialog extends StatusDialog {
 	protected void okPressed() {
 		String prefix= fNameField.getText();
 		for (int i= 0; i < fSelectedSubstitutions.size(); i++) {
-			NLSSubstitution sub= (NLSSubstitution) fSelectedSubstitutions.get(i);
+			NLSSubstitution sub= fSelectedSubstitutions.get(i);
 			String newKey= prefix + sub.getKey().substring(fCommonPrefixLength);
 			sub.setKey(newKey);
 		}
 		super.okPressed();
 	}
 		
-	private String getInitialPrefix(List selectedSubstitutions) {
+	private String getInitialPrefix(List<NLSSubstitution> selectedSubstitutions) {
 		String prefix= null;
 		for (int i= 0; i < selectedSubstitutions.size(); i++) {
-			NLSSubstitution sub= (NLSSubstitution) selectedSubstitutions.get(i);
+			NLSSubstitution sub= selectedSubstitutions.get(i);
 			String curr= sub.getKey();
 			if (prefix == null) {
 				prefix= curr;

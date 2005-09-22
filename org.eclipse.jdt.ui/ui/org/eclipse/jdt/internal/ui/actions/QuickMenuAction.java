@@ -262,7 +262,7 @@ public abstract class QuickMenuAction extends Action {
 	}
 	
 	private Point[] getIncludedPositions(Rectangle[] rectangles, Rectangle widgetBounds) {
-		List result= new ArrayList();
+		List<Point> result= new ArrayList<Point>();
 		for (int i= 0; i < rectangles.length; i++) {
 			Rectangle rectangle= rectangles[i];
 			Rectangle intersect= widgetBounds.intersection(rectangle);
@@ -270,7 +270,7 @@ public abstract class QuickMenuAction extends Action {
 				result.add(new Point(intersect.x, intersect.y + intersect.height));
 			}
 		}
-		return (Point[]) result.toArray(new Point[result.size()]);
+		return result.toArray(new Point[result.size()]);
 	}
 	
 	private Point findBestLocation(Point[] points, Point relativeCursor) {

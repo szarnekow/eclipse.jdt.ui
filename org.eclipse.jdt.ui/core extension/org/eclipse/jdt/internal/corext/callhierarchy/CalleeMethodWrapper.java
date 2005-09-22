@@ -23,7 +23,7 @@ import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 
 class CalleeMethodWrapper extends MethodWrapper {
-    private Comparator fMethodWrapperComparator = new MethodWrapperComparator();
+    private Comparator<MethodWrapper> fMethodWrapperComparator = new MethodWrapperComparator();
 
     private static class MethodWrapperComparator implements Comparator {
         /* (non-Javadoc)
@@ -83,7 +83,7 @@ class CalleeMethodWrapper extends MethodWrapper {
      * Find callees called from the current method.
 	 * @see org.eclipse.jdt.internal.corext.callhierarchy.MethodWrapper#findChildren(org.eclipse.core.runtime.IProgressMonitor)
      */
-    protected Map findChildren(IProgressMonitor progressMonitor) {
+    protected Map<Object, MethodCall> findChildren(IProgressMonitor progressMonitor) {
     	if (getMember().exists() && getMember().getElementType() == IJavaElement.METHOD) {
         	CompilationUnit cu= CallHierarchy.getCompilationUnitNode(getMember(), true);
             if (progressMonitor != null) {
@@ -98,6 +98,6 @@ class CalleeMethodWrapper extends MethodWrapper {
         		return visitor.getCallees();
         	}
         }
-        return new HashMap(0);
+        return new HashMap<Object, MethodCall>(0);
     }
 }

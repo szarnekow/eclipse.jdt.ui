@@ -24,10 +24,10 @@ import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 
 class ImportRewriteManager {
 
-	private final Map fImportRewrites; //ICompilationUnit -> ImportEdit
+	private final Map<ICompilationUnit, ImportRewrite> fImportRewrites; //ICompilationUnit -> ImportEdit
 
 	public ImportRewriteManager() {
-		fImportRewrites= new HashMap();
+		fImportRewrites= new HashMap<ICompilationUnit, ImportRewrite>();
 	}
 
 	public boolean hasImportEditFor(ICompilationUnit cu) throws JavaModelException {
@@ -36,7 +36,7 @@ class ImportRewriteManager {
 
 	public ImportRewrite getImportRewrite(ICompilationUnit cu) throws CoreException {
 		if (hasImportEditFor(cu))
-			return (ImportRewrite)fImportRewrites.get(cu);
+			return fImportRewrites.get(cu);
 
 		ImportRewrite edit= new ImportRewrite(cu);
 		fImportRewrites.put(cu, edit);

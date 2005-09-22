@@ -25,13 +25,13 @@ import org.eclipse.jdt.internal.corext.refactoring.code.flow.FlowInfo;
 
 	private SingleVariableDeclaration fDeclaration;
 	private int fAccessMode;
-	private List fReferences;
+	private List<ASTNode> fReferences;
 
 	public ParameterData(SingleVariableDeclaration decl) {
 		super();
 		fDeclaration= decl;
 		fAccessMode= FlowInfo.UNUSED;
-		fReferences= new ArrayList(2);
+		fReferences= new ArrayList<ASTNode>(2);
 	}
 
 	public String getName() {
@@ -46,7 +46,7 @@ import org.eclipse.jdt.internal.corext.refactoring.code.flow.FlowInfo;
 		fReferences.add(node);
 	}
 	
-	public List references() {
+	public List<ASTNode> references() {
 		return fReferences;
 	}
 	

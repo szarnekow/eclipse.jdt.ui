@@ -99,7 +99,7 @@ public class JavadocStandardWizardPage extends JavadocWizardPage {
 	private StatusInfo fStyleSheetStatus;
 	private StatusInfo fLinkRefStatus;
 	
-	private ArrayList fButtonsList;
+	private ArrayList<FlaggedButton> fButtonsList;
 	private JavadocTreeWizardPage fFirstPage;
 
 
@@ -109,7 +109,7 @@ public class JavadocStandardWizardPage extends JavadocWizardPage {
 		setDescription(JavadocExportMessages.JavadocStandardWizardPage_description); 
 
 		fStore= store;
-		fButtonsList= new ArrayList();
+		fButtonsList= new ArrayList<FlaggedButton>();
 		fStyleSheetStatus= new StatusInfo();
 		fLinkRefStatus= new StatusInfo();
 	}
@@ -258,7 +258,7 @@ public class JavadocStandardWizardPage extends JavadocWizardPage {
 		
 		String hrefs[]= fStore.getHRefs();
 		if (hrefs.length > 0) {
-			HashSet set= new HashSet();
+			HashSet<String> set= new HashSet<String>();
 			for (int i= 0; i < hrefs.length; i++) {
 				set.add(hrefs[i]);
 			}
@@ -279,7 +279,7 @@ public class JavadocStandardWizardPage extends JavadocWizardPage {
 	 * Returns IJavaProjects and IPaths that will be on the classpath  
 	 */
 	private JavadocLinkRef[] getReferencedElements(IJavaProject[] checkedProjects) {
-		HashSet result= new HashSet();
+		HashSet<JavadocLinkRef> result= new HashSet<JavadocLinkRef>();
 		for (int i= 0; i < checkedProjects.length; i++) {
 			IJavaProject project= checkedProjects[i];
 			try {
@@ -289,10 +289,10 @@ public class JavadocStandardWizardPage extends JavadocWizardPage {
 				// ignore
 			}
 		}
-		return (JavadocLinkRef[]) result.toArray(new JavadocLinkRef[result.size()]);	
+		return result.toArray(new JavadocLinkRef[result.size()]);	
 	}
 	
-	private void collectReferencedElements(IJavaProject project, HashSet result) throws CoreException {
+	private void collectReferencedElements(IJavaProject project, HashSet<JavadocLinkRef> result) throws CoreException {
 		IRuntimeClasspathEntry[] unresolved = JavaRuntime.computeUnresolvedRuntimeClasspath(project);
 		for (int i= 0; i < unresolved.length; i++) {
 			IRuntimeClasspathEntry curr= unresolved[i];
@@ -392,7 +392,7 @@ public class JavadocStandardWizardPage extends JavadocWizardPage {
 	}
 
 	private String[] getHRefs() {
-		HashSet res= new HashSet();
+		HashSet<String> res= new HashSet<String>();
 		List checked= fListDialogField.getCheckedElements();
 		for (Iterator iterator= checked.iterator(); iterator.hasNext();) {
 			JavadocLinkRef element= (JavadocLinkRef) iterator.next();
@@ -401,7 +401,7 @@ public class JavadocStandardWizardPage extends JavadocWizardPage {
 				res.add(url.toExternalForm());
 			}
 		}
-		return (String[]) res.toArray(new String[res.size()]);
+		return res.toArray(new String[res.size()]);
 	}
 
 	//get the links

@@ -113,7 +113,7 @@ public final class ConvertIterableLoopProposal extends LinkedCorrectionProposal 
 	private IVariableBinding fIterator= null;
 
 	/** The nodes of the element variable occurrences */
-	private List fOccurrences= new ArrayList(2);
+	private List<Expression> fOccurrences= new ArrayList<Expression>(2);
 
 	/** The compilation unit to operate on */
 	private final CompilationUnit fRoot;
@@ -144,7 +144,7 @@ public final class ConvertIterableLoopProposal extends LinkedCorrectionProposal 
 		final ASTRewrite rewrite= rewriter.getASTRewrite();
 		final AST ast= fRoot.getAST();
 		final EnhancedForStatement statement= ast.newEnhancedForStatement();
-		final List names= computeElementNames();
+		final List<String> names= computeElementNames();
 		String name= GROUP_ELEMENT;
 		if (fElement != null) {
 			name= fElement.getName();
@@ -152,17 +152,17 @@ public final class ConvertIterableLoopProposal extends LinkedCorrectionProposal 
 				names.add(0, name);
 		} else {
 			if (!names.isEmpty())
-				name= (String) names.get(0);
+				name= names.get(0);
 		}
-		for (final Iterator iterator= names.iterator(); iterator.hasNext();)
-			addLinkedPositionProposal(GROUP_ELEMENT, (String) iterator.next(), null);
+		for (final Iterator<String> iterator= names.iterator(); iterator.hasNext();)
+			addLinkedPositionProposal(GROUP_ELEMENT, iterator.next(), null);
 		final Statement body= fStatement.getBody();
 		final ImportRemover remover= rewriter.getImportRemover();
 		if (body != null) {
 			if (body instanceof Block) {
 				final ListRewrite list= rewrite.getListRewrite(body, Block.STATEMENTS_PROPERTY);
-				for (final Iterator iterator= fOccurrences.iterator(); iterator.hasNext();) {
-					final Statement parent= (Statement) ASTNodes.getParent((ASTNode) iterator.next(), Statement.class);
+				for (final Iterator<Expression> iterator= fOccurrences.iterator(); iterator.hasNext();) {
+					final Statement parent= (Statement) ASTNodes.getParent(iterator.next(), Statement.class);
 					if (parent != null && list.getRewrittenList().contains(parent)) {
 						list.remove(parent, null);
 						remover.registerRemovedNode(parent);
@@ -226,25 +226,25 @@ public final class ConvertIterableLoopProposal extends LinkedCorrectionProposal 
 		root.addChild(rewriter.createChange().getEdit());
 	}
 
-	private List computeElementNames() {
-		final List names= new ArrayList();
+	private List<String> computeElementNames() {
+		final List<String> names= new ArrayList<String>();
 		final IJavaProject project= getCompilationUnit().getJavaProject();
 		String name= GROUP_ELEMENT;
 		final ITypeBinding binding= fIterator.getType();
 		if (binding != null && binding.isParameterizedType())
 			name= binding.getTypeArguments()[0].getName();
-		final List excluded= getExcludedNames();
-		final String[] suggestions= StubUtility.getLocalNameSuggestions(project, name, 0, (String[]) excluded.toArray(new String[excluded.size()]));
+		final List<String> excluded= getExcludedNames();
+		final String[] suggestions= StubUtility.getLocalNameSuggestions(project, name, 0, excluded.toArray(new String[excluded.size()]));
 		for (int index= 0; index < suggestions.length; index++)
 			names.add(suggestions[index]);
 		return names;
 	}
 
-	private List getExcludedNames() {
+	private List<String> getExcludedNames() {
 		final CompilationUnit unit= (CompilationUnit) fStatement.getRoot();
 		final IBinding[] before= (new ScopeAnalyzer(unit)).getDeclarationsInScope(fStatement.getStartPosition(), ScopeAnalyzer.VARIABLES);
 		final IBinding[] after= (new ScopeAnalyzer(unit)).getDeclarationsAfter(fStatement.getStartPosition() + fStatement.getLength(), ScopeAnalyzer.VARIABLES);
-		final List names= new ArrayList();
+		final List<String> names= new ArrayList<String>();
 		for (int index= 0; index < before.length; index++)
 			names.add(before[index].getName());
 		for (int index= 0; index < after.length; index++)
@@ -293,11 +293,11 @@ public final class ConvertIterableLoopProposal extends LinkedCorrectionProposal 
 	 */
 	public final boolean isApplicable() {
 		if (JavaModelUtil.is50OrHigher(getCompilationUnit().getJavaProject())) {
-			for (final Iterator outer= fStatement.initializers().iterator(); outer.hasNext();) {
+			for (final Iterator<ASTNode> outer= fStatement.initializers().iterator(); outer.hasNext();) {
 				final Expression initializer= (Expression) outer.next();
 				if (initializer instanceof VariableDeclarationExpression) {
 					final VariableDeclarationExpression declaration= (VariableDeclarationExpression) initializer;
-					for (Iterator inner= declaration.fragments().iterator(); inner.hasNext();) {
+					for (Iterator<ASTNode> inner= declaration.fragments().iterator(); inner.hasNext();) {
 						final VariableDeclarationFragment fragment= (VariableDeclarationFragment) inner.next();
 						fragment.accept(new ASTVisitor() {
 

@@ -264,7 +264,7 @@ public class JavaOutlinePage extends Page implements IContentOutlinePage, IAdapt
 					if (!initializers)
 						return children;
 
-					Vector v= new Vector();
+					Vector<IJavaElement> v= new Vector<IJavaElement>();
 					for (int i= 0; i < children.length; i++) {
 						if (matches(children[i]))
 							continue;
@@ -522,8 +522,8 @@ public class JavaOutlinePage extends Page implements IContentOutlinePage, IAdapt
 					boolean doUpdateParent= false;
 					boolean doUpdateParentsPlus= false;
 
-					Vector deletions= new Vector();
-					Vector additions= new Vector();
+					Vector<Item> deletions= new Vector<Item>();
+					Vector<IJavaElementDelta> additions= new Vector<IJavaElementDelta>();
 
 					for (int i= 0; i < affected.length; i++) {
 					    IJavaElementDelta affectedDelta= affected[i];
@@ -588,7 +588,7 @@ public class JavaOutlinePage extends Page implements IContentOutlinePage, IAdapt
 						IJavaElementDelta[] tmp= new IJavaElementDelta[add.length + additions.size()];
 						System.arraycopy(add, 0, tmp, 0, add.length);
 						for (int i= 0; i < additions.size(); i++)
-							tmp[i + add.length]= (IJavaElementDelta) additions.elementAt(i);
+							tmp[i + add.length]= additions.elementAt(i);
 						add= tmp;
 					}
 
@@ -699,9 +699,9 @@ public class JavaOutlinePage extends Page implements IContentOutlinePage, IAdapt
 
 
 					// remove items which haven't been reused
-					Enumeration e= deletions.elements();
+					Enumeration<Item> e= deletions.elements();
 					while (e.hasMoreElements()) {
-						item= (Item) e.nextElement();
+						item= e.nextElement();
 						disassociate(item);
 						item.dispose();
 					}
@@ -867,7 +867,7 @@ public class JavaOutlinePage extends Page implements IContentOutlinePage, IAdapt
 
 	private ListenerList fSelectionChangedListeners= new ListenerList();
 	private ListenerList fPostSelectionChangedListeners= new ListenerList();
-	private Hashtable fActions= new Hashtable();
+	private Hashtable<String, IAction> fActions= new Hashtable<String, IAction>();
 
 	private TogglePresentationAction fTogglePresentation;
 
@@ -1193,7 +1193,7 @@ public class JavaOutlinePage extends Page implements IContentOutlinePage, IAdapt
 
 	public IAction getAction(String actionID) {
 		Assert.isNotNull(actionID);
-		return (IAction) fActions.get(actionID);
+		return fActions.get(actionID);
 	}
 
 	/*

@@ -91,7 +91,7 @@ public class NLSHintHelper {
 		}
 		
 		MethodInvocation methodInvocation= (MethodInvocation) parent;
-		List args= methodInvocation.arguments();
+		List<ASTNode> args= methodInvocation.arguments();
 		if (args.indexOf(nlsStringLiteral) != 0) {
 			return null; // must be first argument in lookup method
 		}
@@ -148,7 +148,7 @@ public class NLSHintHelper {
 		if (astRoot == null)
 			return null;
 		
-		final Map resultCollector= new HashMap(5);
+		final Map<Object, Object> resultCollector= new HashMap<Object, Object>(5);
 		final Object RESULT_KEY= new Object();
 		final Object FIELD_KEY= new Object();
 		
@@ -250,7 +250,7 @@ public class NLSHintHelper {
 			return (String)resultCollector.get(fieldName);
 		
 		// Fallback: try hard-coded (from NLS tooling) bundle name String field names:
-		Iterator iter= resultCollector.keySet().iterator();
+		Iterator<Object> iter= resultCollector.keySet().iterator();
 		while (iter.hasNext()) {
 			IBinding binding= (IBinding)iter.next();
 			if (binding == null)

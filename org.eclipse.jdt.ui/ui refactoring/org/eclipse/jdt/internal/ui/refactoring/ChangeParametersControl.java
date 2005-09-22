@@ -96,13 +96,13 @@ public class ChangeParametersControl extends Composite {
 			return removeMarkedAsDeleted((List) inputElement);
 		}
 		private ParameterInfo[] removeMarkedAsDeleted(List paramInfos){
-			List result= new ArrayList(paramInfos.size());
+			List<ParameterInfo> result= new ArrayList<ParameterInfo>(paramInfos.size());
 			for (Iterator iter= paramInfos.iterator(); iter.hasNext();) {
 				ParameterInfo info= (ParameterInfo) iter.next();
 				if (! info.isDeleted())
 					result.add(info);
 			}
-			return (ParameterInfo[]) result.toArray(new ParameterInfo[result.size()]);
+			return result.toArray(new ParameterInfo[result.size()]);
 		}
 		public void dispose() {
 			// do nothing
@@ -199,7 +199,7 @@ public class ChangeParametersControl extends Composite {
 
 	private final Mode fMode;
 	private final IParameterListChangeListener fListener;
-	private List fParameterInfos;
+	private List<Object> fParameterInfos;
 	private final StubTypeContext fTypeContext;
 	private final String[] fParamNameProposals;
 	private ContentAssistHandler fNameContentAssistHandler;
@@ -254,7 +254,7 @@ public class ChangeParametersControl extends Composite {
 	}
 
 
-	public void setInput(List parameterInfos) {
+	public void setInput(List<Object> parameterInfos) {
 		Assert.isNotNull(parameterInfos);
 		fParameterInfos= parameterInfos;
 		fTableViewer.setInput(fParameterInfos);
@@ -643,11 +643,11 @@ public class ChangeParametersControl extends Composite {
 		Collections.reverse(fParameterInfos);
 	}
 
-	private static void moveUp(List elements, List move) {
-		List res= new ArrayList(elements.size());
-		List deleted= new ArrayList();
+	private static void moveUp(List<Object> elements, List<ParameterInfo> move) {
+		List<Object> res= new ArrayList<Object>(elements.size());
+		List<Object> deleted= new ArrayList<Object>();
 		Object floating= null;
-		for (Iterator iter= elements.iterator(); iter.hasNext();) {
+		for (Iterator<Object> iter= elements.iterator(); iter.hasNext();) {
 			Object curr= iter.next();
 			if (move.contains(curr)) {
 				res.add(curr);
@@ -664,7 +664,7 @@ public class ChangeParametersControl extends Composite {
 		}
 		res.addAll(deleted);
 		elements.clear();
-		for (Iterator iter= res.iterator(); iter.hasNext();) {
+		for (Iterator<Object> iter= res.iterator(); iter.hasNext();) {
 			elements.add(iter.next());
 		}
 	}
@@ -688,7 +688,7 @@ public class ChangeParametersControl extends Composite {
 		if (fParameterInfos == null) // during initialization
 			return 0;
 		int result= 0;
-		for (Iterator iter= fParameterInfos.iterator(); iter.hasNext();) {
+		for (Iterator<Object> iter= fParameterInfos.iterator(); iter.hasNext();) {
 			ParameterInfo info= (ParameterInfo) iter.next();
 			if (! info.isDeleted())
 				result++;

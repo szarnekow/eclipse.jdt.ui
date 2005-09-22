@@ -198,7 +198,7 @@ public class VariableBlock {
 		return false;
 	}
 	
-	private static void addAll(Object[] objs, Collection dest) {
+	private static void addAll(Object[] objs, Collection<Object> dest) {
 		for (int i= 0; i < objs.length; i++) {
 			dest.add(objs[i]);
 		}
@@ -261,8 +261,8 @@ public class VariableBlock {
 	}
 
 	public boolean performOk() {
-		ArrayList removedVariables= new ArrayList();
-		ArrayList changedVariables= new ArrayList();
+		ArrayList<String> removedVariables= new ArrayList<String>();
+		ArrayList<String> changedVariables= new ArrayList<String>();
 		removedVariables.addAll(Arrays.asList(JavaCore.getClasspathVariableNames()));
 
 		// remove all unchanged
@@ -332,7 +332,7 @@ public class VariableBlock {
 		return true;
 	}
 	
-	private boolean doesChangeRequireFullBuild(List removed, List changed) {
+	private boolean doesChangeRequireFullBuild(List<String> removed, List<String> changed) {
 		try {
 			IJavaModel model= JavaCore.create(ResourcesPlugin.getWorkspace().getRoot());
 			IJavaProject[] projects= model.getJavaProjects();
@@ -355,11 +355,11 @@ public class VariableBlock {
 	}
 	
 	private class VariableBlockRunnable implements IRunnableWithProgress {
-		private List fToRemove;
+		private List<String> fToRemove;
 		private List fToChange;
 		private boolean fDoBuild;
 		
-		public VariableBlockRunnable(List toRemove, List toChange, boolean doBuild) {
+		public VariableBlockRunnable(List<String> toRemove, List toChange, boolean doBuild) {
 			fToRemove= toRemove;
 			fToChange= toChange;
 			fDoBuild= doBuild;
@@ -396,7 +396,7 @@ public class VariableBlock {
 				k++;
 			}
 			for (int i= 0; i < fToRemove.size(); i++) {
-				names[k]= (String) fToRemove.get(i);
+				names[k]= fToRemove.get(i);
 				paths[k]= null;
 				k++;					
 			}
@@ -423,7 +423,7 @@ public class VariableBlock {
 		CPVariableElement initSelectedElement= null;
 		
 		String[] reservedName= getReservedVariableNames();
-		ArrayList reserved= new ArrayList(reservedName.length);
+		ArrayList<Object> reserved= new ArrayList<Object>(reservedName.length);
 		addAll(reservedName, reserved);
 				
 		String[] entries= JavaCore.getClasspathVariableNames();

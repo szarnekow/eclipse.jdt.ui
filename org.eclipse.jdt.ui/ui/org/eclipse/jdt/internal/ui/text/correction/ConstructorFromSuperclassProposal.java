@@ -101,7 +101,7 @@ public class ConstructorFromSuperclassProposal extends LinkedCorrectionProposal 
 	}
 
 	private void addLinkedRanges(ASTRewrite rewrite, MethodDeclaration newStub) {
-		List parameters= newStub.parameters();
+		List<ASTNode> parameters= newStub.parameters();
 		for (int i= 0; i < parameters.size(); i++) {
 			SingleVariableDeclaration curr= (SingleVariableDeclaration) parameters.get(i);
 			String name= curr.getName().getIdentifier();
@@ -120,7 +120,7 @@ public class ConstructorFromSuperclassProposal extends LinkedCorrectionProposal 
 
 		SuperConstructorInvocation invocation= null;
 
-		List parameters= decl.parameters();
+		List<ASTNode> parameters= decl.parameters();
 		String[] paramNames= getArgumentNames(binding);
 
 		ITypeBinding enclosingInstance= getEnclosingInstance();
@@ -141,7 +141,7 @@ public class ConstructorFromSuperclassProposal extends LinkedCorrectionProposal 
 				parameters.add(var);
 			}
 
-			List thrownExceptions= decl.thrownExceptions();
+			List<ASTNode> thrownExceptions= decl.thrownExceptions();
 			ITypeBinding[] excTypes= binding.getExceptionTypes();
 			for (int i= 0; i < excTypes.length; i++) {
 				String excTypeName= getImportRewrite().addImport(excTypes[i]);
@@ -152,7 +152,7 @@ public class ConstructorFromSuperclassProposal extends LinkedCorrectionProposal 
 				invocation= ast.newSuperConstructorInvocation();
 			}
 
-			List arguments= invocation.arguments();
+			List<ASTNode> arguments= invocation.arguments();
 			for (int i= 0; i < paramNames.length; i++) {
 				Name argument= ast.newSimpleName(paramNames[i]);
 				arguments.add(argument);
@@ -176,7 +176,7 @@ public class ConstructorFromSuperclassProposal extends LinkedCorrectionProposal 
 		return decl;
 	}
 
-	private SuperConstructorInvocation addEnclosingInstanceAccess(ASTRewrite rewrite, List parameters, String[] paramNames, ITypeBinding enclosingInstance) throws CoreException {
+	private SuperConstructorInvocation addEnclosingInstanceAccess(ASTRewrite rewrite, List<ASTNode> parameters, String[] paramNames, ITypeBinding enclosingInstance) throws CoreException {
 		AST ast= rewrite.getAST();
 		SuperConstructorInvocation invocation= ast.newSuperConstructorInvocation();
 

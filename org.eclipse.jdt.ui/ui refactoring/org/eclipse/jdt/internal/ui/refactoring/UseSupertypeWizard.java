@@ -69,14 +69,14 @@ public class UseSupertypeWizard extends RefactoringWizard{
 		private static final String REWRITE_INSTANCEOF= "rewriteInstanceOf";  //$NON-NLS-1$
 		public static final String PAGE_NAME= "UseSupertypeInputPage";//$NON-NLS-1$
 		private TableViewer fTableViewer; 
-		private final Map fFileCount;  //IType -> Integer
+		private final Map<IType, Integer> fFileCount;  //IType -> Integer
 		private final static String MESSAGE= RefactoringMessages.UseSupertypeInputPage_Select_supertype; 
 		private JavaElementLabelProvider fTableLabelProvider;
 		private IDialogSettings fSettings;
 		
 		public UseSupertypeInputPage() {
 			super(PAGE_NAME);
-			fFileCount= new HashMap(2);
+			fFileCount= new HashMap<IType, Integer>(2);
 			setMessage(MESSAGE);
 		}
 
@@ -190,8 +190,8 @@ public class UseSupertypeWizard extends RefactoringWizard{
 
 		private int countFilesWithValue(int i) {
 			int count= 0;
-			for (Iterator iter= fFileCount.keySet().iterator(); iter.hasNext();) {
-				if (((Integer)fFileCount.get(iter.next())).intValue() == i)
+			for (Iterator<IType> iter= fFileCount.keySet().iterator(); iter.hasNext();) {
+				if (fFileCount.get(iter.next()).intValue() == i)
 					count++;
 			}
 			return count;
@@ -234,15 +234,15 @@ public class UseSupertypeWizard extends RefactoringWizard{
 		}
 	
 		private static class UseSupertypeLabelProvider extends JavaElementLabelProvider{
-			private final Map fFileCount;
-			private UseSupertypeLabelProvider(Map fileCount){
+			private final Map<IType, Integer> fFileCount;
+			private UseSupertypeLabelProvider(Map<IType, Integer> fileCount){
 				fFileCount= fileCount;
 			}
 			public String getText(Object element) {
 				String superText= super.getText(element);
 				if  (! fFileCount.containsKey(element))
 					return superText;
-				int count= ((Integer)fFileCount.get(element)).intValue();
+				int count= fFileCount.get(element).intValue();
 				if (count == 0){
 					String[] keys= {superText};
 					return Messages.format(RefactoringMessages.UseSupertypeInputPage_no_possible_updates, keys); 

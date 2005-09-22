@@ -417,7 +417,7 @@ public class JavadocTreeWizardPage extends JavadocWizardPage {
 	}
 
 	private IPath[] getSourcePath(IJavaProject[] projects) {
-		HashSet res= new HashSet();
+		HashSet<IPath> res= new HashSet<IPath>();
 		//loops through all projects and gets a list if of thier sourpaths
 		for (int k= 0; k < projects.length; k++) {
 			IJavaProject iJavaProject= projects[k];
@@ -440,11 +440,11 @@ public class JavadocTreeWizardPage extends JavadocWizardPage {
 				JavaPlugin.log(e);
 			}
 		}
-		return (IPath[]) res.toArray(new IPath[res.size()]);
+		return res.toArray(new IPath[res.size()]);
 	}
 
 	private IPath[] getClassPath(IJavaProject[] javaProjects) {
-		HashSet res= new HashSet();
+		HashSet<IPath> res= new HashSet<IPath>();
 
 		IWorkspaceRoot root= ResourcesPlugin.getWorkspace().getRoot();
 		for (int j= 0; j < javaProjects.length; j++) {
@@ -467,7 +467,7 @@ public class JavadocTreeWizardPage extends JavadocWizardPage {
 				JavaPlugin.log(e);
 			}
 		}
-		return (IPath[]) res.toArray(new IPath[res.size()]);
+		return res.toArray(new IPath[res.size()]);
 	}
 
 	/**
@@ -475,11 +475,11 @@ public class JavadocTreeWizardPage extends JavadocWizardPage {
 	 * Javadoc can be generated for either a IPackageFragmentRoot or a ICompilationUnit.
 	 */
 	private IJavaElement[] getSourceElements(IJavaProject[] projects) {
-		ArrayList res= new ArrayList();
+		ArrayList<IJavaElement> res= new ArrayList<IJavaElement>();
 		try {
-			Set allChecked= fInputGroup.getAllCheckedTreeItems();
+			Set<Object> allChecked= fInputGroup.getAllCheckedTreeItems();
 
-			Set incompletePackages= new HashSet();
+			Set<String> incompletePackages= new HashSet<String>();
 			for (int h= 0; h < projects.length; h++) {
 				IJavaProject iJavaProject= projects[h];
 
@@ -501,7 +501,7 @@ public class JavadocTreeWizardPage extends JavadocWizardPage {
 				}
 			}
 
-			Iterator checkedElements= fInputGroup.getAllCheckedListItems();
+			Iterator<Object> checkedElements= fInputGroup.getAllCheckedListItems();
 			while (checkedElements.hasNext()) {
 				Object element= checkedElements.next();
 				if (element instanceof ICompilationUnit) {
@@ -512,7 +512,7 @@ public class JavadocTreeWizardPage extends JavadocWizardPage {
 				}
 			}
 
-			Set addedPackages= new HashSet();
+			Set<String> addedPackages= new HashSet<String>();
 
 			checkedElements= allChecked.iterator();
 			while (checkedElements.hasNext()) {
@@ -530,7 +530,7 @@ public class JavadocTreeWizardPage extends JavadocWizardPage {
 		} catch (JavaModelException e) {
 			JavaPlugin.log(e);
 		}
-		return (IJavaElement[]) res.toArray(new IJavaElement[res.size()]);
+		return res.toArray(new IJavaElement[res.size()]);
 	}
 
 	protected void updateStore(IJavaProject[] checkedProjects) {
@@ -551,7 +551,7 @@ public class JavadocTreeWizardPage extends JavadocWizardPage {
 		fStore.setAccess(fVisibilitySelection);
 		fStore.setSelectedElements(getSourceElements(checkedProjects));
 		
-		ArrayList commands= new ArrayList();
+		ArrayList<String> commands= new ArrayList<String>();
 		commands.add(fJavadocCommandText.getText()); // must be first
 		String[] items= fJavadocCommandText.getItems();
 		for (int i= 0; i < items.length; i++) {
@@ -560,11 +560,11 @@ public class JavadocTreeWizardPage extends JavadocWizardPage {
 				commands.add(curr);
 			}
 		}
-		fStore.setJavadocCommandHistory((String[]) commands.toArray(new String[commands.size()]));
+		fStore.setJavadocCommandHistory(commands.toArray(new String[commands.size()]));
 	}
 
 	public IJavaProject[] getCheckedProjects() {
-		ArrayList res= new ArrayList();
+		ArrayList<Object> res= new ArrayList<Object>();
 		TreeItem[] treeItems= fInputGroup.getTree().getItems();
 		for (int i= 0; i < treeItems.length; i++) {
 			if (treeItems[i].getChecked()) {
@@ -574,7 +574,7 @@ public class JavadocTreeWizardPage extends JavadocWizardPage {
 				}
 			}
 		}
-		return (IJavaProject[]) res.toArray(new IJavaProject[res.size()]);
+		return res.toArray(new IJavaProject[res.size()]);
 	}
 	
 	protected void doValidation(int validate) {
@@ -658,7 +658,7 @@ public class JavadocTreeWizardPage extends JavadocWizardPage {
 		dialog.setFileName(dirName);
 		String selectedDirectory= dialog.open();
 		if (selectedDirectory != null) {
-			ArrayList newItems= new ArrayList();
+			ArrayList<String> newItems= new ArrayList<String>();
 			String[] items= fJavadocCommandText.getItems();
 			newItems.add(selectedDirectory);
 			for (int i= 0; i < items.length && newItems.size() < 5; i++) { // only keep the last 5 entries
@@ -667,7 +667,7 @@ public class JavadocTreeWizardPage extends JavadocWizardPage {
 					newItems.add(curr);
 				}
 			}
-			fJavadocCommandText.setItems((String[]) newItems.toArray(new String[newItems.size()]));
+			fJavadocCommandText.setItems(newItems.toArray(new String[newItems.size()]));
 			fJavadocCommandText.select(0);
 		}
 	}

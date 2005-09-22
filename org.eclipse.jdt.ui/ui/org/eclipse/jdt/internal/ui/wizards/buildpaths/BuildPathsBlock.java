@@ -800,7 +800,7 @@ public class BuildPathsBlock {
 		Class[] acceptedClasses= new Class[] { IProject.class, IFolder.class };
 		ISelectionStatusValidator validator= new TypedElementSelectionValidator(acceptedClasses, false);
 		IProject[] allProjects= fWorkspaceRoot.getProjects();
-		ArrayList rejectedElements= new ArrayList(allProjects.length);
+		ArrayList<IProject> rejectedElements= new ArrayList<IProject>(allProjects.length);
 		IProject currProject= fCurrJProject.getProject();
 		for (int i= 0; i < allProjects.length; i++) {
 			if (!allProjects[i].equals(currProject)) {

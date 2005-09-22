@@ -131,7 +131,7 @@ public class ClassPathContainer implements IAdaptable, IWorkbenchAdapter {
 	}
 
 	private Object[] getRequiredProjects() {
-		List list= new ArrayList();
+		List<RequiredProjectWrapper> list= new ArrayList<RequiredProjectWrapper>();
 		if (fContainer != null) {
 			IClasspathEntry[] classpathEntries= fContainer.getClasspathEntries();
 			IWorkspaceRoot root= ResourcesPlugin.getWorkspace().getRoot();

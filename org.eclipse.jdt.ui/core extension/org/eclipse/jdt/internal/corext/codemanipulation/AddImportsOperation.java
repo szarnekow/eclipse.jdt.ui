@@ -360,20 +360,20 @@ public class AddImportsOperation implements IWorkspaceRunnable {
 			typeKinds= ASTResolving.getPossibleTypeKinds(nameNode, is50OrHigher);
 		}
 		
-		ArrayList typeInfos= new ArrayList();
+		ArrayList<TypeInfo> typeInfos= new ArrayList<TypeInfo>();
 		TypeInfoRequestor requestor= new TypeInfoRequestor(typeInfos);
 		new SearchEngine().searchAllTypeNames(null, simpleTypeName.toCharArray(), SearchPattern.R_EXACT_MATCH | SearchPattern.R_CASE_SENSITIVE, getSearchForConstant(typeKinds), searchScope, requestor, IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH, monitor);
 
-		ArrayList typeRefsFound= new ArrayList(typeInfos.size());
+		ArrayList<TypeInfo> typeRefsFound= new ArrayList<TypeInfo>(typeInfos.size());
 		for (int i= 0, len= typeInfos.size(); i < len; i++) {
-			TypeInfo curr= (TypeInfo) typeInfos.get(i);
+			TypeInfo curr= typeInfos.get(i);
 			if (curr.getPackageName().length() > 0) { // do not suggest imports from the default package
 				if (isOfKind(curr, typeKinds, is50OrHigher) && isVisible(curr)) {
 					typeRefsFound.add(curr);
 				}
 			}
 		}
-		return (TypeInfo[]) typeRefsFound.toArray(new TypeInfo[typeRefsFound.size()]);
+		return typeRefsFound.toArray(new TypeInfo[typeRefsFound.size()]);
 	}
 	
 	private boolean isOfKind(TypeInfo curr, int typeKinds, boolean is50OrHigher) {

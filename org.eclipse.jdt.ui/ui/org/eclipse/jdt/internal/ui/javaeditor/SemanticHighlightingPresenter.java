@@ -281,7 +281,7 @@ public class SemanticHighlightingPresenter implements ITextPresentationListener,
 	 * @param removedPositions the removed positions
 	 * @return the text presentation or <code>null</code>, if reconciliation should be canceled
 	 */
-	public TextPresentation createPresentation(List addedPositions, List removedPositions) {
+	public TextPresentation createPresentation(List<Position> addedPositions, List removedPositions) {
 		JavaSourceViewer sourceViewer= fSourceViewer;
 		JavaPresentationReconciler presentationReconciler= fPresentationReconciler;
 		if (sourceViewer == null || presentationReconciler == null)
@@ -303,7 +303,7 @@ public class SemanticHighlightingPresenter implements ITextPresentationListener,
 			maxEnd= Math.max(maxEnd, offset + position.getLength());
 		}
 		for (int i= 0, n= addedPositions.size(); i < n; i++) {
-			Position position= (Position) addedPositions.get(i);
+			Position position= addedPositions.get(i);
 			int offset= position.getOffset();
 			minStart= Math.min(minStart, offset);
 			maxEnd= Math.max(maxEnd, offset + position.getLength());
@@ -329,7 +329,7 @@ public class SemanticHighlightingPresenter implements ITextPresentationListener,
 	 * @param removedPositions the removed positions
 	 * @return the runnable or <code>null</code>, if reconciliation should be canceled
 	 */
-	public Runnable createUpdateRunnable(final TextPresentation textPresentation, List addedPositions, List removedPositions) {
+	public Runnable createUpdateRunnable(final TextPresentation textPresentation, List<Position> addedPositions, List removedPositions) {
 		if (fSourceViewer == null || textPresentation == null)
 			return null;
 
@@ -545,14 +545,14 @@ public class SemanticHighlightingPresenter implements ITextPresentationListener,
 		IRegion region= textPresentation.getExtent();
 		int i= computeIndexAtOffset(fPositions, region.getOffset()), n= computeIndexAtOffset(fPositions, region.getOffset() + region.getLength());
 		if (n - i > 2) {
-			List ranges= new ArrayList(n - i);
+			List<StyleRange> ranges= new ArrayList<StyleRange>(n - i);
 			for (; i < n; i++) {
 				HighlightedPosition position= (HighlightedPosition) fPositions.get(i);
 				if (!position.isDeleted())
 					ranges.add(position.createStyleRange());
 			}
 			StyleRange[] array= new StyleRange[ranges.size()];
-			array= (StyleRange[]) ranges.toArray(array);
+			array= ranges.toArray(array);
 			textPresentation.replaceStyleRanges(array);
 		} else {
 			for (; i < n; i++) {

@@ -36,6 +36,7 @@ import org.eclipse.ltk.core.refactoring.RefactoringDescriptor;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 import org.eclipse.ltk.core.refactoring.RefactoringStatusContext;
 import org.eclipse.ltk.core.refactoring.participants.CheckConditionsContext;
+import org.eclipse.ltk.core.refactoring.participants.RefactoringParticipant;
 import org.eclipse.ltk.core.refactoring.participants.RenameArguments;
 import org.eclipse.ltk.core.refactoring.participants.SharableParticipants;
 import org.eclipse.ltk.core.refactoring.participants.ValidateEditChecker;
@@ -148,7 +149,7 @@ public class RenameTypeProcessor extends JavaRenameProcessor implements ITextUpd
 		return new Object[] {fType};
 	}
 	
-	protected void loadDerivedParticipants(RefactoringStatus status, List result, String[] natures, SharableParticipants shared) throws CoreException {
+	protected void loadDerivedParticipants(RefactoringStatus status, List<RefactoringParticipant> result, String[] natures, SharableParticipants shared) throws CoreException {
 		String newCUName= getNewElementName() + ".java"; //$NON-NLS-1$
 		RenameArguments arguments= new RenameArguments(newCUName, getUpdateReferences());
 		loadDerivedParticipants(status, result, 
@@ -570,13 +571,13 @@ public class RenameTypeProcessor extends JavaRenameProcessor implements ITextUpd
 	}
 	
 	private IFile[] getAllFilesToModify() throws CoreException {
-		List result= new ArrayList();
+		List<IFile> result= new ArrayList<IFile>();
 		result.addAll(Arrays.asList(ResourceUtil.getFiles(fChangeManager.getAllCompilationUnits())));
 		if (fQualifiedNameSearchResult != null)
 			result.addAll(Arrays.asList(fQualifiedNameSearchResult.getAllFiles()));
 		if (willRenameCU())
 			result.add(ResourceUtil.getFile(fType.getCompilationUnit()));
-		return (IFile[]) result.toArray(new IFile[result.size()]);
+		return result.toArray(new IFile[result.size()]);
 	}
 	
 	/*
@@ -619,20 +620,20 @@ public class RenameTypeProcessor extends JavaRenameProcessor implements ITextUpd
 	}
 	
 	private static ICompilationUnit[] isIntersectionEmpty(ICompilationUnit[] a1, ICompilationUnit[] a2){
-		Set set1= new HashSet(Arrays.asList(a1));
-		Set set2= new HashSet(Arrays.asList(a2));
+		Set<ICompilationUnit> set1= new HashSet<ICompilationUnit>(Arrays.asList(a1));
+		Set<ICompilationUnit> set2= new HashSet<ICompilationUnit>(Arrays.asList(a2));
 		set1.retainAll(set2);
-		return (ICompilationUnit[]) set1.toArray(new ICompilationUnit[set1.size()]);
+		return set1.toArray(new ICompilationUnit[set1.size()]);
 	}
 	
 	private static ICompilationUnit[] getCus(SearchResultGroup[] searchResultGroups){
-		List cus= new ArrayList(searchResultGroups.length);
+		List<ICompilationUnit> cus= new ArrayList<ICompilationUnit>(searchResultGroups.length);
 		for (int i= 0; i < searchResultGroups.length; i++) {
 			ICompilationUnit cu= searchResultGroups[i].getCompilationUnit();
 			if (cu != null)
 				cus.add(cu);
 		}
-		return (ICompilationUnit[]) cus.toArray(new ICompilationUnit[cus.size()]);
+		return cus.toArray(new ICompilationUnit[cus.size()]);
 	}
 	
 	private static String getFullPath(ICompilationUnit cu) {
@@ -647,7 +648,7 @@ public class RenameTypeProcessor extends JavaRenameProcessor implements ITextUpd
 		final DynamicValidationStateChange result= new DynamicValidationStateChange(RefactoringCoreMessages.Change_javaChanges) {
 
 			public RefactoringDescriptor getRefactoringDescriptor() {
-				final Map arguments= new HashMap();
+				final Map<String, String> arguments= new HashMap<String, String>();
 				arguments.put(ATTRIBUTE_HANDLE, fType.getHandleIdentifier());
 				arguments.put(ATTRIBUTE_NAME, getNewElementName());
 				if (fFilePatterns != null && "".equals(fFilePatterns)) //$NON-NLS-1$

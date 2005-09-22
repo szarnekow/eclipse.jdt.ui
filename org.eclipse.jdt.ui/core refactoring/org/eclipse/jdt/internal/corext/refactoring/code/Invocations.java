@@ -25,7 +25,7 @@ import org.eclipse.jdt.internal.corext.Assert;
 
 public class Invocations {
 
-	public static List getArguments(ASTNode invocation) {
+	public static List<ASTNode> getArguments(ASTNode invocation) {
 		switch(invocation.getNodeType()) {
 			case ASTNode.METHOD_INVOCATION:
 				return ((MethodInvocation)invocation).arguments();

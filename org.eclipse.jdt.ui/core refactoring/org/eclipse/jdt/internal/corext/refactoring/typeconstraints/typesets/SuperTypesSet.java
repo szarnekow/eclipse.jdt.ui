@@ -147,8 +147,8 @@ public class SuperTypesSet extends TypeSet {
 
 		// Find the "lower frontier", i.e. the lower bound, and see whether
 		// the given type is a supertype of any of those.
-		for(Iterator lbIter= fLowerBounds /*.lowerBound() */.iterator(); lbIter.hasNext(); ) {
-			TType lb= (TType) lbIter.next();
+		for(Iterator<TType> lbIter= fLowerBounds /*.lowerBound() */.iterator(); lbIter.hasNext(); ) {
+			TType lb= lbIter.next();
 
 			if (TTypes.canAssignTo(lb, t))
 				return true;
@@ -170,14 +170,14 @@ public class SuperTypesSet extends TypeSet {
 			return true;
 
 		// Make sure all elements of s are contained in this set
-		for(Iterator sIter= s.iterator(); sIter.hasNext(); ) {
-			TType t= (TType) sIter.next();
+		for(Iterator<TType> sIter= s.iterator(); sIter.hasNext(); ) {
+			TType t= sIter.next();
 			boolean found= false;
 
 			// Scan the "lower frontier", i.e. the lower bound set, and see whether
 			// 't' is a supertype of any of those.
-			for(Iterator lbIter= fLowerBounds /*.lowerBound()*/.iterator(); lbIter.hasNext(); ) {
-				TType lb= (TType) lbIter.next();
+			for(Iterator<TType> lbIter= fLowerBounds /*.lowerBound()*/.iterator(); lbIter.hasNext(); ) {
+				TType lb= lbIter.next();
 
 				if (TTypes.canAssignTo(lb, t)) {
 					found= true;
@@ -224,7 +224,7 @@ public class SuperTypesSet extends TypeSet {
 	/* (non-Javadoc)
 	 * @see org.eclipse.jdt.internal.corext.refactoring.typeconstraints.typesets.TypeSet#iterator()
 	 */
-	public Iterator iterator() {
+	public Iterator<TType> iterator() {
 		return enumerate().iterator();
 	}
 
@@ -270,8 +270,8 @@ public class SuperTypesSet extends TypeSet {
 			fEnumCache= new EnumeratedTypeSet(getTypeSetEnvironment());
 			boolean anyLBIsIntfOrArray= false;
 
-			for(Iterator iter= fLowerBounds.iterator(); iter.hasNext(); ) {
-				TType lb= (TType) iter.next();
+			for(Iterator<TType> iter= fLowerBounds.iterator(); iter.hasNext(); ) {
+				TType lb= iter.next();
 
 				if (lb instanceof ArrayType) {
 					ArrayType at= (ArrayType) lb;
@@ -280,7 +280,7 @@ public class SuperTypesSet extends TypeSet {
 						fEnumCache.add(TTypes.createArrayType((TType) elemSuperIter.next(), numDims));
 					anyLBIsIntfOrArray= true;
 				} else {
-					for (Iterator iterator= TTypes.getAllSuperTypesIterator(lb); iterator.hasNext(); )
+					for (Iterator<TType> iterator= TTypes.getAllSuperTypesIterator(lb); iterator.hasNext(); )
 					fEnumCache.fMembers.add(iterator.next());
 				}
 				fEnumCache.add(lb);

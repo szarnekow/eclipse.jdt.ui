@@ -37,6 +37,7 @@ import org.eclipse.jdt.internal.corext.util.Resources;
 import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 import org.eclipse.ltk.core.refactoring.participants.CheckConditionsContext;
+import org.eclipse.ltk.core.refactoring.participants.RefactoringParticipant;
 import org.eclipse.ltk.core.refactoring.participants.RenameArguments;
 import org.eclipse.ltk.core.refactoring.participants.SharableParticipants;
 import org.eclipse.ltk.core.refactoring.participants.ValidateEditChecker;
@@ -79,7 +80,7 @@ public class RenameJavaProjectProcessor extends JavaRenameProcessor implements I
 		return new Object[] {fProject};
 	}
 
-	protected void loadDerivedParticipants(RefactoringStatus status, List result, String[] natures, SharableParticipants shared) throws CoreException {
+	protected void loadDerivedParticipants(RefactoringStatus status, List<RefactoringParticipant> result, String[] natures, SharableParticipants shared) throws CoreException {
 		loadDerivedParticipants(status, result, 
 			null, null, 
 			computeResourceModifications(), natures, shared);

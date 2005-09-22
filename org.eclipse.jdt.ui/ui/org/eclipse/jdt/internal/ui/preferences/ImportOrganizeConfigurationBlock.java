@@ -438,7 +438,7 @@ public class ImportOrganizeConfigurationBlock extends OptionsConfigurationBlock 
 	}
 
 	private static ImportOrderEntry[] unpackOrderList(String str) {
-		ArrayList res= new ArrayList();
+		ArrayList<ImportOrderEntry> res= new ArrayList<ImportOrderEntry>();
 		int start= 0;
 		do {
 			int end= str.indexOf(';', start);
@@ -449,7 +449,7 @@ public class ImportOrganizeConfigurationBlock extends OptionsConfigurationBlock 
 			start= end + 1;
 		} while (start < str.length());
 		
-		return (ImportOrderEntry[]) res.toArray(new ImportOrderEntry[res.size()]);
+		return res.toArray(new ImportOrderEntry[res.size()]);
 	}
 	
 	private static String packOrderList(List orderList) {

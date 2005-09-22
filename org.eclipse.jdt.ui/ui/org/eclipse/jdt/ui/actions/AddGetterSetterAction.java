@@ -268,7 +268,7 @@ public class AddGetterSetterAction extends SelectionDispatchAction {
 
 		ILabelProvider lp= new AddGetterSetterLabelProvider();
 		resetNumEntries();
-		Map entries= createGetterSetterMapping(type);
+		Map<IField, GetterSetterEntry[]> entries= createGetterSetterMapping(type);
 		if (entries.isEmpty()) {
 			MessageDialog.openInformation(getShell(), DIALOG_TITLE, ActionMessages.AddGettSetterAction_typeContainsNoFields_message); 
 			return;
@@ -322,9 +322,9 @@ public class AddGetterSetterAction extends SelectionDispatchAction {
 
 		public IStatus validate(Object[] selection) {
 			// https://bugs.eclipse.org/bugs/show_bug.cgi?id=38478
-			HashSet map= null;
+			HashSet<Object> map= null;
 			if ((selection != null) && (selection.length > 1)) {
-				map= new HashSet(selection.length);
+				map= new HashSet<Object>(selection.length);
 			}
 
 			int count= 0;
@@ -377,7 +377,7 @@ public class AddGetterSetterAction extends SelectionDispatchAction {
 
 	// returns a list of fields with setter entries checked
 	private static IField[] getSetterFields(Object[] result) {
-		Collection list= new ArrayList(0);
+		Collection<IField> list= new ArrayList<IField>(0);
 		Object each= null;
 		GetterSetterEntry entry= null;
 		for (int i= 0; i < result.length; i++) {
@@ -389,12 +389,12 @@ public class AddGetterSetterAction extends SelectionDispatchAction {
 				}
 			}
 		}
-		return (IField[]) list.toArray(new IField[list.size()]);
+		return list.toArray(new IField[list.size()]);
 	}
 
 	// returns a list of fields with getter entries checked
 	private static IField[] getGetterFields(Object[] result) {
-		Collection list= new ArrayList(0);
+		Collection<IField> list= new ArrayList<IField>(0);
 		Object each= null;
 		GetterSetterEntry entry= null;
 		for (int i= 0; i < result.length; i++) {
@@ -406,12 +406,12 @@ public class AddGetterSetterAction extends SelectionDispatchAction {
 				}
 			}
 		}
-		return (IField[]) list.toArray(new IField[list.size()]);
+		return list.toArray(new IField[list.size()]);
 	}
 
 	// returns a list of fields with only getter entries checked
 	private static IField[] getGetterOnlyFields(Object[] result) {
-		Collection list= new ArrayList(0);
+		Collection<IField> list= new ArrayList<IField>(0);
 		Object each= null;
 		GetterSetterEntry entry= null;
 		boolean getterSet= false;
@@ -430,12 +430,12 @@ public class AddGetterSetterAction extends SelectionDispatchAction {
 			} else
 				getterSet= false;
 		}
-		return (IField[]) list.toArray(new IField[list.size()]);
+		return list.toArray(new IField[list.size()]);
 	}
 
 	// returns a list of fields with only setter entries checked
 	private static IField[] getSetterOnlyFields(Object[] result) {
-		Collection list= new ArrayList(0);
+		Collection<IField> list= new ArrayList<IField>(0);
 		Object each= null;
 		GetterSetterEntry entry= null;
 		boolean getterSet= false;
@@ -453,12 +453,12 @@ public class AddGetterSetterAction extends SelectionDispatchAction {
 			} else
 				getterSet= false;
 		}
-		return (IField[]) list.toArray(new IField[list.size()]);
+		return list.toArray(new IField[list.size()]);
 	}
 
 	// returns a list of fields with both entries checked
 	private static IField[] getGetterSetterFields(Object[] result) {
-		Collection list= new ArrayList(0);
+		Collection<IField> list= new ArrayList<IField>(0);
 		Object each= null;
 		GetterSetterEntry entry= null;
 		boolean getterSet= false;
@@ -476,7 +476,7 @@ public class AddGetterSetterAction extends SelectionDispatchAction {
 			} else
 				getterSet= false;
 		}
-		return (IField[]) list.toArray(new IField[list.size()]);
+		return list.toArray(new IField[list.size()]);
 	}
 
 	private void generate(IType type, IField[] getterFields, IField[] setterFields, IField[] getterSetterFields, CompilationUnit unit, IJavaElement elementPosition) throws CoreException {
@@ -719,12 +719,12 @@ public class AddGetterSetterAction extends SelectionDispatchAction {
 	/**
 	 * @return map IField -> GetterSetterEntry[]
 	 */
-	private Map createGetterSetterMapping(IType type) throws JavaModelException {
+	private Map<IField, GetterSetterEntry[]> createGetterSetterMapping(IType type) throws JavaModelException {
 		IField[] fields= type.getFields();
-		Map result= new HashMap();
+		Map<IField, GetterSetterEntry[]> result= new HashMap<IField, GetterSetterEntry[]>();
 		for (int i= 0; i < fields.length; i++) {
 			if (!JdtFlags.isEnum(fields[i])) {
-				List l= new ArrayList(2);
+				List<GetterSetterEntry> l= new ArrayList<GetterSetterEntry>(2);
 				if (GetterSetterUtil.getGetter(fields[i]) == null) {
 					l.add(new GetterSetterEntry(fields[i], true));
 					incNumEntries();
@@ -744,13 +744,13 @@ public class AddGetterSetterAction extends SelectionDispatchAction {
 
 	private static class AddGetterSetterContentProvider implements ITreeContentProvider {
 
-		private static final Object[] EMPTY= new Object[0];
+		private static final GetterSetterEntry[] EMPTY= new GetterSetterEntry[0];
 
 		private Viewer fViewer;
 
-		private Map fGetterSetterEntries;
+		private Map<IField, GetterSetterEntry[]> fGetterSetterEntries;
 
-		public AddGetterSetterContentProvider(Map entries) {
+		public AddGetterSetterContentProvider(Map<IField, GetterSetterEntry[]> entries) {
 			fGetterSetterEntries= entries;
 		}
 
@@ -770,7 +770,7 @@ public class AddGetterSetterAction extends SelectionDispatchAction {
 		 */
 		public Object[] getChildren(Object parentElement) {
 			if (parentElement instanceof IField)
-				return (Object[]) fGetterSetterEntries.get(parentElement);
+				return fGetterSetterEntries.get(parentElement);
 			return EMPTY;
 		}
 
@@ -909,7 +909,7 @@ public class AddGetterSetterAction extends SelectionDispatchAction {
 
 		private Object[] getGetterSetterElements(boolean isGetter) {
 			Object[] allFields= fContentProvider.getElements(null);
-			Set result= new HashSet();
+			Set<GetterSetterEntry> result= new HashSet<GetterSetterEntry>();
 			for (int i= 0; i < allFields.length; i++) {
 				IField field= (IField) allFields[i];
 				GetterSetterEntry[] entries= getEntries(field);
@@ -923,8 +923,8 @@ public class AddGetterSetterAction extends SelectionDispatchAction {
 		}
 
 		private GetterSetterEntry[] getEntries(IField field) {
-			List result= Arrays.asList(fContentProvider.getChildren(field));
-			return (GetterSetterEntry[]) result.toArray(new GetterSetterEntry[result.size()]);
+			List<Object> result= Arrays.asList(fContentProvider.getChildren(field));
+			return result.toArray(new GetterSetterEntry[result.size()]);
 		}
 
 		protected Composite createSelectionButtons(Composite composite) {

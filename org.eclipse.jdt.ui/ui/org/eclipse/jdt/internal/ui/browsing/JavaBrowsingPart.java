@@ -1109,7 +1109,7 @@ abstract class JavaBrowsingPart extends ViewPart implements IMenuListener, ISele
 	 * Gets the typeComparator.
 	 * @return Returns a JavaElementTypeComparator
 	 */
-	protected Comparator getTypeComparator() {
+	protected Comparator<Object> getTypeComparator() {
 		return fTypeComparator;
 	}
 

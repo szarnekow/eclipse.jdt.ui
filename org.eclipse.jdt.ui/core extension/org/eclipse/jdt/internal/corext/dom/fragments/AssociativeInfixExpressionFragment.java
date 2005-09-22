@@ -26,7 +26,7 @@ import org.eclipse.jdt.internal.corext.dom.JdtASTMatcher;
 
 class AssociativeInfixExpressionFragment extends ASTFragment implements IExpressionFragment {
 	
-	private List fOperands;
+	private List<ASTNode> fOperands;
 	private InfixExpression fGroupRoot;
 	
 	public static IExpressionFragment createSubPartFragmentBySourceRange(InfixExpression node, SourceRange range, ICompilationUnit cu) throws JavaModelException {
@@ -41,8 +41,8 @@ class AssociativeInfixExpressionFragment extends ASTFragment implements IExpress
 		InfixExpression groupRoot= findGroupRoot(node);
 		Assert.isTrue(isAGroupRoot(groupRoot));
 		
-		List groupMembers= GroupMemberFinder.findGroupMembersInOrderFor(groupRoot);
-		List subGroup= findSubGroupForSourceRange(groupMembers, range);
+		List<ASTNode> groupMembers= GroupMemberFinder.findGroupMembersInOrderFor(groupRoot);
+		List<ASTNode> subGroup= findSubGroupForSourceRange(groupMembers, range);
 		if(subGroup.isEmpty() || rangeIncludesExtraNonWhitespace(range, subGroup, cu))
 			return null;
 		
@@ -58,7 +58,7 @@ class AssociativeInfixExpressionFragment extends ASTFragment implements IExpress
 		InfixExpression groupRoot= findGroupRoot(node);
 		Assert.isTrue(isAGroupRoot(groupRoot));
 		
-		List groupMembers= GroupMemberFinder.findGroupMembersInOrderFor(node);
+		List<ASTNode> groupMembers= GroupMemberFinder.findGroupMembersInOrderFor(node);
 		
 		return new AssociativeInfixExpressionFragment(groupRoot, groupMembers);
 	}
@@ -79,17 +79,17 @@ class AssociativeInfixExpressionFragment extends ASTFragment implements IExpress
 		return node;
 	}
 
-	private static List findSubGroupForSourceRange(List group, SourceRange range) {
+	private static List<ASTNode> findSubGroupForSourceRange(List<ASTNode> group, SourceRange range) {
 		Assert.isTrue(!group.isEmpty());
 				
-		List subGroup= new ArrayList();
+		List<ASTNode> subGroup= new ArrayList<ASTNode>();
 		
 		boolean entered= false, exited= false;
-		if(range.getOffset() == ((ASTNode)group.get(0)).getStartPosition())
+		if(range.getOffset() == group.get(0).getStartPosition())
 			entered= true;
 		for(int i= 0; i < group.size() - 1; i++) {
-			ASTNode member= (ASTNode) group.get(i);
-			ASTNode nextMember= (ASTNode) group.get(i + 1);
+			ASTNode member= group.get(i);
+			ASTNode nextMember= group.get(i + 1);
 			
 			if(entered) {
 				subGroup.add(member);
@@ -103,14 +103,14 @@ class AssociativeInfixExpressionFragment extends ASTFragment implements IExpress
 					entered= true;
 			}
 		}
-		ASTNode lastGroupMember= (ASTNode)group.get(group.size() - 1);
+		ASTNode lastGroupMember= group.get(group.size() - 1);
 		if(range.getEndExclusive() == new SourceRange(lastGroupMember).getEndExclusive()) {
 			subGroup.add(lastGroupMember);
 			exited= true;	
 		}
 			
 		if(!exited)
-			return new ArrayList(0);
+			return new ArrayList<ASTNode>(0);
 		return subGroup;
 	}
 	private static boolean rangeStartsBetween(SourceRange range, ASTNode first, ASTNode next) {
@@ -123,10 +123,10 @@ class AssociativeInfixExpressionFragment extends ASTFragment implements IExpress
 		return    first.getStartPosition() + first.getLength() <= pos
 		        && pos <= next.getStartPosition();
 	}
-	private static boolean rangeIncludesExtraNonWhitespace(SourceRange range, List operands, ICompilationUnit cu) throws JavaModelException {
+	private static boolean rangeIncludesExtraNonWhitespace(SourceRange range, List<ASTNode> operands, ICompilationUnit cu) throws JavaModelException {
 		return Util.rangeIncludesNonWhitespaceOutsideRange(range, getRangeOfOperands(operands), cu.getBuffer());
 	}
-	private static SourceRange getRangeOfOperands(List operands) {
+	private static SourceRange getRangeOfOperands(List<ASTNode> operands) {
 		Expression first= (Expression) operands.get(0);
 		Expression last= (Expression) operands.get(operands.size() - 1);
 		return new SourceRange(first.getStartPosition(), last.getStartPosition() + last.getLength() - first.getStartPosition());	
@@ -145,10 +145,10 @@ class AssociativeInfixExpressionFragment extends ASTFragment implements IExpress
 	/**
 	 * Returns List of Lists of <code>ASTNode</code>s
 	 */
-	private static List getMatchingContiguousNodeSubsequences(List source, List toMatch) {
+	private static List<List<ASTNode>> getMatchingContiguousNodeSubsequences(List<ASTNode> source, List<ASTNode> toMatch) {
 		//naive implementation:
 		
-		List subsequences= new ArrayList();
+		List<List<ASTNode>> subsequences= new ArrayList<List<ASTNode>>();
 		
 		for(int i= 0; i < source.size();) {
 			if(matchesAt(i, source, toMatch)) {
@@ -160,12 +160,12 @@ class AssociativeInfixExpressionFragment extends ASTFragment implements IExpress
 		
 		return subsequences;
 	}
-	private static boolean matchesAt(int index, List subject, List toMatch) {
+	private static boolean matchesAt(int index, List<ASTNode> subject, List<ASTNode> toMatch) {
 		if(index + toMatch.size() > subject.size())
 			return false;  
 		for(int i= 0; i < toMatch.size(); i++, index++) {
 			if(!JdtASTMatcher.doNodesMatch(
-			        (ASTNode) subject.get(index), (ASTNode) toMatch.get(i)
+			        subject.get(index), toMatch.get(i)
 			    )
 			)
 				return false;
@@ -196,7 +196,7 @@ class AssociativeInfixExpressionFragment extends ASTFragment implements IExpress
 		        || operator == InfixExpression.Operator.CONDITIONAL_AND;
 	}
 	
-	private AssociativeInfixExpressionFragment(InfixExpression groupRoot, List operands) {
+	private AssociativeInfixExpressionFragment(InfixExpression groupRoot, List<ASTNode> operands) {
 		Assert.isTrue(isAGroupRoot(groupRoot));
 		Assert.isTrue(!operands.isEmpty());
 		fGroupRoot= groupRoot;
@@ -217,12 +217,12 @@ class AssociativeInfixExpressionFragment extends ASTFragment implements IExpress
 		
 		if (getOperands().size() != other.getOperands().size())
 			return false;
-		Iterator myOperands= getOperands().iterator();
-		Iterator othersOperands= other.getOperands().iterator();
+		Iterator<ASTNode> myOperands= getOperands().iterator();
+		Iterator<ASTNode> othersOperands= other.getOperands().iterator();
 		
 		while(myOperands.hasNext() && othersOperands.hasNext()) {	
-			ASTNode myOperand= (ASTNode) myOperands.next();
-			ASTNode othersOperand= (ASTNode) othersOperands.next();
+			ASTNode myOperand= myOperands.next();
+			ASTNode othersOperand= othersOperands.next();
 			
 			if(!JdtASTMatcher.doNodesMatch(myOperand, othersOperand))
 				return false;
@@ -246,7 +246,7 @@ class AssociativeInfixExpressionFragment extends ASTFragment implements IExpress
 		if(kinToMatch.getOperator() != getOperator())
 			return new IASTFragment[0];
 		
-		List matchingSubsequences=
+		List<List<ASTNode>> matchingSubsequences=
 			getMatchingContiguousNodeSubsequences(
 				getOperands(),
 				kinToMatch.getOperands()
@@ -256,7 +256,7 @@ class AssociativeInfixExpressionFragment extends ASTFragment implements IExpress
 		for(int i= 0; i < matchingSubsequences.size(); i++) {
 			IASTFragment match= new AssociativeInfixExpressionFragment(
 		                           getGroupRoot(), 
-		                           (List) matchingSubsequences.get(i)
+		                           matchingSubsequences.get(i)
 		                );
 			Assert.isTrue(match.matches(toMatch) || toMatch.matches(match));		    
 		    matches[i]= match;
@@ -265,8 +265,8 @@ class AssociativeInfixExpressionFragment extends ASTFragment implements IExpress
 	}
 	private IASTFragment[] getSubFragmentsWithAnotherNodeMatching(IASTFragment toMatch) {
 		IASTFragment[] result= new IASTFragment[0];
-		for (Iterator iter= getOperands().iterator(); iter.hasNext();) {
-			ASTNode operand= (ASTNode) iter.next();
+		for (Iterator<ASTNode> iter= getOperands().iterator(); iter.hasNext();) {
+			ASTNode operand= iter.next();
 			result= union(result, ASTMatchingFragmentFinder.findMatchingFragments(operand, (ASTFragment)toMatch));
 		}
 		return result;
@@ -307,17 +307,17 @@ class AssociativeInfixExpressionFragment extends ASTFragment implements IExpress
 	}
 	
 	private int getEndPositionExclusive() {
-		List operands= getOperands();
-		ASTNode lastNode= (ASTNode)operands.get(operands.size() - 1);
+		List<ASTNode> operands= getOperands();
+		ASTNode lastNode= operands.get(operands.size() - 1);
 		return lastNode.getStartPosition() + lastNode.getLength();
 	}
 
 	public int getStartPosition() {
-		return ((ASTNode)getOperands().get(0)).getStartPosition();
+		return getOperands().get(0).getStartPosition();
 	}
 	
-	public List getOperands() {
-		return new ArrayList(fOperands);	
+	public List<ASTNode> getOperands() {
+		return new ArrayList<ASTNode>(fOperands);	
 	}
 	
 	public InfixExpression.Operator getOperator() {
@@ -325,10 +325,10 @@ class AssociativeInfixExpressionFragment extends ASTFragment implements IExpress
 	}
 
 	private static class GroupMemberFinder extends GenericVisitor {
-		private List fMembersInOrder= new ArrayList();
+		private List<ASTNode> fMembersInOrder= new ArrayList<ASTNode>();
 		private InfixExpression fGroupRoot;
 		
-		public static List findGroupMembersInOrderFor(InfixExpression groupRoot) {
+		public static List<ASTNode> findGroupMembersInOrderFor(InfixExpression groupRoot) {
 			return new GroupMemberFinder(groupRoot).getMembersInOrder();	
 		}
 		
@@ -338,7 +338,7 @@ class AssociativeInfixExpressionFragment extends ASTFragment implements IExpress
 			fGroupRoot= groupRoot;
 			fGroupRoot.accept(this);
 		}
-		private List getMembersInOrder() {
+		private List<ASTNode> getMembersInOrder() {
 			return fMembersInOrder;	
 		}
 		protected boolean visitNode(ASTNode node) {

@@ -38,15 +38,15 @@ public class GenerateConstructorUsingFieldsContentProvider implements ITreeConte
 
 	private static final Object[] EMPTY= new Object[0];
 
-	private List fFields= new ArrayList();
+	private List<Object> fFields= new ArrayList<Object>();
 
-	private List fSelected= new ArrayList();
+	private List<IVariableBinding> fSelected= new ArrayList<IVariableBinding>();
 
 	private ITypeBinding fType= null;
 
 	private final CompilationUnit fUnit;
 
-	public GenerateConstructorUsingFieldsContentProvider(IType type, List fields, List selected) throws JavaModelException {
+	public GenerateConstructorUsingFieldsContentProvider(IType type, List<IField> fields, List<IField> selected) throws JavaModelException {
 		RefactoringASTParser parser= new RefactoringASTParser(AST.JLS3);
 		fUnit= parser.parse(type.getCompilationUnit(), true);
 		AbstractTypeDeclaration declaration= (AbstractTypeDeclaration) ASTNodes.getParent(NodeFinder.perform(fUnit, type.getNameRange()), AbstractTypeDeclaration.class);
@@ -54,8 +54,8 @@ public class GenerateConstructorUsingFieldsContentProvider implements ITreeConte
 			fType= declaration.resolveBinding();
 			if (fType != null) {
 				IField field= null;
-				for (Iterator iterator= fields.iterator(); iterator.hasNext();) {
-					field= (IField) iterator.next();
+				for (Iterator<IField> iterator= fields.iterator(); iterator.hasNext();) {
+					field= iterator.next();
 					VariableDeclarationFragment fragment= ASTNodeSearchUtil.getFieldDeclarationFragmentNode(field, fUnit);
 					if (fragment != null) {
 						IVariableBinding binding= fragment.resolveBinding();
@@ -63,8 +63,8 @@ public class GenerateConstructorUsingFieldsContentProvider implements ITreeConte
 							fFields.add(binding);
 					}
 				}
-				for (Iterator iterator= selected.iterator(); iterator.hasNext();) {
-					field= (IField) iterator.next();
+				for (Iterator<IField> iterator= selected.iterator(); iterator.hasNext();) {
+					field= iterator.next();
 					VariableDeclarationFragment fragment= ASTNodeSearchUtil.getFieldDeclarationFragmentNode(field, fUnit);
 					if (fragment != null) {
 						IVariableBinding binding= fragment.resolveBinding();
@@ -130,7 +130,7 @@ public class GenerateConstructorUsingFieldsContentProvider implements ITreeConte
 		return fFields.toArray();
 	}
 
-	public List getFieldsList() {
+	public List<Object> getFieldsList() {
 		return fFields;
 	}
 
@@ -164,8 +164,8 @@ public class GenerateConstructorUsingFieldsContentProvider implements ITreeConte
 	public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
 	}
 
-	private List moveUp(List elements, List move) {
-		List result= new ArrayList(elements.size());
+	private List<Object> moveUp(List<Object> elements, List move) {
+		List<Object> result= new ArrayList<Object>(elements.size());
 		Object floating= null;
 		for (int index= 0; index < elements.size(); index++) {
 			Object current= elements.get(index);
@@ -184,16 +184,16 @@ public class GenerateConstructorUsingFieldsContentProvider implements ITreeConte
 		return result;
 	}
 
-	private List reverse(List list) {
-		List reverse= new ArrayList(list.size());
+	private List<Object> reverse(List<Object> list) {
+		List<Object> reverse= new ArrayList<Object>(list.size());
 		for (int index= list.size() - 1; index >= 0; index--) {
 			reverse.add(list.get(index));
 		}
 		return reverse;
 	}
 
-	public void setElements(List elements, CheckboxTreeViewer tree) {
-		fFields= new ArrayList(elements);
+	public void setElements(List<Object> elements, CheckboxTreeViewer tree) {
+		fFields= new ArrayList<Object>(elements);
 		if (tree != null)
 			tree.refresh();
 	}

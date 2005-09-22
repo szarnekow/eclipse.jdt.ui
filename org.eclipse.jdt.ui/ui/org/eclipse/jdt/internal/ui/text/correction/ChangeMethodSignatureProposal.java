@@ -124,7 +124,7 @@ public class ChangeMethodSignatureProposal extends LinkedCorrectionProposal {
 	private void modifyParameters(ASTRewrite rewrite, MethodDeclaration methodDecl, boolean isInDifferentCU) throws CoreException {
 		AST ast= methodDecl.getAST();
 
-		ArrayList usedNames= new ArrayList();
+		ArrayList<String> usedNames= new ArrayList<String>();
 		boolean hasCreatedVariables= false;
 
 		IVariableBinding[] declaredFields= fSenderBinding.getDeclaringClass().getDeclaredFields();
@@ -135,7 +135,7 @@ public class ChangeMethodSignatureProposal extends LinkedCorrectionProposal {
 		ImportRewrite imports= getImportRewrite();
 		ListRewrite listRewrite= rewrite.getListRewrite(methodDecl, MethodDeclaration.PARAMETERS_PROPERTY);
 
-		List parameters= methodDecl.parameters(); // old parameters
+		List<ASTNode> parameters= methodDecl.parameters(); // old parameters
 		int k= 0; // index over the oldParameters
 
 		for (int i= 0; i < fParameterChanges.length; i++) {
@@ -196,10 +196,10 @@ public class ChangeMethodSignatureProposal extends LinkedCorrectionProposal {
 
 				TagElement tagNode= findParamTag(methodDecl, decl);
 				if (tagNode != null) {
-					List fragments= tagNode.fragments();
+					List<ASTNode> fragments= tagNode.fragments();
 					if (!fragments.isEmpty()) {
 						SimpleName arg= ast.newSimpleName("x"); //$NON-NLS-1$
-						rewrite.replace((ASTNode) fragments.get(0), arg, null);
+						rewrite.replace(fragments.get(0), arg, null);
 						desc.resultingTagArg= arg;
 					}
 				}
@@ -238,7 +238,7 @@ public class ChangeMethodSignatureProposal extends LinkedCorrectionProposal {
 		fixupNames(rewrite, usedNames, methodDecl, isInDifferentCU);
 	}
 
-	private void fixupNames(ASTRewrite rewrite, ArrayList usedNames, MethodDeclaration methodDecl, boolean isInDifferentCU) {
+	private void fixupNames(ASTRewrite rewrite, ArrayList<String> usedNames, MethodDeclaration methodDecl, boolean isInDifferentCU) {
 		AST ast= rewrite.getAST();
 		// set names for new parameters
 		for (int i= 0; i < fParameterChanges.length; i++) {
@@ -253,7 +253,7 @@ public class ChangeMethodSignatureProposal extends LinkedCorrectionProposal {
 
 				// collect name suggestions
 				String favourite= null;
-				String[] excludedNames= (String[]) usedNames.toArray(new String[usedNames.size()]);
+				String[] excludedNames= usedNames.toArray(new String[usedNames.size()]);
 				if (suggestedName != null) {
 					favourite= StubUtility.suggestArgumentName(getCompilationUnit().getJavaProject(), suggestedName, excludedNames);
 					addLinkedPositionProposal(nameKey, favourite, null);
@@ -301,8 +301,8 @@ public class ChangeMethodSignatureProposal extends LinkedCorrectionProposal {
 		return null;
 	}
 
-	private TagElement insertParamTag(ListRewrite tagRewriter, List parameters, int currentIndex, TagElement newTagElement) {
-		HashSet previousNames= new HashSet();
+	private TagElement insertParamTag(ListRewrite tagRewriter, List<ASTNode> parameters, int currentIndex, TagElement newTagElement) {
+		HashSet<String> previousNames= new HashSet<String>();
 		for (int n = 0; n < currentIndex; n++) {
 			SingleVariableDeclaration var= (SingleVariableDeclaration) parameters.get(n);
 			previousNames.add(var.getName().getIdentifier());
@@ -318,7 +318,7 @@ public class ChangeMethodSignatureProposal extends LinkedCorrectionProposal {
 		ImportRewrite imports= getImportRewrite();
 		ListRewrite listRewrite= rewrite.getListRewrite(methodDecl, MethodDeclaration.THROWN_EXCEPTIONS_PROPERTY);
 
-		List exceptions= methodDecl.thrownExceptions(); // old exceptions
+		List<ASTNode> exceptions= methodDecl.thrownExceptions(); // old exceptions
 		int k= 0; // index over the old exceptions
 
 		for (int i= 0; i < fExceptionChanges.length; i++) {
@@ -375,7 +375,7 @@ public class ChangeMethodSignatureProposal extends LinkedCorrectionProposal {
 				TagElement tagNode= findThrowsTag(methodDecl, oldNode);
 				if (tagNode != null) {
 					ASTNode newRef= ASTNodeFactory.newName(ast, type);
-					rewrite.replace((ASTNode) tagNode.fragments().get(0), newRef, null);
+					rewrite.replace((ASTNode)tagNode.fragments().get(0), newRef, null);
 					addLinkedPosition(rewrite.track(newRef), false, key);
 				}
 
@@ -398,7 +398,7 @@ public class ChangeMethodSignatureProposal extends LinkedCorrectionProposal {
 		}
 	}
 
-	private void insertTabStop(ASTRewrite rewriter, List fragments, String linkedName) {
+	private void insertTabStop(ASTRewrite rewriter, List<ASTNode> fragments, String linkedName) {
 		TextElement textElement= rewriter.getAST().newTextElement();
 		textElement.setText(""); //$NON-NLS-1$
 		fragments.add(textElement);
@@ -414,8 +414,8 @@ public class ChangeMethodSignatureProposal extends LinkedCorrectionProposal {
 		return null;
 	}
 
-	private TagElement insertThrowsTag(ListRewrite tagRewriter, List exceptions, int currentIndex, TagElement newTagElement) {
-		HashSet previousNames= new HashSet();
+	private TagElement insertThrowsTag(ListRewrite tagRewriter, List<ASTNode> exceptions, int currentIndex, TagElement newTagElement) {
+		HashSet<String> previousNames= new HashSet<String>();
 		for (int n = 0; n < currentIndex; n++) {
 			Name curr= (Name) exceptions.get(n);
 			previousNames.add(ASTNodes.getSimpleNameIdentifier(curr));

@@ -30,6 +30,7 @@ import org.eclipse.ltk.core.refactoring.Change;
 import org.eclipse.ltk.core.refactoring.CompositeChange;
 import org.eclipse.ltk.core.refactoring.RefactoringDescriptor;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
+import org.eclipse.ltk.core.refactoring.participants.RefactoringParticipant;
 import org.eclipse.ltk.core.refactoring.participants.SharableParticipants;
 
 public final class RenameEnumConstProcessor extends RenameFieldProcessor {
@@ -88,7 +89,7 @@ public final class RenameEnumConstProcessor extends RenameFieldProcessor {
 	/*
 	 * @see org.eclipse.jdt.internal.corext.refactoring.rename.JavaRenameProcessor#loadDerivedParticipants(org.eclipse.ltk.core.refactoring.RefactoringStatus, java.util.List, java.lang.String[], org.eclipse.ltk.core.refactoring.participants.SharableParticipants)
 	 */
-	protected void loadDerivedParticipants(RefactoringStatus status, List result, String[] natures, SharableParticipants shared) throws CoreException {
+	protected void loadDerivedParticipants(RefactoringStatus status, List<RefactoringParticipant> result, String[] natures, SharableParticipants shared) throws CoreException {
 		// Don't load participants to rename getters and setters
 	}
 
@@ -100,7 +101,7 @@ public final class RenameEnumConstProcessor extends RenameFieldProcessor {
 		if (change != null) {
 			final CompositeChange composite= new CompositeChange("", new Change[] { change}) { //$NON-NLS-1$
 				public final RefactoringDescriptor getRefactoringDescriptor() {
-					final Map arguments= new HashMap();
+					final Map<String, String> arguments= new HashMap<String, String>();
 					arguments.put(ATTRIBUTE_HANDLE, getField().getHandleIdentifier());
 					arguments.put(ATTRIBUTE_NAME, getNewElementName());
 					arguments.put(ATTRIBUTE_REFERENCES, Boolean.valueOf(fUpdateReferences).toString());

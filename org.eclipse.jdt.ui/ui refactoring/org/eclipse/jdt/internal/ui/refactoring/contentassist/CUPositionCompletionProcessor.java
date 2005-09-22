@@ -210,7 +210,7 @@ public class CUPositionCompletionProcessor implements IContentAssistProcessor, I
 		private int fOffsetReduction;
 		private IJavaProject fJavaProject;
 		
-		private List fProposals;
+		private List<JavaCompletionProposal> fProposals;
 		private String fErrorMessage2;
 
 		public IJavaProject getJavaProject() {
@@ -223,7 +223,7 @@ public class CUPositionCompletionProcessor implements IContentAssistProcessor, I
 		
 		private void setOffsetReduction(int offsetReduction) {
 			fOffsetReduction= offsetReduction;
-			fProposals= new ArrayList();
+			fProposals= new ArrayList<JavaCompletionProposal>();
 		}
 		
 		public final void completionFailure(IProblem error) {
@@ -231,7 +231,7 @@ public class CUPositionCompletionProcessor implements IContentAssistProcessor, I
 		}
 
 		public final JavaCompletionProposal[] getResults() {
-			return (JavaCompletionProposal[]) fProposals.toArray(new JavaCompletionProposal[fProposals.size()]);
+			return fProposals.toArray(new JavaCompletionProposal[fProposals.size()]);
 		}
 		
 		public final String getErrorMessage() {

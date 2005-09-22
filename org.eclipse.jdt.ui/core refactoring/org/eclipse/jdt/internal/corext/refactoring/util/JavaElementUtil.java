@@ -72,13 +72,13 @@ public class JavaElementUtil {
 	}
 	
 	public static IJavaElement[] getElementsOfType(IJavaElement[] elements, int type){
-		Set result= new HashSet(elements.length);
+		Set<IJavaElement> result= new HashSet<IJavaElement>(elements.length);
 		for (int i= 0; i < elements.length; i++) {
 			IJavaElement element= elements[i];
 			if (element.getElementType() == type)
 				result.add(element);
 		}
-		return (IJavaElement[]) result.toArray(new IJavaElement[result.size()]);
+		return result.toArray(new IJavaElement[result.size()]);
 	}
 
 	public static IType getMainType(ICompilationUnit cu) throws JavaModelException{
@@ -128,14 +128,14 @@ public class JavaElementUtil {
 	public static IMethod[] getAllConstructors(IType type) throws JavaModelException {
 		if (JavaModelUtil.isInterfaceOrAnnotation(type))
 			return new IMethod[0];
-		List result= new ArrayList();
+		List<IMethod> result= new ArrayList<IMethod>();
 		IMethod[] methods= type.getMethods();
 		for (int i= 0; i < methods.length; i++) {
 			IMethod iMethod= methods[i];
 			if (iMethod.isConstructor())
 				result.add(iMethod);
 		}
-		return (IMethod[]) result.toArray(new IMethod[result.size()]);
+		return result.toArray(new IMethod[result.size()]);
 	}
 
 	/**
@@ -146,7 +146,7 @@ public class JavaElementUtil {
 		IClasspathEntry cpe= root.getRawClasspathEntry();
 		IJavaProject myProject= root.getJavaProject();
 		IJavaProject[] allJavaProjects= JavaCore.create(ResourcesPlugin.getWorkspace().getRoot()).getJavaProjects();
-		List result= new ArrayList(allJavaProjects.length);
+		List<IJavaProject> result= new ArrayList<IJavaProject>(allJavaProjects.length);
 		for (int i= 0; i < allJavaProjects.length; i++) {
 			IJavaProject project= allJavaProjects[i];
 			if (project.equals(myProject))
@@ -155,12 +155,12 @@ public class JavaElementUtil {
 			if (roots.length > 0)
 				result.add(project);
 		}
-		return (IJavaProject[]) result.toArray(new IJavaProject[result.size()]);
+		return result.toArray(new IJavaProject[result.size()]);
 	}	
 	
 	public static IMember[] merge(IMember[] a1, IMember[] a2) {
 		// Don't use hash sets since ordering is important for some refactorings.
-		List result= new ArrayList(a1.length + a2.length);
+		List<IMember> result= new ArrayList<IMember>(a1.length + a2.length);
 		for (int i= 0; i < a1.length; i++) {
 			IMember member= a1[i];
 			if (!result.contains(member))
@@ -171,7 +171,7 @@ public class JavaElementUtil {
 			if (!result.contains(member))
 				result.add(member);
 		}
-		return (IMember[]) result.toArray(new IMember[result.size()]);
+		return result.toArray(new IMember[result.size()]);
 	}
 
 	public static boolean isDefaultPackage(Object element) {
@@ -186,7 +186,7 @@ public class JavaElementUtil {
 	public static IPackageFragment[] getPackageAndSubpackages(IPackageFragment pack) throws JavaModelException {
 		IPackageFragmentRoot root= (IPackageFragmentRoot) pack.getParent();
 		IJavaElement[] allPackages= root.getChildren();
-		ArrayList subpackages= new ArrayList();
+		ArrayList<IPackageFragment> subpackages= new ArrayList<IPackageFragment>();
 		subpackages.add(pack);
 		String prefix= pack.getElementName() + '.';
 		for (int i= 0; i < allPackages.length; i++) {
@@ -194,7 +194,7 @@ public class JavaElementUtil {
 			if (currentPackage.getElementName().startsWith(prefix))
 				subpackages.add(currentPackage);
 		}
-		return (IPackageFragment[]) subpackages.toArray(new IPackageFragment[subpackages.size()]);
+		return subpackages.toArray(new IPackageFragment[subpackages.size()]);
 	}
 	
 	public static IMember[] sortByOffset(IMember[] members){

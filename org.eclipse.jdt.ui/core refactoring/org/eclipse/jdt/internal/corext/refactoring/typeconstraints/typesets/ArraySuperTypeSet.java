@@ -50,8 +50,8 @@ public class ArraySuperTypeSet extends ArrayTypeSet {
 		if (fElemTypeSet.contains(atElemType)) // try to avoid enumeration
 			return true;
 
-		for(Iterator iter= fElemTypeSet.iterator(); iter.hasNext(); ) {
-			TType elemType= (TType) iter.next();
+		for(Iterator<TType> iter= fElemTypeSet.iterator(); iter.hasNext(); ) {
+			TType elemType= iter.next();
 
 			if (TTypes.canAssignTo(elemType, atElemType))
 				return true;
@@ -103,8 +103,8 @@ public class ArraySuperTypeSet extends ArrayTypeSet {
 			fEnumCache= new EnumeratedTypeSet(getTypeSetEnvironment());
 			TypeSet elemSupers= fElemTypeSet.superTypes();
 
-			for(Iterator iter= elemSupers.iterator(); iter.hasNext(); ) {
-				TType elemSuper= (TType) iter.next();
+			for(Iterator<TType> iter= elemSupers.iterator(); iter.hasNext(); ) {
+				TType elemSuper= iter.next();
 
 				fEnumCache.add(TTypes.createArrayType(elemSuper, 1));
 			}
@@ -139,7 +139,7 @@ public class ArraySuperTypeSet extends ArrayTypeSet {
 	/* (non-Javadoc)
 	 * @see org.eclipse.jdt.internal.corext.refactoring.typeconstraints.typesets.ArrayTypeSet#iterator()
 	 */
-	public Iterator iterator() {
+	public Iterator<TType> iterator() {
 		return enumerate().iterator();
 	}
 

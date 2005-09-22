@@ -63,9 +63,9 @@ public class ExceptionAnalyzer extends AbstractExceptionAnalyzer {
 	public static ITypeBinding[] perform(BodyDeclaration enclosingNode, Selection selection) {
 		ExceptionAnalyzer analyzer= new ExceptionAnalyzer(selection);
 		enclosingNode.accept(analyzer);
-		List exceptions= analyzer.getCurrentExceptions();
+		List<ITypeBinding> exceptions= analyzer.getCurrentExceptions();
 		Collections.sort(exceptions, new ExceptionComparator());
-		return (ITypeBinding[]) exceptions.toArray(new ITypeBinding[exceptions.size()]);
+		return exceptions.toArray(new ITypeBinding[exceptions.size()]);
 	}
 
 	public boolean visit(ThrowStatement node) {

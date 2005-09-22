@@ -66,7 +66,7 @@ public class CallHierarchy {
         settings.setValue(PREF_USE_IMPLEMENTORS, enabled);
     }
 
-    public Collection getImplementingMethods(IMethod method) {
+    public Collection<IJavaElement> getImplementingMethods(IMethod method) {
         if (isSearchUsingImplementorsEnabled()) {
             IJavaElement[] result = Implementors.getInstance().searchForImplementors(new IJavaElement[] {
                         method
@@ -77,10 +77,10 @@ public class CallHierarchy {
             }
         }
 
-        return new ArrayList(0);
+        return new ArrayList<IJavaElement>(0);
     }
 
-    public Collection getInterfaceMethods(IMethod method) {
+    public Collection<IJavaElement> getInterfaceMethods(IMethod method) {
         if (isSearchUsingImplementorsEnabled()) {
             IJavaElement[] result = Implementors.getInstance().searchForInterfaces(new IJavaElement[] {
                         method
@@ -91,7 +91,7 @@ public class CallHierarchy {
             }
         }
 
-        return new ArrayList(0);
+        return new ArrayList<IJavaElement>(0);
     }
 
     public MethodWrapper getCallerRoot(IMethod method) {
@@ -211,7 +211,7 @@ public class CallHierarchy {
      * @return list
      */
     private static StringMatcher[] parseList(String listString) {
-        List list = new ArrayList(10);
+        List<StringMatcher> list = new ArrayList<StringMatcher>(10);
         StringTokenizer tokenizer = new StringTokenizer(listString, ","); //$NON-NLS-1$
 
         while (tokenizer.hasMoreTokens()) {
@@ -219,7 +219,7 @@ public class CallHierarchy {
             list.add(new StringMatcher(textFilter, false, false));
         }
 
-        return (StringMatcher[]) list.toArray(new StringMatcher[list.size()]);
+        return list.toArray(new StringMatcher[list.size()]);
     }
     
     static CompilationUnit getCompilationUnitNode(IMember member, boolean resolveBindings) {

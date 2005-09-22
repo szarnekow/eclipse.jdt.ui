@@ -99,17 +99,17 @@ class TextMatchUpdater {
 
 	private IProject[] getProjectsInScope() {
 		IPath[] enclosingProjects= fScope.enclosingProjectsAndJars();
-		Set enclosingProjectSet= new HashSet();
+		Set<IPath> enclosingProjectSet= new HashSet<IPath>();
 		enclosingProjectSet.addAll(Arrays.asList(enclosingProjects));
 		
-		ArrayList projectsInScope= new ArrayList();
+		ArrayList<IProject> projectsInScope= new ArrayList<IProject>();
 		IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
 		for (int i =0 ; i < projects.length; i++){
 			if (enclosingProjectSet.contains(projects[i].getFullPath()))
 				projectsInScope.add(projects[i]);
 		}
 		
-		return (IProject[]) projectsInScope.toArray(new IProject[projectsInScope.size()]);
+		return projectsInScope.toArray(new IProject[projectsInScope.size()]);
 	}
 
 	private void addTextMatches(IResource resource, IProgressMonitor pm) throws JavaModelException{
@@ -148,7 +148,7 @@ class TextMatchUpdater {
 	
 	private void addCuTextMatches(ICompilationUnit cu) throws JavaModelException{
 		fScanner.scan(cu);
-		Set matches= fScanner.getMatches(); //Set of Integer (start position)
+		Set<Integer> matches= fScanner.getMatches(); //Set of Integer (start position)
 		if (matches.size() == 0)
 			return;
 
@@ -157,7 +157,7 @@ class TextMatchUpdater {
 			addTextUpdates(cu, matches); 
 	}
 	
-	private void removeReferences(ICompilationUnit cu, Set matches) {
+	private void removeReferences(ICompilationUnit cu, Set<Integer> matches) {
 		for (int i= 0; i < fReferences.length; i++) {
 			SearchResultGroup group= fReferences[i];
 			if (cu.equals(group.getCompilationUnit())) {
@@ -166,7 +166,7 @@ class TextMatchUpdater {
 		}
 	}
 
-	private void removeReferences(Set matches, SearchResultGroup group) {
+	private void removeReferences(Set<Integer> matches, SearchResultGroup group) {
 		SearchMatch[] searchResults= group.getSearchResults();
 		for (int r= 0; r < searchResults.length; r++) {
 			//int start= searchResults[r].getStart(); // doesn't work for pack.ReferencedType
@@ -175,9 +175,9 @@ class TextMatchUpdater {
 		}
 	}
 
-	private void addTextUpdates(ICompilationUnit cu, Set matches) {
-		for (Iterator resultIter= matches.iterator(); resultIter.hasNext();){
-			int matchStart= ((Integer) resultIter.next()).intValue();
+	private void addTextUpdates(ICompilationUnit cu, Set<Integer> matches) {
+		for (Iterator<Integer> resultIter= matches.iterator(); resultIter.hasNext();){
+			int matchStart= resultIter.next().intValue();
 			ReplaceEdit edit= new ReplaceEdit(matchStart, fCurrentNameLength, fNewName);
 			TextChangeCompatibility.addTextEdit(fManager.get(cu), TEXT_EDIT_LABEL, edit, TEXTUAL_MATCHES);
 		}

@@ -22,7 +22,7 @@ import org.eclipse.ui.IWorkingSet;
 
 public class WorkingSetAwareLabelProvider extends PackageExplorerLabelProvider {
 
-	private Map fImages= new HashMap();
+	private Map<ImageDescriptor, Image> fImages= new HashMap<ImageDescriptor, Image>();
 	
 	public WorkingSetAwareLabelProvider(long textFlags, int imageFlags, PackageExplorerContentProvider cp) {
 		super(textFlags, imageFlags, cp);
@@ -44,7 +44,7 @@ public class WorkingSetAwareLabelProvider extends PackageExplorerLabelProvider {
 	public Image getImage(Object element) {
 		if (element instanceof IWorkingSet) {
 			ImageDescriptor image= ((IWorkingSet)element).getImage();
-			Image result= (Image)fImages.get(image);
+			Image result= fImages.get(image);
 			if (result == null) {
 				result= image.createImage();
 				fImages.put(image, result);
@@ -58,8 +58,8 @@ public class WorkingSetAwareLabelProvider extends PackageExplorerLabelProvider {
 	 * {@inheritDoc}
 	 */
 	public void dispose() {
-		for (Iterator iter= fImages.values().iterator(); iter.hasNext();) {
-			((Image)iter.next()).dispose();
+		for (Iterator<Image> iter= fImages.values().iterator(); iter.hasNext();) {
+			iter.next().dispose();
 		}
 		super.dispose();
 	}

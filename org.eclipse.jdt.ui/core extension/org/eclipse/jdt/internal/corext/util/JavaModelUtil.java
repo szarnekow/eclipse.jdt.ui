@@ -695,7 +695,7 @@ public final class JavaModelUtil {
 		String[] paramTypes= new String[paramTypeSigs.length];
 		if (is50OrHigher(curr.getJavaProject())) {
 			// for methods in 5.0 project test erasure
-			Set variables= getVariables(curr);
+			Set<String> variables= getVariables(curr);
 			for (int i= 0; i < paramTypeSigs.length; i++) {
 				paramTypes[i]= getErasure(paramTypeSigs[i], variables);
 			}
@@ -707,8 +707,8 @@ public final class JavaModelUtil {
 		return paramTypes;
 	}
 	
-	private static Set getVariables(IMethod curr) throws JavaModelException {
-		Set res= new HashSet();
+	private static Set<String> getVariables(IMethod curr) throws JavaModelException {
+		Set<String> res= new HashSet<String>();
 		ITypeParameter[] typeParameters= curr.getTypeParameters();
 		for (int i= 0; i < typeParameters.length; i++) {
 			res.add(typeParameters[i].getElementName());
@@ -721,7 +721,7 @@ public final class JavaModelUtil {
 		return res;
 	}
 
-	private static String getErasure(String str, Set variables) {
+	private static String getErasure(String str, Set<String> variables) {
 		switch (Signature.getTypeSignatureKind(str)) {
 			case Signature.TYPE_VARIABLE_SIGNATURE:
 				return null;
@@ -1008,11 +1008,11 @@ public final class JavaModelUtil {
 
 	public static IType[] getAllSuperTypes(IType type, IProgressMonitor pm) throws JavaModelException {
 		//workaround for 23656
-		Set types= new HashSet(Arrays.asList(type.newSupertypeHierarchy(pm).getAllSupertypes(type)));
+		Set<IType> types= new HashSet<IType>(Arrays.asList(type.newSupertypeHierarchy(pm).getAllSupertypes(type)));
 		IType objekt= type.getJavaProject().findType("java.lang.Object");//$NON-NLS-1$
 		if (objekt != null)
 			types.add(objekt);
-		return (IType[]) types.toArray(new IType[types.size()]);
+		return types.toArray(new IType[types.size()]);
 	}
 	
 	public static boolean isSuperType(ITypeHierarchy hierarchy, IType possibleSuperType, IType type) {
@@ -1102,14 +1102,14 @@ public final class JavaModelUtil {
 	 * @throws JavaModelException
 	 */
 	public static ICompilationUnit[] getAllCompilationUnits(IJavaElement[] javaElements) throws JavaModelException {
-		HashSet result= new HashSet();
+		HashSet<IJavaElement> result= new HashSet<IJavaElement>();
 		for (int i= 0; i < javaElements.length; i++) {
 			addAllCus(result, javaElements[i]);
 		}
-		return (ICompilationUnit[]) result.toArray(new ICompilationUnit[result.size()]);
+		return result.toArray(new ICompilationUnit[result.size()]);
 	}
 
-	private static void addAllCus(HashSet/*<ICompilationUnit>*/ collector, IJavaElement javaElement) throws JavaModelException {
+	private static void addAllCus(HashSet/*<ICompilationUnit>*/<IJavaElement> collector, IJavaElement javaElement) throws JavaModelException {
 		switch (javaElement.getElementType()) {
 			case IJavaElement.JAVA_PROJECT:
 				IJavaProject javaProject= (IJavaProject) javaElement;

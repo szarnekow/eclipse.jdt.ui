@@ -337,7 +337,7 @@ public class NewSourceFolderWizardPage extends NewElementWizardPage {
 						return;
 					}
 				}
-				ArrayList newEntries= new ArrayList(fEntries.length + 1);
+				ArrayList<IClasspathEntry> newEntries= new ArrayList<IClasspathEntry>(fEntries.length + 1);
 				int projectEntryIndex= -1;
 				
 				for (int i= 0; i < fEntries.length; i++) {
@@ -356,7 +356,7 @@ public class NewSourceFolderWizardPage extends NewElementWizardPage {
 				
 				IClasspathEntry newEntry= JavaCore.newSourceEntry(path);
 				
-				Set modified= new HashSet();				
+				Set<IClasspathEntry> modified= new HashSet<IClasspathEntry>();				
 				if (fExcludeInOthersFields.isSelected()) {
 					addExclusionPatterns(newEntry, newEntries, modified);
 					newEntries.add(JavaCore.newSourceEntry(path));
@@ -369,7 +369,7 @@ public class NewSourceFolderWizardPage extends NewElementWizardPage {
 					}
 				}
 					
-				fNewEntries= (IClasspathEntry[]) newEntries.toArray(new IClasspathEntry[newEntries.size()]);
+				fNewEntries= newEntries.toArray(new IClasspathEntry[newEntries.size()]);
 				fNewOutputLocation= fOutputLocation;
 
 				IJavaModelStatus status= JavaConventions.validateClasspath(fCurrJProject, fNewEntries, fNewOutputLocation);
@@ -400,10 +400,10 @@ public class NewSourceFolderWizardPage extends NewElementWizardPage {
 		}
 	}
 	
-	private void addExclusionPatterns(IClasspathEntry newEntry, List existing, Set modifiedEntries) {
+	private void addExclusionPatterns(IClasspathEntry newEntry, List<IClasspathEntry> existing, Set<IClasspathEntry> modifiedEntries) {
 		IPath entryPath= newEntry.getPath();
 		for (int i= 0; i < existing.size(); i++) {
-			IClasspathEntry curr= (IClasspathEntry) existing.get(i);
+			IClasspathEntry curr= existing.get(i);
 			IPath currPath= curr.getPath();
 			if (curr.getEntryKind() == IClasspathEntry.CPE_SOURCE && currPath.isPrefixOf(entryPath)) {
 				IPath[] exclusionFilters= curr.getExclusionPatterns();

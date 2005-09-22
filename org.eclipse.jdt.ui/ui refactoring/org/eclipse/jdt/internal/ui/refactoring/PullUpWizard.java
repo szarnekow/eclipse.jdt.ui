@@ -492,28 +492,28 @@ public class PullUpWizard extends RefactoringWizard {
 			try{
 				String shellTitle= RefactoringMessages.PullUpInputPage1_Edit_members; 
 				String labelText= RefactoringMessages.PullUpInputPage1_Mark_selected_members; 
-				Map stringMapping= createStringMappingForSelectedMembers();
-				String[] keys= (String[]) stringMapping.keySet().toArray(new String[stringMapping.keySet().size()]);
+				Map<String, Integer> stringMapping= createStringMappingForSelectedMembers();
+				String[] keys= stringMapping.keySet().toArray(new String[stringMapping.keySet().size()]);
 				Arrays.sort(keys);
 				int initialSelectionIndex= getInitialSelectionIndexForEditDialog(stringMapping, keys);
 				ComboSelectionDialog dialog= new ComboSelectionDialog(getShell(), shellTitle, labelText, keys, initialSelectionIndex);
 				dialog.setBlockOnOpen(true);
 				if (dialog.open() == Window.CANCEL)
 					return;
-				int action= ((Integer)stringMapping.get(dialog.getSelectedString())).intValue();
+				int action= stringMapping.get(dialog.getSelectedString()).intValue();
 				setInfoAction(getSelectedMemberActionInfos(), action);
 			} finally{
 				updateUIElements(preserved, true);
 			}
 		}
 
-		private int getInitialSelectionIndexForEditDialog(Map stringMapping, String[] keys) {
+		private int getInitialSelectionIndexForEditDialog(Map<String, Integer> stringMapping, String[] keys) {
 			int commonActionCode= getCommonActionCodeForSelectedInfos();
 			if (commonActionCode == -1)
 				return 0;
-			for (Iterator iter= stringMapping.keySet().iterator(); iter.hasNext();) {
-				String key= (String) iter.next();
-				int action= ((Integer)stringMapping.get(key)).intValue();
+			for (Iterator<String> iter= stringMapping.keySet().iterator(); iter.hasNext();) {
+				String key= iter.next();
+				int action= stringMapping.get(key).intValue();
 				if (commonActionCode == action){
 					for (int i= 0; i < keys.length; i++) {
 						if (key.equals(keys[i]))
@@ -545,13 +545,13 @@ public class PullUpWizard extends RefactoringWizard {
 		}
 
 		//String -> Integer
-		private Map createStringMappingForSelectedMembers() {
-			Map result= new HashMap();
+		private Map<String, Integer> createStringMappingForSelectedMembers() {
+			Map<String, Integer> result= new HashMap<String, Integer>();
 			putToStingMapping(result, MemberActionInfo.METHOD_LABELS, MemberActionInfo.PULL_UP_ACTION);
 			putToStingMapping(result, MemberActionInfo.METHOD_LABELS, MemberActionInfo.DECLARE_ABSTRACT_ACTION);
 			return result;
 		}
-		private static void putToStingMapping(Map result, String[] actionLabels, int actionIndex){
+		private static void putToStingMapping(Map<String, Integer> result, String[] actionLabels, int actionIndex){
 			result.put(actionLabels[actionIndex], new Integer(actionIndex));
 		}
 
@@ -684,7 +684,7 @@ public class PullUpWizard extends RefactoringWizard {
 		}
 
 		private MemberActionInfo[] convertPullableMemberToMemberActionInfoArray() {
-			List toPullUp= Arrays.asList(getPullUpRefactoring().getMembersToMove());
+			List<IMember> toPullUp= Arrays.asList(getPullUpRefactoring().getMembersToMove());
 			IMember[] members= getPullUpRefactoring().getPullableMembersOfDeclaringType();
 			MemberActionInfo[] result= new MemberActionInfo[members.length];
 			for (int i= 0; i < members.length; i++) {
@@ -812,13 +812,13 @@ public class PullUpWizard extends RefactoringWizard {
 	
 		private IMethod[] getMethodsForAction(int action) {
 			MemberActionInfo[] macs= getTableInputAsMemberActionInfoArray();
-			List list= new ArrayList(macs.length);
+			List<IMember> list= new ArrayList<IMember>(macs.length);
 			for (int i= 0; i < macs.length; i++) {
 				if (macs[i].isMethodInfo() && macs[i].getAction() == action){
 					list.add(macs[i].getMember());
 				}		
 			}
-			return (IMethod[]) list.toArray(new IMethod[list.size()]);
+			return list.toArray(new IMethod[list.size()]);
 		}
 
 		private IMember[] getMembersWithNoAction(){
@@ -831,23 +831,23 @@ public class PullUpWizard extends RefactoringWizard {
 	
 		private IMember[] getMembersForAction(int action) {
 			MemberActionInfo[] macs= getTableInputAsMemberActionInfoArray();
-			List result= new ArrayList(macs.length);
+			List<IMember> result= new ArrayList<IMember>(macs.length);
 			for (int i = 0; i < macs.length; i++) {
 				if (macs[i].getAction() == action)
 					result.add(macs[i].getMember());
 			}
-			return (IMember[]) result.toArray(new IMember[result.size()]);
+			return result.toArray(new IMember[result.size()]);
 		}
 	
 		private MemberActionInfo[] getActiveInfos() {
 			MemberActionInfo[] infos= getTableInputAsMemberActionInfoArray();
-			List result= new ArrayList(infos.length);
+			List<MemberActionInfo> result= new ArrayList<MemberActionInfo>(infos.length);
 			for (int i= 0; i < infos.length; i++) {
 				MemberActionInfo info= infos[i];
 				if (info.isActive())
 					result.add(info);
 			}
-			return (MemberActionInfo[]) result.toArray(new MemberActionInfo[result.size()]);
+			return result.toArray(new MemberActionInfo[result.size()]);
 		}
 
 		/* (non-Javadoc)
@@ -865,23 +865,23 @@ public class PullUpWizard extends RefactoringWizard {
 	private static class PullUpInputPage2 extends UserInputWizardPage {
 
 		private static class PullUpFilter extends ViewerFilter {
-			private final Set fTypesToShow;
+			private final Set<IType> fTypesToShow;
 	
 			PullUpFilter(ITypeHierarchy hierarchy, IMember[] members) {
 				//IType -> IMember[]
-				Map typeToMemberArray= PullUpInputPage2.createTypeToMemberArrayMapping(members);
+				Map<IType, IMember[]> typeToMemberArray= PullUpInputPage2.createTypeToMemberArrayMapping(members);
 				fTypesToShow= computeTypesToShow(hierarchy, typeToMemberArray);
 			}
 	
-			private static Set computeTypesToShow(ITypeHierarchy hierarchy, Map typeToMemberArray) {
-				Set typesToShow= new HashSet();
+			private static Set<IType> computeTypesToShow(ITypeHierarchy hierarchy, Map<IType, IMember[]> typeToMemberArray) {
+				Set<IType> typesToShow= new HashSet<IType>();
 				typesToShow.add(hierarchy.getType());
 				typesToShow.addAll(computeShowableSubtypesOfMainType(hierarchy, typeToMemberArray));
 				return typesToShow;
 			}
 		
-			private static Set computeShowableSubtypesOfMainType(ITypeHierarchy hierarchy, Map typeToMemberArray) {
-				Set result= new HashSet();
+			private static Set<IType> computeShowableSubtypesOfMainType(ITypeHierarchy hierarchy, Map<IType, IMember[]> typeToMemberArray) {
+				Set<IType> result= new HashSet<IType>();
 				IType[] subtypes= hierarchy.getAllSubtypes(hierarchy.getType());
 				for (int i= 0; i < subtypes.length; i++) {
 					IType subtype= subtypes[i];
@@ -891,13 +891,13 @@ public class PullUpWizard extends RefactoringWizard {
 				return result;
 			}
 	
-			private static boolean canBeShown(IType type, Map typeToMemberArray, ITypeHierarchy hierarchy) {
+			private static boolean canBeShown(IType type, Map<IType, IMember[]> typeToMemberArray, ITypeHierarchy hierarchy) {
 				if (typeToMemberArray.containsKey(type))
 					return true;
 				return anySubtypeCanBeShown(type, typeToMemberArray, hierarchy);	
 			}
 		
-			private static boolean anySubtypeCanBeShown(IType type, Map typeToMemberArray, ITypeHierarchy hierarchy){
+			private static boolean anySubtypeCanBeShown(IType type, Map<IType, IMember[]> typeToMemberArray, ITypeHierarchy hierarchy){
 				IType[] subTypes= hierarchy.getSubtypes(type);
 				for (int i= 0; i < subTypes.length; i++) {
 					if (canBeShown(subTypes[i], typeToMemberArray, hierarchy))
@@ -918,7 +918,7 @@ public class PullUpWizard extends RefactoringWizard {
 	
 		private static class PullUpHierarchyContentProvider implements ITreeContentProvider {
 			private ITypeHierarchy fHierarchy;
-			private Map fTypeToMemberArray; //IType -> IMember[]
+			private Map<IType, IMember[]> fTypeToMemberArray; //IType -> IMember[]
 			private IType fDeclaringType;
 	
 			PullUpHierarchyContentProvider(IType declaringType, IMember[] members) {
@@ -937,7 +937,7 @@ public class PullUpWizard extends RefactoringWizard {
 			}
 	
 			private Object[] getSubclassesAndMembers(IType type) {
-				Set set= new HashSet();
+				Set<IMember> set= new HashSet<IMember>();
 				set.addAll(Arrays.asList(getSubclasses(type)));
 				set.addAll(Arrays.asList(getMembers(type)));
 				return set.toArray();
@@ -951,7 +951,7 @@ public class PullUpWizard extends RefactoringWizard {
 	
 			private IMember[] getMembers(IType type) {
 				if (fTypeToMemberArray.containsKey(type))
-					return (IMember[]) (fTypeToMemberArray.get(type));
+					return (fTypeToMemberArray.get(type));
 				else
 					return new IMember[0];
 			}
@@ -1164,12 +1164,12 @@ public class PullUpWizard extends RefactoringWizard {
 	
 	  private IMethod[] getCheckedMethods(){
 		  Object[] checked= fTreeViewer.getCheckedElements();
-		  List members= new ArrayList(checked.length);
+		  List<Object> members= new ArrayList<Object>(checked.length);
 		  for (int i= 0; i < checked.length; i++) {
 			  if (checked[i] instanceof IMethod)
 				  members.add(checked[i]);
 		  }
-		  return (IMethod[]) members.toArray(new IMethod[members.size()]);
+		  return members.toArray(new IMethod[members.size()]);
 	  }
 	
 		private void createSourceViewerComposite(Composite parent) {
@@ -1320,28 +1320,28 @@ public class PullUpWizard extends RefactoringWizard {
 	  }
 	
 		//IType -> IMember[]
-		private static Map createTypeToMemberArrayMapping(IMember[] members) {
-			Map typeToMemberSet= createTypeToMemberSetMapping(members);
+		private static Map<IType, IMember[]> createTypeToMemberArrayMapping(IMember[] members) {
+			Map<IType, HashSet> typeToMemberSet= createTypeToMemberSetMapping(members);
 	
-			Map typeToMemberArray= new HashMap();
-			for (Iterator iter= typeToMemberSet.keySet().iterator(); iter.hasNext();) {
-				IType type= (IType) iter.next();
-				Set memberSet= (Set) typeToMemberSet.get(type);
-				IMember[] memberArray= (IMember[]) memberSet.toArray(new IMember[memberSet.size()]);
+			Map<IType, IMember[]> typeToMemberArray= new HashMap<IType, IMember[]>();
+			for (Iterator<IType> iter= typeToMemberSet.keySet().iterator(); iter.hasNext();) {
+				IType type= iter.next();
+				Set memberSet= typeToMemberSet.get(type);
+				IMember[] memberArray= (IMember[])memberSet.toArray(new IMember[memberSet.size()]);
 				typeToMemberArray.put(type, memberArray);
 			}
 			return typeToMemberArray;
 		}
 	
 		//	IType -> Set of IMember
-		private static Map createTypeToMemberSetMapping(IMember[] members) {
-			Map typeToMemberSet= new HashMap();
+		private static Map<IType, HashSet> createTypeToMemberSetMapping(IMember[] members) {
+			Map<IType, HashSet> typeToMemberSet= new HashMap<IType, HashSet>();
 			for (int i= 0; i < members.length; i++) {
 				IMember member= members[i];
 				IType type= member.getDeclaringType();
 				if (! typeToMemberSet.containsKey(type))
 					typeToMemberSet.put(type, new HashSet());
-				((Set) typeToMemberSet.get(type)).add(member);
+				typeToMemberSet.get(type).add(member);
 			}
 			return typeToMemberSet;
 		}

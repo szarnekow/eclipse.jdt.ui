@@ -1726,7 +1726,7 @@ public abstract class JavaEditor extends AbstractDecoratedTextEditor implements 
 	 * @since 3.0
 	 */
 	private IPreferenceStore createCombinedPreferenceStore(IEditorInput input) {
-		List stores= new ArrayList(3);
+		List<IPreferenceStore> stores= new ArrayList<IPreferenceStore>(3);
 
 		IJavaProject project= EditorUtility.getJavaProject(input);
 		if (project != null) {
@@ -1737,7 +1737,7 @@ public abstract class JavaEditor extends AbstractDecoratedTextEditor implements 
 		stores.add(new PreferencesAdapter(JavaCore.getPlugin().getPluginPreferences()));
 		stores.add(EditorsUI.getPreferenceStore());
 
-		return new ChainedPreferenceStore((IPreferenceStore[]) stores.toArray(new IPreferenceStore[stores.size()]));
+		return new ChainedPreferenceStore(stores.toArray(new IPreferenceStore[stores.size()]));
 	}
 
 	/**
@@ -2680,7 +2680,7 @@ public abstract class JavaEditor extends AbstractDecoratedTextEditor implements 
 	 */
 	protected void updateMarkerViews(Annotation annotation) {
 		if (annotation instanceof IJavaAnnotation) {
-			Iterator e= ((IJavaAnnotation) annotation).getOverlaidIterator();
+			Iterator<IJavaAnnotation> e= ((IJavaAnnotation) annotation).getOverlaidIterator();
 			if (e != null) {
 				while (e.hasNext()) {
 					Object o= e.next();
@@ -2759,7 +2759,7 @@ public abstract class JavaEditor extends AbstractDecoratedTextEditor implements 
 
 			// Add occurrence annotations
 			int length= fPositions.length;
-			Map annotationMap= new HashMap(length);
+			Map<Annotation, Position> annotationMap= new HashMap<Annotation, Position>(length);
 			for (int i= 0; i < length; i++) {
 
 				if (isCanceled())
@@ -2794,7 +2794,7 @@ public abstract class JavaEditor extends AbstractDecoratedTextEditor implements 
 						annotationModel.addAnnotation((Annotation)mapEntry.getKey(), (Position)mapEntry.getValue());
 					}
 				}
-				fOccurrenceAnnotations= (Annotation[])annotationMap.keySet().toArray(new Annotation[annotationMap.keySet().size()]);
+				fOccurrenceAnnotations= annotationMap.keySet().toArray(new Annotation[annotationMap.keySet().size()]);
 			}
 
 			return Status.OK_STATUS;
@@ -2835,7 +2835,7 @@ public abstract class JavaEditor extends AbstractDecoratedTextEditor implements 
 			fMarkOccurrenceModificationStamp= currentModificationStamp;
 		}
 
-		List matches= null;
+		List<ASTNode> matches= null;
 		if (fMarkExceptions || fMarkTypeOccurrences) {
 			ExceptionOccurrencesFinder exceptionFinder= new ExceptionOccurrencesFinder();
 			String message= exceptionFinder.initialize(astRoot, selection.getOffset(), selection.getLength());
@@ -2889,8 +2889,8 @@ public abstract class JavaEditor extends AbstractDecoratedTextEditor implements 
 
 		Position[] positions= new Position[matches.size()];
 		int i= 0;
-		for (Iterator each= matches.iterator(); each.hasNext();) {
-			ASTNode currentNode= (ASTNode)each.next();
+		for (Iterator<ASTNode> each= matches.iterator(); each.hasNext();) {
+			ASTNode currentNode= each.next();
 			positions[i++]= new Position(currentNode.getStartPosition(), currentNode.getLength());
 		}
 

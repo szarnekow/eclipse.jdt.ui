@@ -37,7 +37,7 @@ public class BodyDeclarationRewrite {
 	}
 	
 	public void insert(BodyDeclaration decl, TextEditGroup description) {
-		List container= ASTNodes.getBodyDeclarations(fTypeNode);
+		List<ASTNode> container= ASTNodes.getBodyDeclarations(fTypeNode);
 		int index= ASTNodes.getInsertionIndex(decl, container);
 		fListRewrite.insertAt(decl, index, description);
 	}

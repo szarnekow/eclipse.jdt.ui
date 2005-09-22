@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.internal.corext.refactoring.typeconstraints.types;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -494,10 +495,10 @@ public abstract class TType {
 	 * 		was not created with rememberSubtypes == true
 	 */
 	public TType[] getSubTypes() throws IllegalStateException {
-		Map subTypes= fEnvironment.getSubTypes();
+		Map<TType, ArrayList<TType>> subTypes= fEnvironment.getSubTypes();
 		if (subTypes == null)
 			throw new IllegalStateException("This TypeEnvironment does not remember subtypes"); //$NON-NLS-1$
-		List subtypes= (List) subTypes.get(this);
+		List subtypes= subTypes.get(this);
 		if (subtypes == null)
 			return EMPTY_TYPE_ARRAY;
 		else

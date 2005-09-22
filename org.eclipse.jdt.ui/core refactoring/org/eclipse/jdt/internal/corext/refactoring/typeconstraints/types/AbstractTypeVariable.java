@@ -50,7 +50,7 @@ public abstract class AbstractTypeVariable extends TType {
 	}
 	
 	public final TType[] getBounds() {
-		return (TType[]) fBounds.clone();
+		return fBounds.clone();
 	}
 	
 	public final TType[] getSubTypes() {

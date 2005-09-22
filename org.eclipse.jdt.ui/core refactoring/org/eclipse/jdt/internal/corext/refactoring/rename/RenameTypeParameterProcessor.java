@@ -59,6 +59,7 @@ import org.eclipse.ltk.core.refactoring.CompositeChange;
 import org.eclipse.ltk.core.refactoring.RefactoringDescriptor;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 import org.eclipse.ltk.core.refactoring.participants.CheckConditionsContext;
+import org.eclipse.ltk.core.refactoring.participants.RefactoringParticipant;
 import org.eclipse.ltk.core.refactoring.participants.SharableParticipants;
 import org.eclipse.ltk.core.refactoring.participants.ValidateEditChecker;
 
@@ -264,7 +265,7 @@ public final class RenameTypeParameterProcessor extends JavaRenameProcessor impl
 			if (change != null) {
 				final CompositeChange composite= new CompositeChange("", new Change[] { change}) { //$NON-NLS-1$
 					public RefactoringDescriptor getRefactoringDescriptor() {
-						final Map arguments= new HashMap();
+						final Map<String, String> arguments= new HashMap<String, String>();
 						arguments.put(ATTRIBUTE_HANDLE, fTypeParameter.getParent().getHandleIdentifier());
 						arguments.put(ATTRIBUTE_NAME, getNewElementName());
 						arguments.put(ATTRIBUTE_REFERENCES, Boolean.valueOf(fUpdateReferences).toString());
@@ -388,7 +389,7 @@ public final class RenameTypeParameterProcessor extends JavaRenameProcessor impl
 	/*
 	 * @see org.eclipse.jdt.internal.corext.refactoring.rename.JavaRenameProcessor#loadDerivedParticipants(org.eclipse.ltk.core.refactoring.RefactoringStatus, java.util.List, java.lang.String[], org.eclipse.ltk.core.refactoring.participants.SharableParticipants)
 	 */
-	protected final void loadDerivedParticipants(final RefactoringStatus status, final List result, final String[] natures, final SharableParticipants shared) throws CoreException {
+	protected final void loadDerivedParticipants(final RefactoringStatus status, final List<RefactoringParticipant> result, final String[] natures, final SharableParticipants shared) throws CoreException {
 		// Do nothing
 	}
 	

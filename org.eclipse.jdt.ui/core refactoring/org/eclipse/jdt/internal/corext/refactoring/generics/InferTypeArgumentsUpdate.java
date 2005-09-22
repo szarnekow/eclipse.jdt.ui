@@ -23,21 +23,21 @@ import org.eclipse.jdt.internal.corext.refactoring.typeconstraints2.CollectionEl
 
 public class InferTypeArgumentsUpdate {
 	public static class CuUpdate {
-		private List fDeclarations= new ArrayList();
-		private List fCastsToRemove= new ArrayList();
+		private List<CollectionElementVariable2> fDeclarations= new ArrayList<CollectionElementVariable2>();
+		private List<CastVariable2> fCastsToRemove= new ArrayList<CastVariable2>();
 
-		public List/*<CollectionElementVariable2>*/ getDeclarations() {
+		public List/*<CollectionElementVariable2>*/<CollectionElementVariable2> getDeclarations() {
 			return fDeclarations;
 		}
 		
-		public List/*<CastVariable2>*/ getCastsToRemove() {
+		public List/*<CastVariable2>*/<CastVariable2> getCastsToRemove() {
 			return fCastsToRemove;
 		}
 	}
 	
-	private HashMap/*<ICompilationUnit, CuUpdate>*/ fUpdates= new HashMap();
+	private HashMap/*<ICompilationUnit, CuUpdate>*/<ICompilationUnit, CuUpdate> fUpdates= new HashMap<ICompilationUnit, CuUpdate>();
 	
-	public HashMap/*<ICompilationUnit, CuUpdate>*/ getUpdates() {
+	public HashMap/*<ICompilationUnit, CuUpdate>*/<ICompilationUnit, CuUpdate> getUpdates() {
 		return fUpdates;
 	}
 	

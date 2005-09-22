@@ -37,9 +37,9 @@ import org.eclipse.jdt.internal.ui.JavaPlugin;
 public class JavaFormattingStrategy extends ContextBasedFormattingStrategy {
 
 	/** Documents to be formatted by this strategy */
-	private final LinkedList fDocuments= new LinkedList();
+	private final LinkedList<Object> fDocuments= new LinkedList<Object>();
 	/** Partitions to be formatted by this strategy */
-	private final LinkedList fPartitions= new LinkedList();
+	private final LinkedList<Object> fPartitions= new LinkedList<Object>();
 
 	/**
 	 * Creates a new java formatting strategy.

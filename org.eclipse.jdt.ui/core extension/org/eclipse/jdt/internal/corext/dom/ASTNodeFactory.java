@@ -78,7 +78,7 @@ public class ASTNodeFactory {
 		ASTParser p= ASTParser.newParser(ast.apiLevel());
 		p.setSource(buffer.toString().toCharArray());
 		CompilationUnit root= (CompilationUnit) p.createAST(null);
-		List list= root.types();
+		List<ASTNode> list= root.types();
 		TypeDeclaration typeDecl= (TypeDeclaration) list.get(0);
 		MethodDeclaration methodDecl= typeDecl.getMethods()[0];
 		TypeParameter tp= (TypeParameter) methodDecl.typeParameters().get(0);
@@ -95,7 +95,7 @@ public class ASTNodeFactory {
 		ASTParser p= ASTParser.newParser(ast.apiLevel());
 		p.setSource(buffer.toString().toCharArray());
 		CompilationUnit root= (CompilationUnit) p.createAST(null);
-		List list= root.types();
+		List<ASTNode> list= root.types();
 		TypeDeclaration typeDecl= (TypeDeclaration) list.get(0);
 		MethodDeclaration methodDecl= typeDecl.getMethods()[0];
 		ASTNode type= methodDecl.getReturnType2();
@@ -187,8 +187,8 @@ public class ASTNodeFactory {
 	 * to use {@link ASTNode#copySubtrees(AST, List)}.
 	 * @return Returns a list of nodes of type {@link Modifier}.
 	 */
-	public static List newModifiers(AST ast, List modifierNodes) {
-		List res= new ArrayList(modifierNodes.size());
+	public static List<Modifier> newModifiers(AST ast, List<ASTNode> modifierNodes) {
+		List<Modifier> res= new ArrayList<Modifier>(modifierNodes.size());
 		for (int i= 0; i < modifierNodes.size(); i++) {
 			Object curr= modifierNodes.get(i);
 			if (curr instanceof Modifier) {

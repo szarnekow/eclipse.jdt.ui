@@ -83,7 +83,7 @@ public class JarFileEntryTypeInfo extends TypeInfo {
 				}
 			}
 		}
-		List paths= Arrays.asList(enclosedPaths);
+		List<IPath> paths= Arrays.asList(enclosedPaths);
 		IJavaProject[] projects= jmodel.getJavaProjects();
 		for (int i= 0; i < projects.length; i++) {
 			IJavaProject jproject= projects[i];

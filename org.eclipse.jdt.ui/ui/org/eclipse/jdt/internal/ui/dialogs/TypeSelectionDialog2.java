@@ -196,7 +196,7 @@ public class TypeSelectionDialog2 extends SelectionStatusDialog {
 		}
 		
 		TypeInfoHistory history= TypeInfoHistory.getInstance();
-		List result= new ArrayList(selected.length);
+		List<Object> result= new ArrayList<Object>(selected.length);
 		if (result != null) {
 			for (int i= 0; i < selected.length; i++) {
 				try {

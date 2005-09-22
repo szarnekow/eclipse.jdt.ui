@@ -74,6 +74,7 @@ import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.internal.ui.dialogs.StatusInfo;
 import org.eclipse.jdt.internal.ui.dialogs.StatusUtil;
 import org.eclipse.jdt.internal.ui.javaeditor.JavaSourceViewer;
+import org.eclipse.jdt.internal.ui.preferences.OverlayPreferenceStore.OverlayKey;
 import org.eclipse.jdt.internal.ui.propertiesfileeditor.IPropertiesFilePartitions;
 import org.eclipse.jdt.internal.ui.propertiesfileeditor.PropertiesFileDocumentSetupParticipant;
 import org.eclipse.jdt.internal.ui.propertiesfileeditor.PropertiesFileSourceViewerConfiguration;
@@ -348,12 +349,12 @@ public class PropertiesFileEditorPreferencePage extends PreferencePage implement
 	 * 
 	 * @see #createDependency(Button, String, Control)
 	 */
-	private ArrayList fMasterSlaveListeners= new ArrayList();
+	private ArrayList<SelectionListener> fMasterSlaveListeners= new ArrayList<SelectionListener>();
 
 	/**
 	 * Highlighting color list
 	 */
-	private final List fHighlightingColorList= new ArrayList();
+	private final List<HighlightingColorListItem> fHighlightingColorList= new ArrayList<HighlightingColorListItem>();
 	/**
 	 * Highlighting color list viewer
 	 */
@@ -376,7 +377,7 @@ public class PropertiesFileEditorPreferencePage extends PreferencePage implement
 	
 	private OverlayPreferenceStore.OverlayKey[] createOverlayStoreKeys() {
 		
-		ArrayList overlayKeys= new ArrayList();
+		ArrayList<OverlayKey> overlayKeys= new ArrayList<OverlayKey>();
 
 		for (int i= 0; i < fSyntaxColorListModel.length; i++) {
 			String colorKey= fSyntaxColorListModel[i][1];
@@ -680,9 +681,9 @@ public class PropertiesFileEditorPreferencePage extends PreferencePage implement
         updateStatus(new StatusInfo());
         
         // Update slaves
-        Iterator iter= fMasterSlaveListeners.iterator();
+        Iterator<SelectionListener> iter= fMasterSlaveListeners.iterator();
         while (iter.hasNext()) {
-            SelectionListener listener= (SelectionListener)iter.next();
+            SelectionListener listener= iter.next();
             listener.widgetSelected(null);
         }
 	}

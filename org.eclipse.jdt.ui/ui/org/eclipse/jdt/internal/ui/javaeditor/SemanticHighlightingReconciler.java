@@ -188,7 +188,7 @@ public class SemanticHighlightingReconciler implements IJavaReconcilingListener,
 	private Highlighting[] fHighlightings;
 
 	/** Background job's added highlighted positions */
-	private List fAddedPositions= new ArrayList();
+	private List<Position> fAddedPositions= new ArrayList<Position>();
 	/** Background job's removed highlighted positions */
 	private List fRemovedPositions= new ArrayList();
 	/** Number of removed positions */
@@ -314,7 +314,7 @@ public class SemanticHighlightingReconciler implements IJavaReconcilingListener,
 	 * @param addedPositions the added positions
 	 * @param removedPositions the removed positions
 	 */
-	private void updatePresentation(TextPresentation textPresentation, List addedPositions, List removedPositions) {
+	private void updatePresentation(TextPresentation textPresentation, List<Position> addedPositions, List removedPositions) {
 		Runnable runnable= fJobPresenter.createUpdateRunnable(textPresentation, addedPositions, removedPositions);
 		if (runnable == null)
 			return;

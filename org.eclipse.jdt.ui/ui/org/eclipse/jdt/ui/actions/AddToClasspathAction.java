@@ -151,7 +151,7 @@ public class AddToClasspathAction extends SelectionDispatchAction {
 	}
 	
 	private static IFile[] getJARFiles(IStructuredSelection selection) throws JavaModelException {
-		ArrayList list= new ArrayList();
+		ArrayList<IFile> list= new ArrayList<IFile>();
 		for (Iterator iter= selection.iterator(); iter.hasNext();) {
 			Object element= iter.next();
 			if (element instanceof IAdaptable) {
@@ -161,7 +161,6 @@ public class AddToClasspathAction extends SelectionDispatchAction {
 				}
 			}
 		}
-		return (IFile[]) list.toArray(new IFile[list.size()]);
+		return list.toArray(new IFile[list.size()]);
 	}
 }
-

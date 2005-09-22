@@ -21,7 +21,7 @@ public class JavaSearchTableContentProvider extends JavaSearchContentProvider im
 	}
 	public Object[] getElements(Object inputElement) {
 		if (inputElement instanceof JavaSearchResult) {
-			Set filteredElements= new HashSet();
+			Set<Object> filteredElements= new HashSet<Object>();
 			Object[] rawElements= ((JavaSearchResult)inputElement).getElements();
 			for (int i= 0; i < rawElements.length; i++) {
 				if (getPage().getDisplayedMatchCount(rawElements[i]) > 0)
@@ -38,9 +38,9 @@ public class JavaSearchTableContentProvider extends JavaSearchContentProvider im
 		int addCount= 0;
 		int removeCount= 0;
 		TableViewer viewer= (TableViewer) getPage().getViewer();
-		Set updated= new HashSet();
-		Set added= new HashSet();
-		Set removed= new HashSet();
+		Set<Object> updated= new HashSet<Object>();
+		Set<Object> added= new HashSet<Object>();
+		Set<Object> removed= new HashSet<Object>();
 		for (int i= 0; i < updatedElements.length; i++) {
 			if (getPage().getDisplayedMatchCount(updatedElements[i]) > 0) {
 				if (viewer.testFindItem(updatedElements[i]) != null)

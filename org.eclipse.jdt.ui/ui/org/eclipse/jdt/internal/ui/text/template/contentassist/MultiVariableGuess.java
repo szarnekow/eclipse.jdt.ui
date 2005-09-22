@@ -180,7 +180,7 @@ public class MultiVariableGuess {
 		}
 	}
 
-	private final List fSlaves= new ArrayList();
+	private final List<VariablePosition> fSlaves= new ArrayList<VariablePosition>();
 
 	private MultiVariable fMaster;
 
@@ -213,8 +213,8 @@ public class MultiVariableGuess {
 							Object old= fMaster.getSet();
 							fMaster.setSet(fReplacementString);
 							if (!fReplacementString.equals(old)) {
-								for (Iterator it= fSlaves.iterator(); it.hasNext();) {
-									VariablePosition pos= (VariablePosition) it.next();
+								for (Iterator<VariablePosition> it= fSlaves.iterator(); it.hasNext();) {
+									VariablePosition pos= it.next();
 									String[] values= pos.getVariable().getValues(fReplacementString);
 									if (values != null)
 										document.replace(pos.getOffset(), pos.getLength(), values[0]);

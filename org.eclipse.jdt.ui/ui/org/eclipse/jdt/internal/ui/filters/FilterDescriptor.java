@@ -85,7 +85,7 @@ public class FilterDescriptor implements Comparable, IPluginContribution {
 	 */
 	public static FilterDescriptor[] getFilterDescriptors(String targetId) {
 		FilterDescriptor[] filterDescs= FilterDescriptor.getFilterDescriptors();
-		List result= new ArrayList(filterDescs.length);
+		List<FilterDescriptor> result= new ArrayList<FilterDescriptor>(filterDescs.length);
 		for (int i= 0; i < filterDescs.length; i++) {
 			String tid= filterDescs[i].getTargetId();
 			if (WorkbenchActivityHelper.filterItem(filterDescs[i]))
@@ -93,7 +93,7 @@ public class FilterDescriptor implements Comparable, IPluginContribution {
 			if (tid == null || tid.equals(targetId))
 				result.add(filterDescs[i]);
 		}
-		return (FilterDescriptor[])result.toArray(new FilterDescriptor[result.size()]);
+		return result.toArray(new FilterDescriptor[result.size()]);
 	}
 	
 	/**
@@ -247,8 +247,8 @@ public class FilterDescriptor implements Comparable, IPluginContribution {
 	 * Creates the filter descriptors.
 	 */
 	private static FilterDescriptor[] createFilterDescriptors(IConfigurationElement[] elements) {
-		List result= new ArrayList(5);
-		Set descIds= new HashSet(5);
+		List<FilterDescriptor> result= new ArrayList<FilterDescriptor>(5);
+		Set<String> descIds= new HashSet<String>(5);
 		for (int i= 0; i < elements.length; i++) {
 			final IConfigurationElement element= elements[i];
 			if (FILTER_TAG.equals(element.getName())) {
@@ -266,7 +266,7 @@ public class FilterDescriptor implements Comparable, IPluginContribution {
 				}
 			}
 		}
-		return (FilterDescriptor[])result.toArray(new FilterDescriptor[result.size()]);
+		return result.toArray(new FilterDescriptor[result.size()]);
 	}
 	
 	public String getLocalId() {

@@ -19,14 +19,14 @@ import org.eclipse.jdt.core.search.TypeNameRequestor;
 
 public class TypeInfoRequestor extends TypeNameRequestor {
 	
-	private Collection fTypesFound;
+	private Collection<TypeInfo> fTypesFound;
 	private TypeInfoFactory fFactory;
 	
 	/**
 	 * Constructs the TypeRefRequestor
 	 * @param typesFound Will collect all TypeRef's found
 	 */
-	public TypeInfoRequestor(Collection typesFound) {
+	public TypeInfoRequestor(Collection<TypeInfo> typesFound) {
 		Assert.isNotNull(typesFound);
 		fTypesFound= typesFound;
 		fFactory= new TypeInfoFactory();

@@ -89,7 +89,7 @@ public class ComplianceConfigurationBlock extends OptionsConfigurationBlock {
 	private static final String DEFAULT_CONF= "default"; //$NON-NLS-1$
 	private static final String USER_CONF= "user";	 //$NON-NLS-1$
 
-	private ArrayList fComplianceControls;
+	private ArrayList<Control> fComplianceControls;
 	private PixelConverter fPixelConverter;
 
 	private String[] fRememberedUserCompliance;
@@ -111,7 +111,7 @@ public class ComplianceConfigurationBlock extends OptionsConfigurationBlock {
 		super(context, project, getKeys(), container);
 
 		fBlockEnableState= null;
-		fComplianceControls= new ArrayList();
+		fComplianceControls= new ArrayList<Control>();
 			
 		fComplianceStatus= new StatusInfo();
 		
@@ -422,7 +422,7 @@ public class ComplianceConfigurationBlock extends OptionsConfigurationBlock {
 	private void updateComplianceEnableState() {
 		boolean enabled= checkValue(INTR_DEFAULT_COMPLIANCE, USER_CONF);
 		for (int i= fComplianceControls.size() - 1; i >= 0; i--) {
-			Control curr= (Control) fComplianceControls.get(i);
+			Control curr= fComplianceControls.get(i);
 			curr.setEnabled(enabled);
 		}
 	}

@@ -177,7 +177,7 @@ public final class MemberVisibilityAdjustor {
 					final FieldDeclaration newDeclaration= rewrite.getAST().newFieldDeclaration(newFragment);
 					newDeclaration.setType((Type) rewrite.createCopyTarget(declaration.getType()));
 					IExtendedModifier extended= null;
-					for (final Iterator iterator= declaration.modifiers().iterator(); iterator.hasNext();) {
+					for (final Iterator<ASTNode> iterator= declaration.modifiers().iterator(); iterator.hasNext();) {
 						extended= (IExtendedModifier) iterator.next();
 						if (extended.isModifier()) {
 							final Modifier modifier= (Modifier) extended;
@@ -483,17 +483,17 @@ public final class MemberVisibilityAdjustor {
 	 * @param adjustments the map of members to visibility adjustments
 	 * @return <code>true</code> if the member needs further adjustment, <code>false</code> otherwise
 	 */
-	public static boolean needsVisibilityAdjustments(final IMember member, final ModifierKeyword threshold, final Map adjustments) {
+	public static boolean needsVisibilityAdjustments(final IMember member, final ModifierKeyword threshold, final Map<IMember, IncomingMemberVisibilityAdjustment> adjustments) {
 		Assert.isNotNull(member);
 		Assert.isNotNull(adjustments);
-		final IncomingMemberVisibilityAdjustment adjustment= (IncomingMemberVisibilityAdjustment) adjustments.get(member);
+		final IncomingMemberVisibilityAdjustment adjustment= adjustments.get(member);
 		if (adjustment != null)
 			return hasLowerVisibility(adjustment.getKeyword(), threshold);
 		return true;
 	}
 
 	/** The map of members to visibility adjustments */
-	private Map fAdjustments= new HashMap();
+	private Map<IMember, IncomingMemberVisibilityAdjustment> fAdjustments= new HashMap<IMember, IncomingMemberVisibilityAdjustment>();
 
 	/** The failure message severity */
 	private int fFailureSeverity= RefactoringStatus.ERROR;
@@ -517,7 +517,7 @@ public final class MemberVisibilityAdjustor {
 	private ASTRewrite fRewrite= null;
 
 	/** The map of compilation units to compilation unit rewrites */
-	private Map fRewrites= new HashMap(3);
+	private Map<ICompilationUnit, CompilationUnitRewrite> fRewrites= new HashMap<ICompilationUnit, CompilationUnitRewrite>(3);
 
 	/** The root node of the ast rewrite for reference visibility adjustments, or <code>null</code> to use a compilation unit rewrite */
 	private CompilationUnit fRoot= null;
@@ -1034,7 +1034,7 @@ public final class MemberVisibilityAdjustor {
 	 * 
 	 * @return the visibility adjustments
 	 */
-	public final Map getAdjustments() {
+	public final Map<IMember, IncomingMemberVisibilityAdjustment> getAdjustments() {
 		return fAdjustments;
 	}
 
@@ -1045,7 +1045,7 @@ public final class MemberVisibilityAdjustor {
 	 * @return the rewrite for the compilation unit
 	 */
 	private CompilationUnitRewrite getCompilationUnitRewrite(final ICompilationUnit unit) {
-		CompilationUnitRewrite rewrite= (CompilationUnitRewrite) fRewrites.get(unit);
+		CompilationUnitRewrite rewrite= fRewrites.get(unit);
 		if (rewrite == null)
 			rewrite= new CompilationUnitRewrite(unit);
 		return rewrite;
@@ -1102,10 +1102,10 @@ public final class MemberVisibilityAdjustor {
 			monitor.setTaskName(RefactoringCoreMessages.MemberVisibilityAdjustor_adjusting);
 			IMember member= null;
 			IVisibilityAdjustment adjustment= null;
-			for (final Iterator iterator= fAdjustments.keySet().iterator(); iterator.hasNext();) {
-				member= (IMember) iterator.next();
+			for (final Iterator<IMember> iterator= fAdjustments.keySet().iterator(); iterator.hasNext();) {
+				member= iterator.next();
 				if (unit.equals(member.getCompilationUnit())) {
-					adjustment= (IVisibilityAdjustment) fAdjustments.get(member);
+					adjustment= fAdjustments.get(member);
 					if (adjustment != null)
 						adjustment.rewriteVisibility(this, new SubProgressMonitor(monitor, 1));
 				}
@@ -1128,9 +1128,9 @@ public final class MemberVisibilityAdjustor {
 			monitor.setTaskName(RefactoringCoreMessages.MemberVisibilityAdjustor_adjusting);
 			IMember member= null;
 			IVisibilityAdjustment adjustment= null;
-			for (final Iterator iterator= fAdjustments.keySet().iterator(); iterator.hasNext();) {
-				member= (IMember) iterator.next();
-				adjustment= (IVisibilityAdjustment) fAdjustments.get(member);
+			for (final Iterator<IMember> iterator= fAdjustments.keySet().iterator(); iterator.hasNext();) {
+				member= iterator.next();
+				adjustment= fAdjustments.get(member);
 				if (adjustment != null)
 					adjustment.rewriteVisibility(this, new SubProgressMonitor(monitor, 1));
 			}
@@ -1147,7 +1147,7 @@ public final class MemberVisibilityAdjustor {
 	 * 
 	 * @param adjustments the existing adjustments to set
 	 */
-	public final void setAdjustments(final Map adjustments) {
+	public final void setAdjustments(final Map<IMember, IncomingMemberVisibilityAdjustment> adjustments) {
 		Assert.isNotNull(adjustments);
 		fAdjustments= adjustments;
 	}
@@ -1218,7 +1218,7 @@ public final class MemberVisibilityAdjustor {
 	 * 
 	 * @param rewrites the map of compilation units to compilation unit rewrites to set
 	 */
-	public final void setRewrites(final Map rewrites) {
+	public final void setRewrites(final Map<ICompilationUnit, CompilationUnitRewrite> rewrites) {
 		Assert.isNotNull(rewrites);
 		fRewrites= rewrites;
 	}

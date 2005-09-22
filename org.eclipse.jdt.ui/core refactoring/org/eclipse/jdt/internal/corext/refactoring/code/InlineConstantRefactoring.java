@@ -166,7 +166,7 @@ public class InlineConstantRefactoring extends Refactoring {
 			private final HashSet fStaticImportsInInitializer2;
 		
 			// cache:
-			private Set fNamesDeclaredLocallyAtNewLocation;
+			private Set<String> fNamesDeclaredLocallyAtNewLocation;
 		
 			private final Expression fNewLocation;
 			private final HashSet fStaticImportsInReference;
@@ -188,10 +188,10 @@ public class InlineConstantRefactoring extends Refactoring {
 			 * @param scope not a TypeDeclaration
 			 * @return Set containing Strings representing simple names
 			 */
-			private Set getLocallyDeclaredNames(BodyDeclaration scope) {
+			private Set<String> getLocallyDeclaredNames(BodyDeclaration scope) {
 				Assert.isTrue(!(scope instanceof AbstractTypeDeclaration));
 		
-				final Set result= new HashSet();
+				final Set<String> result= new HashSet<String>();
 		
 				if (scope instanceof FieldDeclaration)
 					return result;
@@ -236,7 +236,7 @@ public class InlineConstantRefactoring extends Refactoring {
 				else
 					invocation.getExpression().accept(this);
 		
-				for (Iterator it= invocation.arguments().iterator(); it.hasNext();)
+				for (Iterator<ASTNode> it= invocation.arguments().iterator(); it.hasNext();)
 					((Expression) it.next()).accept(this);
 		
 				return false;
@@ -289,7 +289,7 @@ public class InlineConstantRefactoring extends Refactoring {
 				return getNamesDeclaredLocallyAtNewLocation().contains(memberName.getIdentifier());
 			}
 		
-			private Set getNamesDeclaredLocallyAtNewLocation() {
+			private Set<String> getNamesDeclaredLocallyAtNewLocation() {
 				if (fNamesDeclaredLocallyAtNewLocation != null)
 					return fNamesDeclaredLocallyAtNewLocation;
 		
@@ -688,7 +688,7 @@ public class InlineConstantRefactoring extends Refactoring {
 		pm.beginTask("", 3); //$NON-NLS-1$
 		
 		try {
-			List/*<CompilationUnitChange>*/changes= new ArrayList();
+			List/*<CompilationUnitChange>*/<CompilationUnitChange>changes= new ArrayList<CompilationUnitChange>();
 			HashSet staticImportsInInitializer= new HashSet();
 			ImportReferencesCollector importReferencesCollector= new ImportReferencesCollector(fField.getJavaProject(), null, new ArrayList(), staticImportsInInitializer);
 			getInitializer().accept(importReferencesCollector);
@@ -720,8 +720,8 @@ public class InlineConstantRefactoring extends Refactoring {
 
 			if (getRemoveDeclaration() && getReplaceAllReferences()) {
 				boolean declarationRemoved= false;
-				for (Iterator iter= changes.iterator(); iter.hasNext();) {
-					CompilationUnitChange change= (CompilationUnitChange) iter.next();
+				for (Iterator<CompilationUnitChange> iter= changes.iterator(); iter.hasNext();) {
+					CompilationUnitChange change= iter.next();
 					if (change.getCompilationUnit().equals(fDeclarationCuRewrite.getCu())) {
 						declarationRemoved= true;
 						break;
@@ -737,14 +737,14 @@ public class InlineConstantRefactoring extends Refactoring {
 
 			ICompilationUnit[] cus= new ICompilationUnit[changes.size()];
 			for (int i= 0; i < changes.size(); i++) {
-				CompilationUnitChange change= (CompilationUnitChange) changes.get(i);
+				CompilationUnitChange change= changes.get(i);
 				cus[i]= change.getCompilationUnit();
 			}
 			result.merge(Checks.validateModifiesFiles(ResourceUtil.getFiles(cus), getValidationContext()));
 
 			pm.worked(1);
 
-			fChanges= (CompilationUnitChange[]) changes.toArray(new CompilationUnitChange[changes.size()]);
+			fChanges= changes.toArray(new CompilationUnitChange[changes.size()]);
 
 			return result;
 			

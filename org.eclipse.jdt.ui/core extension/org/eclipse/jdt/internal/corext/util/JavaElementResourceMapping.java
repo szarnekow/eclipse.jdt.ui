@@ -207,7 +207,7 @@ public abstract class JavaElementResourceMapping extends ResourceMapping {
 	}
 	
 	private static IFile[] getPackageContent(IPackageFragment pack) throws CoreException {
-		List result= new ArrayList();
+		List<IFile> result= new ArrayList<IFile>();
 		IContainer container= (IContainer)pack.getCorrespondingResource();
 		if (container != null) {
 			IResource[] members= container.members();
@@ -217,11 +217,11 @@ public abstract class JavaElementResourceMapping extends ResourceMapping {
 					IFile file= (IFile)member;
 					if ("class".equals(file.getFileExtension()) && file.isDerived()) //$NON-NLS-1$
 						continue;
-					result.add(member);
+					result.add(file);
 				}
 			}
 		}
-		return (IFile[])result.toArray(new IFile[result.size()]);
+		return result.toArray(new IFile[result.size()]);
 	}
 	
 	
@@ -271,14 +271,14 @@ public abstract class JavaElementResourceMapping extends ResourceMapping {
 			return fFragments;
 		}
 		public IProject[] getProjects() {
-			Set result= new HashSet();
+			Set<IProject> result= new HashSet<IProject>();
 			for (int i= 0; i < fFragments.length; i++) {
 				result.add(fFragments[i].getJavaProject().getProject());
 			}
-			return (IProject[])result.toArray(new IProject[result.size()]);
+			return result.toArray(new IProject[result.size()]);
 		}
 		public ResourceTraversal[] getTraversals(ResourceMappingContext context, IProgressMonitor monitor) throws CoreException {
-			List result= new ArrayList();
+			List<ResourceTraversal> result= new ArrayList<ResourceTraversal>();
 			if (context instanceof RemoteResourceMappingContext) {
 				for (int i= 0; i < fFragments.length; i++) {
 					result.add(new ResourceTraversal(
@@ -289,7 +289,7 @@ public abstract class JavaElementResourceMapping extends ResourceMapping {
 					result.add(new LocalPackageFragementTraversal(fFragments[i]));
 				}
 			}
-			return (ResourceTraversal[])result.toArray(new ResourceTraversal[result.size()]);
+			return result.toArray(new ResourceTraversal[result.size()]);
 		}
 	}
 	
@@ -365,7 +365,7 @@ public abstract class JavaElementResourceMapping extends ResourceMapping {
 	
 	public static ResourceMapping create(LogicalPackage logicalPackage) {
 		IPackageFragment[] fragments= logicalPackage.getFragments();
-		List toProcess= new ArrayList(fragments.length);
+		List<IPackageFragment> toProcess= new ArrayList<IPackageFragment>(fragments.length);
 		for (int i= 0; i < fragments.length; i++) {
 			// only add if not part of an archive
 			IPackageFragmentRoot root= (IPackageFragmentRoot)fragments[i].getAncestor(IJavaElement.PACKAGE_FRAGMENT_ROOT);
@@ -375,6 +375,6 @@ public abstract class JavaElementResourceMapping extends ResourceMapping {
 		}
 		if (toProcess.size() == 0)
 			return null;
-		return new LogicalPackageResourceMapping((IPackageFragment[])toProcess.toArray(new IPackageFragment[toProcess.size()]));
+		return new LogicalPackageResourceMapping(toProcess.toArray(new IPackageFragment[toProcess.size()]));
 	}
 }

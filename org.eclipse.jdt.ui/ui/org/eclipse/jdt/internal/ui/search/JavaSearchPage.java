@@ -213,7 +213,7 @@ public class JavaSearchPage extends DialogPage implements ISearchPage, IJavaSear
 	private final static String STORE_HISTORY= "HISTORY"; //$NON-NLS-1$
 	private final static String STORE_HISTORY_SIZE= "HISTORY_SIZE"; //$NON-NLS-1$
 	
-	private final List fPreviousSearchPatterns;
+	private final List<SearchPatternData> fPreviousSearchPatterns;
 	
 	private SearchPatternData fInitialData;
 	private IJavaElement fJavaElement;
@@ -250,7 +250,7 @@ public class JavaSearchPage extends DialogPage implements ISearchPage, IJavaSear
 	 * 
 	 */
 	public JavaSearchPage() {
-		fPreviousSearchPatterns= new ArrayList();
+		fPreviousSearchPatterns= new ArrayList<SearchPatternData>();
 	}
 	
 	
@@ -354,7 +354,7 @@ public class JavaSearchPage extends DialogPage implements ISearchPage, IJavaSear
 		int patternCount= fPreviousSearchPatterns.size();
 		String [] patterns= new String[patternCount];
 		for (int i= 0; i < patternCount; i++)
-			patterns[i]= ((SearchPatternData) fPreviousSearchPatterns.get(i)).getPattern();
+			patterns[i]= fPreviousSearchPatterns.get(i).getPattern();
 		return patterns;
 	}
 	
@@ -373,8 +373,8 @@ public class JavaSearchPage extends DialogPage implements ISearchPage, IJavaSear
 
 	
 	private SearchPatternData findInPrevious(String pattern) {
-		for (Iterator iter= fPreviousSearchPatterns.iterator(); iter.hasNext();) {
-			SearchPatternData element= (SearchPatternData) iter.next();
+		for (Iterator<SearchPatternData> iter= fPreviousSearchPatterns.iterator(); iter.hasNext();) {
+			SearchPatternData element= iter.next();
 			if (pattern.equals(element.getPattern())) {
 				return element;
 			}
@@ -605,7 +605,7 @@ public class JavaSearchPage extends DialogPage implements ISearchPage, IJavaSear
 		if (selectionIndex < 0 || selectionIndex >= fPreviousSearchPatterns.size())
 			return;
 		
-		SearchPatternData initialData= (SearchPatternData) fPreviousSearchPatterns.get(selectionIndex);
+		SearchPatternData initialData= fPreviousSearchPatterns.get(selectionIndex);
 
 		setSearchFor(initialData.getSearchFor());
 		setLimitTo(initialData.getSearchFor(), initialData.getLimitTo());
@@ -833,7 +833,7 @@ public class JavaSearchPage extends DialogPage implements ISearchPage, IJavaSear
 	
 	private SearchPatternData getDefaultInitValues() {
 		if (!fPreviousSearchPatterns.isEmpty()) {
-			return (SearchPatternData) fPreviousSearchPatterns.get(0);
+			return fPreviousSearchPatterns.get(0);
 		}
 		return new SearchPatternData(TYPE, REFERENCES, fIsCaseSensitive, "", null); //$NON-NLS-1$
 	}	
@@ -909,7 +909,7 @@ public class JavaSearchPage extends DialogPage implements ISearchPage, IJavaSear
 		s.put(STORE_HISTORY_SIZE, historySize);
 		for (int i= 0; i < historySize; i++) {
 			IDialogSettings histSettings= s.addNewSection(STORE_HISTORY + i);
-			SearchPatternData data= ((SearchPatternData) fPreviousSearchPatterns.get(i));
+			SearchPatternData data= fPreviousSearchPatterns.get(i);
 			data.store(histSettings);
 		}
 	}

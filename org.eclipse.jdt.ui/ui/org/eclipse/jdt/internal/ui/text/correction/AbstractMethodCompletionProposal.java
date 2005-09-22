@@ -111,7 +111,7 @@ public abstract class AbstractMethodCompletionProposal extends LinkedCorrectionP
 		
 		ModifierCorrectionSubProcessor.installLinkedVisibilityProposals(this, rewrite, decl.modifiers());
 
-		ArrayList takenNames= new ArrayList();
+		ArrayList<String> takenNames= new ArrayList<String>();
 		addNewTypeParameters(rewrite, takenNames, decl.typeParameters());
 
 		decl.setName(newNameNode);
@@ -191,9 +191,9 @@ public abstract class AbstractMethodCompletionProposal extends LinkedCorrectionP
 
 	protected abstract boolean isConstructor();
 
-	protected abstract void addNewTypeParameters(ASTRewrite rewrite, List takenNames, List params) throws CoreException;
-	protected abstract void addNewParameters(ASTRewrite rewrite, List takenNames, List params) throws CoreException;
-	protected abstract void addNewExceptions(ASTRewrite rewrite, List exceptions) throws CoreException;
+	protected abstract void addNewTypeParameters(ASTRewrite rewrite, List<String> takenNames, List<ASTNode> params) throws CoreException;
+	protected abstract void addNewParameters(ASTRewrite rewrite, List<String> takenNames, List<ASTNode> params) throws CoreException;
+	protected abstract void addNewExceptions(ASTRewrite rewrite, List<ASTNode> exceptions) throws CoreException;
 
 	protected abstract SimpleName getNewName(ASTRewrite rewrite);
 	protected abstract int evaluateModifiers(ASTNode targetTypeDecl);

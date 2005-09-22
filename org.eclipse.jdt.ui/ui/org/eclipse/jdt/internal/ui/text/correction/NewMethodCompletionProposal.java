@@ -53,10 +53,10 @@ public class NewMethodCompletionProposal extends AbstractMethodCompletionProposa
 	private static final String KEY_NAME= "name"; //$NON-NLS-1$
 	private static final String KEY_TYPE= "type"; //$NON-NLS-1$
 
-	private List fArguments;
+	private List<ASTNode> fArguments;
 
 	//	invocationNode is MethodInvocation, ConstructorInvocation, SuperConstructorInvocation, ClassInstanceCreation, SuperMethodInvocation
-	public NewMethodCompletionProposal(String label, ICompilationUnit targetCU, ASTNode invocationNode,  List arguments, ITypeBinding binding, int relevance, Image image) {
+	public NewMethodCompletionProposal(String label, ICompilationUnit targetCU, ASTNode invocationNode,  List<ASTNode> arguments, ITypeBinding binding, int relevance, Image image) {
 		super(label, targetCU, invocationNode, binding, relevance, image);
 		fArguments= arguments;
 	}
@@ -204,10 +204,10 @@ public class NewMethodCompletionProposal extends AbstractMethodCompletionProposa
 	/* (non-Javadoc)
 	 * @see org.eclipse.jdt.internal.ui.text.correction.AbstractMethodCompletionProposal#addNewParameters(org.eclipse.jdt.core.dom.rewrite.ASTRewrite, java.util.List, java.util.List)
 	 */
-	protected void addNewParameters(ASTRewrite rewrite, List takenNames, List params) throws CoreException {
+	protected void addNewParameters(ASTRewrite rewrite, List<String> takenNames, List<ASTNode> params) throws CoreException {
 		AST ast= rewrite.getAST();
 
-		List arguments= fArguments;
+		List<ASTNode> arguments= fArguments;
 
 		for (int i= 0; i < arguments.size(); i++) {
 			Expression elem= (Expression) arguments.get(i);
@@ -245,12 +245,12 @@ public class NewMethodCompletionProposal extends AbstractMethodCompletionProposa
 		return ast.newSimpleType(ast.newSimpleName("Object")); //$NON-NLS-1$
 	}
 
-	private String evaluateParameterName(List takenNames, Expression argNode, Type type, String key) {
+	private String evaluateParameterName(List<String> takenNames, Expression argNode, Type type, String key) {
 		IJavaProject project= getCompilationUnit().getJavaProject();
-		String[] excludedNames= (String[]) takenNames.toArray(new String[takenNames.size()]);
+		String[] excludedNames= takenNames.toArray(new String[takenNames.size()]);
 
 		String favourite= null;
-		HashSet namesTaken= new HashSet();
+		HashSet<String> namesTaken= new HashSet<String>();
 		String baseName= ASTResolving.getBaseNameFromExpression(project, argNode);
 		if (baseName != null) {
 			String[] suggestions= StubUtility.getArgumentNameSuggestions(project, baseName, 0, excludedNames);
@@ -279,7 +279,7 @@ public class NewMethodCompletionProposal extends AbstractMethodCompletionProposa
 		return favourite;
 	}
 
-	private void addNameProposals(String key, String[] names, Set namesTaken) {
+	private void addNameProposals(String key, String[] names, Set<String> namesTaken) {
 		for (int i= 0; i < names.length; i++) {
 			String curr= names[i];
 			if (namesTaken.add(curr)) {
@@ -292,13 +292,13 @@ public class NewMethodCompletionProposal extends AbstractMethodCompletionProposa
 	/* (non-Javadoc)
 	 * @see org.eclipse.jdt.internal.ui.text.correction.AbstractMethodCompletionProposal#addNewExceptions(org.eclipse.jdt.core.dom.rewrite.ASTRewrite, java.util.List)
 	 */
-	protected void addNewExceptions(ASTRewrite rewrite, List exceptions) throws CoreException {
+	protected void addNewExceptions(ASTRewrite rewrite, List<ASTNode> exceptions) throws CoreException {
 	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.jdt.internal.ui.text.correction.AbstractMethodCompletionProposal#addNewTypeParameters(org.eclipse.jdt.core.dom.rewrite.ASTRewrite, java.util.List, java.util.List)
 	 */
-	protected void addNewTypeParameters(ASTRewrite rewrite, List takenNames, List params) throws CoreException {
+	protected void addNewTypeParameters(ASTRewrite rewrite, List<String> takenNames, List<ASTNode> params) throws CoreException {
 
 	}
 

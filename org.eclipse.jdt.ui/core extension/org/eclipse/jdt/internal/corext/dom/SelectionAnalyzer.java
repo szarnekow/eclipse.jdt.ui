@@ -31,7 +31,7 @@ public class SelectionAnalyzer extends GenericVisitor {
 	private ASTNode fLastCoveringNode;
 	
 	// Selected nodes
-	private List fSelectedNodes;
+	private List<ASTNode> fSelectedNodes;
 	
 	public SelectionAnalyzer(Selection selection, boolean traverseSelectedNode) {
 		super(true);
@@ -47,19 +47,19 @@ public class SelectionAnalyzer extends GenericVisitor {
 	public ASTNode[] getSelectedNodes() {
 		if (fSelectedNodes == null || fSelectedNodes.isEmpty())
 			return new ASTNode[0];
-		return (ASTNode[]) fSelectedNodes.toArray(new ASTNode[fSelectedNodes.size()]);
+		return fSelectedNodes.toArray(new ASTNode[fSelectedNodes.size()]);
 	}
 	
 	public ASTNode getFirstSelectedNode() {
 		if (fSelectedNodes == null || fSelectedNodes.isEmpty())
 			return null;
-		return (ASTNode)fSelectedNodes.get(0);
+		return fSelectedNodes.get(0);
 	}
 	
 	public ASTNode getLastSelectedNode() {
 		if (fSelectedNodes == null || fSelectedNodes.isEmpty())
 			return null;
-		return (ASTNode)fSelectedNodes.get(fSelectedNodes.size() - 1);
+		return fSelectedNodes.get(fSelectedNodes.size() - 1);
 	}
 	
 	public boolean isExpressionSelected() {
@@ -71,8 +71,8 @@ public class SelectionAnalyzer extends GenericVisitor {
 	public IRegion getSelectedNodeRange() {
 		if (fSelectedNodes == null || fSelectedNodes.isEmpty())
 			return null;
-		ASTNode firstNode= (ASTNode)fSelectedNodes.get(0);
-		ASTNode lastNode= (ASTNode)fSelectedNodes.get(fSelectedNodes.size() - 1);
+		ASTNode firstNode= fSelectedNodes.get(0);
+		ASTNode lastNode= fSelectedNodes.get(fSelectedNodes.size() - 1);
 		int start= firstNode.getStartPosition();
 		return new Region(start, lastNode.getStartPosition() + lastNode.getLength() - start);
 	}
@@ -114,7 +114,7 @@ public class SelectionAnalyzer extends GenericVisitor {
 	}
 	
 	protected void handleFirstSelectedNode(ASTNode node) {
-		fSelectedNodes= new ArrayList(5);
+		fSelectedNodes= new ArrayList<ASTNode>(5);
 		fSelectedNodes.add(node);
 	}
 	
@@ -128,7 +128,7 @@ public class SelectionAnalyzer extends GenericVisitor {
 		return false;
 	}
 	
-	protected List internalGetSelectedNodes() {
+	protected List<ASTNode> internalGetSelectedNodes() {
 		return fSelectedNodes;
 	}
 	

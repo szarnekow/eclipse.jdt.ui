@@ -81,7 +81,7 @@ public class ConvertForLoopProposal extends LinkedCorrectionProposal {
 	 */
 	private class LocalOccurencesFinder extends ASTVisitor {
 
-		private List fOccurences;
+		private List<Expression> fOccurences;
 		private ASTNode fScope;
 		private IBinding fTempBinding;
 		private ITypeBinding fTempTypeBinding;
@@ -98,20 +98,20 @@ public class ConvertForLoopProposal extends LinkedCorrectionProposal {
 		public LocalOccurencesFinder(Name collectionName, IBinding oldCollectionBinding, ITypeBinding oldCollectionTypeBinding,
 			ASTNode scope) {
 			this.fScope= scope;
-			fOccurences= new ArrayList();
+			fOccurences= new ArrayList<Expression>();
 			fTempBinding= oldCollectionBinding;
 			fTempTypeBinding= oldCollectionTypeBinding;
 		}
 
 		public LocalOccurencesFinder(Name name, ASTNode scope) {
 			this.fScope= scope;
-			fOccurences= new ArrayList();
+			fOccurences= new ArrayList<Expression>();
 			fTempBinding= name.resolveBinding();
 		}
 
 		public LocalOccurencesFinder(IBinding binding, ASTNode scope) {
 			this.fScope= scope;
-			fOccurences= new ArrayList();
+			fOccurences= new ArrayList<Expression>();
 			fTempBinding= binding;
 		}
 
@@ -140,7 +140,7 @@ public class ConvertForLoopProposal extends LinkedCorrectionProposal {
 			return true;
 		}
 
-		public List getOccurences() {
+		public List<Expression> getOccurences() {
 			return fOccurences;
 		}
 	}
@@ -184,7 +184,7 @@ public class ConvertForLoopProposal extends LinkedCorrectionProposal {
 	private boolean bodySatifiesPreconditions() {
 		// checks in a single pass through Loop's body that arrayOrIndexNotAssignedTo
 		// and indexNotReferencedOutsideInferredArray
-		final List writeAccesses= new ArrayList();
+		final List<Expression> writeAccesses= new ArrayList<Expression>();
 		final boolean isIndexReferenced[]= {false};
 
 		fOldForStatement.getBody().accept(new ASTVisitor() {
@@ -234,7 +234,7 @@ public class ConvertForLoopProposal extends LinkedCorrectionProposal {
 		return writeAccesses.isEmpty() && !isIndexReferenced[0];
 	}
 
-	private void checkThatIndexIsNotAssigned(final List writeAccesses, Expression expression) {
+	private void checkThatIndexIsNotAssigned(final List<Expression> writeAccesses, Expression expression) {
 		Name name= (Name)expression;
 		IBinding binding= name.resolveBinding();
 		if (binding == fIndexBinding) {
@@ -242,7 +242,7 @@ public class ConvertForLoopProposal extends LinkedCorrectionProposal {
 		}
 	}
 
-	private void checkThatArrayIsNotAssigned(final List writeAccesses, Expression expression) {
+	private void checkThatArrayIsNotAssigned(final List<Expression> writeAccesses, Expression expression) {
 		ArrayAccess arrayAccess= (ArrayAccess)expression;
 		if (arrayAccess.getArray() instanceof Name) {
 			Name arrayName= (Name)arrayAccess.getArray();
@@ -300,11 +300,11 @@ public class ConvertForLoopProposal extends LinkedCorrectionProposal {
 		// Only one pass through Initializers
 		// check if startsFromZero and additionalTempsNotReferenced
 
-		final List tempVarsInInitializers= new ArrayList();
+		final List<Name> tempVarsInInitializers= new ArrayList<Name>();
 		final boolean startsFromZero[] = {false};
-		List initializers= fOldForStatement.initializers();
+		List<ASTNode> initializers= fOldForStatement.initializers();
 
-		for (Iterator iter = initializers.iterator(); iter.hasNext();) {
+		for (Iterator<ASTNode> iter = initializers.iterator(); iter.hasNext();) {
 			Expression element = (Expression) iter.next();
 			element.accept(new ASTVisitor(){
 				public boolean visit(VariableDeclarationFragment declarationFragment){
@@ -352,10 +352,10 @@ public class ConvertForLoopProposal extends LinkedCorrectionProposal {
 
 
 
-	private void removeInferredIndexFrom(List localTemps) {
+	private void removeInferredIndexFrom(List<Name> localTemps) {
 		Name indexName= null;
-		for (Iterator iter= localTemps.iterator(); iter.hasNext();) {
-			Name name= (Name)iter.next();
+		for (Iterator<Name> iter= localTemps.iterator(); iter.hasNext();) {
+			Name name= iter.next();
 			IBinding binding= name.resolveBinding();
 			//fIndexBinding has already been initialized via typeBindingsAreNotNull()
 			if (Bindings.equals(fIndexBinding, binding)) {
@@ -366,9 +366,9 @@ public class ConvertForLoopProposal extends LinkedCorrectionProposal {
 		localTemps.remove(indexName);
 	}
 
-	private boolean additionalTempsNotReferenced(List localTemps) {
-		for (Iterator iter= localTemps.iterator(); iter.hasNext();) {
-			Name name= (Name)iter.next();
+	private boolean additionalTempsNotReferenced(List<Name> localTemps) {
+		for (Iterator<Name> iter= localTemps.iterator(); iter.hasNext();) {
+			Name name= iter.next();
 			LocalOccurencesFinder finder= new LocalOccurencesFinder(name, fOldForStatement.getBody());
 			finder.perform();
 			if (!finder.getOccurences().isEmpty())
@@ -390,7 +390,7 @@ public class ConvertForLoopProposal extends LinkedCorrectionProposal {
 	}
 
 	private IBinding inferIndexBinding() {
-		List initializers= fOldForStatement.initializers();
+		List<ASTNode> initializers= fOldForStatement.initializers();
 		Expression expression= (Expression)initializers.get(0);
 		if (expression instanceof VariableDeclarationExpression) {
 			VariableDeclarationFragment declaration= (VariableDeclarationFragment)((VariableDeclarationExpression)expression)
@@ -429,12 +429,12 @@ public class ConvertForLoopProposal extends LinkedCorrectionProposal {
 
 		String name= fParameterDeclaration.getName().getIdentifier();
 
-		List proposals= getProposalsForElement();
+		List<String> proposals= getProposalsForElement();
 		if (!proposals.contains(name))
 			proposals.add(0, name);
 
-		for (Iterator iterator= proposals.iterator(); iterator.hasNext();)
-			addLinkedPositionProposal(ConvertForLoopProposal.ELEMENT_KEY_REFERENCE, (String) iterator.next(), null);
+		for (Iterator<String> iterator= proposals.iterator(); iterator.hasNext();)
+			addLinkedPositionProposal(ConvertForLoopProposal.ELEMENT_KEY_REFERENCE, iterator.next(), null);
 
 		rewrite.replace(fOldForStatement, fEnhancedForStatement, null);
 	}
@@ -447,30 +447,30 @@ public class ConvertForLoopProposal extends LinkedCorrectionProposal {
 			return fCollectionName;
 	}
 
-	private List getProposalsForElement() {
-		List list= new ArrayList();
+	private List<String> getProposalsForElement() {
+		List<String> list= new ArrayList<String>();
 		ICompilationUnit icu= getCompilationUnit();
 		IJavaProject javaProject= icu.getJavaProject();
 		int dimensions= fOldCollectionTypeBinding.getDimensions() - 1;
-		final List used= getUsedVariableNames();
+		final List<String> used= getUsedVariableNames();
 		String type= fOldCollectionTypeBinding.getName();
 		if (fOldCollectionTypeBinding.isArray())
 			type= fOldCollectionTypeBinding.getElementType().getName();
-		String[] proposals= StubUtility.getLocalNameSuggestions(javaProject, type, dimensions, (String[]) used.toArray(new String[used.size()]));
+		String[] proposals= StubUtility.getLocalNameSuggestions(javaProject, type, dimensions, used.toArray(new String[used.size()]));
 		for (int i= 0; i < proposals.length; i++) {
 			list.add(proposals[i]);
 		}
 		return list;
 	}
 
-	private List getUsedVariableNames() {
+	private List<String> getUsedVariableNames() {
 		CompilationUnit root= (CompilationUnit)fOldForStatement.getRoot();
 		IBinding[] varsBefore= (new ScopeAnalyzer(root)).getDeclarationsInScope(fOldForStatement.getStartPosition(),
 			ScopeAnalyzer.VARIABLES);
 		IBinding[] varsAfter= (new ScopeAnalyzer(root)).getDeclarationsAfter(fOldForStatement.getStartPosition()
 			+ fOldForStatement.getLength(), ScopeAnalyzer.VARIABLES);
 
-		List names= new ArrayList();
+		List<String> names= new ArrayList<String>();
 		for (int i= 0; i < varsBefore.length; i++) {
 			names.add(varsBefore[i].getName());
 		}
@@ -484,11 +484,11 @@ public class ConvertForLoopProposal extends LinkedCorrectionProposal {
 		LocalOccurencesFinder finder= new LocalOccurencesFinder(fCollectionName, fOldCollectionBinding,
 			fOldCollectionTypeBinding, fOldForStatement.getBody());
 		finder.perform();
-		List occurences= finder.getOccurences();
+		List<Expression> occurences= finder.getOccurences();
 
 		// this might be the "ideal" case (exercised in testNiceReduction)
 		if (occurences.size() == 1) {
-			ASTNode soleOccurence= (ASTNode)occurences.get(0);
+			ASTNode soleOccurence= occurences.get(0);
 			ArrayAccess arrayAccess= soleOccurence instanceof ArrayAccess
 				? (ArrayAccess)soleOccurence
 				: (ArrayAccess)ASTNodes.getParent(soleOccurence, ArrayAccess.class);
@@ -522,7 +522,7 @@ public class ConvertForLoopProposal extends LinkedCorrectionProposal {
 
 		LocalOccurencesFinder finder2= new LocalOccurencesFinder(theTempVariable.resolveBinding(), fOldForStatement.getBody());
 		finder2.perform();
-		List occurences2= finder2.getOccurences();
+		List<Expression> occurences2= finder2.getOccurences();
 
 		linkAllReferences(rewrite, occurences2);
 
@@ -530,16 +530,16 @@ public class ConvertForLoopProposal extends LinkedCorrectionProposal {
 		return;
 	}
 
-	private void linkAllReferences(ASTRewrite rewrite, List occurences) {
-		for (Iterator iter= occurences.iterator(); iter.hasNext();) {
-			ASTNode variableRef= (ASTNode)iter.next();
+	private void linkAllReferences(ASTRewrite rewrite, List<Expression> occurences) {
+		for (Iterator<Expression> iter= occurences.iterator(); iter.hasNext();) {
+			ASTNode variableRef= iter.next();
 			addLinkedPosition(rewrite.track(variableRef), false, ELEMENT_KEY_REFERENCE);
 		}
 	}
 
-	private void replaceMultipleOccurences(ASTRewrite rewrite, List occurences) {
-		for (Iterator iter= occurences.iterator(); iter.hasNext();) {
-			ASTNode element= (ASTNode)iter.next();
+	private void replaceMultipleOccurences(ASTRewrite rewrite, List<Expression> occurences) {
+		for (Iterator<Expression> iter= occurences.iterator(); iter.hasNext();) {
+			ASTNode element= iter.next();
 			ArrayAccess arrayAccess= element instanceof ArrayAccess ? (ArrayAccess)element : (ArrayAccess)ASTNodes.getParent(
 				element, ArrayAccess.class);
 			if (arrayAccess != null) {
@@ -629,11 +629,11 @@ public class ConvertForLoopProposal extends LinkedCorrectionProposal {
 	}
 
 	private void doInferCollectionFromInitializers() {
-		List initializers= fOldForStatement.initializers();
-		for (Iterator iter= initializers.iterator(); iter.hasNext();) {
+		List<ASTNode> initializers= fOldForStatement.initializers();
+		for (Iterator<ASTNode> iter= initializers.iterator(); iter.hasNext();) {
 			VariableDeclarationExpression element= (VariableDeclarationExpression)iter.next();
-			List declarationFragments= element.fragments();
-			for (Iterator iterator= declarationFragments.iterator(); iterator.hasNext();) {
+			List<ASTNode> declarationFragments= element.fragments();
+			for (Iterator<ASTNode> iterator= declarationFragments.iterator(); iterator.hasNext();) {
 				VariableDeclarationFragment fragment= (VariableDeclarationFragment)iterator.next();
 				doInferCollectionFromFragment(fragment);
 			}

@@ -19,6 +19,7 @@ import org.eclipse.text.edits.TextEditGroup;
 
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.dom.AST;
+import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.Javadoc;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.SimpleName;
@@ -67,8 +68,8 @@ public class JavadocUtil {
 			return false;
 		if (methodDeclaration.parameters().size() == 0)
 			return true;
-		List tags= javadoc.tags();
-		for (Iterator iter= tags.iterator(); iter.hasNext();) {
+		List<ASTNode> tags= javadoc.tags();
+		for (Iterator<ASTNode> iter= tags.iterator(); iter.hasNext();) {
 			TagElement element= (TagElement) iter.next();
 			if (TagElement.TAG_PARAM.equals(element.getTagName()))
 				return true;
@@ -91,8 +92,8 @@ public class JavadocUtil {
 			return;
 		
 		ListRewrite tagsRewrite= astRewrite.getListRewrite(methodDeclaration.getJavadoc(), Javadoc.TAGS_PROPERTY);
-		HashSet leadingNames= new HashSet();
-		for (Iterator iter= methodDeclaration.parameters().iterator(); iter.hasNext();) {
+		HashSet<String> leadingNames= new HashSet<String>();
+		for (Iterator<ASTNode> iter= methodDeclaration.parameters().iterator(); iter.hasNext();) {
 			SingleVariableDeclaration curr= (SingleVariableDeclaration) iter.next();
 			leadingNames.add(curr.getName().getIdentifier());
 		}

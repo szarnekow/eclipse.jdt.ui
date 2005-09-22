@@ -20,10 +20,10 @@ import org.eclipse.jdt.core.search.SearchRequestor;
  * Collects the results returned by a <code>SearchEngine</code>.
  */
 public class CollectingSearchRequestor extends SearchRequestor {
-	private ArrayList fFound;
+	private ArrayList<SearchMatch> fFound;
 
 	public CollectingSearchRequestor() {
-		fFound= new ArrayList();
+		fFound= new ArrayList<SearchMatch>();
 	}
 	
 	/* (non-Javadoc)
@@ -36,7 +36,7 @@ public class CollectingSearchRequestor extends SearchRequestor {
 	/**
 	 * @return a List of {@link SearchMatch}es (not sorted)
 	 */
-	public List/*<SearchMatch>*/ getResults() {
+	public List/*<SearchMatch>*/<SearchMatch> getResults() {
 		return fFound;
 	}
 }

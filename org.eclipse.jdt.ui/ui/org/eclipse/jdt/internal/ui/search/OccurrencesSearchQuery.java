@@ -58,10 +58,10 @@ public class OccurrencesSearchQuery implements ISearchQuery {
 		}
 		try {
 			fFinder.perform();
-			ArrayList resultingMatches= new ArrayList();
+			ArrayList<Match> resultingMatches= new ArrayList<Match>();
 			fFinder.collectOccurrenceMatches(fElement, fDocument, resultingMatches);
 			if (!resultingMatches.isEmpty()) {
-				fResult.addMatches((Match[]) resultingMatches.toArray(new Match[resultingMatches.size()]));
+				fResult.addMatches(resultingMatches.toArray(new Match[resultingMatches.size()]));
 			}
 			//Don't leak AST:
 			fFinder= null;

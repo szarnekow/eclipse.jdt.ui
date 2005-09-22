@@ -122,11 +122,11 @@ public class SurroundWithTryCatchAnalyzer extends CodeAnalyzer {
 		super.endVisit(node);
 	}
 	
-	protected void postProcessSelectedNodes(List selectedNodes) {
+	protected void postProcessSelectedNodes(List<ASTNode> selectedNodes) {
 		if (selectedNodes == null || selectedNodes.size() == 0)
 			return;
 		if (selectedNodes.size() == 1) {
-			ASTNode node= (ASTNode)selectedNodes.get(0);
+			ASTNode node= selectedNodes.get(0);
 			if (node instanceof Expression && node.getParent() instanceof ExpressionStatement) {
 				selectedNodes.clear();
 				selectedNodes.add(node.getParent());

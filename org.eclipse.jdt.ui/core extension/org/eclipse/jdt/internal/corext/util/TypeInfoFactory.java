@@ -197,10 +197,10 @@ public class TypeInfoFactory {
 		// We have to sort the list of project names to make sure that we cut of the longest
 		// project from the path, if two projects with the same prefix exist. For example
 		// org.eclipse.jdt.ui and org.eclipse.jdt.ui.tests.
-		Arrays.sort(result, new Comparator() {
-			public int compare(Object o1, Object o2) {
-				int l1= ((String)o1).length();
-				int l2= ((String)o2).length();
+		Arrays.sort(result, new Comparator<String>() {
+			public int compare(String o1, String o2) {
+				int l1= o1.length();
+				int l2= o2.length();
 				if (l1 < l2)
 					return 1;
 				if (l2 < l1)

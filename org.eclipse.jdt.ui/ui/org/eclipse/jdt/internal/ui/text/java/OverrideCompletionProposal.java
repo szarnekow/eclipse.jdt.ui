@@ -127,7 +127,7 @@ public class OverrideCompletionProposal extends JavaTypeCompletionProposal imple
 			ASTRewrite rewrite= ASTRewrite.create(unit.getAST());
 			IMethodBinding[] bindings= StubUtility2.getOverridableMethods(rewrite.getAST(), binding, true);
 			if (bindings != null && bindings.length > 0) {
-				List candidates= new ArrayList(bindings.length);
+				List<IMethodBinding> candidates= new ArrayList<IMethodBinding>(bindings.length);
 				IMethodBinding method= null;
 				for (index= 0; index < bindings.length; index++) {
 					method= bindings[index];
@@ -137,9 +137,9 @@ public class OverrideCompletionProposal extends JavaTypeCompletionProposal imple
 				if (candidates.size() > 1) {
 					method= Bindings.findMethodInHierarchy(rewrite.getAST().resolveWellKnownType("java.lang.Object"), binding, fMethodName, fParamTypes); //$NON-NLS-1$
 					if (method == null)
-						method= (IMethodBinding) candidates.get(0);
+						method= candidates.get(0);
 				} else if (!candidates.isEmpty())
-					method= (IMethodBinding) candidates.get(0);
+					method= candidates.get(0);
 				if (method != null) {
 					CodeGenerationSettings settings= JavaPreferencesSettings.getCodeGenerationSettings(fJavaProject);
 					ListRewrite rewriter= rewrite.getListRewrite(node, descriptor);

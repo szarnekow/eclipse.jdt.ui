@@ -187,9 +187,9 @@ public final class CompletionProposalCategory {
 	 *         otherwise
 	 */
 	public boolean hasComputers() {
-		List descriptors= fRegistry.getProposalComputerDescriptors();
-		for (Iterator it= descriptors.iterator(); it.hasNext();) {
-			CompletionProposalComputerDescriptor desc= (CompletionProposalComputerDescriptor) it.next();
+		List<CompletionProposalComputerDescriptor> descriptors= fRegistry.getProposalComputerDescriptors();
+		for (Iterator<CompletionProposalComputerDescriptor> it= descriptors.iterator(); it.hasNext();) {
+			CompletionProposalComputerDescriptor desc= it.next();
 			if (desc.getCategory() == this)
 				return true;
 		}

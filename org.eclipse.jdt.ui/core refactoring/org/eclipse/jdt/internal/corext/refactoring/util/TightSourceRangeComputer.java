@@ -17,7 +17,7 @@ import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.rewrite.TargetSourceRangeComputer;
 
 public class TightSourceRangeComputer extends TargetSourceRangeComputer {
-	private HashSet/*<ASTNode>*/ fTightSourceRangeNodes= new HashSet();
+	private HashSet/*<ASTNode>*/<ASTNode> fTightSourceRangeNodes= new HashSet<ASTNode>();
 	
 	public void addTightSourceNode(ASTNode reference) {
 		fTightSourceRangeNodes.add(reference);

@@ -45,7 +45,7 @@ public class SimilarElementsRequestor extends CompletionRequestor {
 	private int fKind;
 	private String fName;
 
-	private HashSet fResult;
+	private HashSet<SimilarElement> fResult;
 
 	public static SimilarElement[] findSimilarElement(ICompilationUnit cu, Name name, int kind) throws JavaModelException {
 		int pos= name.getStartPosition();
@@ -92,7 +92,7 @@ public class SimilarElementsRequestor extends CompletionRequestor {
 	private static ICompilationUnit createPreparedCU(ICompilationUnit cu, Javadoc comment, int wordStart) throws JavaModelException {
 		int startpos= comment.getStartPosition();
 		boolean isTopLevel= comment.getParent().getParent() instanceof CompilationUnit;
-		char[] content= (char[]) cu.getBuffer().getCharacters().clone();
+		char[] content= cu.getBuffer().getCharacters().clone();
 		if (isTopLevel && (wordStart + 6 < content.length)) {
 			content[startpos++]= 'i'; content[startpos++]= 'm'; content[startpos++]= 'p';
 			content[startpos++]= 'o'; content[startpos++]= 'r'; content[startpos++]= 't';
@@ -120,7 +120,7 @@ public class SimilarElementsRequestor extends CompletionRequestor {
 		fName= name;
 		fKind= kind;
 
-		fResult= new HashSet();
+		fResult= new HashSet<SimilarElement>();
 	}
 
 	private void addResult(SimilarElement elem) {
@@ -131,7 +131,7 @@ public class SimilarElementsRequestor extends CompletionRequestor {
 		try {
 			cu.codeComplete(pos, this);
 			processKeywords();
-			return (SimilarElement[]) fResult.toArray(new SimilarElement[fResult.size()]);
+			return fResult.toArray(new SimilarElement[fResult.size()]);
 		} finally {
 			fResult.clear();
 		}

@@ -55,6 +55,7 @@ import org.eclipse.ui.texteditor.MarkerAnnotationPreferences;
 import org.eclipse.ui.editors.text.EditorsUI;
 
 import org.eclipse.jdt.internal.ui.JavaPlugin;
+import org.eclipse.jdt.internal.ui.preferences.OverlayPreferenceStore.OverlayKey;
 
 import org.osgi.service.prefs.BackingStoreException;
 
@@ -81,9 +82,9 @@ class LinkedModeConfigurationBlock extends AbstractConfigurationBlock {
 		final String textStyleKey;
 		final String textKey;
 		final String verticalRulerKey;
-		final List validStyles;
+		final List<String[]> validStyles;
 
-		ListItem(String label, Image image, String colorKey, String textKey, String overviewRulerKey, String highlightKey, String verticalRulerKey, String textStyleKey, List validStyles) {
+		ListItem(String label, Image image, String colorKey, String textKey, String overviewRulerKey, String highlightKey, String verticalRulerKey, String textStyleKey, List<String[]> validStyles) {
 			this.label= label;
 			this.image= image;
 			this.colorKey= colorKey;
@@ -146,7 +147,7 @@ class LinkedModeConfigurationBlock extends AbstractConfigurationBlock {
 	}
 
 	private OverlayPreferenceStore.OverlayKey[] createOverlayStoreKeys(MarkerAnnotationPreferences preferences) {
-		ArrayList overlayKeys= new ArrayList();
+		ArrayList<OverlayKey> overlayKeys= new ArrayList<OverlayKey>();
 
 		Iterator e= preferences.getAnnotationPreferences().iterator();
 		while (e.hasNext()) {
@@ -174,14 +175,14 @@ class LinkedModeConfigurationBlock extends AbstractConfigurationBlock {
 	}
 	
 	private ListItem[] createAnnotationTypeListModel(MarkerAnnotationPreferences preferences) {
-		ArrayList listModelItems= new ArrayList();
+		ArrayList<ListItem> listModelItems= new ArrayList<ListItem>();
 		Iterator e= preferences.getAnnotationPreferences().iterator();
 		
 		while (e.hasNext()) {
 			AnnotationPreference info= (AnnotationPreference) e.next();
 			if (isLinkedModeAnnotation(info)) {
 				String label= info.getPreferenceLabel();
-				List styles= getStyles(info.getAnnotationType());
+				List<String[]> styles= getStyles(info.getAnnotationType());
 				listModelItems.add(new ListItem(label, null, info.getColorPreferenceKey(), info.getTextPreferenceKey(), info.getOverviewRulerPreferenceKey(), info.getHighlightPreferenceKey(), info.getVerticalRulerPreferenceKey(), info.getTextStylePreferenceKey(), styles));
 			}
 		}
@@ -192,7 +193,7 @@ class LinkedModeConfigurationBlock extends AbstractConfigurationBlock {
 	}
 	
 
-	private List getStyles(Object type) {
+	private List<String[]> getStyles(Object type) {
 		if (type.equals(MASTER))
 			return Arrays.asList(new String[][] {BOX, HIGHLIGHT, UNDERLINE, SQUIGGLES});
 		if (type.equals(SLAVE))
@@ -201,7 +202,7 @@ class LinkedModeConfigurationBlock extends AbstractConfigurationBlock {
 			return Arrays.asList(new String[][] {BOX, HIGHLIGHT, UNDERLINE, SQUIGGLES});
 		if (type.equals(EXIT))
 			return Arrays.asList(new String[][] {IBEAM});
-		return new ArrayList();
+		return new ArrayList<String[]>();
 	}
 
 	/**
@@ -453,7 +454,7 @@ class LinkedModeConfigurationBlock extends AbstractConfigurationBlock {
 		
 		if (changed) {
 			String[] selection= null;
-			ArrayList list= new ArrayList();
+			ArrayList<String[]> list= new ArrayList<String[]>();
 			
 			list.addAll(item.validStyles);
 			
@@ -463,8 +464,8 @@ class LinkedModeConfigurationBlock extends AbstractConfigurationBlock {
 			// set selection
 			if (selection == null) {
 				String val= getPreferenceStore().getString(item.textStyleKey);
-				for (Iterator iter= list.iterator(); iter.hasNext();) {
-					String[] elem= (String[]) iter.next();
+				for (Iterator<String[]> iter= list.iterator(); iter.hasNext();) {
+					String[] elem= iter.next();
 					if (elem[1].equals(val)) {
 						selection= elem;
 						break;
@@ -474,7 +475,7 @@ class LinkedModeConfigurationBlock extends AbstractConfigurationBlock {
 			
 			fDecorationViewer.setInput(list.toArray(new Object[list.size()]));
 			if (selection == null)
-				selection= (String[]) list.get(0);
+				selection= list.get(0);
 			fDecorationViewer.setSelection(new StructuredSelection((Object) selection), true);
 		}
 	}

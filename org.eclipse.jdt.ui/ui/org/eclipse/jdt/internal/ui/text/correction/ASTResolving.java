@@ -299,7 +299,7 @@ public class ASTResolving {
 		return null;
 	}
 
-	private static IMethodBinding guessContructorBinding(ITypeBinding superclass, List arguments) {
+	private static IMethodBinding guessContructorBinding(ITypeBinding superclass, List<ASTNode> arguments) {
 		IMethodBinding[] declaredMethods= superclass.getDeclaredMethods();
 		for (int i= 0; i < declaredMethods.length; i++) {
 			IMethodBinding curr= declaredMethods[i];
@@ -361,7 +361,7 @@ public class ASTResolving {
 	}
 
 
-	private static ITypeBinding getParameterTypeBinding(ASTNode node, List args, IMethodBinding binding) {
+	private static ITypeBinding getParameterTypeBinding(ASTNode node, List<ASTNode> args, IMethodBinding binding) {
 		ITypeBinding[] paramTypes= binding.getParameterTypes();
 		int index= args.indexOf(node);
 		if (index >= 0 && index < paramTypes.length) {
@@ -412,7 +412,7 @@ public class ASTResolving {
 				}
 
 				ITypeBinding[] typeArguments= parentBinding.getTypeArguments();
-				List argumentNodes= ((ParameterizedType) parent).typeArguments();
+				List<ASTNode> argumentNodes= ((ParameterizedType) parent).typeArguments();
 				int index= argumentNodes.indexOf(node);
 				if (index != -1 && typeArguments.length == argumentNodes.size()) {
 					return typeArguments[index];
@@ -469,7 +469,7 @@ public class ASTResolving {
 				if (TagElement.TAG_THROWS.equals(tagElement.getTagName()) || TagElement.TAG_EXCEPTION.equals(tagElement.getTagName())) {
 					ASTNode methNode= tagElement.getParent().getParent();
 					if (methNode instanceof MethodDeclaration) {
-						List thrownExcpetions= ((MethodDeclaration) methNode).thrownExceptions();
+						List<ASTNode> thrownExcpetions= ((MethodDeclaration) methNode).thrownExceptions();
 						if (thrownExcpetions.size() == 1) {
 							return ((Name) thrownExcpetions.get(0)).resolveTypeBinding();
 						}
@@ -480,8 +480,8 @@ public class ASTResolving {
 		return null;
 	}
 
-   	private static ITypeBinding guessVariableType(List fragments) {
-		for (Iterator iter= fragments.iterator(); iter.hasNext();) {
+   	private static ITypeBinding guessVariableType(List<ASTNode> fragments) {
+		for (Iterator<ASTNode> iter= fragments.iterator(); iter.hasNext();) {
 			VariableDeclarationFragment frag= (VariableDeclarationFragment) iter.next();
 			if (frag.getInitializer() != null) {
 				return Bindings.normalizeTypeBinding(frag.getInitializer().resolveTypeBinding());
@@ -493,9 +493,9 @@ public class ASTResolving {
    	/**
    	 *@return  Returns all types known in the AST that have a method with a given name
    	 */
-	public static ITypeBinding[] getQualifierGuess(ASTNode searchRoot, final String selector, List arguments, final IBinding context) {
+	public static ITypeBinding[] getQualifierGuess(ASTNode searchRoot, final String selector, List<ASTNode> arguments, final IBinding context) {
 		final int nArgs= arguments.size();
-		final ArrayList result= new ArrayList();
+		final ArrayList<ITypeBinding> result= new ArrayList<ITypeBinding>();
 		
 		// test if selector is a object method
 		ITypeBinding binding= searchRoot.getAST().resolveWellKnownType("java.lang.Object"); //$NON-NLS-1$
@@ -536,7 +536,7 @@ public class ASTResolving {
 				return true;
 			}
 		});
-		return (ITypeBinding[]) result.toArray(new ITypeBinding[result.size()]);
+		return result.toArray(new ITypeBinding[result.size()]);
 	}
 	
 	public static void visitAllBindings(ASTNode astRoot, TypeBindingVisitor visitor) {
@@ -845,7 +845,7 @@ public class ASTResolving {
 	private static final Code[] CODE_ORDER= { PrimitiveType.CHAR, PrimitiveType.SHORT, PrimitiveType.INT, PrimitiveType.LONG, PrimitiveType.FLOAT, PrimitiveType.DOUBLE };
 
 	public static ITypeBinding[] getRelaxingTypes(AST ast, ITypeBinding type) {
-		ArrayList res= new ArrayList();
+		ArrayList<ITypeBinding> res= new ArrayList<ITypeBinding>();
 		res.add(type);
 		if (type.isArray()) {
 			res.add(ast.resolveWellKnownType("java.lang.Object")); //$NON-NLS-1$
@@ -866,10 +866,10 @@ public class ASTResolving {
 		} else {
 			collectRelaxingTypes(res, type);
 		}
-		return (ITypeBinding[]) res.toArray(new ITypeBinding[res.size()]);
+		return res.toArray(new ITypeBinding[res.size()]);
 	}
 
-	private static void collectRelaxingTypes(Collection res, ITypeBinding type) {
+	private static void collectRelaxingTypes(Collection<ITypeBinding> res, ITypeBinding type) {
 		ITypeBinding[] interfaces= type.getInterfaces();
 		for (int i= 0; i < interfaces.length; i++) {
 			ITypeBinding curr= interfaces[i];
@@ -920,7 +920,7 @@ public class ASTResolving {
 	}
 	
 	public static String[] suggestLocalVariableNames(IJavaProject project, ITypeBinding binding, Expression expression, String[] excludedNames) {
-		ArrayList res= new ArrayList();
+		ArrayList<String> res= new ArrayList<String>();
 
 		ITypeBinding base= binding.isArray() ? binding.getElementType() : binding;
 		IPackageBinding packBinding= base.getPackage();
@@ -945,7 +945,7 @@ public class ASTResolving {
 				res.add(curr);
 			}
 		}
-		return (String[]) res.toArray(new String[res.size()]);
+		return res.toArray(new String[res.size()]);
 	}
 	
 	public static String[] getUsedVariableNames(ASTNode node) {

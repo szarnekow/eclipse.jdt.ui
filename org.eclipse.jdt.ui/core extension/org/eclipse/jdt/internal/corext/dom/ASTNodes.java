@@ -124,14 +124,14 @@ public class ASTNodes {
 	 * @param node the node to get the children for
 	 * @return the children
 	 */    
-	public static List getChildren(ASTNode node) {
+	public static List<ASTNode> getChildren(ASTNode node) {
 		ChildrenCollector visitor= new ChildrenCollector();
 		node.accept(visitor);
 		return visitor.result;		
 	}
 	
 	private static class ChildrenCollector extends GenericVisitor {
-		public List result;
+		public List<ASTNode> result;
 
 		public ChildrenCollector() {
 			super(true);
@@ -139,7 +139,7 @@ public class ASTNodes {
 		}
 		protected boolean visitNode(ASTNode node) {
 			if (result == null) { // first visitNode: on the node's parent: do nothing, return true
-				result= new ArrayList();
+				result= new ArrayList<ASTNode>();
 				return true;
 			}
 			result.add(node);
@@ -213,7 +213,7 @@ public class ASTNodes {
 		return 0;
 	}
 		
-	public static List getModifiers(VariableDeclaration declaration) {
+	public static List<ASTNode> getModifiers(VariableDeclaration declaration) {
 		Assert.isNotNull(declaration);
 		if (declaration instanceof SingleVariableDeclaration) {
 			return ((SingleVariableDeclaration)declaration).modifiers();
@@ -224,7 +224,7 @@ public class ASTNodes {
 			else if (parent instanceof VariableDeclarationStatement)
 				return ((VariableDeclarationStatement)parent).modifiers();
 		}
-		return new ArrayList(0);		
+		return new ArrayList<ASTNode>(0);		
 	}
 	
 	public static boolean isSingleDeclaration(VariableDeclaration declaration) {
@@ -257,7 +257,7 @@ public class ASTNodes {
 		return Modifier.isStatic(declaration.getModifiers());
 	}
 	
-	public static List getBodyDeclarations(ASTNode node) {
+	public static List<ASTNode> getBodyDeclarations(ASTNode node) {
 		if (node instanceof AbstractTypeDeclaration) {
 			return ((AbstractTypeDeclaration)node).bodyDeclarations();
 		} else if (node instanceof AnonymousClassDeclaration) {
@@ -528,7 +528,7 @@ public class ASTNodes {
 		if (root == node)
 			return problems;
 		final int iterations= computeIterations(scope);
-		List result= new ArrayList(5);
+		List<IProblem> result= new ArrayList<IProblem>(5);
 		for (int i= 0; i < problems.length; i++) {
 			IProblem problem= problems[i];
 			boolean consider= false;
@@ -553,7 +553,7 @@ public class ASTNodes {
 				} while ((temp= temp.getParent()) != null && count > 0);
 			}
 		}
-		return (IProblem[]) result.toArray(new IProblem[result.size()]);
+		return result.toArray(new IProblem[result.size()]);
 	}
 	
 	public static Message[] getMessages(ASTNode node, int flags) {
@@ -564,7 +564,7 @@ public class ASTNodes {
 		if (root == node)
 			return messages;
 		final int iterations= computeIterations(flags);
-		List result= new ArrayList(5);
+		List<Message> result= new ArrayList<Message>(5);
 		for (int i= 0; i < messages.length; i++) {
 			Message message= messages[i];
 			ASTNode temp= node;
@@ -580,7 +580,7 @@ public class ASTNodes {
 				}
 			} while ((temp= temp.getParent()) != null && count > 0);
 		}
-		return (Message[]) result.toArray(new Message[result.size()]);
+		return result.toArray(new Message[result.size()]);
 	}
 	
 	private static int computeIterations(int flags) {
@@ -642,7 +642,7 @@ public class ASTNodes {
 	 * @param container a list containing objects of type <code>BodyDeclaration</code>
 	 * @return the insertion index to be used
 	 */
-	public static int getInsertionIndex(BodyDeclaration member, List container) {
+	public static int getInsertionIndex(BodyDeclaration member, List<ASTNode> container) {
 		int containerSize= container.size();
 		
 		MembersOrderPreferenceCache orderStore= JavaPlugin.getDefault().getMemberOrderPreferenceCache();
@@ -759,7 +759,7 @@ public class ASTNodes {
 		}
 	}
 	
-	public static Modifier findModifierNode(int flag, List modifiers) {
+	public static Modifier findModifierNode(int flag, List<ASTNode> modifiers) {
 		for (int i= 0; i < modifiers.size(); i++) {
 			Object curr= modifiers.get(i);
 			if (curr instanceof Modifier && ((Modifier) curr).getKeyword().toFlagValue() == flag) {

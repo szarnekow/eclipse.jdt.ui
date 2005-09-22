@@ -184,7 +184,7 @@ public class TypesView extends JavaBrowsingPart {
 			Object selectedElement= sel.getFirstElement();
 			if (sel.size() == 1 && (selectedElement instanceof LogicalPackage)) {
 				IPackageFragment[] fragments= ((LogicalPackage)selectedElement).getFragments();
-				List selectedElements= Arrays.asList(fragments);
+				List<IPackageFragment> selectedElements= Arrays.asList(fragments);
 				if (selectedElements.size() > 1) {
 					adjustInput(part, selectedElements);
 					fPreviousSelectedElement= selectedElements;
@@ -199,7 +199,7 @@ public class TypesView extends JavaBrowsingPart {
 		super.selectionChanged(part, selection);
 	}
 
-	private void adjustInput(IWorkbenchPart part, List selectedElements) {
+	private void adjustInput(IWorkbenchPart part, List<IPackageFragment> selectedElements) {
 		Object currentInput= getViewer().getInput();
 		if (!selectedElements.equals(currentInput))
 			setInput(selectedElements);

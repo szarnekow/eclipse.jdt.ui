@@ -67,10 +67,10 @@ class SourceAnalyzer  {
 	
 	public static class NameData {
 		private String fName;
-		private List fReferences;
+		private List<SimpleName> fReferences;
 		public NameData(String n) {
 			fName= n;
-			fReferences= new ArrayList(2);
+			fReferences= new ArrayList<SimpleName>(2);
 		}
 		public String getName() {
 			return fName;
@@ -78,7 +78,7 @@ class SourceAnalyzer  {
 		public void addReference(SimpleName ref) {
 			fReferences.add(ref);
 		}
-		public List references() {
+		public List<SimpleName> references() {
 			return fReferences;
 		}
 	}
@@ -135,10 +135,10 @@ class SourceAnalyzer  {
 			return true;
 		}
 		private ASTNode getLastNode() {
-			List statements= fDeclaration.getBody().statements();
+			List<ASTNode> statements= fDeclaration.getBody().statements();
 			if (statements.size() == 0)
 				return null;
-			return (ASTNode)statements.get(statements.size() - 1);
+			return statements.get(statements.size() - 1);
 		}
 		private IMethodBinding getBinding() {
 			return fDeclaration.resolveBinding();
@@ -194,7 +194,7 @@ class SourceAnalyzer  {
 		public boolean visit(MethodDeclaration node) {
 			if (node.isConstructor()) {
 				AbstractTypeDeclaration decl= (AbstractTypeDeclaration) ASTNodes.getParent(node, AbstractTypeDeclaration.class);
-				NameData name= (NameData)fNames.get(decl.getName().resolveBinding());
+				NameData name= fNames.get(decl.getName().resolveBinding());
 				if (name != null) {
 					name.addReference(node.getName());
 				}
@@ -264,7 +264,7 @@ class SourceAnalyzer  {
 			if (data != null)
 				data.addReference(node);
 				
-			NameData name= (NameData)fNames.get(binding);
+			NameData name= fNames.get(binding);
 			if (name != null)
 				name.addReference(node);
 		}
@@ -272,9 +272,9 @@ class SourceAnalyzer  {
 			fNames.put(name.resolveBinding(), new NameData(name.getIdentifier()));
 		}
 		private void addTypeVariableReference(ITypeBinding variable, SimpleName name) {
-			NameData data= (NameData)fTypeParameterMapping.get(variable);
+			NameData data= fTypeParameterMapping.get(variable);
 			if (data == null) {
-				data= (NameData)fMethodTypeParameterMapping.get(variable);
+				data= fMethodTypeParameterMapping.get(variable);
 			}
 			data.addReference(name);
 		}
@@ -299,20 +299,20 @@ class SourceAnalyzer  {
 
 	private ICompilationUnit fCUnit;
 	private MethodDeclaration fDeclaration;
-	private Map fParameters;
-	private Map fNames;
-	private List fImplicitReceivers;
+	private Map<IVariableBinding, Object> fParameters;
+	private Map<IBinding, NameData> fNames;
+	private List<Expression> fImplicitReceivers;
 	
 	private boolean fArrayAccess;
 	
 	private List/*<Name>*/ fTypesToImport;
 	private List/*<Name>*/ fStaticsToImport;
 	
-	private List/*<NameData>*/ fTypeParameterReferences;
-	private Map/*<ITypeBinding, NameData>*/ fTypeParameterMapping;
+	private List/*<NameData>*/<NameData> fTypeParameterReferences;
+	private Map/*<ITypeBinding, NameData>*/<ITypeBinding, NameData> fTypeParameterMapping;
 	
-	private List/*<NameData>*/ fMethodTypeParameterReferences;
-	private Map/*<ITypeBinding, NameData>*/ fMethodTypeParameterMapping;
+	private List/*<NameData>*/<NameData> fMethodTypeParameterReferences;
+	private Map/*<ITypeBinding, NameData>*/<ITypeBinding, NameData> fMethodTypeParameterMapping;
 	
 	private boolean fInterruptedExecutionFlow;
 
@@ -351,9 +351,9 @@ class SourceAnalyzer  {
 		fDeclaration.accept(analyzer);
 		result.merge(analyzer.status);
 		if (!result.hasFatalError()) {
-			List parameters= fDeclaration.parameters();
-			fParameters= new HashMap(parameters.size() * 2);
-			for (Iterator iter= parameters.iterator(); iter.hasNext();) {
+			List<ASTNode> parameters= fDeclaration.parameters();
+			fParameters= new HashMap<IVariableBinding, Object>(parameters.size() * 2);
+			for (Iterator<ASTNode> iter= parameters.iterator(); iter.hasNext();) {
 				SingleVariableDeclaration element= (SingleVariableDeclaration) iter.next();
 				IVariableBinding binding= element.resolveBinding();
 				if (binding == null) {
@@ -364,11 +364,11 @@ class SourceAnalyzer  {
 				}
 				fParameters.put(binding, element.getProperty(ParameterData.PROPERTY));
 			}
-			fNames= new HashMap();
-			fImplicitReceivers= new ArrayList(2);
+			fNames= new HashMap<IBinding, NameData>();
+			fImplicitReceivers= new ArrayList<Expression>(2);
 			
-			fTypeParameterReferences= new ArrayList(0);
-			fTypeParameterMapping= new HashMap();
+			fTypeParameterReferences= new ArrayList<NameData>(0);
+			fTypeParameterMapping= new HashMap<ITypeBinding, NameData>();
 			ITypeBinding declaringType= fDeclaration.resolveBinding().getDeclaringClass();
 			if (declaringType == null) {
 				result.addFatalError(
@@ -383,8 +383,8 @@ class SourceAnalyzer  {
 				fTypeParameterMapping.put(typeParameters[i], data);
 			}
 			
-			fMethodTypeParameterReferences= new ArrayList(0);
-			fMethodTypeParameterMapping= new HashMap();
+			fMethodTypeParameterReferences= new ArrayList<NameData>(0);
+			fMethodTypeParameterMapping= new HashMap<ITypeBinding, NameData>();
 			IMethodBinding method= fDeclaration.resolveBinding();
 			typeParameters= method.getTypeParameters();
 			for (int i= 0; i < typeParameters.length; i++) {
@@ -395,7 +395,7 @@ class SourceAnalyzer  {
 			
 		}
 		if (fDeclaration.isVarargs()) {
-			List parameters= fDeclaration.parameters();
+			List<ASTNode> parameters= fDeclaration.parameters();
 			VarargAnalyzer vAnalyzer= new VarargAnalyzer(
 				((SingleVariableDeclaration)parameters.get(parameters.size() - 1)).getName().resolveBinding());
 			fDeclaration.getBody().accept(vAnalyzer);
@@ -423,7 +423,7 @@ class SourceAnalyzer  {
 		InOutFlowAnalyzer flowAnalyzer= new InOutFlowAnalyzer(context);
 		FlowInfo info= flowAnalyzer.perform(getStatements());
 		
-		for (Iterator iter= fDeclaration.parameters().iterator(); iter.hasNext();) {
+		for (Iterator<ASTNode> iter= fDeclaration.parameters().iterator(); iter.hasNext();) {
 			SingleVariableDeclaration element= (SingleVariableDeclaration) iter.next();
 			IVariableBinding binding= element.resolveBinding();
 			ParameterData data= (ParameterData)element.getProperty(ParameterData.PROPERTY);
@@ -431,11 +431,11 @@ class SourceAnalyzer  {
 		}
 	}
 	
-	public Collection getUsedNames() {
+	public Collection<NameData> getUsedNames() {
 		return fNames.values();
 	}
 	
-	public List getImplicitReceivers() {
+	public List<Expression> getImplicitReceivers() {
 		return fImplicitReceivers;
 	}
 	
@@ -447,11 +447,11 @@ class SourceAnalyzer  {
 		return fStaticsToImport;
 	}
 	
-	public List getTypeParameterReferences() {
+	public List<NameData> getTypeParameterReferences() {
 		return fTypeParameterReferences;
 	}
 	
-	public List getMethodTypeParameterReferences() {
+	public List<NameData> getMethodTypeParameterReferences() {
 		return fMethodTypeParameterReferences;
 	}
 	
@@ -460,7 +460,7 @@ class SourceAnalyzer  {
 	}
 	
 	private ASTNode[] getStatements() {
-		List statements= fDeclaration.getBody().statements();
-		return (ASTNode[]) statements.toArray(new ASTNode[statements.size()]);
+		List<ASTNode> statements= fDeclaration.getBody().statements();
+		return statements.toArray(new ASTNode[statements.size()]);
 	}	
 }

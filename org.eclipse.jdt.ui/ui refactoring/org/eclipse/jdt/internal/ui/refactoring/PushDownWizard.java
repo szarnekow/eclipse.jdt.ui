@@ -313,13 +313,13 @@ public class PushDownWizard extends RefactoringWizard {
 
 		private MemberActionInfo[] getActiveInfos() {
 			MemberActionInfo[] infos= getPushDownRefactoring().getMemberActionInfos();
-			List result= new ArrayList(infos.length);
+			List<MemberActionInfo> result= new ArrayList<MemberActionInfo>(infos.length);
 			for (int i= 0; i < infos.length; i++) {
 				PushDownRefactoring.MemberActionInfo info= infos[i];
 				if (info.isActive())
 					result.add(info);
 			}
-			return (MemberActionInfo[]) result.toArray(new MemberActionInfo[result.size()]);
+			return result.toArray(new MemberActionInfo[result.size()]);
 		}
 
 		private void setupCellEditors(final Table table) {
@@ -403,8 +403,8 @@ public class PushDownWizard extends RefactoringWizard {
 			try{
 				String shellTitle= RefactoringMessages.PushDownInputPage_Edit_members; 
 				String labelText= RefactoringMessages.PushDownInputPage_Mark_selected_members; 
-				Map stringMapping= createStringMappingForSelectedElements();
-				String[] keys= (String[]) stringMapping.keySet().toArray(new String[stringMapping.keySet().size()]);
+				Map<String, Integer> stringMapping= createStringMappingForSelectedElements();
+				String[] keys= stringMapping.keySet().toArray(new String[stringMapping.keySet().size()]);
 				Arrays.sort(keys);
 				int initialSelectionIndex= getInitialSelectionIndexForEditDialog(stringMapping, keys);
 				
@@ -412,20 +412,20 @@ public class PushDownWizard extends RefactoringWizard {
 				dialog.setBlockOnOpen(true);
 				if (dialog.open() == Window.CANCEL)
 					return;
-				int action= ((Integer)stringMapping.get(dialog.getSelectedString())).intValue();
+				int action= stringMapping.get(dialog.getSelectedString()).intValue();
 				setInfoAction(getSelectedMemberActionInfos(), action);
 			} finally{
 				updateUIElements(preserved, true);
 			}
 		}
 
-		private int getInitialSelectionIndexForEditDialog(Map stringMapping, String[] keys) {
+		private int getInitialSelectionIndexForEditDialog(Map<String, Integer> stringMapping, String[] keys) {
 			int commonActionCode= getCommonActionCodeForSelectedInfos();
 			if (commonActionCode == -1)
 				return 0;
-			for (Iterator iter= stringMapping.keySet().iterator(); iter.hasNext();) {
-				String key= (String) iter.next();
-				int action= ((Integer)stringMapping.get(key)).intValue();
+			for (Iterator<String> iter= stringMapping.keySet().iterator(); iter.hasNext();) {
+				String key= iter.next();
+				int action= stringMapping.get(key).intValue();
 				if (commonActionCode == action){
 					for (int i= 0; i < keys.length; i++) {
 						if (key.equals(keys[i]))
@@ -451,13 +451,13 @@ public class PushDownWizard extends RefactoringWizard {
 		}
 
 		//String -> Integer
-		private Map createStringMappingForSelectedElements() {
-			Map result= new HashMap();
+		private Map<String, Integer> createStringMappingForSelectedElements() {
+			Map<String, Integer> result= new HashMap<String, Integer>();
 			addToStringMapping(result, MemberActionInfo.PUSH_DOWN_ACTION);
 			addToStringMapping(result, MemberActionInfo.PUSH_ABSTRACT_ACTION);
 			return result;
 		}
-		private void addToStringMapping(Map result, int action) {
+		private void addToStringMapping(Map<String, Integer> result, int action) {
 			result.put(MemberActionInfoLabelProvider.getActionLabel(action), new Integer(action));
 		}
 

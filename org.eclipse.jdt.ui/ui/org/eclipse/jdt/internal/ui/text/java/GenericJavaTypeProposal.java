@@ -460,7 +460,7 @@ public final class GenericJavaTypeProposal extends LazyJavaTypeCompletionProposa
 		if (!hierarchy.contains(superType))
 			return null; // no path
 
-		List path= new LinkedList();
+		List<IType> path= new LinkedList<IType>();
 		path.add(superType);
 		do {
 			// any sub type must be on a hierarchy chain from superType to subType
@@ -468,7 +468,7 @@ public final class GenericJavaTypeProposal extends LazyJavaTypeCompletionProposa
 			path.add(superType);
 		} while (!superType.equals(subType)); // since the equality case is handled above, we can spare one check
 
-		return (IType[]) path.toArray(new IType[path.size()]);
+		return path.toArray(new IType[path.size()]);
 	}
 
 	private NullProgressMonitor getProgressMonitor() {
@@ -609,7 +609,7 @@ public final class GenericJavaTypeProposal extends LazyJavaTypeCompletionProposa
 		parser.setProject(fCompilationUnit.getJavaProject());
 		parser.setResolveBindings(true);
 
-		final Map bindings= new HashMap();
+		final Map<String, IBinding> bindings= new HashMap<String, IBinding>();
 		ASTRequestor requestor= new ASTRequestor() {
 			public void acceptBinding(String bindingKey, IBinding binding) {
 				bindings.put(bindingKey, binding);

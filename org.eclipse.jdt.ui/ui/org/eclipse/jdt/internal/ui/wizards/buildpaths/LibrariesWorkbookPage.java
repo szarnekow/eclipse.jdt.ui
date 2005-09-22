@@ -270,7 +270,7 @@ public class LibrariesWorkbookPage extends BuildPathBasePage {
 	}
 	
 	private void askForAddingExclusionPatternsDialog(List newEntries) {
-		HashSet modified= new HashSet();
+		HashSet<CPListElement> modified= new HashSet<CPListElement>();
 		fixNestingConflicts(newEntries, fClassPathList.getElements(), modified);
 		if (!modified.isEmpty()) {
 			String title= NewWizardMessages.LibrariesWorkbookPage_exclusion_added_title; 
@@ -299,7 +299,7 @@ public class LibrariesWorkbookPage extends BuildPathBasePage {
 
 	private void removeEntry() {
 		List selElements= fLibrariesList.getSelectedElements();
-		HashMap containerEntriesToUpdate= new HashMap();
+		HashMap<CPListElement, HashSet<String>> containerEntriesToUpdate= new HashMap<CPListElement, HashSet<String>>();
 		for (int i= selElements.size() - 1; i >= 0 ; i--) {
 			Object elem= selElements.get(i);
 			if (elem instanceof CPListElementAttribute) {
@@ -314,9 +314,9 @@ public class LibrariesWorkbookPage extends BuildPathBasePage {
 				
 				if (attrib.getParent().getParentContainer() instanceof CPListElement) { // inside a container: apply changes right away
 					CPListElement containerEntry= attrib.getParent();
-					HashSet changedAttributes= (HashSet) containerEntriesToUpdate.get(containerEntry);
+					HashSet<String> changedAttributes= containerEntriesToUpdate.get(containerEntry);
 					if (changedAttributes == null) {
-						changedAttributes= new HashSet();
+						changedAttributes= new HashSet<String>();
 						containerEntriesToUpdate.put(containerEntry, changedAttributes);
 					}
 					changedAttributes.add(key); // collect the changed attributes
@@ -589,7 +589,7 @@ public class LibrariesWorkbookPage extends BuildPathBasePage {
 			IPath[] selected= BuildPathDialogAccess.chooseClassFolderEntries(getShell(), fCurrJProject.getPath(), getUsedContainers(existing));
 			if (selected != null) {
 				IWorkspaceRoot root= fCurrJProject.getProject().getWorkspace().getRoot();
-				ArrayList res= new ArrayList();
+				ArrayList<CPListElement> res= new ArrayList<CPListElement>();
 				for (int i= 0; i < selected.length; i++) {
 					IPath curr= selected[i];
 					IResource resource= root.findMember(curr);
@@ -597,7 +597,7 @@ public class LibrariesWorkbookPage extends BuildPathBasePage {
 						res.add(newCPLibraryElement(resource));
 					}
 				}
-				return (CPListElement[]) res.toArray(new CPListElement[res.size()]);
+				return res.toArray(new CPListElement[res.size()]);
 			}
 		} else {
 			// disabled
@@ -611,7 +611,7 @@ public class LibrariesWorkbookPage extends BuildPathBasePage {
 		if (existing == null) {
 			IPath[] selected= BuildPathDialogAccess.chooseJAREntries(getShell(), fCurrJProject.getPath(), getUsedJARFiles(existing));
 			if (selected != null) {
-				ArrayList res= new ArrayList();
+				ArrayList<CPListElement> res= new ArrayList<CPListElement>();
 				
 				for (int i= 0; i < selected.length; i++) {
 					IPath curr= selected[i];
@@ -620,7 +620,7 @@ public class LibrariesWorkbookPage extends BuildPathBasePage {
 						res.add(newCPLibraryElement(resource));
 					}
 				}
-				return (CPListElement[]) res.toArray(new CPListElement[res.size()]);
+				return res.toArray(new CPListElement[res.size()]);
 			}
 		} else {
 			IPath configured= BuildPathDialogAccess.configureJAREntry(getShell(), existing.getPath(), getUsedJARFiles(existing));
@@ -635,7 +635,7 @@ public class LibrariesWorkbookPage extends BuildPathBasePage {
 	}
 	
 	private IPath[] getUsedContainers(CPListElement existing) {
-		ArrayList res= new ArrayList();
+		ArrayList<IPath> res= new ArrayList<IPath>();
 		if (fCurrJProject.exists()) {
 			try {
 				IPath outputLocation= fCurrJProject.getOutputLocation();
@@ -658,11 +658,11 @@ public class LibrariesWorkbookPage extends BuildPathBasePage {
 				}
 			}
 		}
-		return (IPath[]) res.toArray(new IPath[res.size()]);
+		return res.toArray(new IPath[res.size()]);
 	}
 	
 	private IPath[] getUsedJARFiles(CPListElement existing) {
-		List res= new ArrayList();
+		List<IPath> res= new ArrayList<IPath>();
 		List cplist= fLibrariesList.getElements();
 		for (int i= 0; i < cplist.size(); i++) {
 			CPListElement elem= (CPListElement)cplist.get(i);
@@ -673,7 +673,7 @@ public class LibrariesWorkbookPage extends BuildPathBasePage {
 				}
 			}
 		}
-		return (IPath[]) res.toArray(new IPath[res.size()]);
+		return res.toArray(new IPath[res.size()]);
 	}	
 	
 	private CPListElement newCPLibraryElement(IResource res) {
@@ -684,11 +684,11 @@ public class LibrariesWorkbookPage extends BuildPathBasePage {
 		if (existing == null) {
 			IPath[] selected= BuildPathDialogAccess.chooseExternalJAREntries(getShell());
 			if (selected != null) {
-				ArrayList res= new ArrayList();
+				ArrayList<CPListElement> res= new ArrayList<CPListElement>();
 				for (int i= 0; i < selected.length; i++) {
 					res.add(new CPListElement(fCurrJProject, IClasspathEntry.CPE_LIBRARY, selected[i], null));
 				}
-				return (CPListElement[]) res.toArray(new CPListElement[res.size()]);
+				return res.toArray(new CPListElement[res.size()]);
 			}
 		} else {
 			IPath configured= BuildPathDialogAccess.configureExternalJAREntry(getShell(), existing.getPath());
@@ -701,19 +701,19 @@ public class LibrariesWorkbookPage extends BuildPathBasePage {
 		
 	private CPListElement[] openVariableSelectionDialog(CPListElement existing) {
 		List existingElements= fLibrariesList.getElements();
-		ArrayList existingPaths= new ArrayList(existingElements.size());
+		ArrayList<IPath> existingPaths= new ArrayList<IPath>(existingElements.size());
 		for (int i= 0; i < existingElements.size(); i++) {
 			CPListElement elem= (CPListElement) existingElements.get(i);
 			if (elem.getEntryKind() == IClasspathEntry.CPE_VARIABLE) {
 				existingPaths.add(elem.getPath());
 			}
 		}
-		IPath[] existingPathsArray= (IPath[]) existingPaths.toArray(new IPath[existingPaths.size()]);
+		IPath[] existingPathsArray= existingPaths.toArray(new IPath[existingPaths.size()]);
 		
 		if (existing == null) {
 			IPath[] paths= BuildPathDialogAccess.chooseVariableEntries(getShell(), existingPathsArray);
 			if (paths != null) {
-				ArrayList result= new ArrayList();
+				ArrayList<CPListElement> result= new ArrayList<CPListElement>();
 				for (int i = 0; i < paths.length; i++) {
 					CPListElement elem= new CPListElement(fCurrJProject, IClasspathEntry.CPE_VARIABLE, paths[i], null);
 					IPath resolvedPath= JavaCore.getResolvedVariablePath(paths[i]);
@@ -722,7 +722,7 @@ public class LibrariesWorkbookPage extends BuildPathBasePage {
 						result.add(elem);
 					}
 				}
-				return (CPListElement[]) result.toArray(new CPListElement[result.size()]);
+				return result.toArray(new CPListElement[result.size()]);
 			}
 		} else {
 			IPath path= BuildPathDialogAccess.configureVariableEntry(getShell(), existing.getPath(), existingPathsArray);

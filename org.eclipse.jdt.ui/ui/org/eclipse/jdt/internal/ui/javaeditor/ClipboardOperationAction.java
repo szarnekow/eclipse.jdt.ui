@@ -56,6 +56,7 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.Name;
+import org.eclipse.jdt.core.dom.SimpleName;
 
 import org.eclipse.jdt.ui.PreferenceConstants;
 
@@ -332,8 +333,8 @@ public final class ClipboardOperationAction extends TextEditorAction {
 				Object textData= clipboard.getContents(TextTransfer.getInstance());
 				Object rtfData= clipboard.getContents(RTFTransfer.getInstance());
 
-				ArrayList datas= new ArrayList(3);
-				ArrayList transfers= new ArrayList(3);
+				ArrayList<Object> datas= new ArrayList<Object>(3);
+				ArrayList<ByteArrayTransfer> transfers= new ArrayList<ByteArrayTransfer>(3);
 				if (textData != null) {
 					datas.add(textData);
 					transfers.add(TextTransfer.getInstance());
@@ -353,7 +354,7 @@ public final class ClipboardOperationAction extends TextEditorAction {
 				datas.add(clipboardData);
 				transfers.add(fgTransferInstance);
 
-				Transfer[] dataTypes= (Transfer[]) transfers.toArray(new Transfer[transfers.size()]);
+				Transfer[] dataTypes= transfers.toArray(new Transfer[transfers.size()]);
 				Object[] data= datas.toArray();
 				setClipboardContents(clipboard, data, dataTypes);
 			} finally {
@@ -396,9 +397,9 @@ public final class ClipboardOperationAction extends TextEditorAction {
 		}
 
 		// do process import if selection spans over import declaration or package
-		List list= astRoot.imports();
+		List<ASTNode> list= astRoot.imports();
 		if (!list.isEmpty()) {
-			if (offset < ((ASTNode) list.get(list.size() - 1)).getStartPosition()) {
+			if (offset < list.get(list.size() - 1).getStartPosition()) {
 				return null;
 			}
 		} else if (astRoot.getPackage() != null) {
@@ -407,8 +408,8 @@ public final class ClipboardOperationAction extends TextEditorAction {
 			}
 		}
 
-		ArrayList typeImportsRefs= new ArrayList();
-		ArrayList staticImportsRefs= new ArrayList();
+		ArrayList<SimpleName> typeImportsRefs= new ArrayList<SimpleName>();
+		ArrayList<Name> staticImportsRefs= new ArrayList<Name>();
 
 		ImportReferencesCollector.collect(astRoot, inputElement.getJavaProject(), new Region(offset, length), typeImportsRefs, staticImportsRefs);
 
@@ -416,9 +417,9 @@ public final class ClipboardOperationAction extends TextEditorAction {
 			return null;
 		}
 
-		HashSet namesToImport= new HashSet(typeImportsRefs.size());
+		HashSet<String> namesToImport= new HashSet<String>(typeImportsRefs.size());
 		for (int i= 0; i < typeImportsRefs.size(); i++) {
-			Name curr= (Name) typeImportsRefs.get(i);
+			Name curr= typeImportsRefs.get(i);
 			IBinding binding= curr.resolveBinding();
 			if (binding != null && binding.getKind() == IBinding.TYPE) {
 				ITypeBinding typeBinding= (ITypeBinding) binding;
@@ -438,9 +439,9 @@ public final class ClipboardOperationAction extends TextEditorAction {
 			}
 		}
 
-		HashSet staticsToImport= new HashSet(staticImportsRefs.size());
+		HashSet<String> staticsToImport= new HashSet<String>(staticImportsRefs.size());
 		for (int i= 0; i < staticImportsRefs.size(); i++) {
-			Name curr= (Name) staticImportsRefs.get(i);
+			Name curr= staticImportsRefs.get(i);
 			IBinding binding= curr.resolveBinding();
 			if (binding != null) {
 				StringBuffer buf= new StringBuffer(Bindings.getImportName(binding));
@@ -456,8 +457,8 @@ public final class ClipboardOperationAction extends TextEditorAction {
 			return null;
 		}
 
-		String[] typeImports= (String[]) namesToImport.toArray(new String[namesToImport.size()]);
-		String[] staticImports= (String[]) staticsToImport.toArray(new String[staticsToImport.size()]);
+		String[] typeImports= namesToImport.toArray(new String[namesToImport.size()]);
+		String[] staticImports= staticsToImport.toArray(new String[staticsToImport.size()]);
 		return new ClipboardData(inputElement, typeImports, staticImports);
 	}
 

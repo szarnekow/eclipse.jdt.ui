@@ -34,7 +34,7 @@ import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 class JavaParseTreeBuilder extends ASTVisitor {
 
     private char[] fBuffer;
-    private Stack fStack= new Stack();
+    private Stack<JavaNode> fStack= new Stack<JavaNode>();
     private JavaNode fImportContainer;
     private boolean fShowCU;
 
@@ -189,7 +189,7 @@ class JavaParseTreeBuilder extends ASTVisitor {
     }
 
     private JavaNode getCurrentContainer() {
-        return (JavaNode) fStack.peek();
+        return fStack.peek();
     }
 
     private String getFieldName(VariableDeclarationFragment node) {
@@ -209,7 +209,7 @@ class JavaParseTreeBuilder extends ASTVisitor {
         buffer.append(node.getName().toString());
         buffer.append('(');
         boolean first= true;
-        Iterator iterator= node.parameters().iterator();
+        Iterator<ASTNode> iterator= node.parameters().iterator();
         while (iterator.hasNext()) {
             Object parameterDecl= iterator.next();
             if (parameterDecl instanceof SingleVariableDeclaration) {

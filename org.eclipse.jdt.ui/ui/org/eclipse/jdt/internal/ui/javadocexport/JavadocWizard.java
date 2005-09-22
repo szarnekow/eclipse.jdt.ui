@@ -179,7 +179,7 @@ public class JavadocWizard extends Wizard implements IExportWizard {
 			try {
 
 				URL newURL= fDestination.toFile().toURL();
-				List projs= new ArrayList();
+				List<IJavaProject> projs= new ArrayList<IJavaProject>();
 				//get javadoc locations for all projects
 				for (int i= 0; i < checkedProjects.length; i++) {
 					IJavaProject curr= checkedProjects[i];
@@ -191,7 +191,7 @@ public class JavadocWizard extends Wizard implements IExportWizard {
 					}
 				}
 				if (!projs.isEmpty()) {
-					setAllJavadocLocations((IJavaProject[]) projs.toArray(new IJavaProject[projs.size()]), newURL);
+					setAllJavadocLocations(projs.toArray(new IJavaProject[projs.size()]), newURL);
 				}
 			} catch (MalformedURLException e) {
 				JavaPlugin.log(e);
@@ -280,8 +280,8 @@ public class JavadocWizard extends Wizard implements IExportWizard {
 	private boolean executeJavadocGeneration() {
 		Process process= null;
 		try {
-			ArrayList vmArgs= new ArrayList();
-			ArrayList progArgs= new ArrayList();
+			ArrayList<String> vmArgs= new ArrayList<String>();
+			ArrayList<String> progArgs= new ArrayList<String>();
 			
 			fStore.getArgumentArray(vmArgs, progArgs);
 			
@@ -291,7 +291,7 @@ public class JavadocWizard extends Wizard implements IExportWizard {
 			FileWriter writer= new FileWriter(file);
 			try {
 				for (int i= 0; i < progArgs.size(); i++) {
-					String curr= (String) progArgs.get(i);
+					String curr= progArgs.get(i);
 					curr= checkForSpaces(curr);
 					
 					writer.write(curr);
@@ -301,7 +301,7 @@ public class JavadocWizard extends Wizard implements IExportWizard {
 				writer.close();
 			}
 			
-			String[] args= (String[]) vmArgs.toArray(new String[vmArgs.size()]);
+			String[] args= vmArgs.toArray(new String[vmArgs.size()]);
 			process= Runtime.getRuntime().exec(args);
 			if (process != null) {
 				// construct a formatted command line for the process properties
@@ -397,7 +397,7 @@ public class JavadocWizard extends Wizard implements IExportWizard {
 	 */
 	private IFile[] getUnsavedFiles(List resources) {
 		IEditorPart[] dirtyEditors= JavaPlugin.getDirtyEditors();
-		Set unsavedFiles= new HashSet(dirtyEditors.length);
+		Set<IFile> unsavedFiles= new HashSet<IFile>(dirtyEditors.length);
 		if (dirtyEditors.length > 0) {
 			for (int i= 0; i < dirtyEditors.length; i++) {
 				if (dirtyEditors[i].getEditorInput() instanceof IFileEditorInput) {
@@ -408,7 +408,7 @@ public class JavadocWizard extends Wizard implements IExportWizard {
 				}
 			}
 		}
-		return (IFile[]) unsavedFiles.toArray(new IFile[unsavedFiles.size()]);
+		return unsavedFiles.toArray(new IFile[unsavedFiles.size()]);
 	}
 
 	/**
@@ -497,7 +497,7 @@ public class JavadocWizard extends Wizard implements IExportWizard {
 				String name= JavadocExportMessages.JavadocWizard_savetask_name; 
 				pm.beginTask(name, editorsToSave.length);
 				try {
-					List dirtyFilesList= Arrays.asList(dirtyFiles);
+					List<IFile> dirtyFilesList= Arrays.asList(dirtyFiles);
 					for (int i= 0; i < editorsToSave.length; i++) {
 						if (editorsToSave[i].getEditorInput() instanceof IFileEditorInput) {
 							IFile dirtyFile= ((IFileEditorInput) editorsToSave[i].getEditorInput()).getFile();

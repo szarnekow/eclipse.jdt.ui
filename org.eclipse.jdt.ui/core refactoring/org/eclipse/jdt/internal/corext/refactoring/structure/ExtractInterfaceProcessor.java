@@ -169,7 +169,7 @@ public final class ExtractInterfaceProcessor extends SuperTypeRefactoringProcess
 	private final CodeGenerationSettings fSettings;
 
 	/** The static bindings to import */
-	private final Set fStaticBindings= new HashSet();
+	private final Set<IBinding> fStaticBindings= new HashSet<IBinding>();
 
 	/** The subtype where to extract the supertype */
 	private final IType fSubType;
@@ -181,7 +181,7 @@ public final class ExtractInterfaceProcessor extends SuperTypeRefactoringProcess
 	private String fSuperSource= null;
 
 	/** The type bindings to import */
-	private final Set fTypeBindings= new HashSet();
+	private final Set<ITypeBinding> fTypeBindings= new HashSet<ITypeBinding>();
 
 	/**
 	 * Creates a new extract interface processor.
@@ -397,7 +397,7 @@ public final class ExtractInterfaceProcessor extends SuperTypeRefactoringProcess
 		final ITrackedNodePosition position= rewrite.track(field);
 		final ListRewrite rewriter= rewrite.getListRewrite(field, FieldDeclaration.FRAGMENTS_PROPERTY);
 		VariableDeclarationFragment current= null;
-		for (final Iterator iterator= field.fragments().iterator(); iterator.hasNext();) {
+		for (final Iterator<ASTNode> iterator= field.fragments().iterator(); iterator.hasNext();) {
 			current= (VariableDeclarationFragment) iterator.next();
 			if (!current.getName().getIdentifier().equals(fragment.getName().getIdentifier()))
 				rewriter.remove(current, null);
@@ -552,7 +552,7 @@ public final class ExtractInterfaceProcessor extends SuperTypeRefactoringProcess
 		boolean abstractFound= false;
 		Modifier modifier= null;
 		IExtendedModifier extended= null;
-		for (final Iterator iterator= declaration.modifiers().iterator(); iterator.hasNext();) {
+		for (final Iterator<ASTNode> iterator= declaration.modifiers().iterator(); iterator.hasNext();) {
 			extended= (IExtendedModifier) iterator.next();
 			if (!extended.isAnnotation()) {
 				modifier= (Modifier) extended;
@@ -650,8 +650,8 @@ public final class ExtractInterfaceProcessor extends SuperTypeRefactoringProcess
 		Assert.isNotNull(unit);
 		final ImportRewrite rewrite= new ImportRewrite(unit);
 		ITypeBinding type= null;
-		for (final Iterator iterator= fTypeBindings.iterator(); iterator.hasNext();) {
-			type= (ITypeBinding) iterator.next();
+		for (final Iterator<ITypeBinding> iterator= fTypeBindings.iterator(); iterator.hasNext();) {
+			type= iterator.next();
 			if (type.isTypeVariable()) {
 				final ITypeBinding[] bounds= type.getTypeBounds();
 				for (int index= 0; index < bounds.length; index++)
@@ -660,8 +660,8 @@ public final class ExtractInterfaceProcessor extends SuperTypeRefactoringProcess
 			rewrite.addImport(type);
 		}
 		IBinding binding= null;
-		for (final Iterator iterator= fStaticBindings.iterator(); iterator.hasNext();) {
-			binding= (IBinding) iterator.next();
+		for (final Iterator<IBinding> iterator= fStaticBindings.iterator(); iterator.hasNext();) {
+			binding= iterator.next();
 			rewrite.addStaticImport(binding);
 		}
 		final IDocument document= new Document();
@@ -693,7 +693,7 @@ public final class ExtractInterfaceProcessor extends SuperTypeRefactoringProcess
 		if (sourceDeclaration instanceof TypeDeclaration) {
 			TypeParameter parameter= null;
 			final ListRewrite rewrite= targetRewrite.getListRewrite(targetDeclaration, TypeDeclaration.TYPE_PARAMETERS_PROPERTY);
-			for (final Iterator iterator= ((TypeDeclaration) sourceDeclaration).typeParameters().iterator(); iterator.hasNext();) {
+			for (final Iterator<ASTNode> iterator= ((TypeDeclaration) sourceDeclaration).typeParameters().iterator(); iterator.hasNext();) {
 				parameter= (TypeParameter) iterator.next();
 				rewrite.insertLast(ASTNode.copySubtree(targetRewrite.getAST(), parameter), null);
 				ImportRewriteUtil.collectImports(fSubType.getJavaProject(), sourceDeclaration, fTypeBindings, fStaticBindings, false);
@@ -858,7 +858,7 @@ public final class ExtractInterfaceProcessor extends SuperTypeRefactoringProcess
 	 * @throws JavaModelException if an error occurs
 	 */
 	public final IMember[] getExtractableMembers() throws JavaModelException {
-		final List list= new ArrayList();
+		final List<IJavaElement> list= new ArrayList<IJavaElement>();
 		IJavaElement[] children= fSubType.getChildren();
 		for (int index= 0; index < children.length; index++) {
 			if (children[index] instanceof IMember && isExtractableMember((IMember) children[index]))
@@ -877,7 +877,7 @@ public final class ExtractInterfaceProcessor extends SuperTypeRefactoringProcess
 	 */
 	protected final IField[] getExtractedFields(final ICompilationUnit unit) {
 		Assert.isNotNull(unit);
-		final List list= new ArrayList();
+		final List<IJavaElement> list= new ArrayList<IJavaElement>();
 		for (int index= 0; index < fMembers.length; index++) {
 			if (fMembers[index] instanceof IField) {
 				final IJavaElement element= JavaModelUtil.findInCompilationUnit(unit, fMembers[index]);
@@ -898,7 +898,7 @@ public final class ExtractInterfaceProcessor extends SuperTypeRefactoringProcess
 	 */
 	protected final IMethod[] getExtractedMethods(final ICompilationUnit unit) {
 		Assert.isNotNull(unit);
-		final List list= new ArrayList();
+		final List<IJavaElement> list= new ArrayList<IJavaElement>();
 		for (int index= 0; index < fMembers.length; index++) {
 			if (fMembers[index] instanceof IMethod) {
 				final IJavaElement element= JavaModelUtil.findInCompilationUnit(unit, fMembers[index]);
@@ -1009,7 +1009,7 @@ public final class ExtractInterfaceProcessor extends SuperTypeRefactoringProcess
 			currentRewrite= rewrite;
 		else
 			currentRewrite= new CompilationUnitRewrite(unit, node);
-		final Collection collection= (Collection) fTypeOccurrences.get(unit);
+		final Collection collection= fTypeOccurrences.get(unit);
 		if (collection != null && !collection.isEmpty()) {
 			TType estimate= null;
 			ISourceConstraintVariable variable= null;

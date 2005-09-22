@@ -44,13 +44,13 @@ public class SuperTypeConstraintsSolver {
 	protected final SuperTypeConstraintsModel fModel;
 
 	/** The obsolete casts (element type: <code>&ltICompilationUnit, Collection&ltCastVariable2&gt&gt</code>) */
-	protected Map fObsoleteCasts= null;
+	protected Map<ICompilationUnit, Collection> fObsoleteCasts= null;
 
 	/** The list of constraint variables to be processed */
-	protected LinkedList fProcessable= null;
+	protected LinkedList<ConstraintVariable2> fProcessable= null;
 
 	/** The type occurrences (element type: <code>&ltICompilationUnit, Collection&ltIDeclaredConstraintVariable&gt</code>) */
-	protected Map fTypeOccurrences= null;
+	protected Map<ICompilationUnit, Collection> fTypeOccurrences= null;
 
 	/**
 	 * Creates a new super type constraints solver.
@@ -69,10 +69,10 @@ public class SuperTypeConstraintsSolver {
 	 * @param constraints the type constraints (element type: <code>ITypeConstraint2</code>)
 	 * @param level the compliance level
 	 */
-	private void computeConditionalTypeConstraints(final Collection constraints, final int level) {
+	private void computeConditionalTypeConstraints(final Collection<ITypeConstraint2> constraints, final int level) {
 		ITypeConstraint2 constraint= null;
-		for (final Iterator iterator= constraints.iterator(); iterator.hasNext();) {
-			constraint= (ITypeConstraint2) iterator.next();
+		for (final Iterator<ITypeConstraint2> iterator= constraints.iterator(); iterator.hasNext();) {
+			constraint= iterator.next();
 			if (constraint instanceof ConditionalTypeConstraint) {
 				final ConditionalTypeConstraint conditional= (ConditionalTypeConstraint) constraint;
 				fModel.createEqualityConstraint(constraint.getLeft(), constraint.getRight());
@@ -88,11 +88,11 @@ public class SuperTypeConstraintsSolver {
 	 * @param constraints the type constraints (element type: <code>ITypeConstraint2</code>)
 	 * @param level the compliance level
 	 */
-	private void computeNonCovariantConstraints(final Collection constraints, final int level) {
+	private void computeNonCovariantConstraints(final Collection<ITypeConstraint2> constraints, final int level) {
 		if (level != 3) {
 			ITypeConstraint2 constraint= null;
-			for (final Iterator iterator= constraints.iterator(); iterator.hasNext();) {
-				constraint= (ITypeConstraint2) iterator.next();
+			for (final Iterator<ITypeConstraint2> iterator= constraints.iterator(); iterator.hasNext();) {
+				constraint= iterator.next();
 				if (constraint instanceof CovariantTypeConstraint)
 					fModel.createEqualityConstraint(constraint.getLeft(), constraint.getRight());
 			}
@@ -104,19 +104,19 @@ public class SuperTypeConstraintsSolver {
 	 * 
 	 * @param variables the cast variables (element type: <code>CastVariable2</code>)
 	 */
-	private void computeObsoleteCasts(final Collection variables) {
-		fObsoleteCasts= new HashMap();
+	private void computeObsoleteCasts(final Collection<CastVariable2> variables) {
+		fObsoleteCasts= new HashMap<ICompilationUnit, Collection>();
 		CastVariable2 variable= null;
-		for (final Iterator iterator= variables.iterator(); iterator.hasNext();) {
-			variable= (CastVariable2) iterator.next();
+		for (final Iterator<CastVariable2> iterator= variables.iterator(); iterator.hasNext();) {
+			variable= iterator.next();
 			final TType type= (TType) variable.getExpressionVariable().getData(DATA_TYPE_ESTIMATE);
 			if (type != null && type.canAssignTo(variable.getType())) {
 				final ICompilationUnit unit= variable.getCompilationUnit();
-				Collection casts= (Collection) fObsoleteCasts.get(unit);
+				Collection<CastVariable2> casts= fObsoleteCasts.get(unit);
 				if (casts != null)
 					casts.add(variable);
 				else {
-					casts= new ArrayList(1);
+					casts= new ArrayList<CastVariable2>(1);
 					casts.add(variable);
 					fObsoleteCasts.put(unit, casts);
 				}
@@ -170,7 +170,7 @@ public class SuperTypeConstraintsSolver {
 	 * @param variables the constraint variables (element type: <code>ConstraintVariable2</code>)
 	 */
 	private void computeTypeOccurrences(final Collection variables) {
-		fTypeOccurrences= new HashMap();
+		fTypeOccurrences= new HashMap<ICompilationUnit, Collection>();
 		final TType superErasure= fModel.getSuperType().getErasure();
 		TType estimatedType= null;
 		ITypeSet set= null;
@@ -192,11 +192,11 @@ public class SuperTypeConstraintsSolver {
 							declaration.setData(DATA_TYPE_ESTIMATE, estimatedType);
 							unit= declaration.getCompilationUnit();
 							if (unit != null) {
-								Collection matches= (Collection) fTypeOccurrences.get(unit);
+								Collection<ITypeConstraintVariable> matches= fTypeOccurrences.get(unit);
 								if (matches != null)
 									matches.add(declaration);
 								else {
-									matches= new ArrayList(1);
+									matches= new ArrayList<ITypeConstraintVariable>(1);
 									matches.add(declaration);
 									fTypeOccurrences.put(unit, matches);
 								}
@@ -213,7 +213,7 @@ public class SuperTypeConstraintsSolver {
 	 * 
 	 * @return the obsolete casts (element type: <code>&ltICompilationUnit, Collection&ltCastVariable2&gt&gt</code>)
 	 */
-	public final Map getObsoleteCasts() {
+	public final Map<ICompilationUnit, Collection> getObsoleteCasts() {
 		return fObsoleteCasts;
 	}
 
@@ -222,7 +222,7 @@ public class SuperTypeConstraintsSolver {
 	 * 
 	 * @return the type occurrences (element type: <code>&ltICompilationUnit, Collection&ltIDeclaredConstraintVariable&gt</code>)
 	 */
-	public final Map getTypeOccurrences() {
+	public final Map<ICompilationUnit, Collection> getTypeOccurrences() {
 		return fTypeOccurrences;
 	}
 
@@ -253,9 +253,9 @@ public class SuperTypeConstraintsSolver {
 	 * Solves the constraints of the associated model.
 	 */
 	public final void solveConstraints() {
-		fProcessable= new LinkedList();
+		fProcessable= new LinkedList<ConstraintVariable2>();
 		final Collection variables= fModel.getConstraintVariables();
-		final Collection constraints= fModel.getTypeConstraints();
+		final Collection<ITypeConstraint2> constraints= fModel.getTypeConstraints();
 		final int level= fModel.getCompliance();
 		computeNonCovariantConstraints(constraints, level);
 
@@ -267,7 +267,7 @@ public class SuperTypeConstraintsSolver {
 		Collection usage= null;
 		ConstraintVariable2 variable= null;
 		while (!fProcessable.isEmpty()) {
-			variable= (ConstraintVariable2) fProcessable.removeFirst();
+			variable= fProcessable.removeFirst();
 			usage= SuperTypeConstraintsModel.getVariableUsage(variable);
 			if (!usage.isEmpty())
 				processConstraints(usage);

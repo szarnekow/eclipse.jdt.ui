@@ -93,10 +93,10 @@ public class TypeContextChecker {
 
 		private final IMethod fMethod;
 		private final StubTypeContext fStubTypeContext;
-		private final List/*<ParameterInfo>*/ fParameterInfos;
+		private final List/*<ParameterInfo>*/<Object> fParameterInfos;
 		private final ReturnTypeInfo fReturnTypeInfo;
 
-		public MethodTypesChecker(IMethod method, StubTypeContext stubTypeContext, List/*<ParameterInfo>*/ parameterInfos, ReturnTypeInfo returnTypeInfo) {
+		public MethodTypesChecker(IMethod method, StubTypeContext stubTypeContext, List/*<ParameterInfo>*/<Object> parameterInfos, ReturnTypeInfo returnTypeInfo) {
 			fMethod= method;
 			fStubTypeContext= stubTypeContext;
 			fParameterInfos= parameterInfos;
@@ -171,7 +171,7 @@ public class TypeContextChecker {
 				if (method instanceof MethodDeclaration) {
 					MethodDeclaration methodDeclaration= (MethodDeclaration) method;
 					typeNodes[parameterCount]= methodDeclaration.getReturnType2();
-					List/*<SingleVariableDeclaration>*/ parameters= methodDeclaration.parameters();
+					List/*<SingleVariableDeclaration>*/<ASTNode> parameters= methodDeclaration.parameters();
 					for (int i= 0; i < parameterCount; i++)
 						typeNodes[i]= ((SingleVariableDeclaration) parameters.get(i)).getType();
 
@@ -283,14 +283,14 @@ public class TypeContextChecker {
 				}
 			}
 			
-			List typeRefsFound= findTypeInfos(elementTypeName, declaringType, pm);
+			List<TypeInfo> typeRefsFound= findTypeInfos(elementTypeName, declaringType, pm);
 			if (typeRefsFound.size() == 0){
 				String[] keys= {elementTypeName};
 				String msg= Messages.format(RefactoringCoreMessages.TypeContextChecker_not_unique, keys); 
 				status.addError(msg);
 				return elementTypeName;
 			} else if (typeRefsFound.size() == 1){
-				TypeInfo typeInfo= (TypeInfo) typeRefsFound.get(0);
+				TypeInfo typeInfo= typeRefsFound.get(0);
 				return typeInfo.getFullyQualifiedName();
 			} else {
 				Assert.isTrue(typeRefsFound.size() > 1);
@@ -301,16 +301,16 @@ public class TypeContextChecker {
 			}
 		}
 
-		private static List findTypeInfos(String typeName, IType contextType, IProgressMonitor pm) throws JavaModelException {
+		private static List<TypeInfo> findTypeInfos(String typeName, IType contextType, IProgressMonitor pm) throws JavaModelException {
 			IJavaSearchScope scope= SearchEngine.createJavaSearchScope(new IJavaProject[]{contextType.getJavaProject()}, true);
 			IPackageFragment currPackage= contextType.getPackageFragment();
-			ArrayList collectedInfos= new ArrayList();
+			ArrayList<TypeInfo> collectedInfos= new ArrayList<TypeInfo>();
 			TypeInfoRequestor requestor= new TypeInfoRequestor(collectedInfos);
 			new SearchEngine().searchAllTypeNames(null, new char[][] {typeName.toCharArray()}, scope, requestor, IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH, pm);
 			
-			List result= new ArrayList();
-			for (Iterator iter= collectedInfos.iterator(); iter.hasNext();) {
-				TypeInfo curr= (TypeInfo) iter.next();
+			List<TypeInfo> result= new ArrayList<TypeInfo>();
+			for (Iterator<TypeInfo> iter= collectedInfos.iterator(); iter.hasNext();) {
+				TypeInfo curr= iter.next();
 				IType type= curr.resolveType(scope);
 				if (type != null && JavaModelUtil.isVisible(type, currPackage)) {
 					result.add(curr);
@@ -324,10 +324,10 @@ public class TypeContextChecker {
 	private static class MethodTypesSyntaxChecker {
 	
 		private final IMethod fMethod;
-		private final List/*<ParameterInfo>*/ fParameterInfos;
+		private final List/*<ParameterInfo>*/<Object> fParameterInfos;
 		private final ReturnTypeInfo fReturnTypeInfo;
 	
-		public MethodTypesSyntaxChecker(IMethod method, List/*<ParameterInfo>*/ parameterInfos, ReturnTypeInfo returnTypeInfo) {
+		public MethodTypesSyntaxChecker(IMethod method, List/*<ParameterInfo>*/<Object> parameterInfos, ReturnTypeInfo returnTypeInfo) {
 			fMethod= method;
 			fParameterInfos= parameterInfos;
 			fReturnTypeInfo= returnTypeInfo;
@@ -356,7 +356,7 @@ public class TypeContextChecker {
 				String msg= RefactoringCoreMessages.TypeContextChecker_return_type_not_empty; 
 				return RefactoringStatus.createFatalErrorStatus(msg);
 			}
-			List problemsCollector= new ArrayList(0);
+			List<String> problemsCollector= new ArrayList<String>(0);
 			Type parsedType= parseType(newTypeName, fMethod.getJavaProject(), problemsCollector);
 			if (parsedType == null) {
 				String msg= Messages.format(RefactoringCoreMessages.TypeContextChecker_invalid_return_type, new String[]{newTypeName}); 
@@ -366,8 +366,8 @@ public class TypeContextChecker {
 				return null;
 			
 			RefactoringStatus result= new RefactoringStatus();
-			for (Iterator iter= problemsCollector.iterator(); iter.hasNext();) {
-				String msg= Messages.format(RefactoringCoreMessages.TypeContextChecker_invalid_return_type_syntax, new String[]{newTypeName, (String) iter.next()}); 
+			for (Iterator<String> iter= problemsCollector.iterator(); iter.hasNext();) {
+				String msg= Messages.format(RefactoringCoreMessages.TypeContextChecker_invalid_return_type_syntax, new String[]{newTypeName, iter.next()}); 
 				result.addError(msg);
 			}
 			return result;
@@ -386,7 +386,7 @@ public class TypeContextChecker {
 	
 	}
 
-	private static Type parseType(String typeString, IJavaProject javaProject, List/*<IProblem>*/ problemsCollector) {
+	private static Type parseType(String typeString, IJavaProject javaProject, List/*<IProblem>*/<String> problemsCollector) {
 		if ("".equals(typeString.trim())) //speed up for a common case //$NON-NLS-1$
 			return null;
 		if (! typeString.trim().equals(typeString))
@@ -432,12 +432,12 @@ public class TypeContextChecker {
 			return typeBinding;
 	}
 
-	public static RefactoringStatus[] checkAndResolveMethodTypes(IMethod method, StubTypeContext stubTypeContext, List parameterInfos, ReturnTypeInfo returnTypeInfo) throws CoreException {
+	public static RefactoringStatus[] checkAndResolveMethodTypes(IMethod method, StubTypeContext stubTypeContext, List<Object> parameterInfos, ReturnTypeInfo returnTypeInfo) throws CoreException {
 		MethodTypesChecker checker= new MethodTypesChecker(method, stubTypeContext, parameterInfos, returnTypeInfo);
 		return checker.checkAndResolveMethodTypes();
 	}
 
-	public static RefactoringStatus[] checkMethodTypesSyntax(IMethod method, List parameterInfos, ReturnTypeInfo returnTypeInfo) {
+	public static RefactoringStatus[] checkMethodTypesSyntax(IMethod method, List<Object> parameterInfos, ReturnTypeInfo returnTypeInfo) {
 		MethodTypesSyntaxChecker checker= new MethodTypesSyntaxChecker(method, parameterInfos, returnTypeInfo);
 		return checker.checkSyntax();
 	}
@@ -455,7 +455,7 @@ public class TypeContextChecker {
 			return RefactoringStatus.createFatalErrorStatus(msg);
 		}
 		
-		List problemsCollector= new ArrayList(0);
+		List<String> problemsCollector= new ArrayList<String>(0);
 		Type parsedType= parseType(newTypeName, project, problemsCollector);
 		boolean valid= parsedType != null;
 		if (valid && parsedType instanceof PrimitiveType)
@@ -468,8 +468,8 @@ public class TypeContextChecker {
 			return null;
 		
 		RefactoringStatus result= new RefactoringStatus();
-		for (Iterator iter= problemsCollector.iterator(); iter.hasNext();) {
-			String msg= Messages.format(RefactoringCoreMessages.TypeContextChecker_invalid_type_syntax, new String[]{newTypeName, (String) iter.next()}); 
+		for (Iterator<String> iter= problemsCollector.iterator(); iter.hasNext();) {
+			String msg= Messages.format(RefactoringCoreMessages.TypeContextChecker_invalid_type_syntax, new String[]{newTypeName, iter.next()}); 
 			result.addError(msg);
 		}
 		return result;
@@ -485,7 +485,7 @@ public class TypeContextChecker {
 			PackageDeclaration pack= root.getPackage();
 			if (pack != null)
 				introEnd= pack.getStartPosition() + pack.getLength();
-			List imports= root.imports();
+			List<ASTNode> imports= root.imports();
 			if (imports.size() > 0) {
 				ImportDeclaration lastImport= (ImportDeclaration) imports.get(imports.size() - 1);
 				introEnd= lastImport.getStartPosition() + lastImport.getLength();
@@ -506,10 +506,10 @@ public class TypeContextChecker {
 		}
 	}
 
-	private static void fillWithTypeStubs(StringBuffer bufBefore, StringBuffer bufAfter, int focalPosition, List/*<? extends BodyDeclaration>*/ types) {
+	private static void fillWithTypeStubs(StringBuffer bufBefore, StringBuffer bufAfter, int focalPosition, List<? extends BodyDeclaration> types) {
 		StringBuffer buf;
-		for (Iterator iter= types.iterator(); iter.hasNext();) {
-			BodyDeclaration bodyDeclaration= (BodyDeclaration) iter.next();
+		for (Iterator<? extends BodyDeclaration> iter= types.iterator(); iter.hasNext();) {
+			BodyDeclaration bodyDeclaration= iter.next();
 			if (! (bodyDeclaration instanceof AbstractTypeDeclaration)) {
 				//account for local classes:
 				if (! (bodyDeclaration instanceof MethodDeclaration))
@@ -525,8 +525,8 @@ public class TypeContextChecker {
 				buf.append(" void "); //$NON-NLS-1$
 				buf.append(methodDeclaration.getName().getIdentifier());
 				buf.append("(){\n"); //$NON-NLS-1$
-				List statements= methodDeclaration.getBody().statements();
-				for (Iterator iterator= statements.iterator(); iterator.hasNext();) {
+				List<ASTNode> statements= methodDeclaration.getBody().statements();
+				for (Iterator<ASTNode> iterator= statements.iterator(); iterator.hasNext();) {
 					Statement statement= (Statement) iterator.next();
 					if (statement instanceof TypeDeclarationStatement) {
 						AbstractTypeDeclaration localType= ((TypeDeclarationStatement) statement).getDeclaration();
@@ -553,7 +553,7 @@ public class TypeContextChecker {
 					buf.append(" extends "); //$NON-NLS-1$
 					buf.append(ASTNodes.asString(type.getSuperclassType()));
 				}
-				List superInterfaces= type.superInterfaceTypes();
+				List<ASTNode> superInterfaces= type.superInterfaceTypes();
 				appendSuperInterfaces(buf, superInterfaces);
 				
 			} else if (decl instanceof AnnotationTypeDeclaration) {
@@ -565,7 +565,7 @@ public class TypeContextChecker {
 				EnumDeclaration enumDecl= (EnumDeclaration) decl;
 				buf.append("enum "); //$NON-NLS-1$
 				buf.append(enumDecl.getName().getIdentifier());
-				List superInterfaces= enumDecl.superInterfaceTypes();
+				List<ASTNode> superInterfaces= enumDecl.superInterfaceTypes();
 				appendSuperInterfaces(buf, superInterfaces);
 			}
 			
@@ -578,7 +578,7 @@ public class TypeContextChecker {
 		}
 	}
 
-	private static void appendTypeParameters(StringBuffer buf, List typeParameters) {
+	private static void appendTypeParameters(StringBuffer buf, List<ASTNode> typeParameters) {
 		int typeParametersCount= typeParameters.size();
 		if (typeParametersCount > 0) {
 			buf.append('<');
@@ -591,8 +591,8 @@ public class TypeContextChecker {
 		}
 	}
 
-	private static void appendModifiers(StringBuffer buf, List modifiers) {
-		for (Iterator iterator= modifiers.iterator(); iterator.hasNext();) {
+	private static void appendModifiers(StringBuffer buf, List<ASTNode> modifiers) {
+		for (Iterator<ASTNode> iterator= modifiers.iterator(); iterator.hasNext();) {
 			IExtendedModifier extendedModifier= (IExtendedModifier) iterator.next();
 			if (extendedModifier.isModifier()) {
 				Modifier modifier= (Modifier) extendedModifier;
@@ -601,7 +601,7 @@ public class TypeContextChecker {
 		}
 	}
 
-	private static void appendSuperInterfaces(StringBuffer buf, List superInterfaces) {
+	private static void appendSuperInterfaces(StringBuffer buf, List<ASTNode> superInterfaces) {
 		int superInterfaceCount= superInterfaces.size();
 		if (superInterfaceCount > 0) {
 			buf.append(" implements "); //$NON-NLS-1$

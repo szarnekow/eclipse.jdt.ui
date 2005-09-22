@@ -229,7 +229,7 @@ class JarPackageWizardPage extends WizardExportResourcesPage implements IJarPack
 	 *
 	 * @return an iterator over the collection of elements currently selected for export
 	 */
-	protected Iterator getSelectedResourcesIterator() {
+	protected Iterator<Object> getSelectedResourcesIterator() {
 		return fInputGroup.getAllCheckedListItems();
 	}
 
@@ -638,7 +638,7 @@ class JarPackageWizardPage extends WizardExportResourcesPage implements IJarPack
 			return true;
 			
 		// Source file only export - check if there are source files
-		Iterator iter= getSelectedResourcesIterator();
+		Iterator<Object> iter= getSelectedResourcesIterator();
 		while (iter.hasNext()) {
 			Object element= iter.next(); 
 			if (element instanceof IClassFile) {
@@ -741,15 +741,15 @@ class JarPackageWizardPage extends WizardExportResourcesPage implements IJarPack
 	}
 
 	Object[] getSelectedElementsWithoutContainedChildren() {
-		Set closure= removeContainedChildren(fInputGroup.getWhiteCheckedTreeItems());
+		Set<Object> closure= removeContainedChildren(fInputGroup.getWhiteCheckedTreeItems());
 		closure.addAll(getExportedNonContainers());
 		return closure.toArray();
 	}
 
-	private Set removeContainedChildren(Set elements) {
-		Set newList= new HashSet(elements.size());
-		Set javaElementResources= getCorrespondingContainers(elements);
-		Iterator iter= elements.iterator();
+	private Set<Object> removeContainedChildren(Set<Object> elements) {
+		Set<Object> newList= new HashSet<Object>(elements.size());
+		Set<Object> javaElementResources= getCorrespondingContainers(elements);
+		Iterator<Object> iter= elements.iterator();
 		boolean removedOne= false;
 		while (iter.hasNext()) {
 			Object element= iter.next();
@@ -784,11 +784,11 @@ class JarPackageWizardPage extends WizardExportResourcesPage implements IJarPack
 			return newList;
 	}
 
-	private Set getExportedNonContainers() {
-		Set whiteCheckedTreeItems= fInputGroup.getWhiteCheckedTreeItems();
-		Set exportedNonContainers= new HashSet(whiteCheckedTreeItems.size());
-		Set javaElementResources= getCorrespondingContainers(whiteCheckedTreeItems);
-		Iterator iter= fInputGroup.getAllCheckedListItems();
+	private Set<Object> getExportedNonContainers() {
+		Set<Object> whiteCheckedTreeItems= fInputGroup.getWhiteCheckedTreeItems();
+		Set<Object> exportedNonContainers= new HashSet<Object>(whiteCheckedTreeItems.size());
+		Set<Object> javaElementResources= getCorrespondingContainers(whiteCheckedTreeItems);
+		Iterator<Object> iter= fInputGroup.getAllCheckedListItems();
 		while (iter.hasNext()) {
 			Object element= iter.next();
 			Object parent= null;
@@ -806,9 +806,9 @@ class JarPackageWizardPage extends WizardExportResourcesPage implements IJarPack
 	 * Create a list with the folders / projects that correspond
 	 * to the Java elements (Java project, package, package root)
 	 */
-	private Set getCorrespondingContainers(Set elements) {
-		Set javaElementResources= new HashSet(elements.size());
-		Iterator iter= elements.iterator();
+	private Set<Object> getCorrespondingContainers(Set<Object> elements) {
+		Set<Object> javaElementResources= new HashSet<Object>(elements.size());
+		Iterator<Object> iter= elements.iterator();
 		while (iter.hasNext()) {
 			Object element= iter.next();
 			if (element instanceof IJavaElement) {

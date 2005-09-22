@@ -130,7 +130,7 @@ public abstract class OpenCloseWorkingSetAction extends SelectionDispatchAction 
 	}
 
 	public void selectionChanged(IStructuredSelection selection) {
-		List projects= getProjects(selection);
+		List<IProject> projects= getProjects(selection);
 		IActionBars actionBars= getActionBars();
 		if (projects != null && projects.size() > 0) {
 			setEnabled(true);
@@ -146,15 +146,15 @@ public abstract class OpenCloseWorkingSetAction extends SelectionDispatchAction 
 	}
 	
 	public void run(IStructuredSelection selection) {
-		final List projects= getProjects(selection);
+		final List<IProject> projects= getProjects(selection);
 		if (projects != null && projects.size() > 0) {
 			try {
 				PlatformUI.getWorkbench().getProgressService().busyCursorWhile(
 					new WorkbenchRunnableAdapter(new IWorkspaceRunnable() {
 						public void run(IProgressMonitor monitor) throws CoreException {
 							monitor.beginTask("", projects.size()); //$NON-NLS-1$
-							for (Iterator iter= projects.iterator(); iter.hasNext();) {
-								IProject project= (IProject)iter.next();
+							for (Iterator<IProject> iter= projects.iterator(); iter.hasNext();) {
+								IProject project= iter.next();
 								performOperation(project, new SubProgressMonitor(monitor, 1));
 							}
 							monitor.done();
@@ -180,14 +180,14 @@ public abstract class OpenCloseWorkingSetAction extends SelectionDispatchAction 
 
 	protected abstract String getErrorMessage();
 	
-	private List getProjects(IStructuredSelection selection) {
-		List result= new ArrayList();
+	private List<IProject> getProjects(IStructuredSelection selection) {
+		List<IProject> result= new ArrayList<IProject>();
 		List elements= selection.toList();
 		for (Iterator iter= elements.iterator(); iter.hasNext();) {
 			Object element= iter.next();
 			if (!(element instanceof IWorkingSet))
 				return null;
-			List projects= getProjects((IWorkingSet)element);
+			List<IProject> projects= getProjects((IWorkingSet)element);
 			if (projects == null)
 				return null;
 			result.addAll(projects);
@@ -195,8 +195,8 @@ public abstract class OpenCloseWorkingSetAction extends SelectionDispatchAction 
 		return result;
 	}
 
-	private List getProjects(IWorkingSet set) {
-		List result= new ArrayList();
+	private List<IProject> getProjects(IWorkingSet set) {
+		List<IProject> result= new ArrayList<IProject>();
 		IAdaptable[] elements= set.getElements();
 		for (int i= 0; i < elements.length; i++) {
 			Object element= elements[i];

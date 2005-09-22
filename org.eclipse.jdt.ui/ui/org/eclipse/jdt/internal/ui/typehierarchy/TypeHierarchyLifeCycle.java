@@ -35,7 +35,7 @@ public class TypeHierarchyLifeCycle implements ITypeHierarchyChangedListener, IE
 	private IJavaElement fInputElement;
 	private boolean fIsSuperTypesOnly;
 	
-	private List fChangeListeners;
+	private List<ITypeHierarchyLifeCycleListener> fChangeListeners;
 	
 	public TypeHierarchyLifeCycle() {
 		this(false);
@@ -45,7 +45,7 @@ public class TypeHierarchyLifeCycle implements ITypeHierarchyChangedListener, IE
 		fHierarchy= null;
 		fInputElement= null;
 		fIsSuperTypesOnly= isSuperTypesOnly;
-		fChangeListeners= new ArrayList(2);
+		fChangeListeners= new ArrayList<ITypeHierarchyLifeCycleListener>(2);
 	}
 	
 	public ITypeHierarchy getHierarchy() {
@@ -78,7 +78,7 @@ public class TypeHierarchyLifeCycle implements ITypeHierarchyChangedListener, IE
 	
 	private void fireChange(IType[] changedTypes) {
 		for (int i= fChangeListeners.size()-1; i>=0; i--) {
-			ITypeHierarchyLifeCycleListener curr= (ITypeHierarchyLifeCycleListener) fChangeListeners.get(i);
+			ITypeHierarchyLifeCycleListener curr= fChangeListeners.get(i);
 			curr.typeHierarchyChanged(this, changedTypes);
 		}
 	}
@@ -186,10 +186,10 @@ public class TypeHierarchyLifeCycle implements ITypeHierarchyChangedListener, IE
 		if (fHierarchyRefreshNeeded) {
 			return;
 		} else {
-			ArrayList changedTypes= new ArrayList();
+			ArrayList<IType> changedTypes= new ArrayList<IType>();
 			processDelta(event.getDelta(), changedTypes);
 			if (changedTypes.size() > 0) {
-				fireChange((IType[]) changedTypes.toArray(new IType[changedTypes.size()]));
+				fireChange(changedTypes.toArray(new IType[changedTypes.size()]));
 			}
 		}
 	}
@@ -197,7 +197,7 @@ public class TypeHierarchyLifeCycle implements ITypeHierarchyChangedListener, IE
 	/*
 	 * Assume that the hierarchy is intact (no refresh needed)
 	 */					
-	private void processDelta(IJavaElementDelta delta, ArrayList changedTypes) {
+	private void processDelta(IJavaElementDelta delta, ArrayList<IType> changedTypes) {
 		IJavaElement element= delta.getElement();
 		switch (element.getElementType()) {
 			case IJavaElement.TYPE:
@@ -250,13 +250,13 @@ public class TypeHierarchyLifeCycle implements ITypeHierarchyChangedListener, IE
 		return (flags & (IJavaElementDelta.F_CONTENT | IJavaElementDelta.F_FINE_GRAINED)) == IJavaElementDelta.F_CONTENT;
 	}
 	
-	private void processTypeDelta(IType type, ArrayList changedTypes) {
+	private void processTypeDelta(IType type, ArrayList<IType> changedTypes) {
 		if (getHierarchy().contains(type)) {
 			changedTypes.add(type);
 		}
 	}
 	
-	private void processChildrenDelta(IJavaElementDelta delta, ArrayList changedTypes) {
+	private void processChildrenDelta(IJavaElementDelta delta, ArrayList<IType> changedTypes) {
 		IJavaElementDelta[] children= delta.getAffectedChildren();
 		for (int i= 0; i < children.length; i++) {
 			processDelta(children[i], changedTypes); // recursive

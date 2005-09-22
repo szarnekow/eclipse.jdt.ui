@@ -111,20 +111,20 @@ public class RefactoringAnalyzeUtil {
 	}
 	
 	public static IProblem[] getIntroducedCompileProblems(CompilationUnit newCUNode, CompilationUnit oldCuNode) {
-		Set subResult= new HashSet();				
-		Set oldProblems= getOldProblems(oldCuNode);
+		Set<IProblem> subResult= new HashSet<IProblem>();				
+		Set<IProblem> oldProblems= getOldProblems(oldCuNode);
 		IProblem[] newProblems= ASTNodes.getProblems(newCUNode, ASTNodes.INCLUDE_ALL_PARENTS, ASTNodes.PROBLEMS);
 		for (int i= 0; i < newProblems.length; i++) {
 			IProblem correspondingOld= findCorrespondingProblem(oldProblems, newProblems[i]);
 			if (correspondingOld == null)
 				subResult.add(newProblems[i]);
 		}
-		return (IProblem[]) subResult.toArray(new IProblem[subResult.size()]);
+		return subResult.toArray(new IProblem[subResult.size()]);
 	}
 	
-	private static IProblem findCorrespondingProblem(Set oldProblems, IProblem iProblem) {
-		for (Iterator iter= oldProblems.iterator(); iter.hasNext();) {
-			IProblem oldProblem= (IProblem) iter.next();
+	private static IProblem findCorrespondingProblem(Set<IProblem> oldProblems, IProblem iProblem) {
+		for (Iterator<IProblem> iter= oldProblems.iterator(); iter.hasNext();) {
+			IProblem oldProblem= iter.next();
 			if (isCorresponding(oldProblem, iProblem))
 				return oldProblem;
 		}
@@ -156,7 +156,7 @@ public class RefactoringAnalyzeUtil {
 		return change.getPreviewEdit(edit).getRegion();
 	}
 
-	private static Set getOldProblems(CompilationUnit oldCuNode) {
-		return new HashSet(Arrays.asList(ASTNodes.getProblems(oldCuNode, ASTNodes.INCLUDE_ALL_PARENTS, ASTNodes.PROBLEMS)));
+	private static Set<IProblem> getOldProblems(CompilationUnit oldCuNode) {
+		return new HashSet<IProblem>(Arrays.asList(ASTNodes.getProblems(oldCuNode, ASTNodes.INCLUDE_ALL_PARENTS, ASTNodes.PROBLEMS)));
 	}
 }

@@ -39,7 +39,7 @@ public class CorrectionCommandInstaller {
 	 */
 	public static final String ASSIST_SUFFIX= ".assist"; //$NON-NLS-1$
 	
-	private List fCorrectionHandlerActivations;
+	private List<IHandlerActivation> fCorrectionHandlerActivations;
 	
 	public CorrectionCommandInstaller() {
 		fCorrectionHandlerActivations= null;
@@ -56,7 +56,7 @@ public class CorrectionCommandInstaller {
 		if (fCorrectionHandlerActivations != null) {
 			JavaPlugin.logErrorMessage("correction handler activations not released"); //$NON-NLS-1$
 		}
-		fCorrectionHandlerActivations= new ArrayList();
+		fCorrectionHandlerActivations= new ArrayList<IHandlerActivation>();
 		
 		Collection definedCommandIds= commandService.getDefinedCommandIds();
 		for (Iterator iter= definedCommandIds.iterator(); iter.hasNext();) {

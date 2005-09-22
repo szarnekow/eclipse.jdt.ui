@@ -97,7 +97,7 @@ public class NewTypeDropDownAction extends Action implements IMenuCreator, IWork
 	}
 	
 	public static Action[] getActionFromDescriptors() {
-		ArrayList containers= new ArrayList();
+		ArrayList<OpenTypeWizardAction> containers= new ArrayList<OpenTypeWizardAction>();
 		
 		IExtensionPoint extensionPoint = Platform.getExtensionRegistry().getExtensionPoint(PlatformUI.PLUGIN_ID, PL_NEW);
 		if (extensionPoint != null) {
@@ -109,7 +109,7 @@ public class NewTypeDropDownAction extends Action implements IMenuCreator, IWork
 				}
 			}
 		}
-		return (Action[]) containers.toArray(new Action[containers.size()]);
+		return containers.toArray(new Action[containers.size()]);
 	}
 		
 	private static boolean isJavaTypeWizard(IConfigurationElement element) {

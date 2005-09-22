@@ -24,6 +24,7 @@ import org.eclipse.jface.util.PropertyChangeEvent;
 
 import org.eclipse.jface.text.Assert;
 import org.eclipse.jface.text.rules.ICharacterScanner;
+import org.eclipse.jface.text.rules.IRule;
 import org.eclipse.jface.text.rules.IToken;
 import org.eclipse.jface.text.rules.IWordDetector;
 import org.eclipse.jface.text.rules.Token;
@@ -33,6 +34,7 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.ui.text.IColorManager;
 import org.eclipse.jdt.ui.text.IJavaColorConstants;
 
+import org.eclipse.jdt.internal.ui.text.CombinedWordRule.CharacterBuffer;
 import org.eclipse.jdt.internal.ui.text.CombinedWordRule.WordMatcher;
 
 /**
@@ -58,7 +60,7 @@ public class JavaCommentScanner extends AbstractJavaScanner{
 		 * Uppercase words
 		 * @since 3.0
 		 */
-		private Map fUppercaseWords= new HashMap();
+		private Map<CharacterBuffer, IToken> fUppercaseWords= new HashMap<CharacterBuffer, IToken>();
 		/**
 		 * <code>true</code> if task tag detection is case-sensitive.
 		 * @since 3.0
@@ -126,7 +128,7 @@ public class JavaCommentScanner extends AbstractJavaScanner{
 			for (int i= 0, n= word.length(); i < n; i++)
 				fBuffer.append(Character.toUpperCase(word.charAt(i)));
 
-			IToken token= (IToken) fUppercaseWords.get(fBuffer);
+			IToken token= fUppercaseWords.get(fBuffer);
 			if (token != null)
 				return token;
 			return Token.UNDEFINED;
@@ -215,15 +217,15 @@ public class JavaCommentScanner extends AbstractJavaScanner{
 	/*
 	 * @see AbstractJavaScanner#createRules()
 	 */
-	protected List createRules() {
-		List list= new ArrayList();
+	protected List<IRule> createRules() {
+		List<IRule> list= new ArrayList<IRule>();
 		Token defaultToken= getToken(fDefaultTokenProperty);
 
-		List matchers= createMatchers();
+		List<WordMatcher> matchers= createMatchers();
 		if (matchers.size() > 0) {
 			CombinedWordRule combinedWordRule= new CombinedWordRule(new AtJavaIdentifierDetector(), defaultToken);
 			for (int i= 0, n= matchers.size(); i < n; i++)
-				combinedWordRule.addWordMatcher((WordMatcher) matchers.get(i));
+				combinedWordRule.addWordMatcher(matchers.get(i));
 			list.add(combinedWordRule);
 		}
 
@@ -237,8 +239,8 @@ public class JavaCommentScanner extends AbstractJavaScanner{
 	 *
 	 * @return the list of word matchers
 	 */
-	protected List createMatchers() {
-		List list= new ArrayList();
+	protected List<WordMatcher> createMatchers() {
+		List<WordMatcher> list= new ArrayList<WordMatcher>();
 
 		// Add rule for Task Tags.
 		boolean isCaseSensitive= true;

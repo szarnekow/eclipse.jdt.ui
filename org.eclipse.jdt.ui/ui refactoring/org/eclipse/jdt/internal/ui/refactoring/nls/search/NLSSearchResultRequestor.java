@@ -53,7 +53,7 @@ class NLSSearchResultRequestor extends SearchRequestor {
 	private NLSSearchResult fResult;
 	private IFile fPropertiesFile;
 	private Properties fProperties;
-	private HashSet fUsedPropertyNames;
+	private HashSet<String> fUsedPropertyNames;
 
 	public NLSSearchResultRequestor(IFile propertiesFile, NLSSearchResult result) {
 		fPropertiesFile= propertiesFile;
@@ -65,7 +65,7 @@ class NLSSearchResultRequestor extends SearchRequestor {
 	 */
 	public void beginReporting() {
 		loadProperties();
-		fUsedPropertyNames= new HashSet(fProperties.size());
+		fUsedPropertyNames= new HashSet<String>(fProperties.size());
 	}
 	
 	/*
@@ -284,7 +284,7 @@ class NLSSearchResultRequestor extends SearchRequestor {
 	}
 
 	private void loadProperties() {
-		Set duplicateKeys= new HashSet();
+		Set<Object> duplicateKeys= new HashSet<Object>();
 		fProperties= new Properties(duplicateKeys);
 		InputStream stream;
 		try {
@@ -307,13 +307,13 @@ class NLSSearchResultRequestor extends SearchRequestor {
 		}
 	}
 
-	private void reportDuplicateKeys(Set duplicateKeys) {
+	private void reportDuplicateKeys(Set<Object> duplicateKeys) {
 		if (duplicateKeys.size() == 0)
 			return;
 		
 		String message= Messages.format(NLSSearchMessages.NLSSearchResultCollector_duplicateKeys, fPropertiesFile.getName()); 
 		FileEntry groupElement= new FileEntry(fPropertiesFile, message);
-		Iterator iter= duplicateKeys.iterator();
+		Iterator<Object> iter= duplicateKeys.iterator();
 		while (iter.hasNext()) {
 			String propertyName= (String) iter.next();
 			addMatch(groupElement, propertyName);

@@ -70,7 +70,7 @@ public class PackagesViewTreeViewer extends ProblemTreeViewer implements IPackag
 	 * @see org.eclipse.jface.viewers.StructuredViewer#getFilteredChildren(java.lang.Object)
 	 */
 	protected Object[] getFilteredChildren(Object parent) {
-		List list= new ArrayList();
+		List<Object> list= new ArrayList<Object>();
 		Object[] result= getRawChildren(parent);
 		if (result != null)	{
 			Object[] toBeFiltered= new Object[1];
@@ -97,7 +97,7 @@ public class PackagesViewTreeViewer extends ProblemTreeViewer implements IPackag
 		if (filters == null || filters.length == 0)
 			return elements;
 
-		ArrayList filtered= new ArrayList(elements.length);
+		ArrayList<Object> filtered= new ArrayList<Object>(elements.length);
 		Object root= getRoot();
 		for (int i= 0; i < elements.length; i++) {
 			boolean add= true;

@@ -53,7 +53,7 @@ public class ResourceTransferDragAdapter extends DragSourceAdapter implements Tr
 
 	private ISelectionProvider fProvider;
 
-	private static final List EMPTY_LIST= new ArrayList(0);
+	private static final List<IResource> EMPTY_LIST= new ArrayList<IResource>(0);
 
 	/**
 	 * Creates a new ResourceTransferDragAdapter for the given selection
@@ -75,8 +75,8 @@ public class ResourceTransferDragAdapter extends DragSourceAdapter implements Tr
 	}
 	
 	public void dragSetData(DragSourceEvent event) {
-		List resources= convertSelection();
-		event.data= (IResource[]) resources.toArray(new IResource[resources.size()]);
+		List<IResource> resources= convertSelection();
+		event.data= resources.toArray(new IResource[resources.size()]);
 	}
 	
 	public void dragFinished(DragSourceEvent event) {
@@ -88,12 +88,12 @@ public class ResourceTransferDragAdapter extends DragSourceAdapter implements Tr
 		}	
 	}
 	
-	private List convertSelection() {
+	private List<IResource> convertSelection() {
 		ISelection s= fProvider.getSelection();
 		if (!(s instanceof IStructuredSelection))
 			return EMPTY_LIST;
 		IStructuredSelection selection= (IStructuredSelection)s;
-		List result= new ArrayList(selection.size());
+		List<IResource> result= new ArrayList<IResource>(selection.size());
 		for (Iterator iter= selection.iterator(); iter.hasNext();) {
 			Object element= iter.next();
 			IResource resource= null;
@@ -115,9 +115,9 @@ public class ResourceTransferDragAdapter extends DragSourceAdapter implements Tr
 			IJavaStatusConstants.INTERNAL_ERROR, 
 			JavaUIMessages.ResourceTransferDragAdapter_cannot_delete_resource,  
 			null);
-		List resources= convertSelection();
-		for (Iterator iter= resources.iterator(); iter.hasNext();) {
-			IResource resource= (IResource) iter.next();
+		List<IResource> resources= convertSelection();
+		for (Iterator<IResource> iter= resources.iterator(); iter.hasNext();) {
+			IResource resource= iter.next();
 			try {
 				resource.delete(true, null);
 			} catch (CoreException e) {

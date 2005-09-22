@@ -30,7 +30,7 @@ public class MethodOverrideTester {
 		
 		public static final Substitutions EMPTY_SUBST= new Substitutions();
 		
-		private HashMap fMap;
+		private HashMap<String, String[]> fMap;
 		
 		public Substitutions() {
 			fMap= null;
@@ -38,14 +38,14 @@ public class MethodOverrideTester {
 		
 		public void addSubstitution(String typeVariable, String substitution, String erasure) {
 			if (fMap == null) {
-				fMap= new HashMap(3);
+				fMap= new HashMap<String, String[]>(3);
 			}
 			fMap.put(typeVariable, new String[] { substitution, erasure });
 		}
 		
 		private String[] getSubstArray(String typeVariable) {
 			if (fMap != null) {
-				return (String[]) fMap.get(typeVariable);
+				return fMap.get(typeVariable);
 			}
 			return null;
 		}
@@ -70,8 +70,8 @@ public class MethodOverrideTester {
 	private final IType fFocusType;
 	private final ITypeHierarchy fHierarchy;
 	
-	private Map /* <IMethod, Substitutions> */ fMethodSubstitutions;
-	private Map /* <IType, Substitutions> */ fTypeVariableSubstitutions;
+	private Map /* <IMethod, Substitutions> */<IMethod, Substitutions> fMethodSubstitutions;
+	private Map /* <IType, Substitutions> */<IType, Substitutions> fTypeVariableSubstitutions;
 			
 	public MethodOverrideTester(IType focusType, ITypeHierarchy hierarchy) {
 		fFocusType= focusType;
@@ -279,10 +279,10 @@ public class MethodOverrideTester {
 	 */
 	private Substitutions getMethodSubstitions(IMethod method) throws JavaModelException {
 		if (fMethodSubstitutions == null) {
-			fMethodSubstitutions= new LRUMap(3);
+			fMethodSubstitutions= new LRUMap<IMethod, Substitutions>(3);
 		}
 		
-		Substitutions s= (Substitutions) fMethodSubstitutions.get(method);
+		Substitutions s= fMethodSubstitutions.get(method);
 		if (s == null) {
 			ITypeParameter[] typeParameters= method.getTypeParameters();
 			if (typeParameters.length == 0) {
@@ -305,11 +305,11 @@ public class MethodOverrideTester {
 	 */
 	private Substitutions getTypeSubstitions(IType type) throws JavaModelException {
 		if (fTypeVariableSubstitutions == null) {
-			fTypeVariableSubstitutions= new HashMap();
+			fTypeVariableSubstitutions= new HashMap<IType, Substitutions>();
 			computeSubstitutions(fFocusType, null, null);
 			//System.out.println("Calculating type substitutions for " + fFocusType.getElementName());
 		}
-		Substitutions subst= (Substitutions) fTypeVariableSubstitutions.get(type);
+		Substitutions subst= fTypeVariableSubstitutions.get(type);
 		if (subst == null) {
 			return Substitutions.EMPTY_SUBST;
 		}

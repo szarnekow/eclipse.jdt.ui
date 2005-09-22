@@ -106,7 +106,7 @@ public class FieldNameProcessor implements IContentAssistProcessor, ISubjectCont
 			return null;
 		String input= contentAssistSubject.getDocument().get();
 		
-		ArrayList proposals= new ArrayList();
+		ArrayList<JavaCompletionProposal> proposals= new ArrayList<JavaCompletionProposal>();
 		String prefix= input.substring(0, documentOffset);
 		ImageDescriptor imageDescriptor= JavaElementImageProvider.getFieldImageDescriptor(false, fRefactoring.getVisibility());
 		Image image= fImageRegistry.get(imageDescriptor);
@@ -118,7 +118,7 @@ public class FieldNameProcessor implements IContentAssistProcessor, ISubjectCont
 			proposals.add(proposal);
 		}
 		fErrorMessage= proposals.size() > 0 ? null : JavaUIMessages.JavaEditor_codeassist_noCompletions; 
-		return (ICompletionProposal[]) proposals.toArray(new ICompletionProposal[proposals.size()]);
+		return proposals.toArray(new ICompletionProposal[proposals.size()]);
 	}
 
 }

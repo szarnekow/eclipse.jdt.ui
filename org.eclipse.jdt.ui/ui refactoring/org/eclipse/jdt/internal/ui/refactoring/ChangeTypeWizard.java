@@ -97,16 +97,16 @@ public class ChangeTypeWizard extends RefactoringWizard {
 										  implements IColorProvider {
 		
 		private Color fGrayColor;
-		private HashMap/*<Image color, Image gray>*/ fGrayImages;
+		private HashMap/*<Image color, Image gray>*/<Image, Image> fGrayImages;
 		
 		public ChangeTypeLabelProvider(){
 			fGrayColor= Display.getCurrent().getSystemColor(SWT.COLOR_WIDGET_NORMAL_SHADOW);
-			fGrayImages= new HashMap();
+			fGrayImages= new HashMap<Image, Image>();
 		}
 		
-		private Collection/*<ITypeBinding>*/ fInvalidTypes;
+		private Collection/*<ITypeBinding>*/<ITypeBinding> fInvalidTypes;
 		
-		public void grayOut(Collection/*<ITypeBinding>*/ invalidTypes){
+		public void grayOut(Collection/*<ITypeBinding>*/<ITypeBinding> invalidTypes){
 			fInvalidTypes= invalidTypes; 
 			/*
 			 * Invalidate all labels. Invalidating only invalid types doesn't
@@ -148,7 +148,7 @@ public class ChangeTypeWizard extends RefactoringWizard {
 		public Image getImage(Object element) {
 			Image image= super.getImage(element);
 			if (isInvalid(element) && image != null) {
-				Image grayImage= (Image) fGrayImages.get(image);
+				Image grayImage= fGrayImages.get(image);
 				if (grayImage == null) {
 					grayImage= new Image(Display.getCurrent(), image, SWT.IMAGE_GRAY);
 					fGrayImages.put(image, grayImage);
@@ -160,8 +160,8 @@ public class ChangeTypeWizard extends RefactoringWizard {
 		}
 		
 		public void dispose() {
-			for (Iterator iter= fGrayImages.values().iterator(); iter.hasNext();) {
-				Image image= (Image) iter.next();
+			for (Iterator<Image> iter= fGrayImages.values().iterator(); iter.hasNext();) {
+				Image image= iter.next();
 				image.dispose();
 			}
 			fGrayImages.clear();
@@ -183,14 +183,14 @@ public class ChangeTypeWizard extends RefactoringWizard {
 		}
 		
 		private class ValidTypesTask implements Runnable {
-			private Collection/*<ITypeBinding>*/ fInvalidTypes;
-			private Collection/*<ITypeBinding>*/ fValidTypes;
+			private Collection/*<ITypeBinding>*/<ITypeBinding> fInvalidTypes;
+			private Collection/*<ITypeBinding>*/<ITypeBinding> fValidTypes;
 			public void run() {
 				IRunnableWithProgress runnable= new IRunnableWithProgress() {
 					public void run(IProgressMonitor pm) {
 						pm.beginTask(RefactoringMessages.ChangeTypeWizard_analyzing, 1000); 
 						ChangeTypeRefactoring ct= (ChangeTypeRefactoring)ChangeTypeWizard.this.getRefactoring();
-						fInvalidTypes = new HashSet();
+						fInvalidTypes = new HashSet<ITypeBinding>();
 						fInvalidTypes.addAll(fCT.getAllSuperTypes(ct.getOriginalType()));
 						fValidTypes= ct.computeValidTypes(new SubProgressMonitor(pm, 950));
 						fInvalidTypes.add(ct.getOriginalType());
@@ -226,12 +226,12 @@ public class ChangeTypeWizard extends RefactoringWizard {
 			}			
 		}
 		
-		private TreeItem getInitialSelection(Collection/*<ITypeBinding>*/ types) {
+		private TreeItem getInitialSelection(Collection/*<ITypeBinding>*/<ITypeBinding> types) {
 			
 			// first, find a most general valid type (there may be more than one)
-			ITypeBinding type= (ITypeBinding)types.iterator().next();
-			for (Iterator it= types.iterator(); it.hasNext(); ){
-				ITypeBinding other= (ITypeBinding)it.next();
+			ITypeBinding type= types.iterator().next();
+			for (Iterator<ITypeBinding> it= types.iterator(); it.hasNext(); ){
+				ITypeBinding other= it.next();
 				if (getGeneralizeTypeRefactoring().isSubTypeOf(type, other)){
 					type= other;
 				}

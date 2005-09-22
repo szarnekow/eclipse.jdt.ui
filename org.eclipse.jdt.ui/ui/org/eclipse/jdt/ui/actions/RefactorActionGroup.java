@@ -132,7 +132,7 @@ public class RefactorActionGroup extends ActionGroup {
 	
 	private UndoRedoActionGroup fUndoRedoActionGroup;
 	
-	private List fEditorActions;
+	private List<SelectionDispatchAction> fEditorActions;
 	
 	private static final String QUICK_MENU_ID= "org.eclipse.jdt.ui.edit.text.java.refactor.quickMenu"; //$NON-NLS-1$
 	
@@ -196,7 +196,7 @@ public class RefactorActionGroup extends ActionGroup {
 		fGroupName= groupName;
 		ISelectionProvider provider= editor.getSelectionProvider();
 		ISelection selection= provider.getSelection();
-		fEditorActions= new ArrayList();
+		fEditorActions= new ArrayList<SelectionDispatchAction>();
 		
 		fRenameAction= new RenameAction(editor);
 		fRenameAction.setActionDefinitionId(IJavaEditorActionDefinitionIds.RENAME_ELEMENT);
@@ -554,8 +554,8 @@ public class RefactorActionGroup extends ActionGroup {
 		JavaTextSelection javaSelection= new JavaTextSelection(
 			getEditorInput(), getDocument(), textSelection.getOffset(), textSelection.getLength());
 		
-		for (Iterator iter= fEditorActions.iterator(); iter.hasNext(); ) {
-			SelectionDispatchAction action= (SelectionDispatchAction)iter.next();
+		for (Iterator<SelectionDispatchAction> iter= fEditorActions.iterator(); iter.hasNext(); ) {
+			SelectionDispatchAction action= iter.next();
 			action.update(javaSelection);
 		}
 		refactorSubmenu.removeAll();
@@ -565,8 +565,8 @@ public class RefactorActionGroup extends ActionGroup {
 	
 	private void refactorMenuHidden(IMenuManager manager) {
 		ITextSelection textSelection= (ITextSelection)fEditor.getSelectionProvider().getSelection();
-		for (Iterator iter= fEditorActions.iterator(); iter.hasNext(); ) {
-			SelectionDispatchAction action= (SelectionDispatchAction)iter.next();
+		for (Iterator<SelectionDispatchAction> iter= fEditorActions.iterator(); iter.hasNext(); ) {
+			SelectionDispatchAction action= iter.next();
 			action.update(textSelection);
 		}
 	}
@@ -592,12 +592,12 @@ public class RefactorActionGroup extends ActionGroup {
 			JavaTextSelection javaSelection= new JavaTextSelection(
 				getEditorInput(), getDocument(), textSelection.getOffset(), textSelection.getLength());
 			
-			for (Iterator iter= fEditorActions.iterator(); iter.hasNext(); ) {
-				((SelectionDispatchAction)iter.next()).update(javaSelection);
+			for (Iterator<SelectionDispatchAction> iter= fEditorActions.iterator(); iter.hasNext(); ) {
+				iter.next().update(javaSelection);
 			}
 			fillRefactorMenu(menu);
-			for (Iterator iter= fEditorActions.iterator(); iter.hasNext(); ) {
-				((SelectionDispatchAction)iter.next()).update(textSelection);
+			for (Iterator<SelectionDispatchAction> iter= fEditorActions.iterator(); iter.hasNext(); ) {
+				iter.next().update(textSelection);
 			}
 		} else {
 			fillRefactorMenu(menu);

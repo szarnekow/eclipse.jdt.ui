@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 
@@ -71,7 +72,7 @@ public final class JavaMoveProcessor extends MoveProcessor implements IQualified
 	}
 	
 	public Object[] getElements() {
-		List result= new ArrayList();
+		List<IAdaptable> result= new ArrayList<IAdaptable>();
 		result.addAll(Arrays.asList(fMovePolicy.getJavaElements()));
 		result.addAll(Arrays.asList(fMovePolicy.getResources()));
 		return result.toArray();
@@ -92,10 +93,10 @@ public final class JavaMoveProcessor extends MoveProcessor implements IQualified
 	private String[] getAffectedProjectNatures() throws CoreException {
 		String[] jNatures= JavaProcessors.computeAffectedNaturs(fMovePolicy.getJavaElements());
 		String[] rNatures= ResourceProcessors.computeAffectedNatures(fMovePolicy.getResources());
-		Set result= new HashSet();
+		Set<String> result= new HashSet<String>();
 		result.addAll(Arrays.asList(jNatures));
 		result.addAll(Arrays.asList(rNatures));
-		return (String[])result.toArray(new String[result.size()]);
+		return result.toArray(new String[result.size()]);
 	}
 
 	public boolean wasCanceled() {

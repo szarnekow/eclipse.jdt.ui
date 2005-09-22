@@ -187,13 +187,13 @@ public abstract class PropertyAndPreferencePage extends PreferencePage implement
 	}
 	
 	final void doLinkActivated(Link link) {
-		Map data= new HashMap();
+		Map<String, Boolean> data= new HashMap<String, Boolean>();
 		data.put(DATA_NO_LINK, Boolean.TRUE);
 		
 		if (isProjectPreferencePage()) {
 			openWorkspacePreferences(data);
 		} else {
-			HashSet projectsWithSpecifics= new HashSet();
+			HashSet<IJavaProject> projectsWithSpecifics= new HashSet<IJavaProject>();
 			try {
 				IJavaProject[] projects= JavaCore.create(ResourcesPlugin.getWorkspace().getRoot()).getJavaProjects();
 				for (int i= 0; i < projects.length; i++) {

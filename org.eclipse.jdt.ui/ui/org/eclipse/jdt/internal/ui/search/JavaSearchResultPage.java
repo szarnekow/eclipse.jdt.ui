@@ -150,7 +150,7 @@ public class JavaSearchResultPage extends AbstractTextSearchViewPage implements 
 	private GroupAction fGroupProjectAction;
 	private int fCurrentGrouping;
 	
-	private Set fMatchFilters= new HashSet();
+	private Set<MatchFilter> fMatchFilters= new HashSet<MatchFilter>();
 	private FilterAction[] fFilterActions;
 	private FiltersDialogAction fFilterDialogAction;
 	private ISearchResultListener fFilterListener;
@@ -249,7 +249,7 @@ public class JavaSearchResultPage extends AbstractTextSearchViewPage implements 
 	private void showWithMarker(IEditorPart editor, IFile file, int offset, int length) throws PartInitException {
 		try {
 			IMarker marker= file.createMarker(NewSearchUI.SEARCH_MARKER);
-			HashMap attributes= new HashMap(4);
+			HashMap<String, Integer> attributes= new HashMap<String, Integer>(4);
 			attributes.put(IMarker.CHAR_START, new Integer(offset));
 			attributes.put(IMarker.CHAR_END, new Integer(offset + length));
 			marker.setAttributes(attributes);
@@ -617,8 +617,8 @@ public class JavaSearchResultPage extends AbstractTextSearchViewPage implements 
 	private void updateFilterState(Match match) {
 		if (!(match instanceof JavaElementMatch))
 			return;
-		for (Iterator iter= fMatchFilters.iterator(); iter.hasNext();) {
-			MatchFilter filter= (MatchFilter)iter.next();
+		for (Iterator<MatchFilter> iter= fMatchFilters.iterator(); iter.hasNext();) {
+			MatchFilter filter= iter.next();
 			if (filter.filters((JavaElementMatch)match)) {
 				match.setFiltered(true);
 				return;
@@ -665,7 +665,7 @@ public class JavaSearchResultPage extends AbstractTextSearchViewPage implements 
 	
 	MatchFilter[] getMatchFilters() {
 		MatchFilter[] filters= new MatchFilter[fMatchFilters.size()];
-		return (MatchFilter[]) fMatchFilters.toArray(filters);
+		return fMatchFilters.toArray(filters);
 	}
 	
 	public int getDisplayedMatchCount(Object element) {

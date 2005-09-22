@@ -97,7 +97,7 @@ public class JavaTypeCompletionProcessor extends CUPositionCompletionProcessor {
 	
 	protected static class TypeCompletionRequestor extends CUPositionCompletionRequestor {
 		private static final String VOID= "void"; //$NON-NLS-1$
-		private static final List BASE_TYPES= Arrays.asList(
+		private static final List<String> BASE_TYPES= Arrays.asList(
 			new String[] {"boolean", "byte", "char", "double", "float", "int", "long", "short"});  //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$
 		
 		private boolean fEnableBaseTypes;

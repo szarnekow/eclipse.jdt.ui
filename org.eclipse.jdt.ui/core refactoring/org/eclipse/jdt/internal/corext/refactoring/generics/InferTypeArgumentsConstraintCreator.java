@@ -572,7 +572,7 @@ public class InferTypeArgumentsConstraintCreator extends HierarchicalASTVisitor 
 				&& receiver.resolveTypeBinding() != methodBinding.getMethodDeclaration().getReturnType();
 	}
 
-	private void doVisitMethodInvocationArguments(IMethodBinding methodBinding, List arguments, Expression receiver, Map methodTypeVariables, Type createdType) {
+	private void doVisitMethodInvocationArguments(IMethodBinding methodBinding, List<ASTNode> arguments, Expression receiver, Map methodTypeVariables, Type createdType) {
 		//TODO: connect generic method type parameters, e.g. <T> void take(T t, List<T> ts)
 		ITypeBinding[] declaredParameterTypes= methodBinding.getMethodDeclaration().getParameterTypes();
 		int lastParamIdx= declaredParameterTypes.length - 1;
@@ -746,7 +746,7 @@ public class InferTypeArgumentsConstraintCreator extends HierarchicalASTVisitor 
 		
 		IMethodBinding methodBinding= node.resolveConstructorBinding();
 		Map methodTypeVariables= createMethodTypeArguments(methodBinding);
-		List arguments= node.arguments();
+		List<ASTNode> arguments= node.arguments();
 		doVisitMethodInvocationArguments(methodBinding, arguments, receiver, methodTypeVariables, createdType);
 	}
 	
@@ -791,8 +791,8 @@ public class InferTypeArgumentsConstraintCreator extends HierarchicalASTVisitor 
 		
 		setConstraintVariable(node, typeCv);
 		
-		List fragments= node.fragments();
-		for (Iterator iter= fragments.iterator(); iter.hasNext();) {
+		List<ASTNode> fragments= node.fragments();
+		for (Iterator<ASTNode> iter= fragments.iterator(); iter.hasNext();) {
 			VariableDeclarationFragment fragment= (VariableDeclarationFragment) iter.next();
 			ConstraintVariable2 fragmentCv= getConstraintVariable(fragment);
 			fTCModel.createElementEqualsConstraints(typeCv, fragmentCv);
@@ -813,12 +813,12 @@ public class InferTypeArgumentsConstraintCreator extends HierarchicalASTVisitor 
 		endVisitFieldVariableDeclaration(node.getType(), node.fragments());
 	}
 	
-	private void endVisitFieldVariableDeclaration(Type type, List variableDeclarationFragments) {
+	private void endVisitFieldVariableDeclaration(Type type, List<ASTNode> variableDeclarationFragments) {
 		ConstraintVariable2 typeCv= getConstraintVariable(type);
 		if (typeCv == null)
 			return;
 		
-		for (Iterator iter= variableDeclarationFragments.iterator(); iter.hasNext();) {
+		for (Iterator<ASTNode> iter= variableDeclarationFragments.iterator(); iter.hasNext();) {
 			VariableDeclarationFragment fragment= (VariableDeclarationFragment) iter.next();
 			ConstraintVariable2 fragmentCv= getConstraintVariable(fragment);
 			fTCModel.createElementEqualsConstraints(typeCv, fragmentCv);

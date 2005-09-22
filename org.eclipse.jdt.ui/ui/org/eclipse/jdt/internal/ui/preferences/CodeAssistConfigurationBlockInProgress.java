@@ -212,7 +212,7 @@ final class CodeAssistConfigurationBlockInProgress extends OptionsConfigurationB
 
 	/** element type: {@link ModelElement}. */
 	private final List fModel;
-	private final Map fImages= new HashMap();
+	private final Map<ImageDescriptor, Image> fImages= new HashMap<ImageDescriptor, Image>();
 
 	private TableViewer fViewer;
 	private Button fInclusionButton;
@@ -228,10 +228,10 @@ final class CodeAssistConfigurationBlockInProgress extends OptionsConfigurationB
 	private List fillModel() {
 		CompletionProposalComputerRegistry registry= CompletionProposalComputerRegistry.getDefault();
 		
-		List categories= registry.getProposalCategories();
+		List<CompletionProposalCategory> categories= registry.getProposalCategories();
 		List model= new ArrayList();
-		for (Iterator it= categories.iterator(); it.hasNext();) {
-			CompletionProposalCategory category= (CompletionProposalCategory) it.next();
+		for (Iterator<CompletionProposalCategory> it= categories.iterator(); it.hasNext();) {
+			CompletionProposalCategory category= it.next();
 			if (category.hasComputers()) {
 				model.add(new Category(category));
 			}
@@ -532,8 +532,8 @@ final class CodeAssistConfigurationBlockInProgress extends OptionsConfigurationB
 	 * @see org.eclipse.jdt.internal.ui.preferences.OptionsConfigurationBlock#dispose()
 	 */
 	public void dispose() {
-		for (Iterator it= fImages.values().iterator(); it.hasNext();) {
-			Image image= (Image) it.next();
+		for (Iterator<Image> it= fImages.values().iterator(); it.hasNext();) {
+			Image image= it.next();
 			image.dispose();
 		}
 		
@@ -582,7 +582,7 @@ final class CodeAssistConfigurationBlockInProgress extends OptionsConfigurationB
 		if (imgDesc == null)
 			return null;
 		
-		Image img= (Image) fImages.get(imgDesc);
+		Image img= fImages.get(imgDesc);
 		if (img == null) {
 			img= imgDesc.createImage(false);
 			fImages.put(imgDesc, img);

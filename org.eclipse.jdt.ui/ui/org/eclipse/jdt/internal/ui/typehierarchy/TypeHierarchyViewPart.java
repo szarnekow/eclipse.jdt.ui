@@ -168,7 +168,7 @@ public class TypeHierarchyViewPart extends ViewPart implements ITypeHierarchyVie
 	private IJavaElement fInputElement;
 	
 	// history of input elements. No duplicates
-	private ArrayList fInputHistory;
+	private ArrayList<IJavaElement> fInputHistory;
 	
 	private IMemento fMemento;
 	private IDialogSettings fDialogSettings;
@@ -252,7 +252,7 @@ public class TypeHierarchyViewPart extends ViewPart implements ITypeHierarchyVie
 
 		fIsEnableMemberFilter= false;
 		
-		fInputHistory= new ArrayList();
+		fInputHistory= new ArrayList<IJavaElement>();
 		fAllViewers= null;
 				
 		fViewActions= new ToggleViewAction[] {
@@ -355,7 +355,7 @@ public class TypeHierarchyViewPart extends ViewPart implements ITypeHierarchyVie
 	
 	private void updateHistoryEntries() {
 		for (int i= fInputHistory.size() - 1; i >= 0; i--) {
-			IJavaElement type= (IJavaElement) fInputHistory.get(i);
+			IJavaElement type= fInputHistory.get(i);
 			if (!type.exists()) {
 				fInputHistory.remove(i);
 			}
@@ -381,7 +381,7 @@ public class TypeHierarchyViewPart extends ViewPart implements ITypeHierarchyVie
 		if (fInputHistory.size() > 0) {
 			updateHistoryEntries();
 		}
-		return (IJavaElement[]) fInputHistory.toArray(new IJavaElement[fInputHistory.size()]);
+		return fInputHistory.toArray(new IJavaElement[fInputHistory.size()]);
 	}
 	
 	/**
@@ -1160,7 +1160,7 @@ public class TypeHierarchyViewPart extends ViewPart implements ITypeHierarchyVie
 			List selected= ((IStructuredSelection)sel).toList();
 			int nSelected= selected.size();
 			if (nSelected != 0) {
-				List types= new ArrayList(nSelected);
+				List<Object> types= new ArrayList<Object>(nSelected);
 				for (int i= nSelected-1; i >= 0; i--) {
 					Object elem= selected.get(i);
 					if (elem instanceof IType && !types.contains(elem)) {

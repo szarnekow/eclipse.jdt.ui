@@ -121,18 +121,18 @@ public class TypedSource {
 	}
 	public static TypedSource[] createTypedSources(IJavaElement[] javaElements) throws CoreException {
 		//Map<ICompilationUnit, List<IJavaElement>>
-		Map grouped= ReorgUtils.groupByCompilationUnit(Arrays.asList(javaElements));
-		List result= new ArrayList(javaElements.length);
-		for (Iterator iter= grouped.keySet().iterator(); iter.hasNext();) {
-			ICompilationUnit cu= (ICompilationUnit) iter.next();
-			for (Iterator iterator= ((List) grouped.get(cu)).iterator(); iterator.hasNext();) {
+		Map<ICompilationUnit, ArrayList> grouped= ReorgUtils.groupByCompilationUnit(Arrays.asList(javaElements));
+		List<TypedSource> result= new ArrayList<TypedSource>(javaElements.length);
+		for (Iterator<ICompilationUnit> iter= grouped.keySet().iterator(); iter.hasNext();) {
+			ICompilationUnit cu= iter.next();
+			for (Iterator iterator= grouped.get(cu).iterator(); iterator.hasNext();) {
 				SourceTuple tuple= new SourceTuple(cu);
 				TypedSource[] ts= createTypedSources((IJavaElement) iterator.next(), tuple);
 				if (ts != null)
 					result.addAll(Arrays.asList(ts));				
 			}
 		}
-		return (TypedSource[]) result.toArray(new TypedSource[result.size()]);		
+		return result.toArray(new TypedSource[result.size()]);		
 	}
 
 	private static TypedSource[] createTypedSources(IJavaElement elem, SourceTuple tuple) throws CoreException {
@@ -147,11 +147,11 @@ public class TypedSource {
 
 	private static TypedSource[] createTypedSourcesForImportContainer(SourceTuple tuple, IImportContainer container) throws JavaModelException, CoreException {
 		IJavaElement[] imports= container.getChildren();
-		List result= new ArrayList(imports.length);
+		List<TypedSource> result= new ArrayList<TypedSource>(imports.length);
 		for (int i= 0; i < imports.length; i++) {
 			result.addAll(Arrays.asList(createTypedSources(imports[i], tuple)));
 		}
-		return (TypedSource[]) result.toArray(new TypedSource[result.size()]);
+		return result.toArray(new TypedSource[result.size()]);
 	}
 
 	private static String getFieldSource(IField field, SourceTuple tuple) throws CoreException {
@@ -171,7 +171,7 @@ public class TypedSource {
 			VariableDeclarationFragment declarationFragment= ASTNodeSearchUtil.getFieldDeclarationFragmentNode(field, tuple.node);
 			IBuffer buffer= tuple.unit.getBuffer();
 			StringBuffer buff= new StringBuffer();
-			buff.append(buffer.getText(declaration.getStartPosition(), ((ASTNode) declaration.fragments().get(0)).getStartPosition() - declaration.getStartPosition()));
+			buff.append(buffer.getText(declaration.getStartPosition(), ((ASTNode)declaration.fragments().get(0)).getStartPosition() - declaration.getStartPosition()));
 			buff.append(buffer.getText(declarationFragment.getStartPosition(), declarationFragment.getLength()));
 			buff.append(";"); //$NON-NLS-1$
 			return buff.toString();

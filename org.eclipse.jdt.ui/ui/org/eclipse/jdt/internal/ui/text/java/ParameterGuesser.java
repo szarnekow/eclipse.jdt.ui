@@ -234,7 +234,7 @@ public class ParameterGuesser {
 		/** The enclosing type name */
 		private String fEnclosingTypeName;
 		/** The local and member variables */
-		private List fVars;
+		private List<Variable> fVars;
 		
 		
 		VariableCollector() {
@@ -253,11 +253,11 @@ public class ParameterGuesser {
 			setIgnored(CompletionProposal.LOCAL_VARIABLE_REF, false);
 		}
 
-		public List collect(int codeAssistOffset, ICompilationUnit compilationUnit) throws JavaModelException {
+		public List<Variable> collect(int codeAssistOffset, ICompilationUnit compilationUnit) throws JavaModelException {
 			Assert.isTrue(codeAssistOffset >= 0);
 			Assert.isNotNull(compilationUnit);
 
-			fVars= new ArrayList();
+			fVars= new ArrayList<Variable>();
 
 			String source= compilationUnit.getSource();
 			if (source == null)
@@ -402,24 +402,24 @@ public class ParameterGuesser {
 		}
 	}
 
-	private static final Map PRIMITIVE_ASSIGNMENTS;
-	private static final Map AUTOUNBOX;
+	private static final Map<String, Set<String>> PRIMITIVE_ASSIGNMENTS;
+	private static final Map<String, String> AUTOUNBOX;
 
 	static {
-		HashMap primitiveAssignments= new HashMap();
+		HashMap<String, Set<String>> primitiveAssignments= new HashMap<String, Set<String>>();
 		// put (LHS, RHS)
 		primitiveAssignments.put("boolean", Collections.singleton("boolean")); //$NON-NLS-1$ //$NON-NLS-2$
 		primitiveAssignments.put("byte", Collections.singleton("byte")); //$NON-NLS-1$ //$NON-NLS-2$
-		primitiveAssignments.put("short", Collections.unmodifiableSet(new HashSet(Arrays.asList(new String[] {"short", "byte"})))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+		primitiveAssignments.put("short", Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(new String[] {"short", "byte"})))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		primitiveAssignments.put("char", Collections.singleton("char")); //$NON-NLS-1$ //$NON-NLS-2$
-		primitiveAssignments.put("int", Collections.unmodifiableSet(new HashSet(Arrays.asList(new String[] {"int", "short", "char", "byte"})))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
-		primitiveAssignments.put("long", Collections.unmodifiableSet(new HashSet(Arrays.asList(new String[] {"long", "int", "short", "char", "byte"})))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
-		primitiveAssignments.put("float", Collections.unmodifiableSet(new HashSet(Arrays.asList(new String[] {"float", "long", "int", "short", "char", "byte"})))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$
-		primitiveAssignments.put("double", Collections.unmodifiableSet(new HashSet(Arrays.asList(new String[] {"double", "float", "long", "int", "short", "char", "byte"})))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$
-		primitiveAssignments.put("primitive number", Collections.unmodifiableSet(new HashSet(Arrays.asList(new String[] {"double", "float", "long", "int", "short", "byte"})))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$
+		primitiveAssignments.put("int", Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(new String[] {"int", "short", "char", "byte"})))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
+		primitiveAssignments.put("long", Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(new String[] {"long", "int", "short", "char", "byte"})))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
+		primitiveAssignments.put("float", Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(new String[] {"float", "long", "int", "short", "char", "byte"})))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$
+		primitiveAssignments.put("double", Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(new String[] {"double", "float", "long", "int", "short", "char", "byte"})))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$
+		primitiveAssignments.put("primitive number", Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(new String[] {"double", "float", "long", "int", "short", "byte"})))); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$
 		PRIMITIVE_ASSIGNMENTS= Collections.unmodifiableMap(primitiveAssignments);
 
-		HashMap autounbox= new HashMap();
+		HashMap<String, String> autounbox= new HashMap<String, String>();
 		autounbox.put("java.lang.Boolean", "boolean"); //$NON-NLS-1$ //$NON-NLS-2$
 		autounbox.put("java.lang.Byte", "byte"); //$NON-NLS-1$ //$NON-NLS-2$
 		autounbox.put("java.lang.Short", "short"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -433,12 +433,12 @@ public class ParameterGuesser {
 	}
 
 	private static final boolean isPrimitiveAssignable(String lhs, String rhs) {
-		Set targets= (Set) PRIMITIVE_ASSIGNMENTS.get(lhs);
+		Set targets= PRIMITIVE_ASSIGNMENTS.get(lhs);
 		return targets != null && targets.contains(rhs);
 	}
 
 	private static final String getAutoUnboxedType(String type) {
-		String primitive= (String) AUTOUNBOX.get(type);
+		String primitive= AUTOUNBOX.get(type);
 		return primitive;
 	}
 
@@ -447,7 +447,7 @@ public class ParameterGuesser {
 	/** The code assist offset. */
 	private final int fCodeAssistOffset;
 	/** Local and member variables of the compilation unit */
-	private List fVariables;
+	private List<Variable> fVariables;
 	private ImageDescriptorRegistry fRegistry= JavaPlugin.getImageDescriptorRegistry();
 	private boolean fAllowAutoBoxing;
 
@@ -507,13 +507,13 @@ public class ParameterGuesser {
 
 		Variable parameter= new Variable(paramPackage, paramType, paramName, Variable.LOCAL, 0, null, null);
 
-		List typeMatches= findProposalsMatchingType(fVariables, parameter);
+		List<Variable> typeMatches= findProposalsMatchingType(fVariables, parameter);
 		orderMatches(typeMatches, paramName);
 
 		ICompletionProposal[] ret= new ICompletionProposal[typeMatches.size()];
 		int i= 0; int replacementLength= 0;
-		for (Iterator it= typeMatches.iterator(); it.hasNext();) {
-			Variable v= (Variable)it.next();
+		for (Iterator<Variable> it= typeMatches.iterator(); it.hasNext();) {
+			Variable v= it.next();
 			if (i == 0) {
 				v.alreadyMatched= true;
 				replacementLength= v.name.length();
@@ -590,14 +590,14 @@ public class ParameterGuesser {
 	 * 	4) A better source position score will prevail (the declaration point of the variable, or
 	 * 		"how close to the point of completion?"
 	 */
-	private static void orderMatches(List typeMatches, String paramName) {
+	private static void orderMatches(List<Variable> typeMatches, String paramName) {
 		if (typeMatches != null) Collections.sort(typeMatches, new MatchComparator(paramName));
 	}
 
 	/**
 	 * Finds a local or member variable that matched the type of the parameter
 	 */
-	private List findProposalsMatchingType(List proposals, Variable parameter) throws JavaModelException {
+	private List<Variable> findProposalsMatchingType(List<Variable> proposals, Variable parameter) throws JavaModelException {
 
 		if (parameter.getFQN().length() == 0)
 			return null;
@@ -606,10 +606,10 @@ public class ParameterGuesser {
 		// completion engine returns variables in the order they are found -- and we want to find
 		// matches closest to the code completion point.. No idea if this behavior is guaranteed.
 
-		List matches= new ArrayList();
+		List<Variable> matches= new ArrayList<Variable>();
 
-		for (ListIterator iterator= proposals.listIterator(proposals.size()); iterator.hasPrevious(); ) {
-			Variable variable= (Variable) iterator.previous();
+		for (ListIterator<Variable> iterator= proposals.listIterator(proposals.size()); iterator.hasPrevious(); ) {
+			Variable variable= iterator.previous();
 			variable.isAutoboxingMatch= false;
 			if (parameter.isAssignable(variable))
 				matches.add(variable);

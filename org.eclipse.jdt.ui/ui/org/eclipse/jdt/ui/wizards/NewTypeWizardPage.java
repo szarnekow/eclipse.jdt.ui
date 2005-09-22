@@ -1134,9 +1134,9 @@ public abstract class NewTypeWizardPage extends NewContainerWizardPage {
 	 * @return a list of chosen super interfaces. The list's elements
 	 * are of type <code>String</code>
 	 */
-	public List getSuperInterfaces() {
+	public List<String> getSuperInterfaces() {
 		List interfaces= fSuperInterfacesDialogField.getElements();
-		ArrayList result= new ArrayList(interfaces.size());
+		ArrayList<String> result= new ArrayList<String>(interfaces.size());
 		for (Iterator iter= interfaces.iterator(); iter.hasNext();) {
 			StringWrapper superInterface= (StringWrapper) iter.next();
 			result.add(superInterface.getString());
@@ -1752,7 +1752,7 @@ public abstract class NewTypeWizardPage extends NewContainerWizardPage {
 			ImportsManager imports;
 			int indent= 0;
 
-			Set /* String (import names) */ existingImports;
+			Set /* String (import names) */<String> existingImports;
 			
 			String lineDelimiter= null;	
 			if (!isInnerClass) {
@@ -1890,20 +1890,20 @@ public abstract class NewTypeWizardPage extends NewContainerWizardPage {
 		}
 	}	
 	
-	private Set /* String */ getExistingImports(ICompilationUnit cu) {
+	private Set /* String */<String> getExistingImports(ICompilationUnit cu) {
 		ASTParser parser= ASTParser.newParser(ASTProvider.AST_LEVEL);
 		parser.setSource(cu);
 		parser.setResolveBindings(false);
 		CompilationUnit root= (CompilationUnit) parser.createAST(null);
-		List imports= root.imports();
-		Set res= new HashSet(imports.size());
+		List<ASTNode> imports= root.imports();
+		Set<String> res= new HashSet<String>(imports.size());
 		for (int i= 0; i < imports.size(); i++) {
-			res.add(ASTNodes.asString((ImportDeclaration) imports.get(i)));
+			res.add(ASTNodes.asString(imports.get(i)));
 		}
 		return res;
 	}
 
-	private void removeUnusedImports(ICompilationUnit cu, Set existingImports, boolean needsSave) throws CoreException {
+	private void removeUnusedImports(ICompilationUnit cu, Set<String> existingImports, boolean needsSave) throws CoreException {
 		ASTParser parser= ASTParser.newParser(ASTProvider.AST_LEVEL);
 		parser.setSource(cu);
 		parser.setResolveBindings(true);
@@ -1913,13 +1913,13 @@ public abstract class NewTypeWizardPage extends NewContainerWizardPage {
 			return;
 		}
 		
-		List importsDecls= root.imports();
+		List<ASTNode> importsDecls= root.imports();
 		if (importsDecls.isEmpty()) {
 			return;
 		}
 		ImportsManager imports= new ImportsManager(cu);
 		
-		int importsEnd= ASTNodes.getExclusiveEnd((ASTNode) importsDecls.get(importsDecls.size() - 1));
+		int importsEnd= ASTNodes.getExclusiveEnd(importsDecls.get(importsDecls.size() - 1));
 		IProblem[] problems= root.getProblems();
 		for (int i= 0; i < problems.length; i++) {
 			IProblem curr= problems[i];
@@ -2017,7 +2017,7 @@ public abstract class NewTypeWizardPage extends NewContainerWizardPage {
 	}
 	
 	private void writeSuperInterfaces(StringBuffer buf, ImportsManager imports) {
-		List interfaces= getSuperInterfaces();
+		List<String> interfaces= getSuperInterfaces();
 		int last= interfaces.size() - 1;
 		if (last >= 0) {
 		    if (fTypeKind != INTERFACE_TYPE) {
@@ -2025,7 +2025,7 @@ public abstract class NewTypeWizardPage extends NewContainerWizardPage {
 			} else {
 				buf.append(" extends "); //$NON-NLS-1$
 			}
-			String[] intfs= (String[]) interfaces.toArray(new String[interfaces.size()]);
+			String[] intfs= interfaces.toArray(new String[interfaces.size()]);
 			ITypeBinding[] bindings= TypeContextChecker.resolveSuperInterfaces(intfs, fCurrType, getSuperInterfaceStubTypeContext());
 			for (int i= 0; i <= last; i++) {
 				ITypeBinding binding= bindings[i];
@@ -2250,10 +2250,10 @@ public abstract class NewTypeWizardPage extends NewContainerWizardPage {
 		final ICompilationUnit cu= type.getCompilationUnit();
 		JavaModelUtil.reconcile(cu);
 		IMethod[] typeMethods= type.getMethods();
-		Set handleIds= new HashSet(typeMethods.length);
+		Set<String> handleIds= new HashSet<String>(typeMethods.length);
 		for (int index= 0; index < typeMethods.length; index++)
 			handleIds.add(typeMethods[index].getHandleIdentifier());
-		ArrayList newMethods= new ArrayList();
+		ArrayList<IMethod> newMethods= new ArrayList<IMethod>();
 		CodeGenerationSettings settings= JavaPreferencesSettings.getCodeGenerationSettings(type.getJavaProject());
 		settings.createComments= isAddComments();
 		ITypeBinding binding= null;

@@ -89,7 +89,7 @@ public class GenerateActionGroup extends ActionGroup {
 	private CompilationUnitEditor fEditor;
 	private IWorkbenchSite fSite;
 	private String fGroupName= IContextMenuConstants.GROUP_REORGANIZE;
-	private List fRegisteredSelectionListeners;
+	private List<ISelectionChangedListener> fRegisteredSelectionListeners;
 	
 	private AddImportOnSelectionAction fAddImport;
 	private OverrideMethodsAction fOverrideMethods;
@@ -298,7 +298,7 @@ public class GenerateActionGroup extends ActionGroup {
 	
 	private void registerSelectionListener(ISelectionProvider provider, ISelectionChangedListener listener) {
 		if (fRegisteredSelectionListeners == null)
-			fRegisteredSelectionListeners= new ArrayList(20);
+			fRegisteredSelectionListeners= new ArrayList<ISelectionChangedListener>(20);
 		provider.addSelectionChangedListener(listener);
 		fRegisteredSelectionListeners.add(listener);
 	}
@@ -401,8 +401,8 @@ public class GenerateActionGroup extends ActionGroup {
 	public void dispose() {
 		if (fRegisteredSelectionListeners != null) {
 			ISelectionProvider provider= fSite.getSelectionProvider();
-			for (Iterator iter= fRegisteredSelectionListeners.iterator(); iter.hasNext();) {
-				ISelectionChangedListener listener= (ISelectionChangedListener) iter.next();
+			for (Iterator<ISelectionChangedListener> iter= fRegisteredSelectionListeners.iterator(); iter.hasNext();) {
+				ISelectionChangedListener listener= iter.next();
 				provider.removeSelectionChangedListener(listener);
 			}
 		}

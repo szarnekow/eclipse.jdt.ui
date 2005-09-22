@@ -305,7 +305,7 @@ public class CodeTemplateBlock {
 	}
 	
 	protected TemplatePersistenceData[] getTemplateOfCategory(boolean isComment) {
-		ArrayList res=  new ArrayList();
+		ArrayList<TemplatePersistenceData> res=  new ArrayList<TemplatePersistenceData>();
 		TemplatePersistenceData[] templates= fTemplateStore.getTemplateData();
 		for (int i= 0; i < templates.length; i++) {
 			TemplatePersistenceData curr= templates[i];
@@ -313,7 +313,7 @@ public class CodeTemplateBlock {
 				res.add(curr);
 			}
 		}
-		return (TemplatePersistenceData[]) res.toArray(new TemplatePersistenceData[res.size()]);
+		return res.toArray(new TemplatePersistenceData[res.size()]);
 	}
 	
 	protected static boolean canEdit(List selected) {
@@ -412,7 +412,7 @@ public class CodeTemplateBlock {
 	}
 	
 	private void export(List selected) {
-		List datas= new ArrayList();
+		List<Object> datas= new ArrayList<Object>();
 		for (int i= 0; i < selected.size(); i++) {
 			Object curr= selected.get(i);
 			if (curr instanceof TemplatePersistenceData) {
@@ -422,7 +422,7 @@ public class CodeTemplateBlock {
 				datas.addAll(Arrays.asList(cat));
 			}
 		}
-		export((TemplatePersistenceData[]) datas.toArray(new TemplatePersistenceData[datas.size()]));
+		export(datas.toArray(new TemplatePersistenceData[datas.size()]));
 	}
 	
 	private void export(TemplatePersistenceData[] templates) {

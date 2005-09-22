@@ -105,7 +105,7 @@ public class ModifierCorrectionSubProcessor {
 	public static final int TO_NON_STATIC= 4;
 	public static final int TO_NON_FINAL= 5;
 
-	public static void addNonAccessibleReferenceProposal(IInvocationContext context, IProblemLocation problem, Collection proposals, int kind, int relevance) throws CoreException {
+	public static void addNonAccessibleReferenceProposal(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals, int kind, int relevance) throws CoreException {
 		ICompilationUnit cu= context.getCompilationUnit();
 
 		ASTNode selectedNode= problem.getCoveringNode(context.getASTRoot());
@@ -210,7 +210,7 @@ public class ModifierCorrectionSubProcessor {
 		}
 	}
 
-	public static void addChangeOverriddenModfierProposal(IInvocationContext context, IProblemLocation problem, Collection proposals, int kind) throws JavaModelException {
+	public static void addChangeOverriddenModfierProposal(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals, int kind) throws JavaModelException {
 		ICompilationUnit cu= context.getCompilationUnit();
 
 		ASTNode selectedNode= problem.getCoveringNode(context.getASTRoot());
@@ -272,7 +272,7 @@ public class ModifierCorrectionSubProcessor {
 		}
 	}
 
-	public static void addNonFinalLocalProposal(IInvocationContext context, IProblemLocation problem, Collection proposals) {
+	public static void addNonFinalLocalProposal(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) {
 		ICompilationUnit cu= context.getCompilationUnit();
 
 		ASTNode selectedNode= problem.getCoveringNode(context.getASTRoot());
@@ -291,7 +291,7 @@ public class ModifierCorrectionSubProcessor {
 
 
 
-	public static void addRemoveInvalidModfiersProposal(IInvocationContext context, IProblemLocation problem, Collection proposals, int relevance) {
+	public static void addRemoveInvalidModfiersProposal(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals, int relevance) {
 		ICompilationUnit cu= context.getCompilationUnit();
 
 		ASTNode selectedNode= problem.getCoveringNode(context.getASTRoot());
@@ -395,7 +395,7 @@ public class ModifierCorrectionSubProcessor {
 		return Modifier.PUBLIC;
 	}
 
-	public static void addAbstractMethodProposals(IInvocationContext context, IProblemLocation problem, Collection proposals) {
+	public static void addAbstractMethodProposals(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) {
 		ICompilationUnit cu= context.getCompilationUnit();
 
 		CompilationUnit astRoot= context.getASTRoot();
@@ -466,7 +466,7 @@ public class ModifierCorrectionSubProcessor {
 
 	}
 
-	public static void addNativeMethodProposals(IInvocationContext context, IProblemLocation problem, Collection proposals) {
+	public static void addNativeMethodProposals(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) {
 		ICompilationUnit cu= context.getCompilationUnit();
 
 		CompilationUnit astRoot= context.getASTRoot();
@@ -536,7 +536,7 @@ public class ModifierCorrectionSubProcessor {
 		return proposal;
 	}
 
-	public static void addMethodRequiresBodyProposals(IInvocationContext context, IProblemLocation problem, Collection proposals) {
+	public static void addMethodRequiresBodyProposals(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) {
 		ICompilationUnit cu= context.getCompilationUnit();
 		AST ast= context.getASTRoot().getAST();
 
@@ -590,7 +590,7 @@ public class ModifierCorrectionSubProcessor {
 	}
 
 
-	public static void addNeedToEmulateProposal(IInvocationContext context, IProblemLocation problem, Collection proposals) {
+	public static void addNeedToEmulateProposal(IInvocationContext context, IProblemLocation problem, Collection<ModifierChangeCompletionProposal> proposals) {
 		ICompilationUnit cu= context.getCompilationUnit();
 
 		ASTNode selectedNode= problem.getCoveringNode(context.getASTRoot());
@@ -607,7 +607,7 @@ public class ModifierCorrectionSubProcessor {
 		}
 	}
 	
-	public static void addOverrideAnnotationProposal(IInvocationContext context, IProblemLocation problem, Collection proposals) {
+	public static void addOverrideAnnotationProposal(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) {
 		ASTRewriteCorrectionProposal proposal= getMissingAnnotationsProposal(context, problem, "Override"); //$NON-NLS-1$
 		if (proposal != null) {
 			proposal.setDisplayName(CorrectionMessages.ModifierCorrectionSubProcessor_addoverrideannotation);
@@ -616,7 +616,7 @@ public class ModifierCorrectionSubProcessor {
 		}
 	}
 	
-	public static void addDeprecatedAnnotationProposal(IInvocationContext context, IProblemLocation problem, Collection proposals) {
+	public static void addDeprecatedAnnotationProposal(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) {
 		ASTRewriteCorrectionProposal proposal= getMissingAnnotationsProposal(context, problem, "Deprecated"); //$NON-NLS-1$
 		if (proposal != null) {
 			proposal.setDisplayName(CorrectionMessages.ModifierCorrectionSubProcessor_adddeprecatedannotation);
@@ -743,7 +743,7 @@ public class ModifierCorrectionSubProcessor {
 		public boolean validate(IDocument document, int offset, DocumentEvent event) { return false; }
 	}
 	
-	public static void installLinkedVisibilityProposals(LinkedCorrectionProposal proposal, ASTRewrite rewrite, List modifiers) {
+	public static void installLinkedVisibilityProposals(LinkedCorrectionProposal proposal, ASTRewrite rewrite, List<ASTNode> modifiers) {
 		ASTNode modifier= findVisibilityModifier(modifiers);
 		if (modifier != null) {
 			int selected= ((Modifier) modifier).getKeyword().toFlagValue();
@@ -760,7 +760,7 @@ public class ModifierCorrectionSubProcessor {
 		} 
 	}
 	
-	private static Modifier findVisibilityModifier(List modifiers) {
+	private static Modifier findVisibilityModifier(List<ASTNode> modifiers) {
 		for (int i= 0; i < modifiers.size(); i++) {
 			Object curr= modifiers.get(i);
 			if (curr instanceof Modifier) {
@@ -779,7 +779,7 @@ public class ModifierCorrectionSubProcessor {
 	}
 	
 	
-	public static void addSuppressWarningsProposals(IInvocationContext context, IProblemLocation problem, Collection proposals) {
+	public static void addSuppressWarningsProposals(IInvocationContext context, IProblemLocation problem, Collection<ICommandAccess> proposals) {
 		if (problem.isError()) {
 			return;
 		}
@@ -823,14 +823,14 @@ public class ModifierCorrectionSubProcessor {
 		}
 	}
 	
-	private static String getFirstFragmentName(List fragments) {
+	private static String getFirstFragmentName(List<ASTNode> fragments) {
 		if (fragments.size() > 0) {
 			return ((VariableDeclarationFragment) fragments.get(0)).getName().getIdentifier();
 		}
 		return new String();
 	}
 	
-	private static void addSuppressWarningsProposal(ICompilationUnit cu, ASTNode node, String warningToken, int relevance, Collection proposals) {
+	private static void addSuppressWarningsProposal(ICompilationUnit cu, ASTNode node, String warningToken, int relevance, Collection<ICommandAccess> proposals) {
 
 		ChildListPropertyDescriptor property= null;
 		String name;
@@ -936,7 +936,7 @@ public class ModifierCorrectionSubProcessor {
 	}
 	
 	
-	private static Expression findValue(List keyValues) {
+	private static Expression findValue(List<ASTNode> keyValues) {
 		for (int i= 0, len= keyValues.size(); i < len; i++) {
 			MemberValuePair curr= (MemberValuePair) keyValues.get(i);
 			if ("value".equals(curr.getName().getIdentifier())) { //$NON-NLS-1$

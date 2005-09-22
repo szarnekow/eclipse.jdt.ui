@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -223,7 +224,7 @@ public class ClasspathModifier {
 					newEntries.add(entry);
 				}
 				
-				Set modifiedSourceEntries= new HashSet();
+				Set<CPListElement> modifiedSourceEntries= new HashSet<CPListElement>();
 				BuildPathBasePage.fixNestingConflicts(newEntries, existingEntries, modifiedSourceEntries);
 
 				setNewEntry(existingEntries, newEntries, project, new SubProgressMonitor(monitor, 1));
@@ -267,7 +268,7 @@ public class ClasspathModifier {
 	 * 
 	 * @see IAddArchivesQuery
 	 */
-	protected List addExternalJars(IAddArchivesQuery query, IJavaProject project, IProgressMonitor monitor) throws CoreException {
+	protected List<IJavaElement> addExternalJars(IAddArchivesQuery query, IJavaProject project, IProgressMonitor monitor) throws CoreException {
 		if (monitor == null)
 			monitor= new NullProgressMonitor();
 		IPath[] selected= query.doQuery();
@@ -284,7 +285,7 @@ public class ClasspathModifier {
 				setNewEntry(existingEntries, addedEntries, project, new SubProgressMonitor(monitor, 1));
 				updateClasspath(existingEntries, project, new SubProgressMonitor(monitor, 1));
 
-				List result= new ArrayList(addedEntries.size());
+				List<IJavaElement> result= new ArrayList<IJavaElement>(addedEntries.size());
 				for (int i= 0; i < addedEntries.size(); i++) {
 					IClasspathEntry entry= ((CPListElement) addedEntries.get(i)).getClasspathEntry();
 					IJavaElement elem= project.findPackageFragmentRoot(entry.getPath());
@@ -298,7 +299,7 @@ public class ClasspathModifier {
 		} finally {
 			monitor.done();
 		}
-		return new ArrayList();
+		return new ArrayList<IJavaElement>();
 	}
 
 	/**
@@ -314,7 +315,7 @@ public class ClasspathModifier {
 	 * 
 	 * @see IAddArchivesQuery
 	 */
-	protected List addLibraries(IAddLibrariesQuery query, IJavaProject project, IProgressMonitor monitor) throws CoreException {
+	protected List<ClassPathContainer> addLibraries(IAddLibrariesQuery query, IJavaProject project, IProgressMonitor monitor) throws CoreException {
 		if (monitor == null)
 			monitor= new NullProgressMonitor();
 		IClasspathEntry[] selected= query.doQuery(project, project.getRawClasspath());
@@ -331,7 +332,7 @@ public class ClasspathModifier {
 				setNewEntry(existingEntries, addedEntries, project, new SubProgressMonitor(monitor, 1));
 				updateClasspath(existingEntries, project, new SubProgressMonitor(monitor, 1));
 
-				List result= new ArrayList(addedEntries.size());
+				List<ClassPathContainer> result= new ArrayList<ClassPathContainer>(addedEntries.size());
 				for (int i= 0; i < addedEntries.size(); i++) {
 					result.add(new ClassPathContainer(project, selected[i]));
 				}
@@ -341,10 +342,10 @@ public class ClasspathModifier {
 		} finally {
 			monitor.done();
 		}
-		return new ArrayList();
+		return new ArrayList<ClassPathContainer>();
 	}
 	
-	protected List addLibraryEntries(List resources, IJavaProject project, IProgressMonitor monitor) throws CoreException {
+	protected List<IJavaElement> addLibraryEntries(List resources, IJavaProject project, IProgressMonitor monitor) throws CoreException {
 		if (monitor == null)
 			monitor= new NullProgressMonitor();
 		List addedEntries= new ArrayList();
@@ -360,7 +361,7 @@ public class ClasspathModifier {
 			setNewEntry(existingEntries, addedEntries, project, new SubProgressMonitor(monitor, 1));
 			updateClasspath(existingEntries, project, new SubProgressMonitor(monitor, 1));
 
-			List result= new ArrayList(addedEntries.size());
+			List<IJavaElement> result= new ArrayList<IJavaElement>(addedEntries.size());
 			for (int i= 0; i < resources.size(); i++) {
 				IResource res= (IResource) resources.get(i);
 				IJavaElement elem= project.getPackageFragmentRoot(res);
@@ -391,13 +392,13 @@ public class ClasspathModifier {
 	 * @throws CoreException 
 	 * @throws OperationCanceledException 
 	 */
-	protected List removeFromClasspath(IRemoveLinkedFolderQuery query, List elements, IJavaProject project, IProgressMonitor monitor) throws CoreException {
+	protected List<Object> removeFromClasspath(IRemoveLinkedFolderQuery query, List elements, IJavaProject project, IProgressMonitor monitor) throws CoreException {
 		if (monitor == null)
 			monitor= new NullProgressMonitor();
 		try {
 			monitor.beginTask(NewWizardMessages.ClasspathModifier_Monitor_RemoveFromBuildpath, elements.size() + 1); 
 			List existingEntries= getExistingEntries(project);
-			List resultElements= new ArrayList();
+			List<Object> resultElements= new ArrayList<Object>();
 
 			boolean archiveRemoved= false;
 			for (int i= 0; i < elements.size(); i++) {
@@ -473,7 +474,7 @@ public class ClasspathModifier {
 	 * 
 	 * @see #exclude(List, IJavaProject, IProgressMonitor)
 	 */
-	protected List include(List elements, IJavaProject project, IProgressMonitor monitor) throws JavaModelException {
+	protected List<IAdaptable> include(List elements, IJavaProject project, IProgressMonitor monitor) throws JavaModelException {
 		if (monitor == null)
 			monitor= new NullProgressMonitor();
 		try {
@@ -498,7 +499,7 @@ public class ClasspathModifier {
 			}
 
 			updateClasspath(existingEntries, project, new SubProgressMonitor(monitor, 4));
-			List javaElements= getCorrespondingElements(resources, project);
+			List<IAdaptable> javaElements= getCorrespondingElements(resources, project);
 			return javaElements;
 		} finally {
 			monitor.done();
@@ -519,14 +520,14 @@ public class ClasspathModifier {
 	 * @return list of objects representing the excluded elements
 	 * @throws JavaModelException
 	 */
-	protected List exclude(List javaElements, IJavaProject project, IProgressMonitor monitor) throws JavaModelException {
+	protected List<IResource> exclude(List javaElements, IJavaProject project, IProgressMonitor monitor) throws JavaModelException {
 		if (monitor == null)
 			monitor= new NullProgressMonitor();
 		try {
 			monitor.beginTask(NewWizardMessages.ClasspathModifier_Monitor_Excluding, javaElements.size() + 4); 
 
 			List existingEntries= getExistingEntries(project);
-			List resources= new ArrayList();
+			List<IResource> resources= new ArrayList<IResource>();
 			for (int i= 0; i < javaElements.size(); i++) {
 				IJavaElement javaElement= (IJavaElement) javaElements.get(i);
 				IPackageFragmentRoot root= (IPackageFragmentRoot) javaElement.getAncestor(IJavaElement.PACKAGE_FRAGMENT_ROOT);
@@ -562,7 +563,7 @@ public class ClasspathModifier {
 	 * 
 	 * @see #include(List, IJavaProject, IProgressMonitor)
 	 */
-	protected List unInclude(List javaElements, IJavaProject project, IProgressMonitor monitor) throws JavaModelException {
+	protected List<IAdaptable> unInclude(List javaElements, IJavaProject project, IProgressMonitor monitor) throws JavaModelException {
 		if (monitor == null)
 			monitor= new NullProgressMonitor();
 		try {
@@ -578,7 +579,7 @@ public class ClasspathModifier {
 			}
 
 			updateClasspath(existingEntries, project, new SubProgressMonitor(monitor, 4));
-			List result= getCorrespondingElements(javaElements, project);
+			List<IAdaptable> result= getCorrespondingElements(javaElements, project);
 			return result;
 		} finally {
 			monitor.done();
@@ -603,7 +604,7 @@ public class ClasspathModifier {
 	 * @see #exclude(List, IJavaProject, IProgressMonitor)
 	 * @see #unExclude(List, IJavaProject, IProgressMonitor)
 	 */
-	protected List unExclude(List elements, IJavaProject project, IProgressMonitor monitor) throws JavaModelException {
+	protected List<IAdaptable> unExclude(List elements, IJavaProject project, IProgressMonitor monitor) throws JavaModelException {
 		if (monitor == null)
 			monitor= new NullProgressMonitor();
 		try {
@@ -620,7 +621,7 @@ public class ClasspathModifier {
 			}
 
 			updateClasspath(entries, project, new SubProgressMonitor(monitor, 4));
-			List resultElements= getCorrespondingElements(elements, project);
+			List<IAdaptable> resultElements= getCorrespondingElements(elements, project);
 			return resultElements;
 		} finally {
 			monitor.done();
@@ -787,13 +788,13 @@ public class ClasspathModifier {
 	 * They can either be of type <code>CPListElement</code>, <code>IJavaProject</code> or 
 	 * <code>IPackageFragmentRoot</code>
 	 */
-	protected List reset(List elements, IJavaProject project, IProgressMonitor monitor) throws JavaModelException {
+	protected List<Object> reset(List elements, IJavaProject project, IProgressMonitor monitor) throws JavaModelException {
 		if (monitor == null)
 			monitor= new NullProgressMonitor();
 		try {
 			monitor.beginTask(NewWizardMessages.ClasspathModifier_Monitor_Resetting, elements.size()); 
 			List entries= getExistingEntries(project);
-			List result= new ArrayList();
+			List<Object> result= new ArrayList<Object>();
 			for (int i= 0; i < elements.size(); i++) {
 				Object element= elements.get(i);
 				if (element instanceof IJavaElement) {
@@ -1507,7 +1508,7 @@ public class ClasspathModifier {
 		try {
 			monitor.beginTask(NewWizardMessages.ClasspathModifier_Monitor_ResetFilters, 3); 
 
-			List exclusionList= getFoldersOnCP(element.getPath(), project, new SubProgressMonitor(monitor, 2));
+			List<Path> exclusionList= getFoldersOnCP(element.getPath(), project, new SubProgressMonitor(monitor, 2));
 			IPath outputLocation= (IPath) entry.getAttribute(CPListElement.OUTPUT);
 			if (outputLocation != null) {
 				IPath[] exclusionPatterns= (IPath[]) entry.getAttribute(CPListElement.EXCLUSION);
@@ -1515,7 +1516,7 @@ public class ClasspathModifier {
 					exclusionList.add(new Path(completeName(outputLocation.lastSegment())));
 				}
 			}
-			IPath[] exclusions= (IPath[]) exclusionList.toArray(new IPath[exclusionList.size()]);
+			IPath[] exclusions= exclusionList.toArray(new IPath[exclusionList.size()]);
 
 			entry.setAttribute(CPListElement.INCLUSION, new IPath[0]);
 			entry.setAttribute(CPListElement.EXCLUSION, exclusions);
@@ -1619,8 +1620,8 @@ public class ClasspathModifier {
 	 * @param project the Java project
 	 * @return a list of elements corresponding to the passed entries.
 	 */
-	private List getCorrespondingElements(List entries, IJavaProject project) {
-		List result= new ArrayList();
+	private List<IAdaptable> getCorrespondingElements(List entries, IJavaProject project) {
+		List<IAdaptable> result= new ArrayList<IAdaptable>();
 		for (int i= 0; i < entries.size(); i++) {
 			Object element= entries.get(i);
 			IPath path;
@@ -1722,14 +1723,14 @@ public class ClasspathModifier {
 			if (!contains(path, paths, new SubProgressMonitor(monitor, 5)))
 				return paths;
 
-			ArrayList newPaths= new ArrayList();
+			ArrayList<IPath> newPaths= new ArrayList<IPath>();
 			for (int i= 0; i < paths.length; i++) {
 				monitor.worked(1);
 				if (!paths[i].equals(path))
 					newPaths.add(paths[i]);
 			}
 			
-			return (IPath[]) newPaths.toArray(new IPath[newPaths.size()]);
+			return newPaths.toArray(new IPath[newPaths.size()]);
 		} finally {
 			monitor.done();
 		}
@@ -1754,10 +1755,10 @@ public class ClasspathModifier {
 	 * of <code>path</code> and which are on the build path
 	 * @throws JavaModelException
 	 */
-	private List getFoldersOnCP(IPath path, IJavaProject project, IProgressMonitor monitor) throws JavaModelException {
+	private List<Path> getFoldersOnCP(IPath path, IJavaProject project, IProgressMonitor monitor) throws JavaModelException {
 		if (monitor == null)
 			monitor= new NullProgressMonitor();
-		List srcFolders= new ArrayList();
+		List<Path> srcFolders= new ArrayList<Path>();
 		IClasspathEntry[] cpEntries= project.getRawClasspath();
 		for (int i= 0; i < cpEntries.length; i++) {
 			IPath cpPath= cpEntries[i].getPath();

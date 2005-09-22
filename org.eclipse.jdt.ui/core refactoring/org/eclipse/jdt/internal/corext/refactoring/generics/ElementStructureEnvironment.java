@@ -17,10 +17,10 @@ import org.eclipse.jdt.internal.corext.refactoring.generics.ParametricStructureC
 import org.eclipse.jdt.internal.corext.refactoring.typeconstraints2.ConstraintVariable2;
 
 /*package*/ final class ElementStructureEnvironment {
-	private final Map/*<ConstraintVariable, IType>*/ fElemStructure;
+	private final Map/*<ConstraintVariable, IType>*/<ConstraintVariable2, ParametricStructure> fElemStructure;
 
 	public ElementStructureEnvironment(){
-		fElemStructure= new LinkedHashMap();
+		fElemStructure= new LinkedHashMap<ConstraintVariable2, ParametricStructure>();
 	}
 	
 	public void setElemStructure(ConstraintVariable2 v, ParametricStructure t) {
@@ -28,6 +28,6 @@ import org.eclipse.jdt.internal.corext.refactoring.typeconstraints2.ConstraintVa
 	}
 
 	public ParametricStructure elemStructure(ConstraintVariable2 v) {
-		return (ParametricStructure) fElemStructure.get(v);
+		return fElemStructure.get(v);
 	}
 }

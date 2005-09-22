@@ -174,12 +174,12 @@ class JavaAddElementFromHistoryImpl extends JavaHistoryActionImpl {
 					} else if (parent instanceof IType) {
 						ASTNode declaration= getBodyContainer(root, (IType)parent);
 						if (declaration instanceof TypeDeclaration || declaration instanceof AnnotationTypeDeclaration) {
-							List container= ASTNodes.getBodyDeclarations(declaration);
+							List<ASTNode> container= ASTNodes.getBodyDeclarations(declaration);
 							int index= ASTNodes.getInsertionIndex((BodyDeclaration)newNode, container);
 							ListRewrite lw= rewriter.getListRewrite(declaration, ASTNodes.getBodyDeclarationsProperty(declaration));
 							lw.insertAt(newNode, index, null);
 						} else if (declaration instanceof EnumDeclaration) {
-							List container= ((EnumDeclaration)declaration).enumConstants();
+							List<ASTNode> container= ((EnumDeclaration)declaration).enumConstants();
 							int index= ASTNodes.getInsertionIndex((FieldDeclaration)newNode, container);
 							ListRewrite lw= rewriter.getListRewrite(declaration, EnumDeclaration.ENUM_CONSTANTS_PROPERTY);
 							lw.insertAt(newNode, index, null);

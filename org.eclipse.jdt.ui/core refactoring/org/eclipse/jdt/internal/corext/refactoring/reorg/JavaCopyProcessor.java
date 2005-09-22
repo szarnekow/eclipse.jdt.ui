@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.SubProgressMonitor;
@@ -97,7 +98,7 @@ public final class JavaCopyProcessor extends CopyProcessor implements IReorgDest
 	public Object[] getElements() {
 		IJavaElement[] jElements= fCopyPolicy.getJavaElements();
 		IResource[] resources= fCopyPolicy.getResources();
-		List result= new ArrayList(jElements.length + resources.length);
+		List<IAdaptable> result= new ArrayList<IAdaptable>(jElements.length + resources.length);
 		result.addAll(Arrays.asList(jElements));
 		result.addAll(Arrays.asList(resources));
 		return result.toArray();
@@ -195,9 +196,9 @@ public final class JavaCopyProcessor extends CopyProcessor implements IReorgDest
 	private String[] getAffectedProjectNatures() throws CoreException {
 		String[] jNatures= JavaProcessors.computeAffectedNaturs(fCopyPolicy.getJavaElements());
 		String[] rNatures= ResourceProcessors.computeAffectedNatures(fCopyPolicy.getResources());
-		Set result= new HashSet();
+		Set<String> result= new HashSet<String>();
 		result.addAll(Arrays.asList(jNatures));
 		result.addAll(Arrays.asList(rNatures));
-		return (String[])result.toArray(new String[result.size()]);
+		return result.toArray(new String[result.size()]);
 	}
 }

@@ -360,7 +360,7 @@ public class AccessRulesDialog extends StatusDialog {
 
 
 	public void performPageSwitch(IWorkbenchPreferenceContainer pageContainer) {
-		HashMap data= new HashMap();
+		HashMap<String, String> data= new HashMap<String, String>();
 		data.put(ProblemSeveritiesPreferencePage.DATA_SELECT_OPTION_KEY, JavaCore.COMPILER_PB_FORBIDDEN_REFERENCE);
 		data.put(ProblemSeveritiesPreferencePage.DATA_SELECT_OPTION_QUALIFIER, JavaCore.PLUGIN_ID);
 		pageContainer.openPage(ProblemSeveritiesPreferencePage.PROP_ID, data);

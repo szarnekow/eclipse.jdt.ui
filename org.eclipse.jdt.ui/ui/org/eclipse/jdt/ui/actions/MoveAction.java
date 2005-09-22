@@ -179,9 +179,9 @@ public class MoveAction extends SelectionDispatchAction{
 	private static IMember[] convertToMemberArray(Object[] obj) {
 		if (obj == null)
 			return null;
-		Set memberSet= new HashSet();
+		Set<Object> memberSet= new HashSet<Object>();
 		memberSet.addAll(Arrays.asList(obj));
-		return (IMember[]) memberSet.toArray(new IMember[memberSet.size()]);
+		return memberSet.toArray(new IMember[memberSet.size()]);
 	}
 
 	private boolean tryMoveStaticMembers(IStructuredSelection selection) throws JavaModelException {

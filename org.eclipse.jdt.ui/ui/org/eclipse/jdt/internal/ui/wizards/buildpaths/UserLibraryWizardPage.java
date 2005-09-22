@@ -62,7 +62,7 @@ public class UserLibraryWizardPage extends NewElementWizardPage implements IClas
 	
 	private CheckedListDialogField fLibrarySelector;
 	private CPUserLibraryElement fEditResult;
-	private Set fUsedPaths;
+	private Set<IPath> fUsedPaths;
 	private boolean fIsEditMode;
 	private IJavaProject fProject;
 	
@@ -71,7 +71,7 @@ public class UserLibraryWizardPage extends NewElementWizardPage implements IClas
 		setTitle(NewWizardMessages.UserLibraryWizardPage_title); 
 		setImageDescriptor(JavaPluginImages.DESC_WIZBAN_ADD_LIBRARY);
 		updateDescription(null);
-		fUsedPaths= new HashSet();
+		fUsedPaths= new HashSet<IPath>();
 		fProject= UserLibraryPreferencePage.getPlaceholderProject();
 		
 		LibraryListAdapter adapter= new LibraryListAdapter();
@@ -94,8 +94,8 @@ public class UserLibraryWizardPage extends NewElementWizardPage implements IClas
 	}
 	
 	private List updateLibraryList() {
-		HashSet oldNames= new HashSet();
-		HashSet oldCheckedNames= new HashSet();
+		HashSet<String> oldNames= new HashSet<String>();
+		HashSet<String> oldCheckedNames= new HashSet<String>();
 		List oldElements= fLibrarySelector.getElements();
 		for (int i= 0; i < oldElements.size(); i++) {
 			CPUserLibraryElement curr= (CPUserLibraryElement) oldElements.get(i);
@@ -180,7 +180,7 @@ public class UserLibraryWizardPage extends NewElementWizardPage implements IClas
 	
 	private void doButtonPressed(int index) {
 		if (index == 0) {
-			HashMap data= new HashMap(3);
+			HashMap<String, String> data= new HashMap<String, String>(3);
 			if (fEditResult != null) {
 				data.put(UserLibraryPreferencePage.DATA_LIBRARY_TO_SELECT, fEditResult.getName());
 			}

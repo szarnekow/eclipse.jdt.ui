@@ -58,7 +58,7 @@ public class CPListElement {
 	private Object fParentContainer;
 		
 	private IClasspathEntry fCachedEntry;
-	private ArrayList fChildren;
+	private ArrayList<Object> fChildren;
 	
 	public CPListElement(IJavaProject project, int entryKind, IPath path, IResource res) {
 		this(null, project, entryKind, path, res);
@@ -70,7 +70,7 @@ public class CPListElement {
 
 		fEntryKind= entryKind;
 		fPath= path;
-		fChildren= new ArrayList();
+		fChildren= new ArrayList<Object>();
 		fResource= res;
 		fIsExported= false;
 		
@@ -128,7 +128,7 @@ public class CPListElement {
 	
 	
 	private IClasspathAttribute[] getClasspathAttributes() {
-		ArrayList res= new ArrayList();
+		ArrayList<IClasspathAttribute> res= new ArrayList<IClasspathAttribute>();
 		for (int i= 0; i < fChildren.size(); i++) {
 			Object curr= fChildren.get(i);
 			if (curr instanceof CPListElementAttribute) {
@@ -138,7 +138,7 @@ public class CPListElement {
 				}
 			}
 		}
-		return (IClasspathAttribute[]) res.toArray(new IClasspathAttribute[res.size()]);
+		return res.toArray(new IClasspathAttribute[res.size()]);
 	}
 	
 
@@ -260,7 +260,7 @@ public class CPListElement {
 	
 	private Object[] getFilteredChildren(String[] filteredKeys) {
 		int nChildren= fChildren.size();
-		ArrayList res= new ArrayList(nChildren);
+		ArrayList<Object> res= new ArrayList<Object>(nChildren);
 		
 		for (int i= 0; i < nChildren; i++) {
 			Object curr= fChildren.get(i);

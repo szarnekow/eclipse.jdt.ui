@@ -52,10 +52,10 @@ public class LinkedNodeFinder  {
 	 * @return Return 
 	 */
 	public static SimpleName[] findByBinding(ASTNode root, IBinding binding) {
-		ArrayList res= new ArrayList();
+		ArrayList<SimpleName> res= new ArrayList<SimpleName>();
 		BindingFinder nodeFinder= new BindingFinder(binding, res);
 		root.accept(nodeFinder);
-		return (SimpleName[]) res.toArray(new SimpleName[res.size()]);
+		return res.toArray(new SimpleName[res.size()]);
 	}
 	
 	/**
@@ -77,10 +77,10 @@ public class LinkedNodeFinder  {
 		}
 		int parentKind= name.getParent().getNodeType();
 		if (parentKind == ASTNode.LABELED_STATEMENT || parentKind == ASTNode.BREAK_STATEMENT || parentKind == ASTNode.CONTINUE_STATEMENT) {
-			ArrayList res= new ArrayList();
+			ArrayList<SimpleName> res= new ArrayList<SimpleName>();
 			LabelFinder nodeFinder= new LabelFinder(name, res);
 			root.accept(nodeFinder);
-			return (SimpleName[]) res.toArray(new SimpleName[res.size()]);
+			return res.toArray(new SimpleName[res.size()]);
 		}
 		return new SimpleName[] { name };
 	}
@@ -127,7 +127,7 @@ public class LinkedNodeFinder  {
 	
 	
 	public static SimpleName[] findByProblems(ASTNode parent, SimpleName nameNode) {
-		ArrayList res= new ArrayList();
+		ArrayList<ASTNode> res= new ArrayList<ASTNode>();
 		
 		ASTNode astRoot = parent.getRoot();
 		if (!(astRoot instanceof CompilationUnit)) {
@@ -160,16 +160,16 @@ public class LinkedNodeFinder  {
 				}
 			}
 		}
-		return (SimpleName[]) res.toArray(new SimpleName[res.size()]);
+		return res.toArray(new SimpleName[res.size()]);
 	}
 	
 	private static class LabelFinder extends ASTVisitor {
 		
 		private SimpleName fLabel;
 		private ASTNode fDefiningLabel;
-		private ArrayList fResult;
+		private ArrayList<SimpleName> fResult;
 		
-		public LabelFinder(SimpleName label, ArrayList result) {
+		public LabelFinder(SimpleName label, ArrayList<SimpleName> result) {
 			super(true);
 			fLabel= label;
 			fResult= result;
@@ -212,9 +212,9 @@ public class LinkedNodeFinder  {
 	private static class BindingFinder extends ASTVisitor {
 	
 		private IBinding fBinding;
-		private ArrayList fResult;
+		private ArrayList<SimpleName> fResult;
 		
-		public BindingFinder(IBinding binding, ArrayList result) {
+		public BindingFinder(IBinding binding, ArrayList<SimpleName> result) {
 			super(true);
 			fBinding= getDeclaration(binding);
 			fResult= result;

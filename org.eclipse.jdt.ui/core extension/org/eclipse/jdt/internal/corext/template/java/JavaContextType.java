@@ -16,15 +16,12 @@ import java.util.List;
 
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.templates.*;
-import org.eclipse.jface.text.templates.TemplateContext;
-import org.eclipse.jface.text.templates.TemplateVariableResolver;
 
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaProject;
 
 import org.eclipse.jdt.internal.corext.codemanipulation.StubUtility;
 import org.eclipse.jdt.internal.ui.text.template.contentassist.*;
-import org.eclipse.jdt.internal.ui.text.template.contentassist.MultiVariableGuess;
 
 /**
  * A context type for java code.
@@ -239,7 +236,7 @@ public class JavaContextType extends CompilationUnitContextType {
 	    }
 	    
 	    protected String[] resolveAll(TemplateContext context) {
-	    	List result= new ArrayList();
+	    	List<String> result= new ArrayList<String>();
 	        String[][] groupedElements= ((JavaContext) context).getIterableElements();
 	        for (int i= 0; i < groupedElements.length; i++) {
 				String[] names= groupedElements[i];
@@ -248,7 +245,7 @@ public class JavaContextType extends CompilationUnitContextType {
 				}
 			}
 	        
-			return (String[]) result.toArray(new String[result.size()]);
+			return result.toArray(new String[result.size()]);
 	    }	    
 
 		/*

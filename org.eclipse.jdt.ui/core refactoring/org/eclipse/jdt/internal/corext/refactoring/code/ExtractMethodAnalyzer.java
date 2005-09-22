@@ -343,7 +343,7 @@ import org.eclipse.jdt.internal.corext.util.Messages;
 				body= ((Initializer) fEnclosingBodyDeclaration).getBody();
 			}
 			if (body != null) {
-				List statements= body.statements();
+				List<ASTNode> statements= body.statements();
 				fIsLastStatementSelected= nodes[nodes.length - 1] == statements.get(statements.size() - 1);
 			}
 		}
@@ -357,19 +357,19 @@ import org.eclipse.jdt.internal.corext.util.Messages;
 	}
 	
 	private IVariableBinding[] removeSelectedDeclarations(IVariableBinding[] bindings) {
-		List result= new ArrayList(bindings.length);
+		List<IVariableBinding> result= new ArrayList<IVariableBinding>(bindings.length);
 		Selection selection= getSelection();
 		for (int i= 0; i < bindings.length; i++) {
 			ASTNode decl= ((CompilationUnit)fEnclosingBodyDeclaration.getRoot()).findDeclaringNode(bindings[i]);
 			if (!selection.covers(decl))
 				result.add(bindings[i]);
 		}
-		return (IVariableBinding[])result.toArray(new IVariableBinding[result.size()]);
+		return result.toArray(new IVariableBinding[result.size()]);
 	}
 	
 	private ITypeBinding[] computeTypeVariables(ITypeBinding[] bindings) {
 		Selection selection= getSelection();
-		Set result= new HashSet();
+		Set<ITypeBinding> result= new HashSet<ITypeBinding>();
 		// first remove all type variables that come from outside of the method
 		// or are covered by the selection
 		CompilationUnit compilationUnit= (CompilationUnit)fEnclosingBodyDeclaration.getRoot();
@@ -388,7 +388,7 @@ import org.eclipse.jdt.internal.corext.util.Messages;
 					result.add(type);
 			}
 		}
-		return (ITypeBinding[])result.toArray(new ITypeBinding[result.size()]);
+		return result.toArray(new ITypeBinding[result.size()]);
 	}
 	
 	private void computeOutput(RefactoringStatus status) {
@@ -424,7 +424,7 @@ import org.eclipse.jdt.internal.corext.util.Messages;
 				status.addFatalError(RefactoringCoreMessages.ExtractMethodAnalyzer_assignments_to_local, JavaStatusContext.create(fCUnit, getSelection())); 
 				return;
 		}
-		List callerLocals= new ArrayList(5);
+		List<IVariableBinding> callerLocals= new ArrayList<IVariableBinding>(5);
 		FlowInfo localInfo= new InputFlowAnalyzer(flowContext, getSelection(), false).perform(fEnclosingBodyDeclaration);
 		IVariableBinding[] writes= localInfo.get(flowContext, FlowInfo.WRITE | FlowInfo.WRITE_POTENTIAL | FlowInfo.UNKNOWN);
 		for (int i= 0; i < writes.length; i++) {
@@ -432,7 +432,7 @@ import org.eclipse.jdt.internal.corext.util.Messages;
 			if (getSelection().covers(ASTNodes.findDeclaration(write, fEnclosingBodyDeclaration)))
 				callerLocals.add(write);
 		}
-		fCallerLocals= (IVariableBinding[])callerLocals.toArray(new IVariableBinding[callerLocals.size()]);
+		fCallerLocals= callerLocals.toArray(new IVariableBinding[callerLocals.size()]);
 		if (fReturnValue != null && getSelection().covers(ASTNodes.findDeclaration(fReturnValue, fEnclosingBodyDeclaration)))
 			fReturnLocal= fReturnValue;
 	}
@@ -488,14 +488,14 @@ import org.eclipse.jdt.internal.corext.util.Messages;
 	public ITypeBinding[] getExceptions(boolean includeRuntimeExceptions, AST ast) {
 		if (includeRuntimeExceptions)
 			return fAllExceptions;
-		List result= new ArrayList(fAllExceptions.length);
+		List<ITypeBinding> result= new ArrayList<ITypeBinding>(fAllExceptions.length);
 		for (int i= 0; i < fAllExceptions.length; i++) {
 			ITypeBinding exception= fAllExceptions[i];
 			if (!includeRuntimeExceptions && Bindings.isRuntimeException(exception))
 				continue;
 			result.add(exception);
 		}
-		return (ITypeBinding[]) result.toArray(new ITypeBinding[result.size()]);
+		return result.toArray(new ITypeBinding[result.size()]);
 	}
 	
 	private void computeExceptions() {

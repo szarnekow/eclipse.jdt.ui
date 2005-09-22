@@ -73,13 +73,13 @@ public class ChangeExceptionsControl extends Composite {
 			return removeMarkedAsDeleted((List) inputElement);
 		}
 		private ExceptionInfo[] removeMarkedAsDeleted(List exceptionInfos){
-			List result= new ArrayList(exceptionInfos.size());
+			List<ExceptionInfo> result= new ArrayList<ExceptionInfo>(exceptionInfos.size());
 			for (Iterator iter= exceptionInfos.iterator(); iter.hasNext();) {
 				ExceptionInfo info= (ExceptionInfo) iter.next();
 				if (! info.isDeleted())
 					result.add(info);
 			}
-			return (ExceptionInfo[]) result.toArray(new ExceptionInfo[result.size()]);
+			return result.toArray(new ExceptionInfo[result.size()]);
 		}
 		public void dispose() {
 			// do nothing
@@ -111,7 +111,7 @@ public class ChangeExceptionsControl extends Composite {
 
 	private TableViewer fTableViewer;
 	private Button fRemoveButton;
-	private List fExceptionInfos;
+	private List<ExceptionInfo> fExceptionInfos;
 
 	public ChangeExceptionsControl(Composite parent, int style, IExceptionListChangeListener listener, IJavaProject project) {
 		super(parent, style);
@@ -129,7 +129,7 @@ public class ChangeExceptionsControl extends Composite {
 		createButtonComposite(this);
 	}
 
-	public void setInput(List exceptionInfos) {
+	public void setInput(List<ExceptionInfo> exceptionInfos) {
 		Assert.isNotNull(exceptionInfos);
 		fExceptionInfos= exceptionInfos;
 		fTableViewer.setInput(fExceptionInfos);
@@ -282,8 +282,8 @@ public class ChangeExceptionsControl extends Composite {
 	}
 	
 	private ExceptionInfo findExceptionInfo(IType exception) {
-		for (Iterator iter= fExceptionInfos.iterator(); iter.hasNext(); ) {
-			ExceptionInfo info= (ExceptionInfo) iter.next();
+		for (Iterator<ExceptionInfo> iter= fExceptionInfos.iterator(); iter.hasNext(); ) {
+			ExceptionInfo info= iter.next();
 			if (info.getType().equals(exception))
 				return info;
 		}

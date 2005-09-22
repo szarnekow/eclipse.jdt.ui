@@ -50,7 +50,7 @@ public class SourceReferenceUtil {
 		return null;
 	}	
 	
-	private static boolean hasParentInSet(IJavaElement elem, Set set){
+	private static boolean hasParentInSet(IJavaElement elem, Set<ISourceReference> set){
 		IJavaElement parent= elem.getParent();
 		while (parent != null) {
 			if (set.contains(parent))	
@@ -61,8 +61,8 @@ public class SourceReferenceUtil {
 	}
 	
 	public static ISourceReference[] removeAllWithParentsSelected(ISourceReference[] elems){
-		Set set= new HashSet(Arrays.asList(elems));
-		List result= new ArrayList(elems.length);
+		Set<ISourceReference> set= new HashSet<ISourceReference>(Arrays.asList(elems));
+		List<ISourceReference> result= new ArrayList<ISourceReference>(elems.length);
 		for (int i= 0; i < elems.length; i++) {
 			ISourceReference elem= elems[i];
 			if (! (elem instanceof IJavaElement))
@@ -72,20 +72,20 @@ public class SourceReferenceUtil {
 					result.add(elem);
 			}	
 		}
-		return (ISourceReference[]) result.toArray(new ISourceReference[result.size()]);
+		return result.toArray(new ISourceReference[result.size()]);
 	}
 	
 	/**
 	 * @return IFile -> List of ISourceReference (elements from that file)	
 	 */
-	public static Map groupByFile(ISourceReference[] elems) {
-		Map map= new HashMap();
+	public static Map<IFile, ArrayList> groupByFile(ISourceReference[] elems) {
+		Map<IFile, ArrayList> map= new HashMap<IFile, ArrayList>();
 		for (int i= 0; i < elems.length; i++) {
 			ISourceReference elem= elems[i];
 			IFile file= SourceReferenceUtil.getFile(elem);
 			if (! map.containsKey(file))
 				map.put(file, new ArrayList());
-			((List)map.get(file)).add(elem);
+			map.get(file).add(elem);
 		}
 		return map;
 	}	

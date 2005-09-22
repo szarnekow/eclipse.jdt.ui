@@ -184,17 +184,17 @@ abstract class TargetProvider {
 
 	private static class BodyData {
 		public BodyDeclaration fBody;
-		private List fInvocations;
+		private List<ASTNode> fInvocations;
 		public BodyData(BodyDeclaration declaration) {
 			fBody= declaration;
 		}
 		public void addInvocation(ASTNode node) {
 			if (fInvocations == null)
-				fInvocations= new ArrayList(2);
+				fInvocations= new ArrayList<ASTNode>(2);
 			fInvocations.add(node);
 		}
 		public ASTNode[] getInvocations() {
-			return (ASTNode[])fInvocations.toArray(new ASTNode[fInvocations.size()]);
+			return fInvocations.toArray(new ASTNode[fInvocations.size()]);
 		}
 		public boolean hasInvocations() {
 			return fInvocations != null && !fInvocations.isEmpty();
@@ -205,8 +205,8 @@ abstract class TargetProvider {
 	}
 
 	private static class InvocationFinder extends ASTVisitor {
-		Map result= new HashMap(2);
-		Stack fBodies= new Stack();
+		Map<BodyDeclaration, BodyData> result= new HashMap<BodyDeclaration, BodyData>(2);
+		Stack<BodyData> fBodies= new Stack<BodyData>();
 		BodyData fCurrent;
 		private IMethodBinding fBinding;
 		public InvocationFinder(IMethodBinding binding) {
@@ -262,7 +262,7 @@ abstract class TargetProvider {
 			return true;
 		}
 		private void endVisitType() {
-			fCurrent= (BodyData)fBodies.remove(fBodies.size() - 1);
+			fCurrent= fBodies.remove(fBodies.size() - 1);
 		}
 		public boolean visit(FieldDeclaration node) {
 			fBodies.add(fCurrent);
@@ -310,7 +310,7 @@ abstract class TargetProvider {
 	private static class LocalTypeTargetProvider extends TargetProvider {
 		private ICompilationUnit fCUnit;
 		private MethodDeclaration fDeclaration;
-		private Map fBodies;
+		private Map<BodyDeclaration, BodyData> fBodies;
 		public LocalTypeTargetProvider(ICompilationUnit unit, MethodDeclaration declaration) {
 			Assert.isNotNull(unit);
 			Assert.isNotNull(declaration);
@@ -330,13 +330,13 @@ abstract class TargetProvider {
 	
 		public BodyDeclaration[] getAffectedBodyDeclarations(ICompilationUnit unit, IProgressMonitor pm) {
 			Assert.isTrue(unit == fCUnit);
-			Set result= fBodies.keySet();
+			Set<BodyDeclaration> result= fBodies.keySet();
 			fastDone(pm);
-			return (BodyDeclaration[])result.toArray(new BodyDeclaration[result.size()]);
+			return result.toArray(new BodyDeclaration[result.size()]);
 		}
 	
 		public ASTNode[] getInvocations(BodyDeclaration declaration, IProgressMonitor pm) {
-			BodyData data= (BodyData)fBodies.get(declaration);
+			BodyData data= fBodies.get(declaration);
 			Assert.isTrue(data != null);
 			fastDone(pm);
 			return data.getInvocations();
@@ -353,7 +353,7 @@ abstract class TargetProvider {
 	
 	private static class MemberTypeTargetProvider extends TargetProvider {
 		private MethodDeclaration fMethod;
-		private Map fCurrentBodies;
+		private Map<BodyDeclaration, BodyData> fCurrentBodies;
 		public MemberTypeTargetProvider(MethodDeclaration method) {
 			Assert.isNotNull(method);
 			fMethod= method;
@@ -400,13 +400,13 @@ abstract class TargetProvider {
 			InvocationFinder finder= new InvocationFinder(fMethod.resolveBinding());
 			root.accept(finder);
 			fCurrentBodies= finder.result;
-			Set result= fCurrentBodies.keySet();
+			Set<BodyDeclaration> result= fCurrentBodies.keySet();
 			fastDone(pm);
-			return (BodyDeclaration[])result.toArray(new BodyDeclaration[result.size()]);
+			return result.toArray(new BodyDeclaration[result.size()]);
 		}
 	
 		public ASTNode[] getInvocations(BodyDeclaration declaration, IProgressMonitor pm) {
-			BodyData data= (BodyData)fCurrentBodies.get(declaration);
+			BodyData data= fCurrentBodies.get(declaration);
 			Assert.isTrue(data != null);
 			fastDone(pm);
 			return data.getInvocations();

@@ -121,8 +121,8 @@ public class ArrayTypeSet extends TypeSet {
 
 			return fElemTypeSet.containsAll(ats.fElemTypeSet);
 		}
-		for(Iterator iter= s.iterator(); iter.hasNext(); ) {
-			TType t= (TType) iter.next();
+		for(Iterator<TType> iter= s.iterator(); iter.hasNext(); ) {
+			TType t= iter.next();
 			if (!contains(t))
 				return false;
 		}
@@ -132,16 +132,16 @@ public class ArrayTypeSet extends TypeSet {
 	/* (non-Javadoc)
 	 * @see org.eclipse.jdt.internal.corext.refactoring.typeconstraints.typesets.TypeSet#iterator()
 	 */
-	public Iterator iterator() {
+	public Iterator<TType> iterator() {
 		if (fEnumCache != null) return fEnumCache.iterator();
 
 		return new Iterator() {
-			Iterator fElemIter= fElemTypeSet.iterator();
+			Iterator<TType> fElemIter= fElemTypeSet.iterator();
 			public boolean hasNext() {
 				return fElemIter.hasNext();
 			}
 			public Object next() {
-				return TTypes.createArrayType(((TType) fElemIter.next()), 1);
+				return TTypes.createArrayType(fElemIter.next(), 1);
 			}
 			public void remove() {
 				throw new UnsupportedOperationException();
@@ -158,8 +158,8 @@ public class ArrayTypeSet extends TypeSet {
 		if (fEnumCache == null) {
 			fEnumCache= new EnumeratedTypeSet(getTypeSetEnvironment());
 
-			for(Iterator iter= fElemTypeSet.iterator(); iter.hasNext(); ) {
-				TType t= (TType) iter.next();
+			for(Iterator<TType> iter= fElemTypeSet.iterator(); iter.hasNext(); ) {
+				TType t= iter.next();
 				fEnumCache.add(TTypes.createArrayType(t, 1));
 			}
 			fEnumCache.initComplete();

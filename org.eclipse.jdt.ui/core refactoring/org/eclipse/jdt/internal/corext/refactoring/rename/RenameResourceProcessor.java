@@ -38,6 +38,7 @@ import org.eclipse.ltk.core.refactoring.participants.CheckConditionsContext;
 import org.eclipse.ltk.core.refactoring.participants.ParticipantManager;
 import org.eclipse.ltk.core.refactoring.participants.RefactoringParticipant;
 import org.eclipse.ltk.core.refactoring.participants.RenameArguments;
+import org.eclipse.ltk.core.refactoring.participants.RenameParticipant;
 import org.eclipse.ltk.core.refactoring.participants.RenameProcessor;
 import org.eclipse.ltk.core.refactoring.participants.SharableParticipants;
 
@@ -105,14 +106,14 @@ public class RenameResourceProcessor extends RenameProcessor implements INameUpd
 	public RefactoringParticipant[] loadParticipants(RefactoringStatus status, SharableParticipants shared) throws CoreException {
 		Object[] elements= getElements();
 		String[] natures= getAffectedProjectNatures();
-		List result= new ArrayList();
+		List<RenameParticipant> result= new ArrayList<RenameParticipant>();
 		RenameArguments arguments= new RenameArguments(getNewElementName(), getUpdateReferences());
 		for (int i= 0; i < elements.length; i++) {
 			result.addAll(Arrays.asList(ParticipantManager.loadRenameParticipants(status, 
 				this, elements[i],
 				arguments, natures, shared)));
 		}
-		return (RefactoringParticipant[])result.toArray(new RefactoringParticipant[result.size()]);
+		return result.toArray(new RefactoringParticipant[result.size()]);
 	}
 	
 	//--- Condition checking --------------------------------------------

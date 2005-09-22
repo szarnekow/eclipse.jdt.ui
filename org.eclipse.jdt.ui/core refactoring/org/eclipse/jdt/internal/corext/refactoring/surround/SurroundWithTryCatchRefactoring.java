@@ -50,6 +50,7 @@ import org.eclipse.jdt.core.dom.CatchClause;
 import org.eclipse.jdt.core.dom.ChildListPropertyDescriptor;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.Expression;
+import org.eclipse.jdt.core.dom.ExpressionStatement;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.Statement;
@@ -219,7 +220,7 @@ public class SurroundWithTryCatchRefactoring extends Refactoring {
 	
 	private void createTryCatchStatement(IDocument document) throws CoreException, BadLocationException {
 		String lineDelimiter= document.getLineDelimiter(0);
-		List result= new ArrayList(1);
+		List<Statement> result= new ArrayList<Statement>(1);
 		TryStatement tryStatement= getAST().newTryStatement();
 		ITypeBinding[] exceptions= fAnalyzer.getExceptions();
 		for (int i= 0; i < exceptions.length; i++) {
@@ -239,7 +240,7 @@ public class SurroundWithTryCatchRefactoring extends Refactoring {
 				catchClause.getBody().statements().add(st);
 			}
 		}
-		List variableDeclarations= getSpecialVariableDeclarationStatements();
+		List<ASTNode> variableDeclarations= getSpecialVariableDeclarationStatements();
 		ListRewrite statements= fRewriter.getListRewrite(tryStatement.getBody(), Block.STATEMENTS_PROPERTY);
 		boolean selectedNodeRemoved= false;
 		ASTNode expressionStatement= null;
@@ -250,8 +251,8 @@ public class SurroundWithTryCatchRefactoring extends Refactoring {
 				VariableDeclarationStatement statement= (VariableDeclarationStatement)node;
 				// Create a copy and remove the initalizers
 				VariableDeclarationStatement copy= (VariableDeclarationStatement)ASTNode.copySubtree(ast, statement);
-				List fragments= copy.fragments();
-				for (Iterator iter= fragments.iterator(); iter.hasNext();) {
+				List<ASTNode> fragments= copy.fragments();
+				for (Iterator<ASTNode> iter= fragments.iterator(); iter.hasNext();) {
 					VariableDeclarationFragment fragment= (VariableDeclarationFragment)iter.next();
 					fragment.setInitializer(null);
 				}
@@ -269,8 +270,8 @@ public class SurroundWithTryCatchRefactoring extends Refactoring {
 				// convert the fragments into expression statements
 				fragments= statement.fragments();
 				if (!fragments.isEmpty()) {
-					List newExpressionStatements= new ArrayList();
-					for (Iterator iter= fragments.iterator(); iter.hasNext();) {
+					List<ExpressionStatement> newExpressionStatements= new ArrayList<ExpressionStatement>();
+					for (Iterator<ASTNode> iter= fragments.iterator(); iter.hasNext();) {
 						VariableDeclarationFragment fragment= (VariableDeclarationFragment)iter.next();
 						Expression initializer= fragment.getInitializer();
 						if (initializer != null) {
@@ -282,11 +283,11 @@ public class SurroundWithTryCatchRefactoring extends Refactoring {
 					}
 					if (!newExpressionStatements.isEmpty()) {
 						if (fSelectedNodes.length == 1) {
-							expressionStatement= fRewriter.createGroupNode((ASTNode[])newExpressionStatements.toArray(new ASTNode[newExpressionStatements.size()]));
+							expressionStatement= fRewriter.createGroupNode(newExpressionStatements.toArray(new ASTNode[newExpressionStatements.size()]));
 						} else {
 							fRewriter.replace(
 								statement, 
-								fRewriter.createGroupNode((ASTNode[])newExpressionStatements.toArray(new ASTNode[newExpressionStatements.size()])), 
+								fRewriter.createGroupNode(newExpressionStatements.toArray(new ASTNode[newExpressionStatements.size()])), 
 								null);
 						}
 					} else {
@@ -302,9 +303,9 @@ public class SurroundWithTryCatchRefactoring extends Refactoring {
 		result.add(tryStatement);
 		ASTNode replacementNode;
 		if (result.size() == 1) {
-			replacementNode= (ASTNode)result.get(0);
+			replacementNode= result.get(0);
 		} else {
-			replacementNode= fRewriter.createGroupNode((ASTNode[])result.toArray(new ASTNode[result.size()]));
+			replacementNode= fRewriter.createGroupNode(result.toArray(new ASTNode[result.size()]));
 		}
 		if (fSelectedNodes.length == 1) {
 			if (expressionStatement != null) {
@@ -325,8 +326,8 @@ public class SurroundWithTryCatchRefactoring extends Refactoring {
 		}
 	}
 	
-	private List getSpecialVariableDeclarationStatements() {
-		List result= new ArrayList(3);
+	private List<ASTNode> getSpecialVariableDeclarationStatements() {
+		List<ASTNode> result= new ArrayList<ASTNode>(3);
 		VariableDeclaration[] locals= fAnalyzer.getAffectedLocals();
 		for (int i= 0; i < locals.length; i++) {
 			ASTNode parent= locals[i].getParent();

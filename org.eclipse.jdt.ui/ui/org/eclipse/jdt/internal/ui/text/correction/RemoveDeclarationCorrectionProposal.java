@@ -33,9 +33,9 @@ public class RemoveDeclarationCorrectionProposal extends ASTRewriteCorrectionPro
 
 	private static class SideEffectFinder extends ASTVisitor {
 
-		private ArrayList fSideEffectNodes;
+		private ArrayList<Expression> fSideEffectNodes;
 
-		public SideEffectFinder(ArrayList res) {
+		public SideEffectFinder(ArrayList<Expression> res) {
 			fSideEffectNodes= res;
 		}
 
@@ -182,7 +182,7 @@ public class RemoveDeclarationCorrectionProposal extends ASTRewriteCorrectionPro
 		} else if (nameParentType == ASTNode.VARIABLE_DECLARATION_FRAGMENT) {
 			VariableDeclarationFragment frag= (VariableDeclarationFragment) parent;
 			ASTNode varDecl= frag.getParent();
-			List fragments;
+			List<ASTNode> fragments;
 			if (varDecl instanceof VariableDeclarationExpression) {
 				fragments= ((VariableDeclarationExpression) varDecl).fragments();
 			} else if (varDecl instanceof FieldDeclaration) {
@@ -199,7 +199,7 @@ public class RemoveDeclarationCorrectionProposal extends ASTRewriteCorrectionPro
 	}
 
 	private void removeVariableWithInitializer(ASTRewrite rewrite, ASTNode initializerNode, ASTNode statementNode) {
-		ArrayList sideEffectNodes= new ArrayList();
+		ArrayList<Expression> sideEffectNodes= new ArrayList<Expression>();
 		initializerNode.accept(new SideEffectFinder(sideEffectNodes));
 		int nSideEffects= sideEffectNodes.size();
 		if (nSideEffects == 0) {

@@ -21,7 +21,7 @@ import org.eclipse.jface.text.templates.TemplateVariable;
  *
  */
 public class MultiVariable extends TemplateVariable {
-	private final Map fValueMap= new HashMap();
+	private final Map<Object, String[]> fValueMap= new HashMap<Object, String[]>();
 	private Object fSet;
 	private Object fDefaultKey= null;
 
@@ -65,7 +65,7 @@ public class MultiVariable extends TemplateVariable {
 	 * @see org.eclipse.jface.text.templates.TemplateVariable#getValues()
 	 */
 	public String[] getValues() {
-		return (String[]) fValueMap.get(fDefaultKey);
+		return fValueMap.get(fDefaultKey);
 	}
 
 	/**
@@ -76,7 +76,7 @@ public class MultiVariable extends TemplateVariable {
 	 *         <code>null</code> if the set is not defined.
 	 */
 	public String[] getValues(Object set) {
-		return (String[]) fValueMap.get(set);
+		return fValueMap.get(set);
 	}
 
 	/**

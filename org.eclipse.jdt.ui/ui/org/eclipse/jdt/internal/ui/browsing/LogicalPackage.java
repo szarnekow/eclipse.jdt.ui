@@ -26,13 +26,13 @@ import org.eclipse.jdt.core.IPackageFragment;
  */
 public class LogicalPackage extends PlatformObject {
 
-	private Set fPackages;
+	private Set<IPackageFragment> fPackages;
 	private String fName;
 	private IJavaProject fJavaProject;
 
 	public LogicalPackage(IPackageFragment fragment){
 		Assert.isNotNull(fragment);
-		fPackages= new HashSet();
+		fPackages= new HashSet<IPackageFragment>();
 		fJavaProject= fragment.getJavaProject();
 		Assert.isNotNull(fJavaProject);
 		add(fragment);
@@ -44,7 +44,7 @@ public class LogicalPackage extends PlatformObject {
 	}
 
 	public IPackageFragment[] getFragments(){
-		return (IPackageFragment[]) fPackages.toArray(new IPackageFragment[fPackages.size()]);
+		return fPackages.toArray(new IPackageFragment[fPackages.size()]);
 	}
 
 	public void add(IPackageFragment fragment){

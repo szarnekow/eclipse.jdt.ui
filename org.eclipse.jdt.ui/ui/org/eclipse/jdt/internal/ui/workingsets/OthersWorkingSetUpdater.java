@@ -94,9 +94,9 @@ public class OthersWorkingSetUpdater implements IWorkingSetUpdater {
 	
 	private class JavaElementChangeListener implements IElementChangedListener {
 		public void elementChanged(ElementChangedEvent event) {
-			processJavaDelta(new ArrayList(Arrays.asList(fWorkingSet.getElements())), event.getDelta());
+			processJavaDelta(new ArrayList<IAdaptable>(Arrays.asList(fWorkingSet.getElements())), event.getDelta());
 		}
-		private void processJavaDelta(List elements, IJavaElementDelta delta) {
+		private void processJavaDelta(List<IAdaptable> elements, IJavaElementDelta delta) {
 			IJavaElement jElement= delta.getElement();
 			int type= jElement.getElementType();
 			if (type == IJavaElement.JAVA_PROJECT) {
@@ -106,12 +106,12 @@ public class OthersWorkingSetUpdater implements IWorkingSetUpdater {
 				if (kind == IJavaElementDelta.CHANGED) {
 					if (index != -1 && (flags & IJavaElementDelta.F_CLOSED) != 0) {
 						elements.set(index, ((IJavaProject)jElement).getProject());
-						fWorkingSet.setElements((IAdaptable[])elements.toArray(new IAdaptable[elements.size()]));
+						fWorkingSet.setElements(elements.toArray(new IAdaptable[elements.size()]));
 					} else if ((flags & IJavaElementDelta.F_OPENED) != 0) {
 						index= elements.indexOf(((IJavaProject)jElement).getProject());
 						if (index != -1) {
 							elements.set(index, jElement);
-							fWorkingSet.setElements((IAdaptable[])elements.toArray(new IAdaptable[elements.size()]));
+							fWorkingSet.setElements(elements.toArray(new IAdaptable[elements.size()]));
 						}
 					}
 				}
@@ -180,8 +180,8 @@ public class OthersWorkingSetUpdater implements IWorkingSetUpdater {
 	}
 	
 	private void updateElements(IWorkingSet[] activeWorkingSets) {
-		List result= new ArrayList();
-		Set projects= new HashSet();
+		List<Object> result= new ArrayList<Object>();
+		Set<IResource> projects= new HashSet<IResource>();
 		for (int i= 0; i < activeWorkingSets.length; i++) {
 			if (activeWorkingSets[i] == fWorkingSet) continue;
 			IAdaptable[] elements= activeWorkingSets[i].getElements();
@@ -207,6 +207,6 @@ public class OthersWorkingSetUpdater implements IWorkingSetUpdater {
 			}
 		} catch (JavaModelException e) {
 		}
-		fWorkingSet.setElements((IAdaptable[])result.toArray(new IAdaptable[result.size()]));
+		fWorkingSet.setElements(result.toArray(new IAdaptable[result.size()]));
 	}
 }

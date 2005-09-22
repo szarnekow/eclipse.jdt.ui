@@ -87,7 +87,7 @@ class PackagesViewFlatContentProvider extends LogicalPackagesProvider implements
 	 * Weeds out packageFragments from external jars
 	 */
 	private IPackageFragment[] getPackageFragments(IPackageFragment[] iPackageFragments) {
-		List list= new ArrayList();
+		List<IPackageFragment> list= new ArrayList<IPackageFragment>();
 		for (int i= 0; i < iPackageFragments.length; i++) {
 			IPackageFragment fragment= iPackageFragments[i];
 			IJavaElement el= fragment.getParent();
@@ -98,7 +98,7 @@ class PackagesViewFlatContentProvider extends LogicalPackagesProvider implements
 			}
 			list.add(fragment);
 		}
-		return (IPackageFragment[]) list.toArray(new IPackageFragment[list.size()]);
+		return list.toArray(new IPackageFragment[list.size()]);
 	}
 
 	/*
@@ -237,7 +237,7 @@ class PackagesViewFlatContentProvider extends LogicalPackagesProvider implements
 
 	private void removeElement(IPackageFragment frag) {
 		String key= getKey(frag);
-		LogicalPackage lp= (LogicalPackage)fMapToLogicalPackage.get(key);
+		LogicalPackage lp= fMapToLogicalPackage.get(key);
 
 		if(lp != null){
 			lp.remove(frag);
@@ -271,14 +271,14 @@ class PackagesViewFlatContentProvider extends LogicalPackagesProvider implements
 
 	private void addElement(IPackageFragment frag) {
 		String key= getKey(frag);
-		LogicalPackage lp= (LogicalPackage)fMapToLogicalPackage.get(key);
+		LogicalPackage lp= fMapToLogicalPackage.get(key);
 
 		if(lp != null && lp.belongs(frag)){
 			lp.add(frag);
 			return;
 		}
 
-		IPackageFragment fragment= (IPackageFragment)fMapToPackageFragments.get(key);
+		IPackageFragment fragment= fMapToPackageFragments.get(key);
 		if(fragment != null){
 			//must create a new LogicalPackage
 			if(!fragment.equals(frag)){

@@ -132,7 +132,7 @@ public class JavaPackageFragmentRootCompletionProcessor implements IContentAssis
 	}
 
 	private ICompletionProposal[] createPackagesProposals(int documentOffset, String input) {
-		ArrayList proposals= new ArrayList();
+		ArrayList<JavaCompletionProposal> proposals= new ArrayList<JavaCompletionProposal>();
 		String prefix= input.substring(0, documentOffset);
 		try {
 			IJavaElement[] packageFragments= fPackageFragmentRoot.getChildren();
@@ -148,7 +148,7 @@ public class JavaPackageFragmentRootCompletionProcessor implements IContentAssis
 		} catch (JavaModelException e) {
 			JavaPlugin.log(e);
 		}
-		return (ICompletionProposal[]) proposals.toArray(new ICompletionProposal[proposals.size()]);
+		return proposals.toArray(new ICompletionProposal[proposals.size()]);
 	}
 
 	private static Image getImage(ImageDescriptor descriptor) {

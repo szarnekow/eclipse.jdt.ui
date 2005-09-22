@@ -31,7 +31,7 @@ import org.eclipse.jface.util.TransferDragSourceListener;
 public class DelegatingDragAdapter implements DragSourceListener {
 
 	private TransferDragSourceListener[] fPossibleListeners;
-	private List fActiveListeners;
+	private List<TransferDragSourceListener> fActiveListeners;
 	private TransferDragSourceListener fFinishListener;
 	
 	public DelegatingDragAdapter(TransferDragSourceListener[] listeners) {
@@ -52,8 +52,8 @@ public class DelegatingDragAdapter implements DragSourceListener {
 		boolean saveDoit= event.doit;
 		Object saveData= event.data;
 		boolean doIt= false;
-		List transfers= new ArrayList(fPossibleListeners.length);
-		fActiveListeners= new ArrayList(fPossibleListeners.length);
+		List<Transfer> transfers= new ArrayList<Transfer>(fPossibleListeners.length);
+		fActiveListeners= new ArrayList<TransferDragSourceListener>(fPossibleListeners.length);
 		
 		for (int i= 0; i < fPossibleListeners.length; i++) {
 			TransferDragSourceListener listener= fPossibleListeners[i];
@@ -66,7 +66,7 @@ public class DelegatingDragAdapter implements DragSourceListener {
 			doIt= doIt || event.doit;
 		}
 		if (doIt) {
-			((DragSource)event.widget).setTransfer((Transfer[])transfers.toArray(new Transfer[transfers.size()]));
+			((DragSource)event.widget).setTransfer(transfers.toArray(new Transfer[transfers.size()]));
 		}
 		event.data= saveData;
 		event.doit= doIt;
@@ -105,8 +105,8 @@ public class DelegatingDragAdapter implements DragSourceListener {
 		if (type == null)
 			return null;
 			
-		for (Iterator iter= fActiveListeners.iterator(); iter.hasNext();) {
-			TransferDragSourceListener listener= (TransferDragSourceListener)iter.next();
+		for (Iterator<TransferDragSourceListener> iter= fActiveListeners.iterator(); iter.hasNext();) {
+			TransferDragSourceListener listener= iter.next();
 			if (listener.getTransfer().isSupportedType(type)) {
 				return listener;
 			}

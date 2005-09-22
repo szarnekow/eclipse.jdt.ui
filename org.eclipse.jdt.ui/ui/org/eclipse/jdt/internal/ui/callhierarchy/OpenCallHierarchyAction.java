@@ -112,7 +112,7 @@ public class OpenCallHierarchyAction extends SelectionDispatchAction {
         IJavaElement[] elements= SelectionConverter.codeResolveOrInputHandled(fEditor, getShell(), getErrorDialogTitle());
         if (elements == null)
             return;
-        List candidates= new ArrayList(elements.length);
+        List<IJavaElement> candidates= new ArrayList<IJavaElement>(elements.length);
         for (int i= 0; i < elements.length; i++) {
             IJavaElement[] resolvedElements= CallHierarchyUI.getCandidates(elements[i]);
             if (resolvedElements != null)   
@@ -124,7 +124,7 @@ public class OpenCallHierarchyAction extends SelectionDispatchAction {
                 candidates.add(enclosingMethod);
             }
         }
-        run((IJavaElement[])candidates.toArray(new IJavaElement[candidates.size()]));
+        run(candidates.toArray(new IJavaElement[candidates.size()]));
     }
     
     private IJavaElement getEnclosingMethod(IJavaElement input, ITextSelection selection) {
@@ -171,10 +171,10 @@ public class OpenCallHierarchyAction extends SelectionDispatchAction {
         if (!ActionUtil.isProcessable(getShell(), element))
             return;
 
-        List result= new ArrayList(1);
+        List<IJavaElement> result= new ArrayList<IJavaElement>(1);
         IStatus status= compileCandidates(result, element);
         if (status.isOK()) {
-            run((IJavaElement[]) result.toArray(new IJavaElement[result.size()]));
+            run(result.toArray(new IJavaElement[result.size()]));
         } else {
             openErrorDialog(status);
         }
@@ -198,7 +198,7 @@ public class OpenCallHierarchyAction extends SelectionDispatchAction {
         CallHierarchyUI.open(elements, getSite().getWorkbenchWindow());
     }
     
-    private static IStatus compileCandidates(List result, IJavaElement elem) {
+    private static IStatus compileCandidates(List<IJavaElement> result, IJavaElement elem) {
         IStatus ok= new Status(IStatus.OK, JavaPlugin.getPluginId(), 0, "", null); //$NON-NLS-1$        
         switch (elem.getElementType()) {
             case IJavaElement.METHOD:

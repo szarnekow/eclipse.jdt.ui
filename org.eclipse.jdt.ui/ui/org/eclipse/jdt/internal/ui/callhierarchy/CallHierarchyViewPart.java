@@ -155,7 +155,7 @@ public class CallHierarchyViewPart extends ViewPart implements ICallHierarchyVie
     private IMemento fMemento;
     private IMethod fShownMethod;
     private CallHierarchySelectionProvider fSelectionProviderMediator;
-    private List fMethodHistory;
+    private List<IJavaElement> fMethodHistory;
     private LocationViewer fLocationViewer;
     private SashForm fHierarchyLocationSplitter;
     private Clipboard fClipboard;
@@ -180,7 +180,7 @@ public class CallHierarchyViewPart extends ViewPart implements ICallHierarchyVie
 
         fDialogSettings = JavaPlugin.getDefault().getDialogSettings();
 
-        fMethodHistory = new ArrayList();
+        fMethodHistory = new ArrayList<IJavaElement>();
     }
 
     public void setFocus() {
@@ -208,7 +208,7 @@ public class CallHierarchyViewPart extends ViewPart implements ICallHierarchyVie
             updateHistoryEntries();
         }
 
-        return (IMethod[]) fMethodHistory.toArray(new IMethod[fMethodHistory.size()]);
+        return fMethodHistory.toArray(new IMethod[fMethodHistory.size()]);
     }
 
     /**

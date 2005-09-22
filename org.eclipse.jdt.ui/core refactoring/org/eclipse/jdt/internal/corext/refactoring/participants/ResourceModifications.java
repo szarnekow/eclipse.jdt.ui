@@ -42,17 +42,17 @@ import org.eclipse.jdt.internal.corext.Assert;
  */
 public class ResourceModifications {
 	
-	private List fCreate;
-	private List fDelete;
+	private List<IResource> fCreate;
+	private List<IResource> fDelete;
 	
-	private List fMove;
-	private List fMoveArguments;
+	private List<IResource> fMove;
+	private List<MoveArguments> fMoveArguments;
 	
 	private IResource fRename;
 	private RenameArguments fRenameArguments;
 	
-	private List fCopy;
-	private List fCopyArguments;
+	private List<IResource> fCopy;
+	private List<CopyArguments> fCopyArguments;
 	
 	/**
 	 * Adds the given resource to the list of resources 
@@ -63,7 +63,7 @@ public class ResourceModifications {
 	 */
 	public void addCreate(IResource create) {
 		if (fCreate == null)
-			fCreate= new ArrayList(2);
+			fCreate= new ArrayList<IResource>(2);
 		fCreate.add(create);
 	}
 	
@@ -75,7 +75,7 @@ public class ResourceModifications {
 	 */
 	public void addDelete(IResource delete) {
 		if (fDelete == null)
-			fDelete= new ArrayList(2);
+			fDelete= new ArrayList<IResource>(2);
 		fDelete.add(delete);
 	}
 	
@@ -87,8 +87,8 @@ public class ResourceModifications {
 	 */
 	public void addMove(IResource move, MoveArguments arguments) {
 		if (fMove == null) {
-			fMove= new ArrayList(2);
-			fMoveArguments= new ArrayList(2);
+			fMove= new ArrayList<IResource>(2);
+			fMoveArguments= new ArrayList<MoveArguments>(2);
 		}
 		fMove.add(move);
 		fMoveArguments.add(arguments);
@@ -102,8 +102,8 @@ public class ResourceModifications {
 	 */
 	public void addCopy(IResource copy, CopyArguments arguments) {
 		if (fCopy == null) {
-			fCopy= new ArrayList(2);
-			fCopyArguments= new ArrayList(2);
+			fCopy= new ArrayList<IResource>(2);
+			fCopyArguments= new ArrayList<CopyArguments>(2);
 		}
 		fCopy.add(copy);
 		fCopyArguments.add(arguments);
@@ -127,10 +127,10 @@ public class ResourceModifications {
 	 * @see org.eclipse.jdt.internal.corext.refactoring.participants.IResourceModifications#getParticipants(org.eclipse.jdt.internal.corext.refactoring.participants.IRefactoringProcessor)
 	 */
 	public RefactoringParticipant[] getParticipants(RefactoringStatus status, RefactoringProcessor processor, String[] natures, SharableParticipants shared) {
-		List result= new ArrayList(5);
+		List<RefactoringParticipant> result= new ArrayList<RefactoringParticipant>(5);
 		if (fDelete != null) {
 			DeleteArguments arguments= new DeleteArguments();
-			for (Iterator iter= fDelete.iterator(); iter.hasNext();) {
+			for (Iterator<IResource> iter= fDelete.iterator(); iter.hasNext();) {
 				DeleteParticipant[] deletes= ParticipantManager.loadDeleteParticipants(status, 
 					processor, iter.next(), 
 					arguments, natures, shared);
@@ -139,7 +139,7 @@ public class ResourceModifications {
 		}
 		if (fCreate != null) {
 			CreateArguments arguments= new CreateArguments();
-			for (Iterator iter= fCreate.iterator(); iter.hasNext();) {
+			for (Iterator<IResource> iter= fCreate.iterator(); iter.hasNext();) {
 				CreateParticipant[] creates= ParticipantManager.loadCreateParticipants(status, 
 					processor, iter.next(), 
 					arguments, natures, shared);
@@ -149,7 +149,7 @@ public class ResourceModifications {
 		if (fMove != null) {
 			for (int i= 0; i < fMove.size(); i++) {
 				Object element= fMove.get(i);
-				MoveArguments arguments= (MoveArguments)fMoveArguments.get(i);
+				MoveArguments arguments= fMoveArguments.get(i);
 				MoveParticipant[] moves= ParticipantManager.loadMoveParticipants(status, 
 					processor, element, 
 					arguments, natures, shared);
@@ -160,7 +160,7 @@ public class ResourceModifications {
 		if (fCopy != null) {
 			for (int i= 0; i < fCopy.size(); i++) {
 				Object element= fCopy.get(i);
-				CopyArguments arguments= (CopyArguments)fCopyArguments.get(i);
+				CopyArguments arguments= fCopyArguments.get(i);
 				CopyParticipant[] copies= ParticipantManager.loadCopyParticipants(status,
 					processor, element, 
 					arguments, natures, shared);
@@ -173,6 +173,6 @@ public class ResourceModifications {
 				fRenameArguments, natures, shared);
 			result.addAll(Arrays.asList(renames));
 		}
-		return (RefactoringParticipant[])result.toArray(new RefactoringParticipant[result.size()]);
+		return result.toArray(new RefactoringParticipant[result.size()]);
 	}
 }

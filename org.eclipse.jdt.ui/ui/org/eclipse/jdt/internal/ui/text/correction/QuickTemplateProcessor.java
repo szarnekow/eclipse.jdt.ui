@@ -118,9 +118,9 @@ public class QuickTemplateProcessor implements IQuickAssistProcessor {
 				length= endLineRegion.getOffset() + endLineRegion.getLength() - offset;
 			}
 
-			ArrayList resultingCollections= new ArrayList();
+			ArrayList<TemplateProposal> resultingCollections= new ArrayList<TemplateProposal>();
 			collectSurroundTemplates(document, cu, offset, length, resultingCollections);
-			return (IJavaCompletionProposal[]) resultingCollections.toArray(new IJavaCompletionProposal[resultingCollections.size()]);
+			return resultingCollections.toArray(new IJavaCompletionProposal[resultingCollections.size()]);
 		} catch (BadLocationException e) {
 			throw new CoreException(JavaUIStatus.createError(IStatus.ERROR, "", e)); //$NON-NLS-1$
 		}
@@ -135,7 +135,7 @@ public class QuickTemplateProcessor implements IQuickAssistProcessor {
 		return document;
 	}
 
-	private void collectSurroundTemplates(IDocument document, ICompilationUnit cu, int offset, int length, Collection result) throws BadLocationException {
+	private void collectSurroundTemplates(IDocument document, ICompilationUnit cu, int offset, int length, Collection<TemplateProposal> result) throws BadLocationException {
 		CompilationUnitContextType contextType= (CompilationUnitContextType) JavaPlugin.getDefault().getTemplateContextRegistry().getContextType(JavaContextType.NAME);
 		CompilationUnitContext context= contextType.createContext(document, offset, length, cu);
 		context.setVariable("selection", document.get(offset, length)); //$NON-NLS-1$

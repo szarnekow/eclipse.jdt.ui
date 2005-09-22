@@ -36,7 +36,7 @@ public class ClasspathModifierDropDownAction extends ClasspathModifierAction imp
     private Menu fMenu;
     /** A list of actions that will be used as 
      * drop down items*/
-    protected List fActions;
+    protected List<ClasspathModifierAction> fActions;
     /** Index of the action that can be executed when clicking directly on the dropdown button.*/
     private int fIndex;
     
@@ -52,7 +52,7 @@ public class ClasspathModifierDropDownAction extends ClasspathModifierAction imp
     public ClasspathModifierDropDownAction(ClasspathModifierAction action, String text, String toolTipText) {
         super(action.getOperation(), action.getImageDescriptor(), action.getDisabledImageDescriptor(), 
                 text, toolTipText, IAction.AS_DROP_DOWN_MENU);
-        fActions= new ArrayList();
+        fActions= new ArrayList<ClasspathModifierAction>();
         fActions.add(action);
         fIndex= 0;
     }
@@ -61,7 +61,7 @@ public class ClasspathModifierDropDownAction extends ClasspathModifierAction imp
      * Runs the first action of the list of managed actions that is valid.
      */
     public void run() {
-        ClasspathModifierAction action= (ClasspathModifierAction)fActions.get(fIndex);
+        ClasspathModifierAction action= fActions.get(fIndex);
         action.run();
     }
 
@@ -119,7 +119,7 @@ public class ClasspathModifierDropDownAction extends ClasspathModifierAction imp
      * @return an array of actions
      */
     public ClasspathModifierAction[] getActions() {
-        return (ClasspathModifierAction[])fActions.toArray(new ClasspathModifierAction[fActions.size()]);
+        return fActions.toArray(new ClasspathModifierAction[fActions.size()]);
     }
     
     /**
@@ -140,7 +140,7 @@ public class ClasspathModifierDropDownAction extends ClasspathModifierAction imp
      */
     private void createEntries(Menu menu) {
         for(int i= 0; i < fActions.size(); i++) {
-            IAction action= (IAction)fActions.get(i);
+            IAction action= fActions.get(i);
             addActionToMenu(menu, action);
         }
     }
@@ -162,7 +162,7 @@ public class ClasspathModifierDropDownAction extends ClasspathModifierAction imp
      */
     public boolean isValid(List selectedElements, int[] types) throws JavaModelException {
         for(int i= 0; i < fActions.size(); i++) {
-            ClasspathModifierAction action= (ClasspathModifierAction)fActions.get(i);
+            ClasspathModifierAction action= fActions.get(i);
             if(action.isValid(selectedElements, types)) {
                 fIndex= i;
                 return true;

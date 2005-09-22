@@ -21,6 +21,7 @@ import org.eclipse.jface.viewers.ILabelDecorator;
 import org.eclipse.jdt.internal.ui.viewsupport.AppearanceAwareLabelProvider;
 import org.eclipse.jdt.internal.ui.viewsupport.JavaElementImageProvider;
 
+import org.eclipse.jdt.internal.corext.callhierarchy.CallLocation;
 import org.eclipse.jdt.internal.corext.callhierarchy.MethodWrapper;
 import org.eclipse.jdt.internal.corext.util.Messages;
 
@@ -83,7 +84,7 @@ class CallHierarchyLabelProvider extends AppearanceAwareLabelProvider {
     private String getElementLabel(MethodWrapper methodWrapper) {
         String label = super.getText(methodWrapper.getMember());
 
-        Collection callLocations = methodWrapper.getMethodCall().getCallLocations();
+        Collection<CallLocation> callLocations = methodWrapper.getMethodCall().getCallLocations();
 
         if ((callLocations != null) && (callLocations.size() > 1)) {
             return Messages.format(CallHierarchyMessages.CallHierarchyLabelProvider_matches, new String[]{label, String.valueOf(callLocations.size())}); 

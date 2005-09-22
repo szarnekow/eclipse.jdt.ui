@@ -130,7 +130,7 @@ public class RenameResourceChange extends JDTChange {
 	 * @see org.eclipse.ltk.core.refactoring.Change#getRefactoringDescriptor()
 	 */
 	public RefactoringDescriptor getRefactoringDescriptor() {
-		final Map arguments= new HashMap();
+		final Map<String, String> arguments= new HashMap<String, String>();
 		arguments.put(ATTRIBUTE_PATH, fResourcePath.toPortableString());
 		arguments.put(ATTRIBUTE_NAME, fNewName);
 		return new RefactoringDescriptor(ID_RENAME_RESOURCE, getResource().getProject().getName(), MessageFormat.format(RefactoringCoreMessages.RenameResourceChange_descriptor_description, new String[] { getResource().getName(), fNewName}), null, arguments);

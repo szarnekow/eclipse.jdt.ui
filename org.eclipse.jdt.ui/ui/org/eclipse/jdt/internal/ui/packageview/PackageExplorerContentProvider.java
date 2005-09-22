@@ -171,9 +171,9 @@ public class PackageExplorerContentProvider extends StandardJavaElementContentPr
 	}
 
 	private Object[] rootsAndContainers(IJavaProject project, Object[] roots) throws JavaModelException { 
-		List result= new ArrayList(roots.length);
-		Set containers= new HashSet(roots.length);
-		Set containedRoots= new HashSet(roots.length); 
+		List<Object> result= new ArrayList<Object>(roots.length);
+		Set<IClasspathEntry> containers= new HashSet<IClasspathEntry>(roots.length);
+		Set<IPackageFragmentRoot> containedRoots= new HashSet<IPackageFragmentRoot>(roots.length); 
 		
 		IClasspathEntry[] entries= project.getRawClasspath();
 		for (int i= 0; i < entries.length; i++) {
@@ -193,8 +193,8 @@ public class PackageExplorerContentProvider extends StandardJavaElementContentPr
 				result.add(roots[i]);
 			}
 		}
-		for (Iterator each= containers.iterator(); each.hasNext();) {
-			IClasspathEntry element= (IClasspathEntry) each.next();
+		for (Iterator<IClasspathEntry> each= containers.iterator(); each.hasNext();) {
+			IClasspathEntry element= each.next();
 			result.add(new ClassPathContainer(project, element));
 		}		
 		return result.toArray();
@@ -254,7 +254,7 @@ public class PackageExplorerContentProvider extends StandardJavaElementContentPr
 	 */
 	private Object[] getWithParentsResources(Object[] existingObject, Object parent) {
 		Object[] objects= super.getChildren(parent);
-		List list= new ArrayList();
+		List<Object> list= new ArrayList<Object>();
 		// Add everything that is not a PackageFragment
 		for (int i= 0; i < objects.length; i++) {
 			Object object= objects[i];
@@ -588,13 +588,13 @@ public class PackageExplorerContentProvider extends StandardJavaElementContentPr
 		// Therefore move the refresh start down to the viewer's input
 		if (isParent(root, fInput)) 
 			root= fInput;
-		List toRefresh= new ArrayList(1);
+		List<Object> toRefresh= new ArrayList<Object>(1);
 		toRefresh.add(root);
 		augmentElementToRefresh(toRefresh, relation, affectedElement);
 		postRefresh(toRefresh, true);
 	}
 	
-	protected void augmentElementToRefresh(List toRefresh, int relation, Object affectedElement) {
+	protected void augmentElementToRefresh(List<Object> toRefresh, int relation, Object affectedElement) {
 	}
 
 	boolean isParent(Object root, Object child) {
@@ -606,12 +606,12 @@ public class PackageExplorerContentProvider extends StandardJavaElementContentPr
 		return isParent(root, parent);
 	}
 
-	/* package */ void postRefresh(final List toRefresh, final boolean updateLabels) {
+	/* package */ void postRefresh(final List<Object> toRefresh, final boolean updateLabels) {
 		postRunnable(new Runnable() {
 			public void run() {
 				Control ctrl= fViewer.getControl();
 				if (ctrl != null && !ctrl.isDisposed()) {
-					for (Iterator iter= toRefresh.iterator(); iter.hasNext();) {
+					for (Iterator<Object> iter= toRefresh.iterator(); iter.hasNext();) {
 						fViewer.refresh(iter.next(), updateLabels);
 					}
 				}

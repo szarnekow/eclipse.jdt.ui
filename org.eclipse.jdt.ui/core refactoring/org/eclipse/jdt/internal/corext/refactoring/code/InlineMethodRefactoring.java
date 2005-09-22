@@ -356,7 +356,7 @@ public class InlineMethodRefactoring extends Refactoring {
 	}
 	
 	private IFile[] getFilesToBeModified(ICompilationUnit[] units) {
-		List result= new ArrayList(units.length + 1);
+		List<IFile> result= new ArrayList<IFile>(units.length + 1);
 		IFile file;
 		for (int i= 0; i < units.length; i++) {
 			file= getFile(units[i]);
@@ -366,7 +366,7 @@ public class InlineMethodRefactoring extends Refactoring {
 		file= getFile(fSourceProvider.getCompilationUnit());
 		if (file != null && !result.contains(file))
 			result.add(file);
-		return (IFile[])result.toArray(new IFile[result.size()]);
+		return result.toArray(new IFile[result.size()]);
 	}
 	
 	private IFile getFile(ICompilationUnit unit) {
@@ -437,12 +437,12 @@ public class InlineMethodRefactoring extends Refactoring {
 		for (int i= 0; i < invocations.length; i++) {
 			removeNestedCalls(status, unit, parents, invocations, i);
 		}
-		List result= new ArrayList();
+		List<ASTNode> result= new ArrayList<ASTNode>();
 		for (int i= 0; i < invocations.length; i++) {
 			if (invocations[i] != null)
 				result.add(invocations[i]);
 		}
-		return (ASTNode[])result.toArray(new ASTNode[result.size()]);
+		return result.toArray(new ASTNode[result.size()]);
 	}
 	
 	private void removeNestedCalls(RefactoringStatus status, ICompilationUnit unit, ASTNode[] parents, ASTNode[] invocations, int index) {

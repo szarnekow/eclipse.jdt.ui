@@ -131,7 +131,7 @@ public class JavaPlugin extends AbstractUIPlugin {
 	
 	private static JavaPlugin fgJavaPlugin;
 	
-	private static LinkedHashMap fgRepeatedMessages= new LinkedHashMap(20, 0.75f, true) {
+	private static LinkedHashMap<Object, Object> fgRepeatedMessages= new LinkedHashMap(20, 0.75f, true) {
 		private static final long serialVersionUID= 1L;
 		protected boolean removeEldestEntry(java.util.Map.Entry eldest) {
 			return size() >= 20;
@@ -244,8 +244,8 @@ public class JavaPlugin extends AbstractUIPlugin {
 	 * @return an array of all dirty editor parts.
 	 */
 	public static IEditorPart[] getDirtyEditors() {
-		Set inputs= new HashSet();
-		List result= new ArrayList(0);
+		Set<IEditorInput> inputs= new HashSet<IEditorInput>();
+		List<IEditorPart> result= new ArrayList<IEditorPart>(0);
 		IWorkbench workbench= getDefault().getWorkbench();
 		IWorkbenchWindow[] windows= workbench.getWorkbenchWindows();
 		for (int i= 0; i < windows.length; i++) {
@@ -262,7 +262,7 @@ public class JavaPlugin extends AbstractUIPlugin {
 				}
 			}
 		}
-		return (IEditorPart[])result.toArray(new IEditorPart[result.size()]);
+		return result.toArray(new IEditorPart[result.size()]);
 	}
 	
 	/**
@@ -270,7 +270,7 @@ public class JavaPlugin extends AbstractUIPlugin {
 	 * @return the list of instantiated editors
 	 */
 	public static IEditorPart[] getInstanciatedEditors() {
-		List result= new ArrayList(0);
+		List<IEditorPart> result= new ArrayList<IEditorPart>(0);
 		IWorkbench workbench= getDefault().getWorkbench();
 		IWorkbenchWindow[] windows= workbench.getWorkbenchWindows();
 		for (int windowIndex= 0; windowIndex < windows.length; windowIndex++) {
@@ -284,7 +284,7 @@ public class JavaPlugin extends AbstractUIPlugin {
 				}
 			}
 		}
-		return (IEditorPart[])result.toArray(new IEditorPart[result.size()]);
+		return result.toArray(new IEditorPart[result.size()]);
 	}
 	
 	public static String getPluginId() {

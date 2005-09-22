@@ -217,7 +217,7 @@ public abstract class TypeSet implements ITypeSet {
 	/**
 	 * Returns an iterator over the types in the receiver.
 	 */
-	abstract public Iterator iterator();
+	abstract public Iterator<TType> iterator();
 
 	/**
 	 * Returns a new TypeSet enumerating the receiver's contents.

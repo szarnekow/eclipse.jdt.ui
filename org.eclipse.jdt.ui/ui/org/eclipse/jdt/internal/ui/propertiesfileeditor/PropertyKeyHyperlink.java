@@ -175,11 +175,11 @@ public class PropertyKeyHyperlink implements IHyperlink {
 
 	private static class ResultCollector implements ITextSearchResultCollector {
 
-		private List fResult;
+		private List<KeyReference> fResult;
 		private IProgressMonitor fProgressMonitor;
 		private boolean fIsKeyDoubleQuoted;
 
-		public ResultCollector(List result, IProgressMonitor progressMonitor, boolean isKeyDoubleQuoted) {
+		public ResultCollector(List<KeyReference> result, IProgressMonitor progressMonitor, boolean isKeyDoubleQuoted) {
 			fResult= result;
 			fProgressMonitor= progressMonitor;
 			fIsKeyDoubleQuoted= isKeyDoubleQuoted;
@@ -421,7 +421,7 @@ public class PropertyKeyHyperlink implements IHyperlink {
 		if (key == null)
 			return new KeyReference[0];
 
-		final List result= new ArrayList(5);
+		final List<KeyReference> result= new ArrayList<KeyReference>(5);
 		final String searchString;
 
 		// XXX: This is a hack to improve the accuracy of matches, see https://bugs.eclipse.org/bugs/show_bug.cgi?id=81140
@@ -450,7 +450,7 @@ public class PropertyKeyHyperlink implements IHyperlink {
 			return null; // canceled
 		}
 
-		return (KeyReference[])result.toArray(new KeyReference[result.size()]);
+		return result.toArray(new KeyReference[result.size()]);
 	}
 
 	private static SearchScope createScope(IResource scope) {

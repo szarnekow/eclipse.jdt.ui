@@ -57,7 +57,7 @@ class CallerMethodWrapper extends MethodWrapper {
      * @return The result of the search for children
 	 * @see org.eclipse.jdt.internal.corext.callhierarchy.MethodWrapper#findChildren(org.eclipse.core.runtime.IProgressMonitor)
      */
-    protected Map findChildren(IProgressMonitor progressMonitor) {
+    protected Map<Object, MethodCall> findChildren(IProgressMonitor progressMonitor) {
         try {
             MethodReferencesSearchRequestor searchRequestor = new MethodReferencesSearchRequestor();
             SearchEngine searchEngine= new SearchEngine();
@@ -66,10 +66,10 @@ class CallerMethodWrapper extends MethodWrapper {
             IJavaSearchScope defaultSearchScope= getSearchScope();
             boolean isWorkspaceScope= SearchEngine.createWorkspaceScope().equals(defaultSearchScope);
             
-            for (Iterator iter= getMembers().iterator(); iter.hasNext();) {
+            for (Iterator<IMember> iter= getMembers().iterator(); iter.hasNext();) {
                 checkCanceled(progressMonitor);
 
-                IMember member = (IMember) iter.next();
+                IMember member = iter.next();
 				SearchPattern pattern= SearchPattern.createPattern(member, IJavaSearchConstants.REFERENCES, SearchUtils.GENERICS_AGNOSTIC_MATCH_RULE);
 				IJavaSearchScope searchScope= isWorkspaceScope ? RefactoringScopeFactory.createReferencingScope(member) : defaultSearchScope;
                 searchEngine.search(pattern, new SearchParticipant[] { SearchEngine.getDefaultSearchParticipant() },
@@ -80,15 +80,15 @@ class CallerMethodWrapper extends MethodWrapper {
         } catch (CoreException e) {
             JavaPlugin.log(e);
 
-            return new HashMap(0);
+            return new HashMap<Object, MethodCall>(0);
         }
     }
 
     /**
      * Returns a collection of IMember instances representing what to search for 
      */
-    private Collection getMembers() {
-        Collection result = new ArrayList();
+    private Collection<IMember> getMembers() {
+        Collection<IMember> result = new ArrayList<IMember>();
 
         result.add(getMember());
 

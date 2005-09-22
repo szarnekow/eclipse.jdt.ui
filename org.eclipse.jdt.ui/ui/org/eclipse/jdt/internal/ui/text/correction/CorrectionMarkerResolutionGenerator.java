@@ -153,14 +153,14 @@ public class CorrectionMarkerResolutionGenerator implements IMarkerResolutionGen
 					if (location != null) {
 
 						IInvocationContext context= new AssistContext(cu,  location.getOffset(), location.getLength());
-						ArrayList proposals= new ArrayList();
+						ArrayList<IJavaCompletionProposal> proposals= new ArrayList<IJavaCompletionProposal>();
 						JavaCorrectionProcessor.collectCorrections(context, new IProblemLocation[] { location }, proposals);
 						Collections.sort(proposals, new CompletionProposalComparator());
 
 						int nProposals= proposals.size();
 						IMarkerResolution[] resolutions= new IMarkerResolution[nProposals];
 						for (int i= 0; i < nProposals; i++) {
-							resolutions[i]= new CorrectionMarkerResolution(context.getCompilationUnit(), location.getOffset(), location.getLength(), (IJavaCompletionProposal) proposals.get(i));
+							resolutions[i]= new CorrectionMarkerResolution(context.getCompilationUnit(), location.getOffset(), location.getLength(), proposals.get(i));
 						}
 						return resolutions;
 					}

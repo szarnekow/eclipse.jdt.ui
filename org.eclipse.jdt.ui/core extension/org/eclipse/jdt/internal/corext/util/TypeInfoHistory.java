@@ -163,9 +163,9 @@ public class TypeInfoHistory {
 	
 	private static final char[][] EMPTY_ENCLOSING_NAMES= new char[0][0];
 	
-	private Map fHistory= new LinkedHashMap(80, 0.75f, true) {
+	private Map<TypeInfo, TypeInfo> fHistory= new LinkedHashMap<TypeInfo, TypeInfo>(80, 0.75f, true) {
 		private static final long serialVersionUID= 1L;
-		protected boolean removeEldestEntry(Map.Entry eldest) {
+		protected boolean removeEldestEntry(Map.Entry<TypeInfo, TypeInfo> eldest) {
 			return size() > 60;
 		}
 	};
@@ -214,10 +214,10 @@ public class TypeInfoHistory {
 
 	public synchronized void checkConsistency(IProgressMonitor monitor) {
 		IJavaSearchScope scope= SearchEngine.createWorkspaceScope();
-		List keys= new ArrayList(fHistory.keySet());
+		List<Object> keys= new ArrayList<Object>(fHistory.keySet());
 		monitor.beginTask(CorextMessages.TypeInfoHistory_consistency_check, keys.size());
 		monitor.setTaskName(CorextMessages.TypeInfoHistory_consistency_check);
-		for (Iterator iter= keys.iterator(); iter.hasNext();) {
+		for (Iterator<Object> iter= keys.iterator(); iter.hasNext();) {
 			TypeInfo type= (TypeInfo)iter.next();
 			try {
 				IType jType= type.resolveType(scope);
@@ -241,31 +241,31 @@ public class TypeInfoHistory {
 	}
 	
 	public synchronized TypeInfo remove(TypeInfo info) {
-		return (TypeInfo)fHistory.remove(info);
+		return fHistory.remove(info);
 	}
 	
 	public synchronized TypeInfo[] getTypeInfos() {
-		Collection values= fHistory.values();
+		Collection<TypeInfo> values= fHistory.values();
 		int size= values.size();
 		TypeInfo[] result= new TypeInfo[size];
 		int i= size - 1;
-		for (Iterator iter= values.iterator(); iter.hasNext();) {
-			result[i]= (TypeInfo)iter.next();
+		for (Iterator<TypeInfo> iter= values.iterator(); iter.hasNext();) {
+			result[i]= iter.next();
 			i--;
 		}
 		return result;
 	}
 	
 	public synchronized TypeInfo[] getFilteredTypeInfos(TypeInfoFilter filter) {
-		Collection values= fHistory.values();
-		List result= new ArrayList();
-		for (Iterator iter= values.iterator(); iter.hasNext();) {
-			TypeInfo type= (TypeInfo)iter.next();
+		Collection<TypeInfo> values= fHistory.values();
+		List<TypeInfo> result= new ArrayList<TypeInfo>();
+		for (Iterator<TypeInfo> iter= values.iterator(); iter.hasNext();) {
+			TypeInfo type= iter.next();
 			if ((filter == null || filter.matchesHistoryElement(type)) && !TypeFilter.isFiltered(type.getFullyQualifiedName()))
 				result.add(type);
 		}
 		Collections.reverse(result);
-		return (TypeInfo[])result.toArray(new TypeInfo[result.size()]);
+		return result.toArray(new TypeInfo[result.size()]);
 		
 	}
 	
@@ -370,9 +370,9 @@ public class TypeInfoHistory {
 			Element rootElement = document.createElement(NODE_ROOT);
 			document.appendChild(rootElement);
 	
-			Iterator values= fHistory.values().iterator();
+			Iterator<TypeInfo> values= fHistory.values().iterator();
 			while (values.hasNext()) {
-				TypeInfo type= (TypeInfo)values.next();
+				TypeInfo type= values.next();
 				Element typeElement= document.createElement(NODE_TYPE_INFO);
 				typeElement.setAttribute(NODE_NAME, type.getTypeName());
 				typeElement.setAttribute(NODE_PACKAGE, type.getPackageName());
@@ -402,12 +402,12 @@ public class TypeInfoHistory {
 		if (enclosingNames.length() == 0)
 			return EMPTY_ENCLOSING_NAMES;
 		StringTokenizer tokenizer= new StringTokenizer(enclosingNames, "."); //$NON-NLS-1$
-		List names= new ArrayList();
+		List<char[]> names= new ArrayList<char[]>();
 		while(tokenizer.hasMoreTokens()) {
 			String name= tokenizer.nextToken();
 			names.add(name.toCharArray());
 		}
-		return (char[][])names.toArray(new char[names.size()][]);
+		return names.toArray(new char[names.size()][]);
 	}
 
 	private static JavaUIException createException(Throwable t, String message) {

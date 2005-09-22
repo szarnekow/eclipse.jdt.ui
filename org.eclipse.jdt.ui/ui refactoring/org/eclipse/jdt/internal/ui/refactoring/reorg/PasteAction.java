@@ -143,7 +143,7 @@ public class PasteAction extends SelectionDispatchAction{
 	private Paster[] createEnabledPasters(TransferData[] availableDataTypes) throws JavaModelException {
 		Paster paster;
 		Shell shell = getShell();
-		List result= new ArrayList(2);
+		List<Paster> result= new ArrayList<Paster>(2);
 		paster= new ProjectPaster(shell, fClipboard);
 		if (paster.canEnable(availableDataTypes)) 
 			result.add(paster);
@@ -167,7 +167,7 @@ public class PasteAction extends SelectionDispatchAction{
 		paster= new TextPaster(shell, fClipboard);
 		if (paster.canEnable(availableDataTypes))
 			result.add(paster);
-		return (Paster[]) result.toArray(new Paster[result.size()]);
+		return result.toArray(new Paster[result.size()]);
 	}
 
 	private static Object getContents(final Clipboard clipboard, final Transfer transfer, Shell shell) {
@@ -294,7 +294,7 @@ public class PasteAction extends SelectionDispatchAction{
 				if (typesCount > 0) {
 					// get first most visible type:
 					int maxVisibility= Modifier.PRIVATE;
-					for (ListIterator iter= unit.types().listIterator(typesCount); iter.hasPrevious();) {
+					for (ListIterator<ASTNode> iter= unit.types().listIterator(typesCount); iter.hasPrevious();) {
 						AbstractTypeDeclaration type= (AbstractTypeDeclaration) iter.previous();
 						int visibility= JdtFlags.getVisibilityCode(type);
 						if (! JdtFlags.isHigherVisibility(maxVisibility, visibility)) {
@@ -498,7 +498,7 @@ public class PasteAction extends SelectionDispatchAction{
 		}
 		public void paste(IJavaElement[] selectedJavaElements, IResource[] selectedResources, IWorkingSet[] selectedWorkingSets, TransferData[] availableTypes) throws JavaModelException, InterruptedException, InvocationTargetException {
 			IWorkingSet workingSet= selectedWorkingSets[0];
-			Set elements= new HashSet(Arrays.asList(workingSet.getElements()));
+			Set<IAdaptable> elements= new HashSet<IAdaptable>(Arrays.asList(workingSet.getElements()));
 			IJavaElement[] javaElements= getClipboardJavaElements(availableTypes);
 			if (javaElements != null) {
 				for (int i= 0; i < javaElements.length; i++) {
@@ -508,21 +508,21 @@ public class PasteAction extends SelectionDispatchAction{
 			}
 			IResource[] resources= getClipboardResources(availableTypes);
 			if (resources != null) {
-				List realJavaElements= new ArrayList();
-				List realResource= new ArrayList();
+				List<Object> realJavaElements= new ArrayList<Object>();
+				List<IResource> realResource= new ArrayList<IResource>();
 				ReorgUtils.splitIntoJavaElementsAndResources(resources, realJavaElements, realResource);
-				for (Iterator iter= realJavaElements.iterator(); iter.hasNext();) {
+				for (Iterator<Object> iter= realJavaElements.iterator(); iter.hasNext();) {
 					IJavaElement element= (IJavaElement)iter.next();
 					if (!ReorgUtils.containsElementOrParent(elements, element))
 						elements.add(element);
 				}
-				for (Iterator iter= realResource.iterator(); iter.hasNext();) {
-					IResource element= (IResource)iter.next();
+				for (Iterator<IResource> iter= realResource.iterator(); iter.hasNext();) {
+					IResource element= iter.next();
 					if (!ReorgUtils.containsElementOrParent(elements, element))
 						elements.add(element);
 				}
 			}
-			workingSet.setElements((IAdaptable[])elements.toArray(new IAdaptable[elements.size()]));
+			workingSet.setElements(elements.toArray(new IAdaptable[elements.size()]));
 		}
 		public boolean canEnable(TransferData[] availableTypes) throws JavaModelException {
 			return isAvailable(ResourceTransfer.getInstance(), availableTypes) ||
@@ -569,13 +569,13 @@ public class PasteAction extends SelectionDispatchAction{
 		private IProject[] getProjectsToPaste(TransferData[] availableTypes) {
 			IResource[] resources= getClipboardResources(availableTypes);
 			IJavaElement[] javaElements= getClipboardJavaElements(availableTypes);
-			Set result= new HashSet();
+			Set<IResource> result= new HashSet<IResource>();
 			if (resources != null)
 				result.addAll(Arrays.asList(resources));
 			if (javaElements != null)
 				result.addAll(Arrays.asList(ReorgUtils.getNotNulls(ReorgUtils.getResources(javaElements))));
 			Assert.isTrue(result.size() > 0);
-			return (IProject[]) result.toArray(new IProject[result.size()]);
+			return result.toArray(new IProject[result.size()]);
 		}
 
 		public boolean canPasteOn(IJavaElement[] javaElements, IResource[] resources, IWorkingSet[] selectedWorkingSets) {

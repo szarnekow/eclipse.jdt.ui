@@ -87,19 +87,19 @@ public class OrganizeImportsOperation implements IWorkspaceRunnable {
 		private static class UnresolvedTypeData {
 			final SimpleName ref;
 			final int typeKinds;
-			final List foundInfos;
+			final List<TypeInfo> foundInfos;
 
 			public UnresolvedTypeData(SimpleName ref) {
 				this.ref= ref;
 				this.typeKinds= ASTResolving.getPossibleTypeKinds(ref, true);
-				this.foundInfos= new ArrayList(3);
+				this.foundInfos= new ArrayList<TypeInfo>(3);
 			}
 		}
 		
-		private Set fOldSingleImports;
-		private Set fOldDemandImports;
+		private Set<String> fOldSingleImports;
+		private Set<String> fOldDemandImports;
 		
-		private Set fImplicitImports;
+		private Set<String> fImplicitImports;
 		
 		private ImportsStructure fImpStructure;
 		
@@ -110,13 +110,13 @@ public class OrganizeImportsOperation implements IWorkspaceRunnable {
 		private ScopeAnalyzer fAnalyzer;
 		private boolean fAllowDefaultPackageImports;
 		
-		private Map fUnresolvedTypes;
-		private Set fImportsAdded;
+		private Map<String, UnresolvedTypeData> fUnresolvedTypes;
+		private Set<String> fImportsAdded;
 		private TypeInfo[][] fOpenChoices;
 		private SourceRange[] fSourceRanges;
 		
 		
-		public TypeReferenceProcessor(Set oldSingleImports, Set oldDemandImports, CompilationUnit root, ImportsStructure impStructure, boolean ignoreLowerCaseNames) {
+		public TypeReferenceProcessor(Set<String> oldSingleImports, Set<String> oldDemandImports, CompilationUnit root, ImportsStructure impStructure, boolean ignoreLowerCaseNames) {
 			fOldSingleImports= oldSingleImports;
 			fOldDemandImports= oldDemandImports;
 			fImpStructure= impStructure;
@@ -124,7 +124,7 @@ public class OrganizeImportsOperation implements IWorkspaceRunnable {
 			
 			ICompilationUnit cu= impStructure.getCompilationUnit();
 			
-			fImplicitImports= new HashSet(3);
+			fImplicitImports= new HashSet<String>(3);
 			fImplicitImports.add(""); //$NON-NLS-1$
 			fImplicitImports.add("java.lang"); //$NON-NLS-1$
 			fImplicitImports.add(cu.getParent().getElementName());	
@@ -135,8 +135,8 @@ public class OrganizeImportsOperation implements IWorkspaceRunnable {
 			
 			fAllowDefaultPackageImports= cu.getJavaProject().getOption(JavaCore.COMPILER_COMPLIANCE, true).equals(JavaCore.VERSION_1_3);
 			
-			fImportsAdded= new HashSet();
-			fUnresolvedTypes= new HashMap();
+			fImportsAdded= new HashSet<String>();
+			fUnresolvedTypes= new HashMap<String, UnresolvedTypeData>();
 		}
 		
 		private boolean needsImport(ITypeBinding typeBinding, SimpleName ref) {
@@ -223,10 +223,10 @@ public class OrganizeImportsOperation implements IWorkspaceRunnable {
 				}
 				char[][] allTypes= new char[nUnresolved][];
 				int i= 0;
-				for (Iterator iter= fUnresolvedTypes.keySet().iterator(); iter.hasNext();) {
-					allTypes[i++]= ((String) iter.next()).toCharArray();
+				for (Iterator<String> iter= fUnresolvedTypes.keySet().iterator(); iter.hasNext();) {
+					allTypes[i++]= iter.next().toCharArray();
 				}
-				ArrayList typesFound= new ArrayList();
+				ArrayList<TypeInfo> typesFound= new ArrayList<TypeInfo>();
 				IJavaProject project= fCurrPackage.getJavaProject();
 				IJavaSearchScope scope= SearchEngine.createJavaSearchScope(new IJavaElement[] { project });
 				TypeInfoRequestor requestor= new TypeInfoRequestor(typesFound);
@@ -235,8 +235,8 @@ public class OrganizeImportsOperation implements IWorkspaceRunnable {
 				boolean is50OrHigher= 	JavaModelUtil.is50OrHigher(project);
 				
 				for (i= 0; i < typesFound.size(); i++) {
-					TypeInfo curr= (TypeInfo) typesFound.get(i);
-					UnresolvedTypeData data= (UnresolvedTypeData) fUnresolvedTypes.get(curr.getTypeName());
+					TypeInfo curr= typesFound.get(i);
+					UnresolvedTypeData data= fUnresolvedTypes.get(curr.getTypeName());
 					if (data != null && isVisible(curr) && isOfKind(curr, data.typeKinds, is50OrHigher)) {
 						if (fAllowDefaultPackageImports || curr.getPackageName().length() > 0) {
 							data.foundInfos.add(curr);
@@ -244,10 +244,10 @@ public class OrganizeImportsOperation implements IWorkspaceRunnable {
 					}
 				}
 				
-				ArrayList openChoices= new ArrayList(nUnresolved);
-				ArrayList sourceRanges= new ArrayList(nUnresolved);
-				for (Iterator iter= fUnresolvedTypes.values().iterator(); iter.hasNext();) {
-					UnresolvedTypeData data= (UnresolvedTypeData) iter.next();
+				ArrayList<TypeInfo[]> openChoices= new ArrayList<TypeInfo[]>(nUnresolved);
+				ArrayList<SourceRange> sourceRanges= new ArrayList<SourceRange>(nUnresolved);
+				for (Iterator<UnresolvedTypeData> iter= fUnresolvedTypes.values().iterator(); iter.hasNext();) {
+					UnresolvedTypeData data= iter.next();
 					TypeInfo[] openChoice= processTypeInfo(data.foundInfos);
 					if (openChoice != null) {
 						openChoices.add(openChoice);
@@ -257,21 +257,21 @@ public class OrganizeImportsOperation implements IWorkspaceRunnable {
 				if (openChoices.isEmpty()) {
 					return false;
 				}
-				fOpenChoices= (TypeInfo[][]) openChoices.toArray(new TypeInfo[openChoices.size()][]);
-				fSourceRanges= (SourceRange[]) sourceRanges.toArray(new SourceRange[sourceRanges.size()]);
+				fOpenChoices= openChoices.toArray(new TypeInfo[openChoices.size()][]);
+				fSourceRanges= sourceRanges.toArray(new SourceRange[sourceRanges.size()]);
 				return true;
 			} finally {
 				monitor.done();
 			}
 		}
 		
-		private TypeInfo[] processTypeInfo(List typeRefsFound) {
+		private TypeInfo[] processTypeInfo(List<TypeInfo> typeRefsFound) {
 			int nFound= typeRefsFound.size();
 			if (nFound == 0) {
 				// nothing found
 				return null;
 			} else if (nFound == 1) {
-				TypeInfo typeRef= (TypeInfo) typeRefsFound.get(0);
+				TypeInfo typeRef= typeRefsFound.get(0);
 				fImpStructure.addImport(typeRef.getFullyQualifiedName());
 				return null;
 			} else {
@@ -280,7 +280,7 @@ public class OrganizeImportsOperation implements IWorkspaceRunnable {
 				
 				// multiple found, use old imports to find an entry
 				for (int i= 0; i < nFound; i++) {
-					TypeInfo typeRef= (TypeInfo) typeRefsFound.get(i);
+					TypeInfo typeRef= typeRefsFound.get(i);
 					String fullName= typeRef.getFullyQualifiedName();
 					String containerName= typeRef.getTypeContainerName();
 					if (fOldSingleImports.contains(fullName)) {
@@ -301,7 +301,7 @@ public class OrganizeImportsOperation implements IWorkspaceRunnable {
 					return null;
 				}
 				// return the open choices
-				return (TypeInfo[]) typeRefsFound.toArray(new TypeInfo[nFound]);
+				return typeRefsFound.toArray(new TypeInfo[nFound]);
 			}
 		}
 		
@@ -391,10 +391,10 @@ public class OrganizeImportsOperation implements IWorkspaceRunnable {
 			
 			monitor.beginTask(Messages.format(CodeGenerationMessages.OrganizeImportsOperation_description, cu.getElementName()), 5); 
 
-			Set/*<String>*/ oldSingleImports= new HashSet();
-			Set/*<String>*/  oldDemandImports= new HashSet();
-			List/*<SimpleName>*/ typeReferences= new ArrayList();
-			List/*<SimpleName>*/ staticReferences= new ArrayList();
+			Set/*<String>*/<String> oldSingleImports= new HashSet<String>();
+			Set/*<String>*/<String>  oldDemandImports= new HashSet<String>();
+			List/*<SimpleName>*/<SimpleName> typeReferences= new ArrayList<SimpleName>();
+			List/*<SimpleName>*/<Name> staticReferences= new ArrayList<Name>();
 			
 			boolean res= collectReferences(typeReferences, staticReferences, oldSingleImports, oldDemandImports);
 			if (!res) {
@@ -405,9 +405,9 @@ public class OrganizeImportsOperation implements IWorkspaceRunnable {
 		
 			TypeReferenceProcessor processor= new TypeReferenceProcessor(oldSingleImports, oldDemandImports, fASTRoot, fImportsStructure, fIgnoreLowerCaseNames);
 			
-			Iterator refIterator= typeReferences.iterator();
+			Iterator<SimpleName> refIterator= typeReferences.iterator();
 			while (refIterator.hasNext()) {
-				SimpleName typeRef= (SimpleName) refIterator.next();
+				SimpleName typeRef= refIterator.next();
 				processor.add(typeRef);
 			}
 			
@@ -436,8 +436,8 @@ public class OrganizeImportsOperation implements IWorkspaceRunnable {
 		}
 	}
 	
-	private void determineImportDifferences(ImportsStructure importsStructure, Set oldSingleImports, Set oldDemandImports) {
-  		ArrayList importsAdded= new ArrayList();
+	private void determineImportDifferences(ImportsStructure importsStructure, Set<String> oldSingleImports, Set<String> oldDemandImports) {
+  		ArrayList<String> importsAdded= new ArrayList<String>();
   		importsAdded.addAll(Arrays.asList(importsStructure.getCreatedImports()));
   		importsAdded.addAll(Arrays.asList(importsStructure.getCreatedStaticImports()));
 		
@@ -458,9 +458,9 @@ public class OrganizeImportsOperation implements IWorkspaceRunnable {
 	}
 	
 	
-	private void addStaticImports(List/*<SimpleName>*/ staticReferences, ImportsStructure importsStructure) {
+	private void addStaticImports(List/*<SimpleName>*/<Name> staticReferences, ImportsStructure importsStructure) {
 		for (int i= 0; i < staticReferences.size(); i++) {
-			Name name= (Name) staticReferences.get(i);
+			Name name= staticReferences.get(i);
 			IBinding binding= name.resolveBinding();
 			if (binding != null) { // paranoidal check
 				importsStructure.addStaticImport(binding);
@@ -474,7 +474,7 @@ public class OrganizeImportsOperation implements IWorkspaceRunnable {
 
 	
 	// find type references in a compilation unit
-	private boolean collectReferences(List typeReferences, List staticReferences, Set oldSingleImports, Set oldDemandImports) {
+	private boolean collectReferences(List<SimpleName> typeReferences, List<Name> staticReferences, Set<String> oldSingleImports, Set<String> oldDemandImports) {
 		IProblem[] problems= fASTRoot.getProblems();
 		for (int i= 0; i < problems.length; i++) {
 			IProblem curr= problems[i];
@@ -483,7 +483,7 @@ public class OrganizeImportsOperation implements IWorkspaceRunnable {
 				return false;
 			}
 		}
-		List imports= fASTRoot.imports();
+		List<ASTNode> imports= fASTRoot.imports();
 		for (int i= 0; i < imports.size(); i++) {
 			ImportDeclaration curr= (ImportDeclaration) imports.get(i);
 			String id= ASTResolving.getFullName(curr.getName());

@@ -56,7 +56,7 @@ public class CreateOutputFolderOperation extends ClasspathModifierOperation {
      * @param monitor a progress monitor, can be <code>null</code>
      */
     public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-        List result= new ArrayList();
+        List<CPListElementAttribute> result= new ArrayList<CPListElementAttribute>();
         fException= null;
         try {
             IPackageFragmentRoot root= (IPackageFragmentRoot)getSelectedElements().get(0);

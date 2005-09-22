@@ -51,11 +51,11 @@ final class SpecificContentAssistAction extends Action {
 		if (action == null || !action.isEnabled())
 			return;
 		
-		Collection categories= CompletionProposalComputerRegistry.getDefault().getProposalCategories();
+		Collection<CompletionProposalCategory> categories= CompletionProposalComputerRegistry.getDefault().getProposalCategories();
 		boolean[] oldstates= new boolean[categories.size()];
 		int i= 0;
-		for (Iterator it1= categories.iterator(); it1.hasNext();) {
-			CompletionProposalCategory cat= (CompletionProposalCategory) it1.next();
+		for (Iterator<CompletionProposalCategory> it1= categories.iterator(); it1.hasNext();) {
+			CompletionProposalCategory cat= it1.next();
 			oldstates[i++]= cat.isIncluded();
 			cat.setIncluded(cat.getId().equals(computerId));
 		}
@@ -66,8 +66,8 @@ final class SpecificContentAssistAction extends Action {
 				target.doOperation(ISourceViewer.CONTENTASSIST_PROPOSALS);
 		} finally {
 			i= 0;
-			for (Iterator it1= categories.iterator(); it1.hasNext();) {
-				CompletionProposalCategory cat= (CompletionProposalCategory) it1.next();
+			for (Iterator<CompletionProposalCategory> it1= categories.iterator(); it1.hasNext();) {
+				CompletionProposalCategory cat= it1.next();
 				cat.setIncluded(oldstates[i++]);
 			}
 		}

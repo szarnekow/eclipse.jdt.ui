@@ -48,8 +48,8 @@ import org.eclipse.jdt.internal.ui.JavaPlugin;
 /* package */ class TextBufferFactory {
 
 	private IDocumentProvider fDocumentProvider;
-	private Map fFileValueMap;
-	private Map fBufferValueMap;
+	private Map<FileEditorInput, Value> fFileValueMap;
+	private Map<TextBuffer, Value> fBufferValueMap;
 	
 	private static class Value {
 		TextBuffer buffer;
@@ -74,14 +74,14 @@ import org.eclipse.jdt.internal.ui.JavaPlugin;
 	public TextBufferFactory(IDocumentProvider provider) {
 		fDocumentProvider= provider;
 		Assert.isNotNull(fDocumentProvider);
-		fFileValueMap= new HashMap(5);
-		fBufferValueMap= new HashMap(5);
+		fFileValueMap= new HashMap<FileEditorInput, Value>(5);
+		fBufferValueMap= new HashMap<TextBuffer, Value>(5);
 	}
 
 	public TextBuffer acquire(IFile file) throws CoreException {
 		FileEditorInput input= new FileEditorInput(file);	
 		
-		Value value= (Value)fFileValueMap.get(input);
+		Value value= fFileValueMap.get(input);
 		if (value != null) {
 			value.references++;
 			return value.buffer;
@@ -101,7 +101,7 @@ import org.eclipse.jdt.internal.ui.JavaPlugin;
 	
 	public void release(TextBuffer buffer) {
 		Assert.isNotNull(buffer);
-		final Value value= (Value)fBufferValueMap.get(buffer);
+		final Value value= fBufferValueMap.get(buffer);
 		if (value == null)
 			return;
 						
@@ -117,7 +117,7 @@ import org.eclipse.jdt.internal.ui.JavaPlugin;
 	}
 	
 	public void commitChanges(final TextBuffer buffer, boolean force, IProgressMonitor monitor) throws CoreException {
-		final Value value= (Value)fBufferValueMap.get(buffer);
+		final Value value= fBufferValueMap.get(buffer);
 		if (value == null)
 			return;
 		
@@ -189,21 +189,21 @@ import org.eclipse.jdt.internal.ui.JavaPlugin;
 	}
 	
 	public void save(TextBuffer buffer, IProgressMonitor pm) throws CoreException {
-		Value value= (Value)fBufferValueMap.get(buffer);
+		Value value= fBufferValueMap.get(buffer);
 		if (value == null)
 			throwNotManaged();
 		fDocumentProvider.saveDocument(pm, value.input, value.document, true);
 	}
 
 	public void aboutToChange(TextBuffer buffer) throws CoreException {
-		Value value= (Value)fBufferValueMap.get(buffer);
+		Value value= fBufferValueMap.get(buffer);
 		if (value == null)
 			throwNotManaged();
 		fDocumentProvider.aboutToChange(value.input);
 	}
 		
 	public void changed(TextBuffer buffer) throws CoreException {
-		Value value= (Value)fBufferValueMap.get(buffer);
+		Value value= fBufferValueMap.get(buffer);
 		if (value == null)
 			throwNotManaged();
 		fDocumentProvider.changed(value.input);
@@ -216,7 +216,7 @@ import org.eclipse.jdt.internal.ui.JavaPlugin;
 	}
 	
 	public IStatus makeCommittable(TextBuffer buffer, Object context) {
-		Value value= (Value)fBufferValueMap.get(buffer);
+		Value value= fBufferValueMap.get(buffer);
 		if (value == null) {
 			// The buffer is not managed. So it can be modified
 			return new Status(IStatus.OK, JavaPlugin.getPluginId(), IStatus.OK, "", null); //$NON-NLS-1$;

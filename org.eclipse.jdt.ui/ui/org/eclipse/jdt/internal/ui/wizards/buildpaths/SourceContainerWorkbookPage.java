@@ -299,14 +299,14 @@ public class SourceContainerWorkbookPage extends BuildPathBasePage {
 							askForChangingBuildPathDialog(existing);
 						}
 					}
-					HashSet modifiedElements= new HashSet();
+					HashSet<CPListElement> modifiedElements= new HashSet<CPListElement>();
 					askForAddingExclusionPatternsDialog(elementsToAdd, modifiedElements);
 					
 					fFoldersList.addElements(elementsToAdd);
 					fFoldersList.postSetSelection(new StructuredSelection(elementsToAdd));
 					
 					if (!modifiedElements.isEmpty()) {
-						for (Iterator iter= modifiedElements.iterator(); iter.hasNext();) {
+						for (Iterator<CPListElement> iter= modifiedElements.iterator(); iter.hasNext();) {
 							Object elem= iter.next();
 							fFoldersList.refresh(elem);
 							fFoldersList.expandElement(elem, 3);
@@ -548,7 +548,7 @@ public class SourceContainerWorkbookPage extends BuildPathBasePage {
 		}			
 	}
 	
-	private void askForAddingExclusionPatternsDialog(List newEntries, Set modifiedEntries) {
+	private void askForAddingExclusionPatternsDialog(List newEntries, Set<CPListElement> modifiedEntries) {
 		fixNestingConflicts(newEntries, fFoldersList.getElements(), modifiedEntries);
 		if (!modifiedEntries.isEmpty()) {
 			String title= NewWizardMessages.SourceContainerWorkbookPage_exclusion_added_title; 
@@ -560,10 +560,10 @@ public class SourceContainerWorkbookPage extends BuildPathBasePage {
 	private CPListElement[] openSourceContainerDialog(CPListElement existing) {
 		
 		Class[] acceptedClasses= new Class[] { IProject.class, IFolder.class };
-		List existingContainers= getExistingContainers(null);
+		List<IResource> existingContainers= getExistingContainers(null);
 		
 		IProject[] allProjects= fWorkspaceRoot.getProjects();
-		ArrayList rejectedElements= new ArrayList(allProjects.length);
+		ArrayList<IProject> rejectedElements= new ArrayList<IProject>(allProjects.length);
 		IProject currProject= fCurrJProject.getProject();
 		for (int i= 0; i < allProjects.length; i++) {
 			if (!allProjects[i].equals(currProject)) {
@@ -601,8 +601,8 @@ public class SourceContainerWorkbookPage extends BuildPathBasePage {
 		return null;
 	}
 	
-	private List getExistingContainers(CPListElement existing) {
-		List res= new ArrayList();
+	private List<IResource> getExistingContainers(CPListElement existing) {
+		List<IResource> res= new ArrayList<IResource>();
 		List cplist= fFoldersList.getElements();
 		for (int i= 0; i < cplist.size(); i++) {
 			CPListElement elem= (CPListElement)cplist.get(i);

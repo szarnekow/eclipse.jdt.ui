@@ -28,7 +28,7 @@ public class VisibilityControlUtil {
 	private VisibilityControlUtil(){}
 	
 	public static Composite createVisibilityControl(Composite parent, final IVisibilityChangeListener visibilityChangeListener, int[] availableVisibilities, int correctVisibility) {
-		List allowedVisibilities= convertToIntegerList(availableVisibilities);
+		List<Integer> allowedVisibilities= convertToIntegerList(availableVisibilities);
 		if (allowedVisibilities.size() == 1)
 			return null;
 		
@@ -70,8 +70,8 @@ public class VisibilityControlUtil {
 		return group;
 	}
 
-	private static List convertToIntegerList(int[] array) {
-		List result= new ArrayList(array.length);
+	private static List<Integer> convertToIntegerList(int[] array) {
+		List<Integer> result= new ArrayList<Integer>(array.length);
 		for (int i= 0; i < array.length; i++) {
 			result.add(new Integer(array[i]));
 		}

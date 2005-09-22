@@ -45,14 +45,14 @@ public abstract class BuildPathBasePage {
 		setSelection(res, false);
 	}
 	
-	public static void fixNestingConflicts(List newEntries, List existing, Set modifiedSourceEntries) {
+	public static void fixNestingConflicts(List newEntries, List existing, Set<CPListElement> modifiedSourceEntries) {
 		for (int i= 0; i < newEntries.size(); i++) {
 			CPListElement curr= (CPListElement) newEntries.get(i);
 			addExclusionPatterns(curr, existing, modifiedSourceEntries);
 		}
 	}
 	
-	private static void addExclusionPatterns(CPListElement newEntry, List existing, Set modifiedEntries) {
+	private static void addExclusionPatterns(CPListElement newEntry, List existing, Set<CPListElement> modifiedEntries) {
 		IPath entryPath= newEntry.getPath();
 		for (int i= 0; i < existing.size(); i++) {
 			CPListElement curr= (CPListElement) existing.get(i);

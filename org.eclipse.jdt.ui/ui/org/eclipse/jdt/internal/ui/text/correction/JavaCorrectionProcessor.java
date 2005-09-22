@@ -64,7 +64,7 @@ public class JavaCorrectionProcessor implements IContentAssistProcessor {
 
 	private static ContributedProcessorDescriptor[] getProcessorDescriptors(String contributionId) {
 		IConfigurationElement[] elements= Platform.getExtensionRegistry().getConfigurationElementsFor(JavaUI.ID_PLUGIN, contributionId);
-		ArrayList res= new ArrayList(elements.length);
+		ArrayList<ContributedProcessorDescriptor> res= new ArrayList<ContributedProcessorDescriptor>(elements.length);
 
 		for (int i= 0; i < elements.length; i++) {
 			ContributedProcessorDescriptor desc= new ContributedProcessorDescriptor(elements[i]);
@@ -75,7 +75,7 @@ public class JavaCorrectionProcessor implements IContentAssistProcessor {
 				JavaPlugin.log(status);
 			}
 		}
-		return (ContributedProcessorDescriptor[]) res.toArray(new ContributedProcessorDescriptor[res.size()]);
+		return res.toArray(new ContributedProcessorDescriptor[res.size()]);
 	}
 
 	private static ContributedProcessorDescriptor[] getCorrectionProcessors() {
@@ -175,9 +175,9 @@ public class JavaCorrectionProcessor implements IContentAssistProcessor {
 		
 		ICompletionProposal[] res= null;
 		if (model != null && annotations != null) {
-			ArrayList proposals= new ArrayList(10);
+			ArrayList<IJavaCompletionProposal> proposals= new ArrayList<IJavaCompletionProposal>(10);
 			IStatus status= collectProposals(context, model, annotations, true, !fAssistant.isUpdatedOffset(), proposals);
-			res= (ICompletionProposal[]) proposals.toArray(new ICompletionProposal[proposals.size()]);
+			res= proposals.toArray(new ICompletionProposal[proposals.size()]);
 			if (!status.isOK()) {
 				fErrorMessage= status.getMessage();
 				JavaPlugin.log(status);
@@ -193,8 +193,8 @@ public class JavaCorrectionProcessor implements IContentAssistProcessor {
 		return res;
 	}
 
-	public static IStatus collectProposals(IInvocationContext context, IAnnotationModel model, Annotation[] annotations, boolean addQuickFixes, boolean addQuickAssists, Collection proposals) {
-		ArrayList problems= new ArrayList();
+	public static IStatus collectProposals(IInvocationContext context, IAnnotationModel model, Annotation[] annotations, boolean addQuickFixes, boolean addQuickAssists, Collection<IJavaCompletionProposal> proposals) {
+		ArrayList<ProblemLocation> problems= new ArrayList<ProblemLocation>();
 		
 		// collect problem locations and corrections from marker annotations
 		for (int i= 0; i < annotations.length; i++) {
@@ -211,7 +211,7 @@ public class JavaCorrectionProcessor implements IContentAssistProcessor {
 		}
 		MultiStatus resStatus= null;
 		
-		IProblemLocation[] problemLocations= (IProblemLocation[]) problems.toArray(new IProblemLocation[problems.size()]);
+		IProblemLocation[] problemLocations= problems.toArray(new IProblemLocation[problems.size()]);
 		if (addQuickFixes) {
 			IStatus status= collectCorrections(context, problemLocations, proposals);
 			if (!status.isOK()) {
@@ -245,7 +245,7 @@ public class JavaCorrectionProcessor implements IContentAssistProcessor {
 		return null;
 	}
 
-	private static void collectMarkerProposals(SimpleMarkerAnnotation annotation, Collection proposals) {
+	private static void collectMarkerProposals(SimpleMarkerAnnotation annotation, Collection<IJavaCompletionProposal> proposals) {
 		IMarker marker= annotation.getMarker();
 		IMarkerResolution[] res= IDE.getMarkerHelpRegistry().getResolutions(marker);
 		if (res.length > 0) {
@@ -296,9 +296,9 @@ public class JavaCorrectionProcessor implements IContentAssistProcessor {
 	private static class SafeCorrectionCollector extends SafeCorrectionProcessorAccess {
 		private final IInvocationContext fContext;
 		private final IProblemLocation[] fLocations;
-		private final Collection fProposals;
+		private final Collection<IJavaCompletionProposal> fProposals;
 
-		public SafeCorrectionCollector(IInvocationContext context, IProblemLocation[] locations, Collection proposals) {
+		public SafeCorrectionCollector(IInvocationContext context, IProblemLocation[] locations, Collection<IJavaCompletionProposal> proposals) {
 			fContext= context;
 			fLocations= locations;
 			fProposals= proposals;
@@ -320,9 +320,9 @@ public class JavaCorrectionProcessor implements IContentAssistProcessor {
 	private static class SafeAssistCollector extends SafeCorrectionProcessorAccess {
 		private final IInvocationContext fContext;
 		private final IProblemLocation[] fLocations;
-		private final Collection fProposals;
+		private final Collection<IJavaCompletionProposal> fProposals;
 
-		public SafeAssistCollector(IInvocationContext context, IProblemLocation[] locations, Collection proposals) {
+		public SafeAssistCollector(IInvocationContext context, IProblemLocation[] locations, Collection<IJavaCompletionProposal> proposals) {
 			fContext= context;
 			fLocations= locations;
 			fProposals= proposals;
@@ -386,7 +386,7 @@ public class JavaCorrectionProcessor implements IContentAssistProcessor {
 	}
 
 
-	public static IStatus collectCorrections(IInvocationContext context, IProblemLocation[] locations, Collection proposals) {
+	public static IStatus collectCorrections(IInvocationContext context, IProblemLocation[] locations, Collection<IJavaCompletionProposal> proposals) {
 		ContributedProcessorDescriptor[] processors= getCorrectionProcessors();
 		SafeCorrectionCollector collector= new SafeCorrectionCollector(context, locations, proposals);
 		collector.process(processors);
@@ -394,7 +394,7 @@ public class JavaCorrectionProcessor implements IContentAssistProcessor {
 		return collector.getStatus();
 	}
 
-	public static IStatus collectAssists(IInvocationContext context, IProblemLocation[] locations, Collection proposals) {
+	public static IStatus collectAssists(IInvocationContext context, IProblemLocation[] locations, Collection<IJavaCompletionProposal> proposals) {
 		ContributedProcessorDescriptor[] processors= getAssistProcessors();
 		SafeAssistCollector collector= new SafeAssistCollector(context, locations, proposals);
 		collector.process(processors);

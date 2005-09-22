@@ -25,7 +25,7 @@ import org.eclipse.jface.text.TextUtilities;
 public class PropertyFileDocumentModel {
 
 	private static final char[] HEX_DIGITS = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
-    private List fKeyValuePairs;
+    private List<KeyValuePairModell> fKeyValuePairs;
     private String fLineDelimiter;
 
     public PropertyFileDocumentModel(IDocument document) {
@@ -35,7 +35,7 @@ public class PropertyFileDocumentModel {
     
     public int getIndex(String key) {
     	for (int i= 0; i < fKeyValuePairs.size(); i++) {
-            KeyValuePairModell keyValuePair = (KeyValuePairModell) fKeyValuePairs.get(i);
+            KeyValuePairModell keyValuePair = fKeyValuePairs.get(i);
             if (keyValuePair.getKey().equals(key)) {
             	return i;
             }
@@ -51,7 +51,7 @@ public class PropertyFileDocumentModel {
     public InsertEdit insert(KeyValuePair keyValuePair) {
         KeyValuePairModell keyValuePairModell = new KeyValuePairModell(keyValuePair); 
         int index = findInsertPosition(keyValuePairModell);
-        KeyValuePairModell insertHere = (KeyValuePairModell) fKeyValuePairs.get(index);
+        KeyValuePairModell insertHere = fKeyValuePairs.get(index);
         int offset = insertHere.fOffset - insertHere.fLeadingWhiteSpaces;
         
         String extra= ""; //$NON-NLS-1$
@@ -71,10 +71,10 @@ public class PropertyFileDocumentModel {
     }
     
     public DeleteEdit remove(String key) {
-    	for (Iterator iter = fKeyValuePairs.iterator(); iter.hasNext();) {
-            KeyValuePairModell keyValuePair = (KeyValuePairModell) iter.next();
+    	for (Iterator<KeyValuePairModell> iter = fKeyValuePairs.iterator(); iter.hasNext();) {
+            KeyValuePairModell keyValuePair = iter.next();
             if (keyValuePair.fKey.equals(key)) {
-            	KeyValuePairModell next = (KeyValuePairModell) iter.next();
+            	KeyValuePairModell next = iter.next();
             	return new DeleteEdit(keyValuePair.fOffset, next.fOffset - keyValuePair.fOffset);
             }            
         }
@@ -82,11 +82,11 @@ public class PropertyFileDocumentModel {
     }
     
     public ReplaceEdit replace(KeyValuePair toReplace, KeyValuePair replaceWith) {     
-        for (Iterator iter = fKeyValuePairs.iterator(); iter.hasNext();) {
-            KeyValuePairModell keyValuePair = (KeyValuePairModell) iter.next();
+        for (Iterator<KeyValuePairModell> iter = fKeyValuePairs.iterator(); iter.hasNext();) {
+            KeyValuePairModell keyValuePair = iter.next();
             if (keyValuePair.fKey.equals(toReplace.getKey())) {
                 String newText = new KeyValuePairModell(replaceWith).getEncodedText(fLineDelimiter);
-                KeyValuePairModell next = (KeyValuePairModell) iter.next();
+                KeyValuePairModell next = iter.next();
                 int range = next.fOffset - keyValuePair.fOffset;
             	return new ReplaceEdit(keyValuePair.fOffset, range, newText);
             }            
@@ -98,7 +98,7 @@ public class PropertyFileDocumentModel {
         int insertIndex = 0;
         int maxMatch = Integer.MIN_VALUE;
         for (int i=0; i<fKeyValuePairs.size(); i++) {
-            KeyValuePairModell element = (KeyValuePairModell) fKeyValuePairs.get(i);
+            KeyValuePairModell element = fKeyValuePairs.get(i);
             int match = element.compareTo(keyValuePair);
             if (match >= maxMatch) {
                 insertIndex = i;
@@ -114,7 +114,7 @@ public class PropertyFileDocumentModel {
     }    
 
     private void parsePropertyDocument(IDocument document) {
-        fKeyValuePairs = new ArrayList();
+        fKeyValuePairs = new ArrayList<KeyValuePairModell>();
       
         SimpleLineReader reader = new SimpleLineReader(document);        
         int offset = 0;

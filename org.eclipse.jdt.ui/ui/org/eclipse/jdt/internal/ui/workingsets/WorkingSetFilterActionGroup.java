@@ -66,7 +66,7 @@ public class WorkingSetFilterActionGroup extends ActionGroup implements IWorking
 	private int fLRUMenuCount;
 	private IMenuManager fMenuManager;
 	private IMenuListener fMenuListener;
-	private List fContributions= new ArrayList();
+	private List<IContributionItem> fContributions= new ArrayList<IContributionItem>();
 
 	public WorkingSetFilterActionGroup(IWorkbenchPartSite site, IPropertyChangeListener changeListener) {
 		Assert.isNotNull(site);
@@ -243,13 +243,13 @@ public class WorkingSetFilterActionGroup extends ActionGroup implements IWorking
 
 	private void addLRUWorkingSetActions(IMenuManager mm) {
 		IWorkingSet[] workingSets= PlatformUI.getWorkbench().getWorkingSetManager().getRecentWorkingSets();
-		List sortedWorkingSets= Arrays.asList(workingSets);
+		List<IWorkingSet> sortedWorkingSets= Arrays.asList(workingSets);
 		Collections.sort(sortedWorkingSets, new WorkingSetComparator());
 		
-		Iterator iter= sortedWorkingSets.iterator();
+		Iterator<IWorkingSet> iter= sortedWorkingSets.iterator();
 		int i= 0;
 		while (iter.hasNext()) {
-			IWorkingSet workingSet= (IWorkingSet)iter.next();
+			IWorkingSet workingSet= iter.next();
 			if (workingSet != null) {
 				IContributionItem item= new WorkingSetMenuContributionItem(++i, this, workingSet);
 				mm.insertBefore(LRU_GROUP, item);
@@ -260,8 +260,8 @@ public class WorkingSetFilterActionGroup extends ActionGroup implements IWorking
 	}
 	
 	public void cleanViewMenu(IMenuManager menuManager) {
-		for (Iterator iter= fContributions.iterator(); iter.hasNext();) {
-			menuManager.remove((IContributionItem)iter.next());
+		for (Iterator<IContributionItem> iter= fContributions.iterator(); iter.hasNext();) {
+			menuManager.remove(iter.next());
 		}
 		fContributions.clear();
 		fMenuManager.removeMenuListener(fMenuListener);

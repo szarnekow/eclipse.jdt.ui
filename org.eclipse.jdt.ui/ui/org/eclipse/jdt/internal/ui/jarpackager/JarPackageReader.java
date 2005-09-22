@@ -26,6 +26,7 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.MultiStatus;
@@ -190,7 +191,7 @@ public class JarPackageReader extends Object implements IJarDescriptionReader {
 			jarPackage.setExportOutputFolders(getBooleanAttribute(element, "exportOutputFolder", false)); //$NON-NLS-1$
 			jarPackage.setExportJavaFiles(getBooleanAttribute(element, "exportJavaFiles")); //$NON-NLS-1$
 			NodeList selectedElements= element.getChildNodes();
-			Set elementsToExport= new HashSet(selectedElements.getLength());
+			Set<IAdaptable> elementsToExport= new HashSet<IAdaptable>(selectedElements.getLength());
 			for (int j= 0; j < selectedElements.getLength(); j++) {
 				Node selectedNode= selectedElements.item(j);
 				if (selectedNode.getNodeType() != Node.ELEMENT_NODE)
@@ -226,7 +227,7 @@ public class JarPackageReader extends Object implements IJarDescriptionReader {
 		throw new IOException(JarPackagerMessages.JarPackageReader_error_illegalValueForBooleanAttribute); 
 	}
 
-	private void addFile(Set selectedElements, Element element) throws IOException {
+	private void addFile(Set<IAdaptable> selectedElements, Element element) throws IOException {
 		IPath path= getPath(element);
 		if (path != null) {
 			IFile file= JavaPlugin.getWorkspace().getRoot().getFile(path);
@@ -235,7 +236,7 @@ public class JarPackageReader extends Object implements IJarDescriptionReader {
 		}
 	}
 
-	private void addFolder(Set selectedElements, Element element) throws IOException {
+	private void addFolder(Set<IAdaptable> selectedElements, Element element) throws IOException {
 		IPath path= getPath(element);
 		if (path != null) {
 			IFolder folder= JavaPlugin.getWorkspace().getRoot().getFolder(path);
@@ -244,7 +245,7 @@ public class JarPackageReader extends Object implements IJarDescriptionReader {
 		}
 	}
 
-	private void addProject(Set selectedElements, Element element) throws IOException {
+	private void addProject(Set<IAdaptable> selectedElements, Element element) throws IOException {
 		String name= element.getAttribute("name"); //$NON-NLS-1$
 		if (name.length() == 0)
 			throw new IOException(JarPackagerMessages.JarPackageReader_error_tagNameNotFound); 
@@ -260,7 +261,7 @@ public class JarPackageReader extends Object implements IJarDescriptionReader {
 		return Path.fromPortableString(element.getAttribute("path")); //$NON-NLS-1$
 	}
 	
-	private void addJavaElement(Set selectedElements, Element element) throws IOException {
+	private void addJavaElement(Set<IAdaptable> selectedElements, Element element) throws IOException {
 		String handleId= element.getAttribute("handleIdentifier"); //$NON-NLS-1$
 		if (handleId.length() == 0)
 			throw new IOException(JarPackagerMessages.JarPackageReader_error_tagHandleIdentifierNotFoundOrEmpty); 
@@ -277,7 +278,7 @@ public class JarPackageReader extends Object implements IJarDescriptionReader {
 		if (list.getLength() == 0)
 			return null; // optional entry is not present
 		NodeList packageNodes= list.item(0).getChildNodes();
-		List packages= new ArrayList(packageNodes.getLength());
+		List<IJavaElement> packages= new ArrayList<IJavaElement>(packageNodes.getLength());
 		for (int i= 0; i < packageNodes.getLength(); i++) {
 			Node packageNode= packageNodes.item(i);
 			if (packageNode.getNodeType() == Node.ELEMENT_NODE && packageNode.getNodeName().equals("package")) { //$NON-NLS-1$
@@ -291,7 +292,7 @@ public class JarPackageReader extends Object implements IJarDescriptionReader {
 					addWarning(JarPackagerMessages.JarPackageReader_warning_javaElementDoesNotExist, null); 
 			}					
 		}
-		return (IPackageFragment[])packages.toArray(new IPackageFragment[packages.size()]);
+		return packages.toArray(new IPackageFragment[packages.size()]);
 	}
 
 	private IType getMainClass(Element element) {

@@ -76,7 +76,7 @@ public final class AddCustomConstructorOperation implements IWorkspaceRunnable {
 	private final IVariableBinding[] fBindings;
 
 	/** The variable binding keys for which a constructor was generated */
-	private final List fCreated= new ArrayList();
+	private final List<IVariableBinding> fCreated= new ArrayList<IVariableBinding>();
 
 	/** The resulting text edit */
 	private TextEdit fEdit= null;

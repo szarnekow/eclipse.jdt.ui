@@ -321,14 +321,14 @@ public class PromoteTempToFieldRefactoring extends Refactoring {
 		final AbstractTypeDeclaration type= getEnclosingType();
 		if (type instanceof TypeDeclaration) {
 			FieldDeclaration[] fields= ((TypeDeclaration) type).getFields();
-			List result= new ArrayList(fields.length);
+			List<String> result= new ArrayList<String>(fields.length);
 			for (int i= 0; i < fields.length; i++) {
-				for (Iterator iter= fields[i].fragments().iterator(); iter.hasNext();) {
+				for (Iterator<ASTNode> iter= fields[i].fragments().iterator(); iter.hasNext();) {
 					VariableDeclarationFragment field= (VariableDeclarationFragment) iter.next();
 					result.add(field.getName().getIdentifier());
 				}
 			}
-			return (String[]) result.toArray(new String[result.size()]);
+			return result.toArray(new String[result.size()]);
 		}
 		return new String[] {};
 	}
@@ -424,7 +424,7 @@ public class PromoteTempToFieldRefactoring extends Refactoring {
 					}
 				};
 				method.accept(nameCollector);
-				List names= nameCollector.getNames();
+				List<String> names= nameCollector.getNames();
 				if (names.contains(fFieldName)) {
 					String[] keys= { fFieldName, BindingLabels.getFullyQualified(method.resolveBinding())};
 					String msg= Messages.format(RefactoringCoreMessages.PromoteTempToFieldRefactoring_Name_conflict, keys); 
@@ -464,13 +464,13 @@ public class PromoteTempToFieldRefactoring extends Refactoring {
     
     private FieldDeclaration[] getFieldDeclarations(ChildListPropertyDescriptor descriptor) {
     	final List bodyDeclarations= (List) getMethodDeclaration().getParent().getStructuralProperty(descriptor);
-    	List fields= new ArrayList(1);
+    	List<Object> fields= new ArrayList<Object>(1);
     	for (Iterator iter= bodyDeclarations.iterator(); iter.hasNext();) {
 	        Object each= iter.next();
 	        if (each instanceof FieldDeclaration)
 	        	fields.add(each);
         }
-        return (FieldDeclaration[]) fields.toArray(new FieldDeclaration[fields.size()]);
+        return fields.toArray(new FieldDeclaration[fields.size()]);
     }
 
     /*
@@ -551,7 +551,7 @@ public class PromoteTempToFieldRefactoring extends Refactoring {
 	}
 
 	private int computeInsertIndexForNewConstructor(AbstractTypeDeclaration declaration) {
-    	List declarations= declaration.bodyDeclarations();
+    	List<ASTNode> declarations= declaration.bodyDeclarations();
     	if (declarations.isEmpty())
 	        return 0;
 		int index= findFirstMethodIndex(declaration);
@@ -579,7 +579,7 @@ public class PromoteTempToFieldRefactoring extends Refactoring {
     	Assert.isTrue(constructor.isConstructor());
         if (constructor.getBody() == null)
         	return false;
-        List statements= constructor.getBody().statements();
+        List<ASTNode> statements= constructor.getBody().statements();
         if (statements == null) 
         	return false;
         if (statements.size() > 0 && statements.get(0) instanceof ConstructorInvocation)
@@ -590,13 +590,13 @@ public class PromoteTempToFieldRefactoring extends Refactoring {
     private static MethodDeclaration[] getAllConstructors(AbstractTypeDeclaration typeDeclaration) {
 		if (typeDeclaration instanceof TypeDeclaration) {
 			MethodDeclaration[] allMethods= ((TypeDeclaration) typeDeclaration).getMethods();
-			List result= new ArrayList(Math.min(allMethods.length, 1));
+			List<MethodDeclaration> result= new ArrayList<MethodDeclaration>(Math.min(allMethods.length, 1));
 			for (int i= 0; i < allMethods.length; i++) {
 				MethodDeclaration declaration= allMethods[i];
 				if (declaration.isConstructor())
 					result.add(declaration);
 			}
-			return (MethodDeclaration[]) result.toArray(new MethodDeclaration[result.size()]);
+			return result.toArray(new MethodDeclaration[result.size()]);
 		}
 		return new MethodDeclaration[] {};
 	}
@@ -618,7 +618,7 @@ public class PromoteTempToFieldRefactoring extends Refactoring {
     	Block block= (Block)tempDeclarationStatement.getParent();//XXX can it be anything else?
     	int statementIndex= block.statements().indexOf(tempDeclarationStatement);
    	   	Assert.isTrue(statementIndex != -1);
-    	List fragments= tempDeclarationStatement.fragments();
+    	List<ASTNode> fragments= tempDeclarationStatement.fragments();
         int fragmentIndex= fragments.indexOf(fTempDeclarationNode);
     	Assert.isTrue(fragmentIndex != -1);
 
@@ -638,11 +638,11 @@ public class PromoteTempToFieldRefactoring extends Refactoring {
         	VariableDeclarationStatement statement= getAST().newVariableDeclarationStatement(copyfirstFragmentAfter);
          	Type type= (Type)rewrite.createCopyTarget(tempDeclarationStatement.getType());
         	statement.setType(type);
-        	List modifiers= tempDeclarationStatement.modifiers();
+        	List<ASTNode> modifiers= tempDeclarationStatement.modifiers();
         	if (modifiers.size() > 0) {
         		ListRewrite modifiersRewrite= rewrite.getListRewrite(tempDeclarationStatement, VariableDeclarationStatement.MODIFIERS2_PROPERTY);
-        		ASTNode firstModifier= (ASTNode) modifiers.get(0);
-				ASTNode lastModifier= (ASTNode) modifiers.get(modifiers.size() - 1);
+        		ASTNode firstModifier= modifiers.get(0);
+				ASTNode lastModifier= modifiers.get(modifiers.size() - 1);
 				ASTNode modifiersCopy= modifiersRewrite.createCopyTarget(firstModifier, lastModifier);
 	        	statement.modifiers().add(modifiersCopy);
         	}
@@ -673,7 +673,7 @@ public class PromoteTempToFieldRefactoring extends Refactoring {
 
     private void addLocalDeclarationRemoval(ASTRewrite rewrite) {
 		VariableDeclarationStatement tempDeclarationStatement= getTempDeclarationStatement();
-    	List fragments= tempDeclarationStatement.fragments();
+    	List<ASTNode> fragments= tempDeclarationStatement.fragments();
 
     	int fragmentIndex= fragments.indexOf(fTempDeclarationNode);
     	Assert.isTrue(fragmentIndex != -1);
@@ -729,14 +729,14 @@ public class PromoteTempToFieldRefactoring extends Refactoring {
     }
 
     private static class LocalTypeAndVariableUsageAnalyzer extends HierarchicalASTVisitor{
-    	private final List fLocalDefinitions= new ArrayList(0); // List of IBinding (Variable and Type)
-    	private final List fLocalReferencesToEnclosing= new ArrayList(0); // List of ASTNodes
-		private final List fMethodTypeVariables;
+    	private final List<IBinding> fLocalDefinitions= new ArrayList<IBinding>(0); // List of IBinding (Variable and Type)
+    	private final List<SimpleName> fLocalReferencesToEnclosing= new ArrayList<SimpleName>(0); // List of ASTNodes
+		private final List<ITypeBinding> fMethodTypeVariables;
 		private boolean fClassTypeVariablesUsed= false;
     	public LocalTypeAndVariableUsageAnalyzer(ITypeBinding[] methodTypeVariables) {
 			fMethodTypeVariables= Arrays.asList(methodTypeVariables);
 		}
-		public List getUsageOfEnclosingNodes(){
+		public List<SimpleName> getUsageOfEnclosingNodes(){
 			return fLocalReferencesToEnclosing;
 		}
 		public boolean getClassTypeVariablesUsed() {

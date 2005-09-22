@@ -248,7 +248,7 @@ public class OutputLocationDialog extends StatusDialog {
 		IWorkspaceRoot root= fCurrProject.getWorkspace().getRoot();
 		final Class[] acceptedClasses= new Class[] { IProject.class, IFolder.class };
 		IProject[] allProjects= root.getProjects();
-		ArrayList rejectedElements= new ArrayList(allProjects.length);
+		ArrayList<IProject> rejectedElements= new ArrayList<IProject>(allProjects.length);
 		for (int i= 0; i < allProjects.length; i++) {
 			if (!allProjects[i].equals(fCurrProject)) {
 				rejectedElements.add(allProjects[i]);

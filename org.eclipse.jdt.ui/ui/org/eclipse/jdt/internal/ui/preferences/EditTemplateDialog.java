@@ -143,8 +143,8 @@ public class EditTemplateDialog extends StatusDialog {
 
 	private StatusInfo fValidationStatus;
 	private boolean fSuppressError= true; // #4354	
-	private Map fGlobalActions= new HashMap(10);
-	private List fSelectionActions = new ArrayList(3);	
+	private Map<String, TextViewerAction> fGlobalActions= new HashMap<String, TextViewerAction>(10);
+	private List<String> fSelectionActions = new ArrayList<String>(3);	
 	private String[][] fContextTypes;
 	
 	private ContextTypeRegistry fContextTypeRegistry; 
@@ -175,7 +175,7 @@ public class EditTemplateDialog extends StatusDialog {
 		
 		String delim= new Document().getLegalLineDelimiters()[0];
 		
-		List contexts= new ArrayList();
+		List<String[]> contexts= new ArrayList<String[]>();
 		for (Iterator it= registry.contextTypes(); it.hasNext();) {
 			TemplateContextType type= (TemplateContextType) it.next();
 			if (type.getId().equals("javadoc")) //$NON-NLS-1$
@@ -183,7 +183,7 @@ public class EditTemplateDialog extends StatusDialog {
 			else
 				contexts.add(0, new String[] { type.getId(), type.getName(), "" }); //$NON-NLS-1$
 		}
-		fContextTypes= (String[][]) contexts.toArray(new String[contexts.size()][]);
+		fContextTypes= contexts.toArray(new String[contexts.size()][]);
 				
 		fValidationStatus= new StatusInfo();
 		
@@ -508,32 +508,32 @@ public class EditTemplateDialog extends StatusDialog {
 
 	private void fillContextMenu(IMenuManager menu) {
 		menu.add(new GroupMarker(ITextEditorActionConstants.GROUP_UNDO));
-		menu.appendToGroup(ITextEditorActionConstants.GROUP_UNDO, (IAction) fGlobalActions.get(ITextEditorActionConstants.UNDO));
+		menu.appendToGroup(ITextEditorActionConstants.GROUP_UNDO, fGlobalActions.get(ITextEditorActionConstants.UNDO));
 		
 		menu.add(new Separator(ITextEditorActionConstants.GROUP_EDIT));		
-		menu.appendToGroup(ITextEditorActionConstants.GROUP_EDIT, (IAction) fGlobalActions.get(ITextEditorActionConstants.CUT));
-		menu.appendToGroup(ITextEditorActionConstants.GROUP_EDIT, (IAction) fGlobalActions.get(ITextEditorActionConstants.COPY));
-		menu.appendToGroup(ITextEditorActionConstants.GROUP_EDIT, (IAction) fGlobalActions.get(ITextEditorActionConstants.PASTE));
-		menu.appendToGroup(ITextEditorActionConstants.GROUP_EDIT, (IAction) fGlobalActions.get(ITextEditorActionConstants.SELECT_ALL));
+		menu.appendToGroup(ITextEditorActionConstants.GROUP_EDIT, fGlobalActions.get(ITextEditorActionConstants.CUT));
+		menu.appendToGroup(ITextEditorActionConstants.GROUP_EDIT, fGlobalActions.get(ITextEditorActionConstants.COPY));
+		menu.appendToGroup(ITextEditorActionConstants.GROUP_EDIT, fGlobalActions.get(ITextEditorActionConstants.PASTE));
+		menu.appendToGroup(ITextEditorActionConstants.GROUP_EDIT, fGlobalActions.get(ITextEditorActionConstants.SELECT_ALL));
 
 		menu.add(new Separator(IContextMenuConstants.GROUP_GENERATE));
-		menu.appendToGroup(IContextMenuConstants.GROUP_GENERATE, (IAction) fGlobalActions.get("ContentAssistProposal")); //$NON-NLS-1$
+		menu.appendToGroup(IContextMenuConstants.GROUP_GENERATE, fGlobalActions.get("ContentAssistProposal")); //$NON-NLS-1$
 	}
 
 	protected void updateSelectionDependentActions() {
-		Iterator iterator= fSelectionActions.iterator();
+		Iterator<String> iterator= fSelectionActions.iterator();
 		while (iterator.hasNext())
-			updateAction((String)iterator.next());		
+			updateAction(iterator.next());		
 	}
 
 	protected void updateUndoAction() {
-		IAction action= (IAction) fGlobalActions.get(ITextEditorActionConstants.UNDO);
+		IAction action= fGlobalActions.get(ITextEditorActionConstants.UNDO);
 		if (action instanceof IUpdate)
 			((IUpdate) action).update();
 	}
 
 	protected void updateAction(String actionId) {
-		IAction action= (IAction) fGlobalActions.get(actionId);
+		IAction action= fGlobalActions.get(actionId);
 		if (action instanceof IUpdate)
 			((IUpdate) action).update();
 	}

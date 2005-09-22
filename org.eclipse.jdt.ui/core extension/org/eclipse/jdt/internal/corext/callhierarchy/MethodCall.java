@@ -19,7 +19,7 @@ import org.eclipse.jdt.core.IMember;
 
 public class MethodCall {
     private IMember fMember;
-    private List fCallLocations;
+    private List<CallLocation> fCallLocations;
 
     /**
      * @param enclosingElement
@@ -31,13 +31,13 @@ public class MethodCall {
     /**
      *
      */
-    public Collection getCallLocations() {
+    public Collection<CallLocation> getCallLocations() {
         return fCallLocations;
     }
 
     public CallLocation getFirstCallLocation() {
         if ((fCallLocations != null) && !fCallLocations.isEmpty()) {
-            return (CallLocation) fCallLocations.get(0);
+            return fCallLocations.get(0);
         } else {
             return null;
         }
@@ -66,7 +66,7 @@ public class MethodCall {
      */
     public void addCallLocation(CallLocation location) {
         if (fCallLocations == null) {
-            fCallLocations = new ArrayList();
+            fCallLocations = new ArrayList<CallLocation>();
         }
 
         fCallLocations.add(location);

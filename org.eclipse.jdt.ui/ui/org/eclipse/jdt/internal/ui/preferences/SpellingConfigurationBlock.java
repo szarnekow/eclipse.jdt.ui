@@ -103,13 +103,13 @@ public class SpellingConfigurationBlock extends OptionsConfigurationBlock {
 	 *                   The list of locales
 	 * @return Array of locale codes for the list
 	 */
-	protected static String[] getDictionaryCodes(final Set locales) {
+	protected static String[] getDictionaryCodes(final Set<Object> locales) {
 
 		int index= 0;
 		Locale locale= null;
 
 		final String[] codes= new String[locales.size()];
-		for (final Iterator iterator= locales.iterator(); iterator.hasNext();) {
+		for (final Iterator<Object> iterator= locales.iterator(); iterator.hasNext();) {
 
 			locale= (Locale)iterator.next();
 			codes[index++]= locale.toString();
@@ -124,13 +124,13 @@ public class SpellingConfigurationBlock extends OptionsConfigurationBlock {
 	 *                   The list of locales
 	 * @return Array of display labels for the list
 	 */
-	protected static String[] getDictionaryLabels(final Set locales) {
+	protected static String[] getDictionaryLabels(final Set<Object> locales) {
 
 		int index= 0;
 		Locale locale= null;
 
 		final String[] labels= new String[locales.size()];
-		for (final Iterator iterator= locales.iterator(); iterator.hasNext();) {
+		for (final Iterator<Object> iterator= locales.iterator(); iterator.hasNext();) {
 
 			locale= (Locale)iterator.next();
 			labels[index++]= locale.getDisplayName();
@@ -170,10 +170,10 @@ public class SpellingConfigurationBlock extends OptionsConfigurationBlock {
 	protected static IStatus validateLocale(final String locale) {
 
 		final StatusInfo status= new StatusInfo(IStatus.ERROR, PreferencesMessages.SpellingPreferencePage_locale_error); 
-		final Set locales= SpellCheckEngine.getAvailableLocales();
+		final Set<Object> locales= SpellCheckEngine.getAvailableLocales();
 
 		Locale current= null;
-		for (final Iterator iterator= locales.iterator(); iterator.hasNext();) {
+		for (final Iterator<Object> iterator= locales.iterator(); iterator.hasNext();) {
 
 			current= (Locale)iterator.next();
 			if (current.toString().equals(locale))
@@ -283,7 +283,7 @@ public class SpellingConfigurationBlock extends OptionsConfigurationBlock {
 		Composite composite= new Composite(parent, SWT.NONE);
 		composite.setLayout(new GridLayout());
 
-		List allControls= new ArrayList();
+		List<Control> allControls= new ArrayList<Control>();
 		final PixelConverter converter= new PixelConverter(parent);
 
 		final String[] trueFalse= new String[] { IPreferenceStore.TRUE, IPreferenceStore.FALSE };
@@ -321,7 +321,7 @@ public class SpellingConfigurationBlock extends OptionsConfigurationBlock {
 		allControls.add(engine);
 
 		label= PreferencesMessages.SpellingPreferencePage_dictionary_label; 
-		final Set locales= SpellCheckEngine.getAvailableLocales();
+		final Set<Object> locales= SpellCheckEngine.getAvailableLocales();
 
 		Combo combo= addComboBox(engine, label, PREF_SPELLING_LOCALE, getDictionaryCodes(locales), getDictionaryLabels(locales), 0);
 		combo.setEnabled(locales.size() > 1);
@@ -370,7 +370,7 @@ public class SpellingConfigurationBlock extends OptionsConfigurationBlock {
 		button= addCheckBox(advanced, label, PREF_SPELLING_ENABLE_CONTENTASSIST, trueFalse, 0);
 		allControls.add(button);
 
-		fAllControls= (Control[]) allControls.toArray(new Control[allControls.size()]);
+		fAllControls= allControls.toArray(new Control[allControls.size()]);
 		
 		PlatformUI.getWorkbench().getHelpSystem().setHelp(composite, IJavaHelpContextIds.JAVA_EDITOR_PREFERENCE_PAGE);
 		return composite;
@@ -439,7 +439,7 @@ public class SpellingConfigurationBlock extends OptionsConfigurationBlock {
 			fEnabledControls= null;
 		}
 		if (!enabled && fEnabledControls == null) {
-			List enabledControls= new ArrayList();
+			List<Control> enabledControls= new ArrayList<Control>();
 			for (int i= fAllControls.length - 1; i >= 0; i--) {
 				Control control= fAllControls[i];
 				if (control.isEnabled()) {
@@ -447,7 +447,7 @@ public class SpellingConfigurationBlock extends OptionsConfigurationBlock {
 					control.setEnabled(false);
 				}
 			}
-			fEnabledControls= (Control[]) enabledControls.toArray(new Control[enabledControls.size()]);
+			fEnabledControls= enabledControls.toArray(new Control[enabledControls.size()]);
 		}
 	}
 }

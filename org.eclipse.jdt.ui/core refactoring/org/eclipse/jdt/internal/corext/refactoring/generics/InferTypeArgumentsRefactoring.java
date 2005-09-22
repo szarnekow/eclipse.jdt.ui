@@ -146,7 +146,7 @@ public class InferTypeArgumentsRefactoring extends Refactoring {
 	 * @see org.eclipse.ltk.core.refactoring.Refactoring#checkFinalConditions(org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	public RefactoringStatus checkFinalConditions(final IProgressMonitor pm) throws CoreException, OperationCanceledException {
-		HashMap/*<IJavaProject, List<JavaElement>>*/ projectsToElements= getJavaElementsPerProject(fElements);
+		HashMap/*<IJavaProject, List<JavaElement>>*/<IJavaProject, ArrayList<IJavaElement>> projectsToElements= getJavaElementsPerProject(fElements);
 		pm.beginTask("", projectsToElements.size() + 2); //$NON-NLS-1$
 		final RefactoringStatus result= new RefactoringStatus();
 		try {
@@ -158,7 +158,7 @@ public class InferTypeArgumentsRefactoring extends Refactoring {
 				IJavaProject project= (IJavaProject) entry.getKey();
 				List javaElementsList= (List) entry.getValue();
 				IJavaElement[] javaElements= (IJavaElement[]) javaElementsList.toArray(new IJavaElement[javaElementsList.size()]);
-				List cus= Arrays.asList(JavaModelUtil.getAllCompilationUnits(javaElements));
+				List<ICompilationUnit> cus= Arrays.asList(JavaModelUtil.getAllCompilationUnits(javaElements));
 				
 				int batchSize= 150;
 				int batches= ((cus.size()-1) / batchSize) + 1;
@@ -166,8 +166,8 @@ public class InferTypeArgumentsRefactoring extends Refactoring {
 				projectMonitor.beginTask("", batches); //$NON-NLS-1$
 				projectMonitor.setTaskName(RefactoringCoreMessages.InferTypeArgumentsRefactoring_building); 
 				for (int i= 0; i < batches; i++) {
-					List batch= cus.subList(i * batchSize, Math.min(cus.size(), (i + 1) * batchSize));
-					ICompilationUnit[] batchCus= (ICompilationUnit[]) batch.toArray(new ICompilationUnit[batch.size()]);
+					List<ICompilationUnit> batch= cus.subList(i * batchSize, Math.min(cus.size(), (i + 1) * batchSize));
+					ICompilationUnit[] batchCus= batch.toArray(new ICompilationUnit[batch.size()]);
 					final SubProgressMonitor batchMonitor= new SubProgressMonitor(projectMonitor, 1);
 					batchMonitor.subTask(RefactoringCoreMessages.InferTypeArgumentsRefactoring_calculating_dependencies); 
 					
@@ -243,14 +243,14 @@ public class InferTypeArgumentsRefactoring extends Refactoring {
 		fTCModel= null;
 	}
 
-	private HashMap getJavaElementsPerProject(IJavaElement[] elements) {
-		HashMap/*<IJavaProject, List<JavaElement>>*/ result= new HashMap/*<IJavaProject, List<JavaElement>>*/();
+	private HashMap<IJavaProject, ArrayList<IJavaElement>> getJavaElementsPerProject(IJavaElement[] elements) {
+		HashMap/*<IJavaProject, List<JavaElement>>*/<IJavaProject, ArrayList<IJavaElement>> result= new HashMap/*<IJavaProject, List<JavaElement>>*/<IJavaProject, ArrayList<IJavaElement>>();
 		for (int i= 0; i < fElements.length; i++) {
 			IJavaElement element= fElements[i];
 			IJavaProject javaProject= element.getJavaProject();
-			ArrayList javaElements= (ArrayList) result.get(javaProject);
+			ArrayList<IJavaElement> javaElements= result.get(javaProject);
 			if (javaElements == null) {
-				javaElements= new ArrayList();
+				javaElements= new ArrayList<IJavaElement>();
 				result.put(javaProject, javaElements);
 			}
 			javaElements.add(element);
@@ -260,7 +260,7 @@ public class InferTypeArgumentsRefactoring extends Refactoring {
 
 	private RefactoringStatus check15() throws CoreException {
 		RefactoringStatus result= new RefactoringStatus();
-		HashSet/*<IJavaProject>*/ checkedProjects= new HashSet/*<IJavaProject>*/();
+		HashSet/*<IJavaProject>*/<IJavaProject> checkedProjects= new HashSet/*<IJavaProject>*/<IJavaProject>();
 		
 		for (int i= 0; i < fElements.length; i++) {
 			IJavaProject javaProject= fElements[i].getJavaProject();
@@ -279,7 +279,7 @@ public class InferTypeArgumentsRefactoring extends Refactoring {
 	}
 
 	private void rewriteDeclarations(InferTypeArgumentsUpdate update, IProgressMonitor pm) throws CoreException {
-		HashMap/*<ICompilationUnit, CuUpdate>*/ updates= update.getUpdates();
+		HashMap/*<ICompilationUnit, CuUpdate>*/<ICompilationUnit, CuUpdate> updates= update.getUpdates();
 		
 		Set entrySet= updates.entrySet();
 		pm.beginTask("", entrySet.size()); //$NON-NLS-1$
@@ -297,13 +297,13 @@ public class InferTypeArgumentsRefactoring extends Refactoring {
 			rewrite.setResolveBindings(false);
 			CuUpdate cuUpdate= (CuUpdate) entry.getValue();
 			
-			for (Iterator cvIter= cuUpdate.getDeclarations().iterator(); cvIter.hasNext();) {
-				ConstraintVariable2 cv= (ConstraintVariable2) cvIter.next();
+			for (Iterator<CollectionElementVariable2> cvIter= cuUpdate.getDeclarations().iterator(); cvIter.hasNext();) {
+				ConstraintVariable2 cv= cvIter.next();
 				rewriteConstraintVariable(cv, rewrite);
 			}
 			
-			for (Iterator castsIter= cuUpdate.getCastsToRemove().iterator(); castsIter.hasNext();) {
-				CastVariable2 castCv= (CastVariable2) castsIter.next();
+			for (Iterator<CastVariable2> castsIter= cuUpdate.getCastsToRemove().iterator(); castsIter.hasNext();) {
+				CastVariable2 castCv= castsIter.next();
 				rewriteCastVariable(castCv, rewrite);
 			}
 			
@@ -338,7 +338,7 @@ public class InferTypeArgumentsRefactoring extends Refactoring {
 				return;
 			originalType.setProperty(REWRITTEN, REWRITTEN);
 			
-			ArrayList typeArgumentCvs= getTypeArgumentCvs(typeCv);
+			ArrayList<CollectionElementVariable2> typeArgumentCvs= getTypeArgumentCvs(typeCv);
 			Type[] typeArguments= getTypeArguments(originalType, typeArgumentCvs, rewrite);
 			if (typeArguments == null)
 				return;
@@ -356,13 +356,13 @@ public class InferTypeArgumentsRefactoring extends Refactoring {
 	/**
 	 * @return the new type arguments, or <code>null</code> iff an argument could not be infered
 	 */
-	private Type[] getTypeArguments(Type baseType, ArrayList typeArgumentCvs, CompilationUnitRewrite rewrite) {
+	private Type[] getTypeArguments(Type baseType, ArrayList<CollectionElementVariable2> typeArgumentCvs, CompilationUnitRewrite rewrite) {
 		if (typeArgumentCvs.size() == 0)
 			return null;
 		
 		Type[] typeArguments= new Type[typeArgumentCvs.size()];
 		for (int i= 0; i < typeArgumentCvs.size(); i++) {
-			CollectionElementVariable2 elementCv= (CollectionElementVariable2) typeArgumentCvs.get(i);
+			CollectionElementVariable2 elementCv= typeArgumentCvs.get(i);
 			Type typeArgument;
 			TType chosenType= InferTypeArgumentsConstraintsSolver.getChosenType(elementCv);
 			if (chosenType != null) {
@@ -372,7 +372,7 @@ public class InferTypeArgumentsRefactoring extends Refactoring {
 					chosenType= chosenType.getTypeDeclaration();
 				BindingKey bindingKey= new BindingKey(chosenType.getBindingKey());
 				typeArgument= rewrite.getImportRewrite().addImportFromSignature(bindingKey.internalToSignature(), rewrite.getAST());
-				ArrayList nestedTypeArgumentCvs= getTypeArgumentCvs(elementCv);
+				ArrayList<CollectionElementVariable2> nestedTypeArgumentCvs= getTypeArgumentCvs(elementCv);
 				Type[] nestedTypeArguments= getTypeArguments(typeArgument, nestedTypeArgumentCvs, rewrite); //recursion
 				if (nestedTypeArguments != null) {
 					ParameterizedType parameterizedType= rewrite.getAST().newParameterizedType(typeArgument);
@@ -410,10 +410,10 @@ public class InferTypeArgumentsRefactoring extends Refactoring {
 		return typeArguments;
 	}
 
-	private ArrayList/*<CollectionElementVariable2>*/ getTypeArgumentCvs(ConstraintVariable2 baseCv) {
+	private ArrayList/*<CollectionElementVariable2>*/<CollectionElementVariable2> getTypeArgumentCvs(ConstraintVariable2 baseCv) {
 		Map elementCvs= fTCModel.getElementVariables(baseCv);
-		ArrayList typeArgumentCvs= new ArrayList();
-		for (Iterator iter= elementCvs.values().iterator(); iter.hasNext();) {
+		ArrayList<CollectionElementVariable2> typeArgumentCvs= new ArrayList<CollectionElementVariable2>();
+		for (Iterator<Object> iter= elementCvs.values().iterator(); iter.hasNext();) {
 			CollectionElementVariable2 elementCv= (CollectionElementVariable2) iter.next();
 			int index= elementCv.getDeclarationTypeVariableIndex();
 			if (index != CollectionElementVariable2.NOT_DECLARED_TYPE_VARIABLE_INDEX) {

@@ -181,7 +181,7 @@ public class ClassFileDocumentProvider extends FileDocumentProvider {
 	}
 
 	/** Input change listeners. */
-	private List fInputListeners= new ArrayList();
+	private List<InputChangeListener> fInputListeners= new ArrayList<InputChangeListener>();
 
 	/**
 	 * Creates a new document provider.
@@ -337,9 +337,9 @@ public class ClassFileDocumentProvider extends FileDocumentProvider {
 	 * Fires input changes to input change listeners.
 	 */
 	protected void fireInputChanged(IClassFileEditorInput input) {
-		List list= new ArrayList(fInputListeners);
-		for (Iterator i = list.iterator(); i.hasNext();)
-			((InputChangeListener) i.next()).inputChanged(input);
+		List<InputChangeListener> list= new ArrayList<InputChangeListener>(fInputListeners);
+		for (Iterator<InputChangeListener> i = list.iterator(); i.hasNext();)
+			i.next().inputChanged(input);
 	}
 
 	/**

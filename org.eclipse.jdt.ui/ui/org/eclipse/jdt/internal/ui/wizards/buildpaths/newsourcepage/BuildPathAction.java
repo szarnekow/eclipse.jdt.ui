@@ -297,7 +297,7 @@ public class BuildPathAction extends Action implements IClasspathInformationProv
 			return;
 
 		// get all the view and editor parts
-		List parts= new ArrayList();
+		List<IWorkbenchPart> parts= new ArrayList<IWorkbenchPart>();
 		IWorkbenchPartReference refs[]= page.getViewReferences();
 		for (int i= 0; i < refs.length; i++) {
 			IWorkbenchPart part= refs[i].getPart(false);
@@ -310,9 +310,9 @@ public class BuildPathAction extends Action implements IClasspathInformationProv
 				parts.add(refs[i].getPart(false));
 		}
 
-		Iterator itr= parts.iterator();
+		Iterator<IWorkbenchPart> itr= parts.iterator();
 		while (itr.hasNext()) {
-			IWorkbenchPart part= (IWorkbenchPart) itr.next();
+			IWorkbenchPart part= itr.next();
 
 			// get the part's ISetSelectionTarget implementation
 			ISetSelectionTarget target= null;

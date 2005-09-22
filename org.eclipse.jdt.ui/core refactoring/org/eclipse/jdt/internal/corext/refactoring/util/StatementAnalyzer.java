@@ -153,7 +153,7 @@ public class StatementAnalyzer extends SelectionAnalyzer {
 	public void endVisit(SwitchStatement node) {
 		ASTNode[] selectedNodes= getSelectedNodes();
 		if (doAfterValidation(node, selectedNodes)) {
-			List cases= getSwitchCases(node);
+			List<Object> cases= getSwitchCases(node);
 			for (int i= 0; i < selectedNodes.length; i++) {
 				ASTNode topNode= selectedNodes[i];
 				if (cases.contains(topNode)) {
@@ -187,9 +187,9 @@ public class StatementAnalyzer extends SelectionAnalyzer {
 			if (firstSelectedNode == node.getBody() || firstSelectedNode == node.getFinally()) {
 				invalidSelection(RefactoringCoreMessages.StatementAnalyzer_try_statement); 
 			} else {
-				List catchClauses= node.catchClauses();
-				for (Iterator iterator= catchClauses.iterator(); iterator.hasNext();) {
-					CatchClause element= (CatchClause)iterator.next();
+				List<CatchClause> catchClauses= node.catchClauses();
+				for (Iterator<CatchClause> iterator= catchClauses.iterator(); iterator.hasNext();) {
+					CatchClause element= iterator.next();
 					if (element == firstSelectedNode || element.getBody() == firstSelectedNode) {
 						invalidSelection(RefactoringCoreMessages.StatementAnalyzer_try_statement); 
 					} else if (element.getException() == firstSelectedNode) {
@@ -228,8 +228,8 @@ public class StatementAnalyzer extends SelectionAnalyzer {
 		reset();
 	}
 	
-	private static List getSwitchCases(SwitchStatement node) {
-		List result= new ArrayList();
+	private static List<Object> getSwitchCases(SwitchStatement node) {
+		List<Object> result= new ArrayList<Object>();
 		for (Iterator iter= node.statements().iterator(); iter.hasNext(); ) {
 			Object element= iter.next();
 			if (element instanceof SwitchCase)
@@ -246,7 +246,7 @@ public class StatementAnalyzer extends SelectionAnalyzer {
 		return false;
 	}	
 	
-	protected static boolean contains(ASTNode[] nodes, List list) {
+	protected static boolean contains(ASTNode[] nodes, List<ASTNode> list) {
 		for (int i = 0; i < nodes.length; i++) {
 			if (list.contains(nodes[i]))
 				return true;

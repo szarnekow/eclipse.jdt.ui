@@ -50,7 +50,7 @@ public final class ParameterizedType extends HierarchyType {
 	}
 	
 	public TType[] getTypeArguments() {
-		return (TType[]) fTypeArguments.clone();
+		return fTypeArguments.clone();
 	}
 	
 	public boolean doEquals(TType type) {

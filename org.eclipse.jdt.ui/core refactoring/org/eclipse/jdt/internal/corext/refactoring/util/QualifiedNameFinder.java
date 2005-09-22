@@ -103,10 +103,10 @@ public class QualifiedNameFinder {
 	}
 	
 	private static SearchScope createScope(String filePatterns, IProject root) {
-		HashSet res= new HashSet();
+		HashSet<IProject> res= new HashSet<IProject>();
 		res.add(root);
 		addReferencingProjects(root, res);
-		IResource[] resArr= (IResource[]) res.toArray(new IResource[res.size()]);
+		IResource[] resArr= res.toArray(new IResource[res.size()]);
 		
 		SearchScope result= SearchScope.newSearchScope("", resArr); //$NON-NLS-1$
 		addFilePatterns(filePatterns, result);
@@ -120,7 +120,7 @@ public class QualifiedNameFinder {
 		}
 	}
 	
-	private static void addReferencingProjects(IProject root, Set res) {
+	private static void addReferencingProjects(IProject root, Set<IProject> res) {
 		IProject[] projects= root.getReferencingProjects();
 		for (int i= 0; i < projects.length; i++) {
 			IProject project= projects[i];

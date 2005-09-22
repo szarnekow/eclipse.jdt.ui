@@ -83,9 +83,9 @@ public class BasicEditorActionContributor extends BasicJavaEditorActionContribut
 			editMenu.appendToGroup(IContextMenuConstants.GROUP_GENERATE, caMenu);
 			
 			caMenu.add(fRetargetContentAssist);
-			Collection descriptors= CompletionProposalComputerRegistry.getDefault().getProposalCategories();
-			for (Iterator it= descriptors.iterator(); it.hasNext();) {
-				final CompletionProposalCategory cat= (CompletionProposalCategory) it.next();
+			Collection<CompletionProposalCategory> descriptors= CompletionProposalComputerRegistry.getDefault().getProposalCategories();
+			for (Iterator<CompletionProposalCategory> it= descriptors.iterator(); it.hasNext();) {
+				final CompletionProposalCategory cat= it.next();
 				if (cat.isSeparateCommand() && cat.hasComputers()) {
 					IAction caAction= new SpecificContentAssistAction(cat);
 					caMenu.add(caAction);

@@ -484,7 +484,7 @@ public class JavaSourceViewerConfiguration extends TextSourceViewerConfiguration
 	 */
 	public String[] getIndentPrefixes(ISourceViewer sourceViewer, String contentType) {
 
-		Vector vector= new Vector();
+		Vector<String> vector= new Vector<String>();
 
 		// prefix[0] is either '\t' or ' ' x tabWidth, depending on useSpaces
 
@@ -520,7 +520,7 @@ public class JavaSourceViewerConfiguration extends TextSourceViewerConfiguration
 
 		vector.add(""); //$NON-NLS-1$
 
-		return (String[]) vector.toArray(new String[vector.size()]);
+		return vector.toArray(new String[vector.size()]);
 	}
 
 	private IJavaProject getProject() {

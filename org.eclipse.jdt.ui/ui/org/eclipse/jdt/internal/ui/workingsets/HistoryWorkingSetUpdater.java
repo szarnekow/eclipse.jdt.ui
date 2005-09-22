@@ -79,13 +79,13 @@ public class HistoryWorkingSetUpdater implements IWorkingSetUpdater {
 	}
 	
 	private IWorkingSet fWorkingSet;
-	private Set fOpenFiles;
+	private Set<IAdaptable> fOpenFiles;
 	private Tracker fTracker;
 	private IElementChangedListener fJavaListener;
 	private int fMaxElements= 15;
 	
 	public HistoryWorkingSetUpdater() {
-		fOpenFiles= new HashSet();
+		fOpenFiles= new HashSet<IAdaptable>();
 		initListeners();
 	}
 	
@@ -226,14 +226,14 @@ public class HistoryWorkingSetUpdater implements IWorkingSetUpdater {
 	
 	private void elementRemoved(IAdaptable element) {
 		fOpenFiles.remove(element);
-		List elements= getElements();
+		List<IAdaptable> elements= getElements();
 		if (elements.remove(element)) {
 			setElements(elements);
 		}
 	}
 	
 	private void elementMoved(IAdaptable oldElement, IAdaptable newElement) {
-		List elements= getElements();
+		List<IAdaptable> elements= getElements();
 		int index= elements.indexOf(oldElement);
 		if (index == -1)
 			return;
@@ -245,10 +245,10 @@ public class HistoryWorkingSetUpdater implements IWorkingSetUpdater {
 	
 	private void projectClosed(IJavaProject jProject) {
 		IProject project= jProject.getProject();
-		List elements= getElements();
+		List<IAdaptable> elements= getElements();
 		int removed= 0;
-		for (Iterator iter= elements.iterator(); iter.hasNext();) {
-			IAdaptable element= (IAdaptable)iter.next();
+		for (Iterator<IAdaptable> iter= elements.iterator(); iter.hasNext();) {
+			IAdaptable element= iter.next();
 			IProject container= getProject(element);
 			if (project.equals(container)) {
 				iter.remove();
@@ -270,7 +270,7 @@ public class HistoryWorkingSetUpdater implements IWorkingSetUpdater {
 	}
 	
 	private void updateHistory(IAdaptable element) {
-		List elements= getElements();
+		List<IAdaptable> elements= getElements();
 		int index= elements.indexOf(element);
 		if (index != -1) {
 			elements.remove(index);
@@ -284,11 +284,11 @@ public class HistoryWorkingSetUpdater implements IWorkingSetUpdater {
 		setElements(elements);
 	}
 
-	private List getElements() {
-		return new ArrayList(Arrays.asList(fWorkingSet.getElements()));
+	private List<IAdaptable> getElements() {
+		return new ArrayList<IAdaptable>(Arrays.asList(fWorkingSet.getElements()));
 	}
 
-	private void setElements(List elements) {
-		fWorkingSet.setElements((IAdaptable[])elements.toArray(new IAdaptable[elements.size()]));
+	private void setElements(List<IAdaptable> elements) {
+		fWorkingSet.setElements(elements.toArray(new IAdaptable[elements.size()]));
 	}
 }

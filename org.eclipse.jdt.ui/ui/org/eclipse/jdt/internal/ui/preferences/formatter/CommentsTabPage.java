@@ -33,13 +33,13 @@ public class CommentsTabPage extends ModifyDialogTabPage {
 	
 	private final static class Controller implements Observer {
 		
-		private final Collection fMasters;
-		private final Collection fSlaves;
+		private final Collection<Object> fMasters;
+		private final Collection<Object> fSlaves;
 		
-		public Controller(Collection masters, Collection slaves) {
+		public Controller(Collection<Object> masters, Collection<Object> slaves) {
 			fMasters= masters;
 			fSlaves= slaves;
-			for (final Iterator iter= fMasters.iterator(); iter.hasNext();) {
+			for (final Iterator<Object> iter= fMasters.iterator(); iter.hasNext();) {
 			    ((CheckboxPreference)iter.next()).addObserver(this);
 			}
 			update(null, null);
@@ -48,11 +48,11 @@ public class CommentsTabPage extends ModifyDialogTabPage {
 		public void update(Observable o, Object arg) {
 		    boolean enabled= true; 
 
-		    for (final Iterator iter= fMasters.iterator(); iter.hasNext();) {
+		    for (final Iterator<Object> iter= fMasters.iterator(); iter.hasNext();) {
 		        enabled &= ((CheckboxPreference)iter.next()).getChecked();
 		    }
 
-			for (final Iterator iter = fSlaves.iterator(); iter.hasNext();) {
+			for (final Iterator<Object> iter = fSlaves.iterator(); iter.hasNext();) {
 			    final Object obj= iter.next();
 			    if (obj instanceof Preference) {
 			        ((Preference)obj).setEnabled(enabled);
@@ -117,12 +117,12 @@ public class CommentsTabPage extends ModifyDialogTabPage {
 		final Group widthGroup= createGroup(numColumns, composite, FormatterMessages.CommentsTabPage_group3_title); 
 		final NumberPreference lineWidth= createNumberPref(widthGroup, numColumns, FormatterMessages.CommentsTabPage_line_width, DefaultCodeFormatterConstants.FORMATTER_COMMENT_LINE_LENGTH, 0, 9999); 
 
-		Collection masters, slaves;
+		Collection<Object> masters, slaves;
 
-		masters= new ArrayList();
+		masters= new ArrayList<Object>();
 		masters.add(global);
 		
-		slaves= new ArrayList();
+		slaves= new ArrayList<Object>();
 		slaves.add(settingsGroup);
 		slaves.add(header);
 		slaves.add(html);
@@ -135,11 +135,11 @@ public class CommentsTabPage extends ModifyDialogTabPage {
 		
 		new Controller(masters, slaves);
 		
-		masters= new ArrayList();
+		masters= new ArrayList<Object>();
 		masters.add(global);
 		masters.add(indentJavadoc);
 		
-		slaves= new ArrayList();
+		slaves= new ArrayList<Object>();
 		slaves.add(indentDesc);
 		
 		new Controller(masters, slaves);

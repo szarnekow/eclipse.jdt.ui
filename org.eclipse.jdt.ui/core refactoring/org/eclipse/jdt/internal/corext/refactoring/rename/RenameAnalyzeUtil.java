@@ -178,7 +178,7 @@ class RenameAnalyzeUtil {
 			SearchResultGroup[] oldReferences, SearchResultGroup[] newReferences, String newElementName) {
 		RefactoringStatus result= new RefactoringStatus();
 		
-		HashMap cuToNewResults= new HashMap(newReferences.length);
+		HashMap<ICompilationUnit, SearchMatch[]> cuToNewResults= new HashMap<ICompilationUnit, SearchMatch[]>(newReferences.length);
 		for (int i1= 0; i1 < newReferences.length; i1++) {
 			ICompilationUnit cu= newReferences[i1].getCompilationUnit();
 			if (cu != null)
@@ -192,7 +192,7 @@ class RenameAnalyzeUtil {
 			if (cu == null)
 				continue;
 			
-			SearchMatch[] newSearchMatches= (SearchMatch[]) cuToNewResults.remove(cu);
+			SearchMatch[] newSearchMatches= cuToNewResults.remove(cu);
 			if (newSearchMatches == null) {
 				for (int j = 0; j < oldMatches.length; j++) {
 					SearchMatch oldMatch = oldMatches[j];
@@ -217,29 +217,29 @@ class RenameAnalyzeUtil {
 
 	private static void analyzeChanges(ICompilationUnit cu, TextChange change,
 			SearchMatch[] oldMatches, SearchMatch[] newMatches, String newElementName, RefactoringStatus result) {
-		Map updatedOldOffsets= getUpdatedChangeOffsets(change, oldMatches);
+		Map<Integer, SearchMatch> updatedOldOffsets= getUpdatedChangeOffsets(change, oldMatches);
 		for (int i= 0; i < newMatches.length; i++) {
 			SearchMatch newMatch= newMatches[i];
 			Integer offsetInNew= new Integer(newMatch.getOffset());
-			SearchMatch oldMatch= (SearchMatch) updatedOldOffsets.remove(offsetInNew);
+			SearchMatch oldMatch= updatedOldOffsets.remove(offsetInNew);
 			if (oldMatch == null) {
 				addReferenceShadowedError(cu, newMatch, newElementName, result);
 			}
 		}
-		for (Iterator iter= updatedOldOffsets.values().iterator(); iter.hasNext();) {
+		for (Iterator<SearchMatch> iter= updatedOldOffsets.values().iterator(); iter.hasNext();) {
 			// remaining old matches are not found any more -> they have been shadowed
-			SearchMatch oldMatch= (SearchMatch) iter.next();
+			SearchMatch oldMatch= iter.next();
 			addShadowsError(cu, oldMatch, result);
 		}
 	}
 	
 	/** @return Map &lt;Integer updatedOffset, SearchMatch oldMatch&gt; */
-	private static Map getUpdatedChangeOffsets(TextChange change, SearchMatch[] oldMatches) {
-		Map/*<Integer updatedOffset, SearchMatch oldMatch>*/ updatedOffsets= new HashMap();
-		Map oldToUpdatedOffsets= getEditChangeOffsetUpdates(change);
+	private static Map<Integer, SearchMatch> getUpdatedChangeOffsets(TextChange change, SearchMatch[] oldMatches) {
+		Map/*<Integer updatedOffset, SearchMatch oldMatch>*/<Integer, SearchMatch> updatedOffsets= new HashMap<Integer, SearchMatch>();
+		Map<Integer, Integer> oldToUpdatedOffsets= getEditChangeOffsetUpdates(change);
 		for (int i= 0; i < oldMatches.length; i++) {
 			SearchMatch oldMatch= oldMatches[i];
-			Integer updatedOffset= (Integer) oldToUpdatedOffsets.get(new Integer(oldMatch.getOffset()));
+			Integer updatedOffset= oldToUpdatedOffsets.get(new Integer(oldMatch.getOffset()));
 			if (updatedOffset == null)
 				updatedOffset= new Integer(-1); //match not updated
 			updatedOffsets.put(updatedOffset, oldMatch);
@@ -248,9 +248,9 @@ class RenameAnalyzeUtil {
 	}
 
 	/** @return Map &lt;Integer oldOffset, Integer updatedOffset&gt; */
-	private static Map getEditChangeOffsetUpdates(TextChange change) {
+	private static Map<Integer, Integer> getEditChangeOffsetUpdates(TextChange change) {
 		TextEditChangeGroup[] editChanges= change.getTextEditChangeGroups();
-		Map/*<oldOffset, newOffset>*/ offsetUpdates= new HashMap(editChanges.length);
+		Map/*<oldOffset, newOffset>*/<Integer, Integer> offsetUpdates= new HashMap<Integer, Integer>(editChanges.length);
 		for (int i= 0; i < editChanges.length; i++) {
 			TextEditChangeGroup editChange= editChanges[i];
 			IRegion oldRegion= editChange.getRegion();

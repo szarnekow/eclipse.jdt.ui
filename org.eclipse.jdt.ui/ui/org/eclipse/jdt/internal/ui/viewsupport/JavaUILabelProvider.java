@@ -36,7 +36,7 @@ public class JavaUILabelProvider implements ILabelProvider, IColorProvider {
 	protected JavaElementImageProvider fImageLabelProvider;
 	protected StorageLabelProvider fStorageLabelProvider;
 	
-	private ArrayList fLabelDecorators;
+	private ArrayList<ILabelDecorator> fLabelDecorators;
 
 	private int fImageFlags;
 	private long fTextFlags;
@@ -66,7 +66,7 @@ public class JavaUILabelProvider implements ILabelProvider, IColorProvider {
 	 */
 	public void addLabelDecorator(ILabelDecorator decorator) {
 		if (fLabelDecorators == null) {
-			fLabelDecorators= new ArrayList(2);
+			fLabelDecorators= new ArrayList<ILabelDecorator>(2);
 		}
 		fLabelDecorators.add(decorator);
 	}
@@ -124,7 +124,7 @@ public class JavaUILabelProvider implements ILabelProvider, IColorProvider {
 	protected Image decorateImage(Image image, Object element) {
 		if (fLabelDecorators != null && image != null) {
 			for (int i= 0; i < fLabelDecorators.size(); i++) {
-				ILabelDecorator decorator= (ILabelDecorator) fLabelDecorators.get(i);
+				ILabelDecorator decorator= fLabelDecorators.get(i);
 				image= decorator.decorateImage(image, element);
 			}
 		}
@@ -146,7 +146,7 @@ public class JavaUILabelProvider implements ILabelProvider, IColorProvider {
 	protected String decorateText(String text, Object element) {
 		if (fLabelDecorators != null && text.length() > 0) {
 			for (int i= 0; i < fLabelDecorators.size(); i++) {
-				ILabelDecorator decorator= (ILabelDecorator) fLabelDecorators.get(i);
+				ILabelDecorator decorator= fLabelDecorators.get(i);
 				text= decorator.decorateText(text, element);
 			}
 		}	
@@ -172,7 +172,7 @@ public class JavaUILabelProvider implements ILabelProvider, IColorProvider {
 	public void dispose() {
 		if (fLabelDecorators != null) {
 			for (int i= 0; i < fLabelDecorators.size(); i++) {
-				ILabelDecorator decorator= (ILabelDecorator) fLabelDecorators.get(i);
+				ILabelDecorator decorator= fLabelDecorators.get(i);
 				decorator.dispose();
 			}
 			fLabelDecorators= null;
@@ -187,7 +187,7 @@ public class JavaUILabelProvider implements ILabelProvider, IColorProvider {
 	public void addListener(ILabelProviderListener listener) {
 		if (fLabelDecorators != null) {
 			for (int i= 0; i < fLabelDecorators.size(); i++) {
-				ILabelDecorator decorator= (ILabelDecorator) fLabelDecorators.get(i);
+				ILabelDecorator decorator= fLabelDecorators.get(i);
 				decorator.addListener(listener);
 			}
 		}
@@ -207,7 +207,7 @@ public class JavaUILabelProvider implements ILabelProvider, IColorProvider {
 	public void removeListener(ILabelProviderListener listener) {
 		if (fLabelDecorators != null) {
 			for (int i= 0; i < fLabelDecorators.size(); i++) {
-				ILabelDecorator decorator= (ILabelDecorator) fLabelDecorators.get(i);
+				ILabelDecorator decorator= fLabelDecorators.get(i);
 				decorator.removeListener(listener);
 			}
 		}

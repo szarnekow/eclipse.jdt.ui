@@ -71,8 +71,8 @@ public class CorrectMainTypeNameProposal extends ASTRewriteCorrectionProposal {
 		return rewrite;
 	}
 
-	private AbstractTypeDeclaration findTypeDeclaration(List types, String name) {
-		for (Iterator iter= types.iterator(); iter.hasNext();) {
+	private AbstractTypeDeclaration findTypeDeclaration(List<ASTNode> types, String name) {
+		for (Iterator<ASTNode> iter= types.iterator(); iter.hasNext();) {
 			AbstractTypeDeclaration decl= (AbstractTypeDeclaration) iter.next();
 			if (name.equals(decl.getName().getIdentifier())) {
 				return decl;

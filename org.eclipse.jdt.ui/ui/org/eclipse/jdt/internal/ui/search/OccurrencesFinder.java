@@ -62,8 +62,8 @@ public class OccurrencesFinder extends ASTVisitor implements IOccurrencesFinder 
 	private CompilationUnit fRoot;
 	private Name fSelectedNode;
 	private IBinding fTarget;
-	private List fUsages= new ArrayList/*<ASTNode>*/();
-	private List fWriteUsages= new ArrayList/*<ASTNode>*/();
+	private List<ASTNode> fUsages= new ArrayList/*<ASTNode>*/<ASTNode>();
+	private List<ASTNode> fWriteUsages= new ArrayList/*<ASTNode>*/<ASTNode>();
 	private boolean fTargetIsStaticMethodImport;
 
 	public OccurrencesFinder(IBinding target) {
@@ -90,24 +90,24 @@ public class OccurrencesFinder extends ASTVisitor implements IOccurrencesFinder 
 		return null;
 	}
 	
-	public List perform() {
+	public List<ASTNode> perform() {
 		fRoot.accept(this);
 		return fUsages;
 	}
 	
-	public void collectOccurrenceMatches(IJavaElement element, IDocument document, Collection resultingMatches) {
+	public void collectOccurrenceMatches(IJavaElement element, IDocument document, Collection<Match> resultingMatches) {
 		boolean isVariable= fTarget instanceof IVariableBinding;
-		HashMap lineToGroup= new HashMap();
+		HashMap<Integer, OccurrencesGroupKey> lineToGroup= new HashMap<Integer, OccurrencesGroupKey>();
 		
-		for (Iterator iter= fUsages.iterator(); iter.hasNext();) {
-			ASTNode node= (ASTNode) iter.next();
+		for (Iterator<ASTNode> iter= fUsages.iterator(); iter.hasNext();) {
+			ASTNode node= iter.next();
 			int startPosition= node.getStartPosition();
 			int length= node.getLength();
 			try {
 				boolean isWriteAccess= fWriteUsages.contains(node);
 				int line= document.getLineOfOffset(startPosition);
 				Integer lineInteger= new Integer(line);
-				OccurrencesGroupKey groupKey= (OccurrencesGroupKey) lineToGroup.get(lineInteger);
+				OccurrencesGroupKey groupKey= lineToGroup.get(lineInteger);
 				if (groupKey == null) {
 					IRegion region= document.getLineInformation(line);
 					String lineContents= document.get(region.getOffset(), region.getLength()).trim();
@@ -235,7 +235,7 @@ public class OccurrencesFinder extends ASTVisitor implements IOccurrencesFinder 
 		return super.visit(node);
 	}
 	
-	private boolean match(Name node, List result, IBinding binding) {
+	private boolean match(Name node, List<ASTNode> result, IBinding binding) {
 		if (binding != null && Bindings.equals(getBindingDeclaration(binding), fTarget)) {
 			result.add(node);
 			return true;
@@ -243,7 +243,7 @@ public class OccurrencesFinder extends ASTVisitor implements IOccurrencesFinder 
 		return false;
 	}
 	
-	private boolean matchStaticImport(Name node, List result, IMethodBinding binding) {
+	private boolean matchStaticImport(Name node, List<ASTNode> result, IMethodBinding binding) {
 		if (binding == null || node == null || !(fTarget instanceof IMethodBinding) || !Modifier.isStatic(binding.getModifiers()))
 			return false;
 		

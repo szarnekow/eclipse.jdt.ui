@@ -134,8 +134,8 @@ public abstract class HierarchyRefactoring extends Refactoring {
 		}
 	}
 
-	protected static boolean areAllFragmentsDeleted(final FieldDeclaration declaration, final List declarationNodes) {
-		for (final Iterator iterator= declaration.fragments().iterator(); iterator.hasNext();) {
+	protected static boolean areAllFragmentsDeleted(final FieldDeclaration declaration, final List<ASTNode> declarationNodes) {
+		for (final Iterator<ASTNode> iterator= declaration.fragments().iterator(); iterator.hasNext();) {
 			if (!declarationNodes.contains(iterator.next()))
 				return false;
 		}
@@ -377,10 +377,10 @@ public abstract class HierarchyRefactoring extends Refactoring {
 		return JavaModelUtil.getFullyQualifiedName(type);
 	}
 
-	protected static void deleteDeclarationNodes(final CompilationUnitRewrite sourceRewriter, final boolean sameCu, final CompilationUnitRewrite unitRewriter, final List members) throws JavaModelException {
-		final List declarationNodes= getDeclarationNodes(unitRewriter.getRoot(), members);
-		for (final Iterator iterator= declarationNodes.iterator(); iterator.hasNext();) {
-			final ASTNode node= (ASTNode) iterator.next();
+	protected static void deleteDeclarationNodes(final CompilationUnitRewrite sourceRewriter, final boolean sameCu, final CompilationUnitRewrite unitRewriter, final List<IMember> members) throws JavaModelException {
+		final List<ASTNode> declarationNodes= getDeclarationNodes(unitRewriter.getRoot(), members);
+		for (final Iterator<ASTNode> iterator= declarationNodes.iterator(); iterator.hasNext();) {
+			final ASTNode node= iterator.next();
 			final ASTRewrite rewriter= unitRewriter.getASTRewrite();
 			final ImportRemover remover= unitRewriter.getImportRemover();
 			if (node instanceof VariableDeclarationFragment) {
@@ -404,10 +404,10 @@ public abstract class HierarchyRefactoring extends Refactoring {
 		}
 	}
 
-	protected static List getDeclarationNodes(final CompilationUnit cuNode, final List members) throws JavaModelException {
-		final List result= new ArrayList(members.size());
-		for (final Iterator iterator= members.iterator(); iterator.hasNext();) {
-			final IMember member= (IMember) iterator.next();
+	protected static List<ASTNode> getDeclarationNodes(final CompilationUnit cuNode, final List<IMember> members) throws JavaModelException {
+		final List<ASTNode> result= new ArrayList<ASTNode>(members.size());
+		for (final Iterator<IMember> iterator= members.iterator(); iterator.hasNext();) {
+			final IMember member= iterator.next();
 			ASTNode node= null;
 			if (member instanceof IField) {
 				if (Flags.isEnum(member.getFlags()))
@@ -438,7 +438,7 @@ public abstract class HierarchyRefactoring extends Refactoring {
 		return Strings.concatenate(lines, StubUtility.getLineDelimiterUsed(declaringCu));
 	}
 
-	protected final Map fCachedMembersReferences= new HashMap(2);
+	protected final Map<IMember, Object[]> fCachedMembersReferences= new HashMap<IMember, Object[]>(2);
 
 	protected IType[] fCachedReferencedTypes;
 
@@ -524,8 +524,8 @@ public abstract class HierarchyRefactoring extends Refactoring {
 	protected IType[] getTypesReferencedInMovedMembers(final IProgressMonitor monitor) throws JavaModelException {
 		if (fCachedReferencedTypes == null) {
 			final IType[] types= ReferenceFinderUtil.getTypesReferencedIn(fMembersToMove, monitor);
-			final List result= new ArrayList(types.length);
-			final List members= Arrays.asList(fMembersToMove);
+			final List<IType> result= new ArrayList<IType>(types.length);
+			final List<IMember> members= Arrays.asList(fMembersToMove);
 			for (int index= 0; index < types.length; index++) {
 				if (!members.contains(types[index]) && types[index] != getDeclaringType())
 					result.add(types[index]);

@@ -38,10 +38,10 @@ public class ConfigureWorkingSetAction extends Action {
 	 * {@inheritDoc}
 	 */
 	public void run() {
-		List workingSets= new ArrayList(Arrays.asList(fWorkingSetModel.getAllWorkingSets()));
+		List<IWorkingSet> workingSets= new ArrayList<IWorkingSet>(Arrays.asList(fWorkingSetModel.getAllWorkingSets()));
 		WorkingSetConfigurationDialog dialog= new WorkingSetConfigurationDialog(
 			fSite.getShell(), 
-			(IWorkingSet[])workingSets.toArray(new IWorkingSet[workingSets.size()])); 
+			workingSets.toArray(new IWorkingSet[workingSets.size()])); 
 		dialog.setSelection(fWorkingSetModel.getActiveWorkingSets());
 		if (dialog.open() == IDialogConstants.OK_ID) {
 			IWorkingSet[] selection= dialog.getSelection();

@@ -55,7 +55,7 @@ public class SpellCheckIterator implements ISpellCheckIterator, IJavaDocTagConst
 	private int fPrevious= 0;
 
 	/** The sentence breaks */
-	private final LinkedList fSentenceBreaks= new LinkedList();
+	private final LinkedList<Integer> fSentenceBreaks= new LinkedList<Integer>();
 
 	/** Does the current word start a sentence? */
 	private boolean fStartsSentence= false;
@@ -266,7 +266,7 @@ public class SpellCheckIterator implements ISpellCheckIterator, IJavaDocTagConst
 	 * @return the next sentence break
 	 */
 	protected final int nextSentence() {
-		return ((Integer) fSentenceBreaks.getFirst()).intValue();
+		return fSentenceBreaks.getFirst().intValue();
 	}
 
 	/**

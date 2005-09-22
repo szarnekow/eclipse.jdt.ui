@@ -25,7 +25,7 @@ class ASTMatchingFragmentFinder extends GenericVisitor {
 	}
 
 	private ASTFragment fFragmentToMatch;
-	private List fMatches= new ArrayList();
+	private List<IASTFragment> fMatches= new ArrayList<IASTFragment>();
 
 	private ASTMatchingFragmentFinder(ASTFragment toMatch) {
 		super(true);
@@ -37,7 +37,7 @@ class ASTMatchingFragmentFinder extends GenericVisitor {
 		return getMatches();
 	}
 	private IASTFragment[] getMatches() {
-		return (IASTFragment[]) fMatches.toArray(new IASTFragment[fMatches.size()]);
+		return fMatches.toArray(new IASTFragment[fMatches.size()]);
 	}
 	
 	public boolean visit(Javadoc node) {

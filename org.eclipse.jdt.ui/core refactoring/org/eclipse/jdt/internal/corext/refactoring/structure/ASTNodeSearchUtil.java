@@ -61,13 +61,13 @@ public class ASTNodeSearchUtil {
 
 	/** misses javadoc nodes */
 	public static ASTNode[] getAstNodes(SearchMatch[] searchResults, CompilationUnit cuNode) {
-		List result= new ArrayList(searchResults.length);
+		List<ASTNode> result= new ArrayList<ASTNode>(searchResults.length);
 		for (int i= 0; i < searchResults.length; i++) {
 			ASTNode node= getAstNode(searchResults[i], cuNode);
 			if (node != null)
 				result.add(node);
 		}
-		return (ASTNode[]) result.toArray(new ASTNode[result.size()]);
+		return result.toArray(new ASTNode[result.size()]);
 	}
 
 	/** misses javadoc nodes */
@@ -179,7 +179,7 @@ public class ASTNodeSearchUtil {
 		return (ClassInstanceCreation) ASTNodes.getParent(getNameNode(iType, cuNode), ClassInstanceCreation.class);
 	}
 	
-	public static List getBodyDeclarationList(IType iType, CompilationUnit cuNode) throws JavaModelException {
+	public static List<ASTNode> getBodyDeclarationList(IType iType, CompilationUnit cuNode) throws JavaModelException {
 		if (iType.isAnonymous())
 			return getClassInstanceCreationNode(iType, cuNode).getAnonymousClassDeclaration().bodyDeclarations();
 		else
@@ -251,13 +251,13 @@ public class ASTNodeSearchUtil {
 	}
 	
 	public static ASTNode[] findNodes(SearchMatch[] searchResults, CompilationUnit cuNode) {
-		List result= new ArrayList(searchResults.length);
+		List<ASTNode> result= new ArrayList<ASTNode>(searchResults.length);
 		for (int i= 0; i < searchResults.length; i++) {
 			ASTNode node= findNode(searchResults[i], cuNode);
 			if (node != null)
 				result.add(node);
 		}
-		return (ASTNode[]) result.toArray(new ASTNode[result.size()]);
+		return result.toArray(new ASTNode[result.size()]);
 	}
 
 	public static ASTNode findNode(SearchMatch searchResult, CompilationUnit cuNode) {

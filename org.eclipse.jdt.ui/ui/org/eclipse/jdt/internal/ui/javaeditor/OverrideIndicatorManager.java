@@ -173,7 +173,7 @@ class OverrideIndicatorManager implements IJavaReconcilingListener {
 		if (ast == null || progressMonitor.isCanceled())
 			return;
 
-		final Map annotationMap= new HashMap(50);
+		final Map<Annotation, Position> annotationMap= new HashMap<Annotation, Position>(50);
 
 		ast.accept(new ASTVisitor(false) {
 			/*
@@ -222,7 +222,7 @@ class OverrideIndicatorManager implements IJavaReconcilingListener {
 					fAnnotationModel.addAnnotation((Annotation)mapEntry.getKey(), (Position)mapEntry.getValue());
 				}
 			}
-			fOverrideAnnotations= (Annotation[])annotationMap.keySet().toArray(new Annotation[annotationMap.keySet().size()]);
+			fOverrideAnnotations= annotationMap.keySet().toArray(new Annotation[annotationMap.keySet().size()]);
 		}
 	}
 

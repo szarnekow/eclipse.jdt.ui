@@ -66,7 +66,7 @@ public class NewDefiningMethodProposal extends AbstractMethodCompletionProposal 
 	/* (non-Javadoc)
 	 * @see org.eclipse.jdt.internal.ui.text.correction.AbstractMethodCompletionProposal#addNewParameters(org.eclipse.jdt.core.dom.rewrite.ASTRewrite, java.util.List, java.util.List)
 	 */
-	protected void addNewParameters(ASTRewrite rewrite, List takenNames, List params) throws CoreException {
+	protected void addNewParameters(ASTRewrite rewrite, List<String> takenNames, List<ASTNode> params) throws CoreException {
 		AST ast= rewrite.getAST();
 		ImportRewrite importRewrite= getImportRewrite();
 		ITypeBinding[] bindings= fMethod.getParameterTypes();
@@ -127,7 +127,7 @@ public class NewDefiningMethodProposal extends AbstractMethodCompletionProposal 
 	/* (non-Javadoc)
 	 * @see org.eclipse.jdt.internal.ui.text.correction.AbstractMethodCompletionProposal#addNewExceptions(org.eclipse.jdt.core.dom.AST, java.util.List)
 	 */
-	protected void addNewExceptions(ASTRewrite rewrite, List exceptions) throws CoreException {
+	protected void addNewExceptions(ASTRewrite rewrite, List<ASTNode> exceptions) throws CoreException {
 		AST ast= rewrite.getAST();
 		ImportRewrite importRewrite= getImportRewrite();
 		ITypeBinding[] bindings= fMethod.getExceptionTypes();
@@ -143,7 +143,7 @@ public class NewDefiningMethodProposal extends AbstractMethodCompletionProposal 
 	/* (non-Javadoc)
 	 * @see org.eclipse.jdt.internal.ui.text.correction.AbstractMethodCompletionProposal#addNewTypeParameters(org.eclipse.jdt.core.dom.rewrite.ASTRewrite, java.util.List, java.util.List)
 	 */
-	protected void addNewTypeParameters(ASTRewrite rewrite, List takenNames, List params) throws CoreException {
+	protected void addNewTypeParameters(ASTRewrite rewrite, List<String> takenNames, List<ASTNode> params) throws CoreException {
 
 	}
 

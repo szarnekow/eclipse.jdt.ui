@@ -129,7 +129,7 @@ public class AddDelegateMethodsAction extends SelectionDispatchAction {
 			StatusInfo info= new StatusInfo();
 			if (selection != null && selection.length > 0) {
 				int count= 0;
-				List bindings= new ArrayList(selection.length);
+				List<IMethodBinding> bindings= new ArrayList<IMethodBinding>(selection.length);
 				IMethodBinding binding= null;
 				for (int index= 0; index < selection.length; index++) {
 					if (selection[index] instanceof IBinding[]) {
@@ -137,7 +137,7 @@ public class AddDelegateMethodsAction extends SelectionDispatchAction {
 						binding= (IMethodBinding) ((IBinding[]) selection[index])[1];
 						IMethodBinding existing= null;
 						for (int offset= 0; offset < bindings.size(); offset++) {
-							existing= (IMethodBinding) bindings.get(offset);
+							existing= bindings.get(offset);
 							if (Bindings.isEqualMethod(binding, existing.getName(), existing.getParameterTypes())) {
 								return new StatusInfo(IStatus.ERROR, ActionMessages.AddDelegateMethodsAction_duplicate_methods); 
 							}
@@ -174,7 +174,7 @@ public class AddDelegateMethodsAction extends SelectionDispatchAction {
 						fCount= bindings.length;
 					}
 				}
-				List expanded= new ArrayList();
+				List<IVariableBinding> expanded= new ArrayList<IVariableBinding>();
 				for (int index= 0; index < fields.length; index++) {
 					VariableDeclarationFragment fragment= ASTNodeSearchUtil.getFieldDeclarationFragmentNode(fields[index], fUnit);
 					if (fragment != null) {
@@ -199,7 +199,7 @@ public class AddDelegateMethodsAction extends SelectionDispatchAction {
 		public Object[] getChildren(Object element) {
 			if (element instanceof IVariableBinding) {
 				IVariableBinding binding= (IVariableBinding) element;
-				List result= new ArrayList();
+				List<IBinding[]> result= new ArrayList<IBinding[]>();
 				final String key= binding.getKey();
 				for (int index= 0; index < fBindings.length; index++)
 					if (fBindings[index][0].getKey().equals(key))
@@ -214,8 +214,8 @@ public class AddDelegateMethodsAction extends SelectionDispatchAction {
 		}
 
 		public Object[] getElements(Object inputElement) {
-			Set keys= new HashSet();
-			List result= new ArrayList();
+			Set<String> keys= new HashSet<String>();
+			List<IBinding> result= new ArrayList<IBinding>();
 			for (int index= 0; index < fBindings.length; index++) {
 				IBinding[] bindings= fBindings[index];
 				final String key= bindings[0].getKey();
@@ -232,12 +232,12 @@ public class AddDelegateMethodsAction extends SelectionDispatchAction {
 		}
 
 		public IBinding[][] getInitiallySelectedElements() {
-			List result= new ArrayList();
+			List<IBinding[]> result= new ArrayList<IBinding[]>();
 			for (int index= 0; index < fBindings.length; index++)
 				for (int offset= 0; offset < fExpanded.length; offset++)
 					if (fExpanded[offset].getKey().equals(fBindings[index][0].getKey()))
 						result.add(fBindings[index]);
-			return (IBinding[][]) result.toArray(new IBinding[result.size()][2]);
+			return result.toArray(new IBinding[result.size()][2]);
 		}
 
 		public Object getParent(Object element) {
@@ -567,7 +567,7 @@ public class AddDelegateMethodsAction extends SelectionDispatchAction {
 				if (object == null)
 					return;
 
-				List tuples= new ArrayList(object.length);
+				List<Object> tuples= new ArrayList<Object>(object.length);
 				for (int index= 0; index < object.length; index++) {
 					if (object[index] instanceof IBinding[])
 						tuples.add(object[index]);

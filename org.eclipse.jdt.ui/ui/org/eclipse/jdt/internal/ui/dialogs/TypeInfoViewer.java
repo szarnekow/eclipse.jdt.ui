@@ -101,23 +101,23 @@ public class TypeInfoViewer {
 		private volatile boolean fStop;
 		
 		private TypeInfoFilter fFilter;
-		private Set fHistory;
+		private Set<TypeInfo> fHistory;
 		
 		private TypeInfoFactory factory= new TypeInfoFactory();
-		private List fResult;
+		private List<TypeInfo> fResult;
 		
 		public SearchRequestor(TypeInfoFilter filter) {
 			super();
 			fFilter= filter;
-			fResult= new ArrayList(2048);
+			fResult= new ArrayList<TypeInfo>(2048);
 		}
 		public TypeInfo[] getResult() {
-			return (TypeInfo[])fResult.toArray(new TypeInfo[fResult.size()]);
+			return fResult.toArray(new TypeInfo[fResult.size()]);
 		}
 		public void cancel() {
 			fStop= true;
 		}
-		public void setHistory(Set history) {
+		public void setHistory(Set<TypeInfo> history) {
 			fHistory= history;
 		}
 		public void acceptType(int modifiers, char[] packageName, char[] simpleTypeName, char[][] enclosingTypeNames, String path) {
@@ -197,27 +197,27 @@ public class TypeInfoViewer {
 	
 	protected static class TypeInfoLabelProvider {
 		
-		private Map fLib2Name= new HashMap();
+		private Map<String, String> fLib2Name= new HashMap<String, String>();
 		private String[] fInstallLocations;
 		private String[] fVMNames;
 
 		private boolean fFullyQualifyDuplicates;
 		
 		public TypeInfoLabelProvider() {
-			List locations= new ArrayList();
-			List labels= new ArrayList();
+			List<String> locations= new ArrayList<String>();
+			List<String> labels= new ArrayList<String>();
 			IVMInstallType[] installs= JavaRuntime.getVMInstallTypes();
 			for (int i= 0; i < installs.length; i++) {
 				processVMInstallType(installs[i], locations, labels);
 			}
-			fInstallLocations= (String[])locations.toArray(new String[locations.size()]);
-			fVMNames= (String[])labels.toArray(new String[labels.size()]);
+			fInstallLocations= locations.toArray(new String[locations.size()]);
+			fVMNames= labels.toArray(new String[labels.size()]);
 			
 		}
 		public void setFullyQualifyDuplicates(boolean value) {
 			fFullyQualifyDuplicates= value;
 		}
-		private void processVMInstallType(IVMInstallType installType, List locations, List labels) {
+		private void processVMInstallType(IVMInstallType installType, List<String> locations, List<String> labels) {
 			if (installType != null) {
 				IVMInstall[] installs= installType.getVMInstalls();
 				boolean isMac= Platform.OS_MACOSX.equals(Platform.getOS());
@@ -351,7 +351,7 @@ public class TypeInfoViewer {
 					return fVMNames[i];
 				}
 			}
-			String lib= (String)fLib2Name.get(name);
+			String lib= fLib2Name.get(name);
 			if (lib != null)
 				return lib;
 			return name;
@@ -487,7 +487,7 @@ public class TypeInfoViewer {
 			fViewer.searchJobDone(fTicket);
 			return ok();	
 		}
-		protected abstract TypeInfo[] getSearchResult(Set filteredHistory, ProgressMonitor monitor) throws CoreException;
+		protected abstract TypeInfo[] getSearchResult(Set<TypeInfo> filteredHistory, ProgressMonitor monitor) throws CoreException;
 		
 		private void internalRun(ProgressMonitor monitor) throws CoreException, InterruptedException {
 			if (monitor.isCanceled())
@@ -499,11 +499,11 @@ public class TypeInfoViewer {
 			TypeInfo last= null;
 			TypeInfo type= null;
 			TypeInfo next= null;
-			List elements= new ArrayList();
-			List imageDescriptors= new ArrayList();
-			List labels= new ArrayList();
+			List<TypeInfo> elements= new ArrayList<TypeInfo>();
+			List<ImageDescriptor> imageDescriptors= new ArrayList<ImageDescriptor>();
+			List<String> labels= new ArrayList<String>();
 			
-			Set filteredHistory= new HashSet();
+			Set<TypeInfo> filteredHistory= new HashSet<TypeInfo>();
 			TypeInfo[] matchingTypes= fHistory.getFilteredTypeInfos(fFilter);
 			if (matchingTypes.length > 0) {
 				Arrays.sort(matchingTypes, new TypeInfoComparator(fLabelProvider, fFilter));
@@ -582,7 +582,7 @@ public class TypeInfoViewer {
 			if ((fMode & INDEX) == 0)
 				return;
 				
-			TypeInfo[] result= getSearchResult(new HashSet(Arrays.asList(matchingTypes)), monitor);
+			TypeInfo[] result= getSearchResult(new HashSet<TypeInfo>(Arrays.asList(matchingTypes)), monitor);
 			if (monitor.isCanceled())
 				throw new OperationCanceledException();
 			
@@ -613,7 +613,7 @@ public class TypeInfoViewer {
 			fReqestor.cancel();
 			super.stop();
 		}
-		protected TypeInfo[] getSearchResult(Set filteredHistory, ProgressMonitor monitor) throws CoreException {
+		protected TypeInfo[] getSearchResult(Set<TypeInfo> filteredHistory, ProgressMonitor monitor) throws CoreException {
 			long start= System.currentTimeMillis();
 			fReqestor.setHistory(filteredHistory);
 			// consider primary working copies during searching
@@ -646,8 +646,8 @@ public class TypeInfoViewer {
 			super(ticket, viewer, filter, history, numberOfVisibleItems, mode);
 			fLastResult= lastResult;
 		}
-		protected TypeInfo[] getSearchResult(Set filteredHistory, ProgressMonitor monitor) throws CoreException {
-			List result= new ArrayList(2048);
+		protected TypeInfo[] getSearchResult(Set<TypeInfo> filteredHistory, ProgressMonitor monitor) throws CoreException {
+			List<TypeInfo> result= new ArrayList<TypeInfo>(2048);
 			for (int i= 0; i < fLastResult.length; i++) {
 				TypeInfo type= fLastResult[i];
 				if (filteredHistory.contains(type))
@@ -656,7 +656,7 @@ public class TypeInfoViewer {
 					result.add(type);
 			}
 			// we have to sort if the filter is a camel case filter.
-			TypeInfo[] types= (TypeInfo[])result.toArray(new TypeInfo[result.size()]);
+			TypeInfo[] types= result.toArray(new TypeInfo[result.size()]);
 			if (fFilter.isCamcelCasePattern()) {
 				Arrays.sort(types, new TypeInfoComparator(fLabelProvider, fFilter));
 			}
@@ -730,7 +730,7 @@ public class TypeInfoViewer {
 
 	/* non virtual table */
 	private int fNextElement;
-	private List fItems;
+	private List<TableItem> fItems;
 	
 	/* virtual table */
 	private TypeInfo[] fHistoryMatches;
@@ -790,7 +790,7 @@ public class TypeInfoViewer {
 		fTable= new Table(parent, SWT.V_SCROLL | SWT.H_SCROLL | SWT.BORDER | SWT.FLAT | flags | (VIRTUAL ? SWT.VIRTUAL : SWT.NONE));
 		fTable.setFont(parent.getFont());
 		fLabelProvider= createLabelProvider();
-		fItems= new ArrayList(500);
+		fItems= new ArrayList<TableItem>(500);
 		fTable.setHeaderVisible(false);
 		addPopupMenu();
 		fTable.addControlListener(new ControlAdapter() {
@@ -925,14 +925,14 @@ public class TypeInfoViewer {
 	
 	public TypeInfo[] getSelection() {
 		TableItem[] items= fTable.getSelection();
-		List result= new ArrayList(items.length);
+		List<Object> result= new ArrayList<Object>(items.length);
 		for (int i= 0; i < items.length; i++) {
 			Object data= items[i].getData();
 			if (data instanceof TypeInfo) {
 				result.add(data);
 			}
 		}
-		return (TypeInfo[])result.toArray(new TypeInfo[result.size()]);
+		return result.toArray(new TypeInfo[result.size()]);
 	}
 	
 	public void stop() {
@@ -1129,18 +1129,18 @@ public class TypeInfoViewer {
 		});
 	}
 
-	private void addHistory(int ticket, final List elements, final List imageDescriptors, final List labels) {
+	private void addHistory(int ticket, final List<TypeInfo> elements, final List<ImageDescriptor> imageDescriptors, final List<String> labels) {
 		addAll(ticket, elements, imageDescriptors, labels);
 	}
 	
-	private void addAll(int ticket, final List elements, final List imageDescriptors, final List labels) {
+	private void addAll(int ticket, final List<TypeInfo> elements, final List<ImageDescriptor> imageDescriptors, final List<String> labels) {
 		syncExec(ticket, new Runnable() {
 			public void run() {
 				int size= elements.size();
 				for(int i= 0; i < size; i++) {
 					addSingleElement(elements.get(i),
-						fImageDescriptorRegistry.get((ImageDescriptor)imageDescriptors.get(i)),
-						(String)labels.get(i));
+						fImageDescriptorRegistry.get(imageDescriptors.get(i)),
+						labels.get(i));
 				}
 			}
 		});
@@ -1171,7 +1171,7 @@ public class TypeInfoViewer {
 	private void addDashLine() {
 		TableItem item= null;
 		if (fItems.size() > fNextElement) {
-			item= (TableItem)fItems.get(fNextElement);
+			item= fItems.get(fNextElement);
 		} else {
 			item= new TableItem(fTable, SWT.NONE);
 			fItems.add(item);
@@ -1184,7 +1184,7 @@ public class TypeInfoViewer {
 		TableItem item= null;
 		Object old= null;
 		if (fItems.size() > fNextElement) {
-			item= (TableItem)fItems.get(fNextElement);
+			item= fItems.get(fNextElement);
 			old= item.getData();
 			item.setForeground(null);
 		} else {

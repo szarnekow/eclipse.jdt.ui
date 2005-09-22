@@ -56,7 +56,7 @@ public abstract class SearchLabelProvider extends AppearanceAwareLabelProvider {
 	protected static final int DEFAULT_SEARCH_IMAGEFLAGS= DEFAULT_IMAGEFLAGS;
 	
 	private Color fPotentialMatchFgColor;
-	private Map fLabelProviderMap;
+	private Map<IMatchPresentation, ILabelProvider> fLabelProviderMap;
 	
 	protected JavaSearchResultPage fPage;
 
@@ -68,7 +68,7 @@ public abstract class SearchLabelProvider extends AppearanceAwareLabelProvider {
 		addLabelDecorator(new ProblemsLabelDecorator());
 		
 		fPage= page;
-		fLabelProviderMap= new HashMap(5);
+		fLabelProviderMap= new HashMap<IMatchPresentation, ILabelProvider>(5);
 		
 		fSearchPreferences= new ScopedPreferenceStore(new InstanceScope(), NewSearchUI.PLUGIN_ID);
 		fSearchPropertyListener= new IPropertyChangeListener() {
@@ -158,8 +158,8 @@ public abstract class SearchLabelProvider extends AppearanceAwareLabelProvider {
 			fPotentialMatchFgColor= null;
 		}
 		fSearchPreferences.removePropertyChangeListener(fSearchPropertyListener);
-		for (Iterator labelProviders = fLabelProviderMap.values().iterator(); labelProviders.hasNext();) {
-			ILabelProvider labelProvider = (ILabelProvider) labelProviders.next();
+		for (Iterator<ILabelProvider> labelProviders = fLabelProviderMap.values().iterator(); labelProviders.hasNext();) {
+			ILabelProvider labelProvider = labelProviders.next();
 			labelProvider.dispose();
 		}
 		fSearchPreferences= null;
@@ -171,8 +171,8 @@ public abstract class SearchLabelProvider extends AppearanceAwareLabelProvider {
 	
 	public void addListener(ILabelProviderListener listener) {
 		super.addListener(listener);
-		for (Iterator labelProviders = fLabelProviderMap.values().iterator(); labelProviders.hasNext();) {
-			ILabelProvider labelProvider = (ILabelProvider) labelProviders.next();
+		for (Iterator<ILabelProvider> labelProviders = fLabelProviderMap.values().iterator(); labelProviders.hasNext();) {
+			ILabelProvider labelProvider = labelProviders.next();
 			labelProvider.addListener(listener);
 		}
 	}
@@ -185,8 +185,8 @@ public abstract class SearchLabelProvider extends AppearanceAwareLabelProvider {
 
 	public void removeListener(ILabelProviderListener listener) {
 		super.removeListener(listener);
-		for (Iterator labelProviders = fLabelProviderMap.values().iterator(); labelProviders.hasNext();) {
-			ILabelProvider labelProvider = (ILabelProvider) labelProviders.next();
+		for (Iterator<ILabelProvider> labelProviders = fLabelProviderMap.values().iterator(); labelProviders.hasNext();) {
+			ILabelProvider labelProvider = labelProviders.next();
 			labelProvider.removeListener(listener);
 		}
 	}
@@ -212,7 +212,7 @@ public abstract class SearchLabelProvider extends AppearanceAwareLabelProvider {
 		if (participant == null)
 			return null;
 		
-		ILabelProvider lp= (ILabelProvider) fLabelProviderMap.get(participant);
+		ILabelProvider lp= fLabelProviderMap.get(participant);
 		if (lp == null) {
 			lp= participant.createLabelProvider();
 			fLabelProviderMap.put(participant, lp);

@@ -69,7 +69,7 @@ class PackagesViewHierarchicalContentProvider extends LogicalPackagesProvider im
 							IJavaProject project= (IJavaProject) parentElement;
 
 							IPackageFragment[] topLevelChildren= getTopLevelChildrenByElementName(project.getPackageFragments());
-							List list= new ArrayList();
+							List<IPackageFragment> list= new ArrayList<IPackageFragment>();
 							for (int i= 0; i < topLevelChildren.length; i++) {
 								IPackageFragment fragment= topLevelChildren[i];
 
@@ -81,7 +81,7 @@ class PackagesViewHierarchicalContentProvider extends LogicalPackagesProvider im
 								}
 							}
 
-							return combineSamePackagesIntoLogialPackages((IPackageFragment[]) list.toArray(new IPackageFragment[list.size()]));
+							return combineSamePackagesIntoLogialPackages(list.toArray(new IPackageFragment[list.size()]));
 						}
 
 					case IJavaElement.PACKAGE_FRAGMENT_ROOT :
@@ -122,7 +122,7 @@ class PackagesViewHierarchicalContentProvider extends LogicalPackagesProvider im
 			//@Improve: rewrite using concatenate
 			} else if (parentElement instanceof LogicalPackage) {
 
-				List children= new ArrayList();
+				List<IPackageFragment> children= new ArrayList<IPackageFragment>();
 				LogicalPackage logicalPackage= (LogicalPackage) parentElement;
 				IPackageFragment[] elements= logicalPackage.getFragments();
 				for (int i= 0; i < elements.length; i++) {
@@ -130,7 +130,7 @@ class PackagesViewHierarchicalContentProvider extends LogicalPackagesProvider im
 					IPackageFragment[] objects= findNextLevelChildrenByElementName((IPackageFragmentRoot) fragment.getParent(), fragment);
 					children.addAll(Arrays.asList(objects));
 				}
-				return combineSamePackagesIntoLogialPackages((IPackageFragment[]) children.toArray(new IPackageFragment[children.size()]));
+				return combineSamePackagesIntoLogialPackages(children.toArray(new IPackageFragment[children.size()]));
 			}
 
 		} catch (JavaModelException e) {
@@ -140,7 +140,7 @@ class PackagesViewHierarchicalContentProvider extends LogicalPackagesProvider im
 	}
 
 		private IPackageFragment[] findNextLevelChildrenByElementName(IPackageFragmentRoot parent, IPackageFragment fragment) {
-		List list= new ArrayList();
+		List<IPackageFragment> list= new ArrayList<IPackageFragment>();
 		try {
 
 			IJavaElement[] children= parent.getChildren();
@@ -163,11 +163,11 @@ class PackagesViewHierarchicalContentProvider extends LogicalPackagesProvider im
 		} catch (JavaModelException e) {
 			JavaPlugin.log(e);
 		}
-		return (IPackageFragment[]) list.toArray(new IPackageFragment[list.size()]);
+		return list.toArray(new IPackageFragment[list.size()]);
 	}
 
 	private IPackageFragment[] getTopLevelChildrenByElementName(IJavaElement[] elements){
-		List topLevelElements= new ArrayList();
+		List<IJavaElement> topLevelElements= new ArrayList<IJavaElement>();
 		for (int i= 0; i < elements.length; i++) {
 			IJavaElement iJavaElement= elements[i];
 			//if the name of the PackageFragment is the top level package it will contain no "." separators
@@ -175,7 +175,7 @@ class PackagesViewHierarchicalContentProvider extends LogicalPackagesProvider im
 				topLevelElements.add(iJavaElement);
 			}
 		}
-		return (IPackageFragment[]) topLevelElements.toArray(new IPackageFragment[topLevelElements.size()]);
+		return topLevelElements.toArray(new IPackageFragment[topLevelElements.size()]);
 	}
 
 	/*
@@ -238,7 +238,7 @@ class PackagesViewHierarchicalContentProvider extends LogicalPackagesProvider im
 		if(!fInputIsProject)
 			return null;
 
-		List fragments= new ArrayList();
+		List<IPackageFragment> fragments= new ArrayList<IPackageFragment>();
 		try {
 			IPackageFragmentRoot[] roots= pkgFragment.getJavaProject().getPackageFragmentRoots();
 			for (int i= 0; i < roots.length; i++) {
@@ -250,9 +250,9 @@ class PackagesViewHierarchicalContentProvider extends LogicalPackagesProvider im
 			if(!fragments.isEmpty()) {
 				LogicalPackage logicalPackage= new LogicalPackage(pkgFragment);
 				fMapToLogicalPackage.put(getKey(pkgFragment), logicalPackage);
-				Iterator iter= fragments.iterator();
+				Iterator<IPackageFragment> iter= fragments.iterator();
 				while(iter.hasNext()){
-					IPackageFragment f= (IPackageFragment)iter.next();
+					IPackageFragment f= iter.next();
 					if(logicalPackage.belongs(f)){
 						logicalPackage.add(f);
 						fMapToLogicalPackage.put(getKey(f), logicalPackage);
@@ -475,7 +475,7 @@ class PackagesViewHierarchicalContentProvider extends LogicalPackagesProvider im
 	private void addElement(IPackageFragment frag, Object parent) {
 
 		String key= getKey(frag);
-		LogicalPackage lp= (LogicalPackage)fMapToLogicalPackage.get(key);
+		LogicalPackage lp= fMapToLogicalPackage.get(key);
 
 		//if fragment must be added to an existing LogicalPackage
 		if (lp != null && lp.belongs(frag)){
@@ -484,7 +484,7 @@ class PackagesViewHierarchicalContentProvider extends LogicalPackagesProvider im
 		}
 
 		//if a new LogicalPackage must be created
-		IPackageFragment iPackageFragment= (IPackageFragment)fMapToPackageFragments.get(key);
+		IPackageFragment iPackageFragment= fMapToPackageFragments.get(key);
 		if (iPackageFragment!= null && !iPackageFragment.equals(frag)){
 			lp= new LogicalPackage(iPackageFragment);
 			lp.add(frag);
@@ -526,7 +526,7 @@ class PackagesViewHierarchicalContentProvider extends LogicalPackagesProvider im
 	private void removeElement(IPackageFragment frag) {
 
 		String key= getKey(frag);
-		LogicalPackage lp= (LogicalPackage)fMapToLogicalPackage.get(key);
+		LogicalPackage lp= fMapToLogicalPackage.get(key);
 
 		if(lp != null){
 			lp.remove(frag);
@@ -550,7 +550,7 @@ class PackagesViewHierarchicalContentProvider extends LogicalPackagesProvider im
 
 		} else {
 			//remove the fragment from the fragment map and viewer
-			IPackageFragment fragment= (IPackageFragment) fMapToPackageFragments.get(key);
+			IPackageFragment fragment= fMapToPackageFragments.get(key);
 			if (fragment!= null && fragment.equals(frag)) {
 				fMapToPackageFragments.remove(key);
 				postRemove(frag);

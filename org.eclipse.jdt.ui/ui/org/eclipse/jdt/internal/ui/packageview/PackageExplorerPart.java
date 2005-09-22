@@ -241,18 +241,18 @@ public class PackageExplorerPart extends ViewPart
 
 	private class PackageExplorerProblemTreeViewer extends ProblemTreeViewer {
 		// fix for 64372  Projects showing up in Package Explorer twice [package explorer] 
-		List fPendingGetChildren;
+		List<Object> fPendingGetChildren;
 		
 		public PackageExplorerProblemTreeViewer(Composite parent, int style) {
 			super(parent, style);
-			fPendingGetChildren= Collections.synchronizedList(new ArrayList());
+			fPendingGetChildren= Collections.synchronizedList(new ArrayList<Object>());
 		}
 		public void add(Object parentElement, Object[] childElements) {
 			if (fPendingGetChildren.contains(parentElement)) 
 				return;
 			// we have to remember the list before we actually do something since
 			// the super.add call already modifies the mapping.
-			List l= (List)fAdditionalMappings.get(parentElement);
+			List l= fAdditionalMappings.get(parentElement);
 			if (l == null) {
 				super.add(parentElement, childElements);
 			} else {
@@ -278,7 +278,7 @@ public class PackageExplorerPart extends ViewPart
 		 * @see org.eclipse.jface.viewers.StructuredViewer#filter(java.lang.Object)
 		 */
 		protected Object[] getFilteredChildren(Object parent) {
-			List list = new ArrayList();
+			List<Object> list = new ArrayList<Object>();
 			ViewerFilter[] filters = getFilters();
 			Object[] children = ((ITreeContentProvider)getContentProvider()).getChildren(parent);
 			for (int i = 0; i < children.length; i++) {
@@ -339,7 +339,7 @@ public class PackageExplorerPart extends ViewPart
 			if (filters == null || filters.length == 0)
 				return elements;
 			
-			ArrayList filtered= new ArrayList(elements.length);
+			ArrayList<Object> filtered= new ArrayList<Object>(elements.length);
 			Object root= getRoot();
 			for (int i= 0; i < elements.length; i++) {
 				boolean add= true;
@@ -436,7 +436,7 @@ public class PackageExplorerPart extends ViewPart
 		
 		// TODO Use custome hash table and use comparator. Currently not an
 		// issue since the package explorer doesn't have a comparator
-		Map fAdditionalMappings= new HashMap();
+		Map<Object, List> fAdditionalMappings= new HashMap<Object, List>();
 		protected void mapElement(Object element, Widget item) {
 			Widget existingItem= findItem(element);
 			// if the widget is part of the map managed in the tree
@@ -445,9 +445,9 @@ public class PackageExplorerPart extends ViewPart
 			if (existingItem == null || existingItem == item) {
 				super.mapElement(element, item);
 			} else {
-				List l= (List)fAdditionalMappings.get(element);
+				List<Widget> l= fAdditionalMappings.get(element);
 				if (l == null) {
-					l= new ArrayList();
+					l= new ArrayList<Widget>();
 					fAdditionalMappings.put(element, l);
 				}
 				// Only add if not already part. See comment above
@@ -458,7 +458,7 @@ public class PackageExplorerPart extends ViewPart
 			}
 		}
 		protected void unmapElement(Object element, Widget item) {
-			List l= (List)fAdditionalMappings.get(element);
+			List l= fAdditionalMappings.get(element);
 			if (l == null) {
 				super.unmapElement(element, item);
 				return;
@@ -491,9 +491,9 @@ public class PackageExplorerPart extends ViewPart
 				super.internalRemove(elements);
 				return;
 			}
-			Map stable= new HashMap();
+			Map<Object, Integer> stable= new HashMap<Object, Integer>();
 			for (int i= 0; i < elements.length; i++) {
-				List l= (List)fAdditionalMappings.get(elements[i]);
+				List l= fAdditionalMappings.get(elements[i]);
 				if (l != null) {
 					stable.put(elements[i], new Integer(l.size()));
 				}
@@ -501,7 +501,7 @@ public class PackageExplorerPart extends ViewPart
 			super.internalRemove(elements);
 			for (int i= 0; i < elements.length; i++) {
 				Object element= elements[i];
-				Integer size= (Integer)stable.get(element);
+				Integer size= stable.get(element);
 				if (size != null) {
 					int loop= size.intValue();
 					Object[] toRemove= new Object[] {element};
@@ -513,7 +513,7 @@ public class PackageExplorerPart extends ViewPart
 			}
 		}
 		protected void internalRefresh(Object element, boolean updateLabels) {
-			List l= (List)fAdditionalMappings.get(element);
+			List l= fAdditionalMappings.get(element);
 			if (l == null) {
 				super.internalRefresh(element, updateLabels);
 			} else {
@@ -526,7 +526,7 @@ public class PackageExplorerPart extends ViewPart
 			}
 		}
 		protected void internalUpdate(Widget item, Object element, String[] properties) {
-			List l= (List)fAdditionalMappings.get(element);
+			List l= fAdditionalMappings.get(element);
 			if (l == null) {
 				super.internalUpdate(item, element, properties);
 			} else {
@@ -549,8 +549,8 @@ public class PackageExplorerPart extends ViewPart
 			}
 			Tree tree= getTree();
 			TreeItem[] selection= tree.getSelection();
-			List result= new ArrayList(selection.length);
-			List treePaths= new ArrayList();
+			List<Object> result= new ArrayList<Object>(selection.length);
+			List<TreePath> treePaths= new ArrayList<TreePath>();
 			for (int i= 0; i < selection.length; i++) {
 				TreeItem item= selection[i];
 				Object element= getElement(item);
@@ -561,10 +561,10 @@ public class PackageExplorerPart extends ViewPart
 				}
 				treePaths.add(createTreePath(item));
 			}
-			return new MultiElementSelection(this, result, (TreePath[])treePaths.toArray(new TreePath[treePaths.size()]));
+			return new MultiElementSelection(this, result, treePaths.toArray(new TreePath[treePaths.size()]));
 		}
 		private TreePath createTreePath(TreeItem item) {
-			List result= new ArrayList();
+			List<Object> result= new ArrayList<Object>();
 			result.add(item.getData());
 			TreeItem parent= item.getParentItem();
 			while (parent != null) {
@@ -585,7 +585,7 @@ public class PackageExplorerPart extends ViewPart
 			if (!(result instanceof TreeItem))
 				return result;
 			if (isInHistroyWorkingSet((TreeItem)result)) {
-				List l= (List)fAdditionalMappings.get(element);
+				List l= fAdditionalMappings.get(element);
 				if (l != null && !l.isEmpty()) {
 					return (Widget)l.get(0);
 				} else {
@@ -638,7 +638,7 @@ public class PackageExplorerPart extends ViewPart
 			}
 			IMultiElementTreeContentProvider contentProvider= (IMultiElementTreeContentProvider)cp;
 			MultiElementSelection toRestore= (MultiElementSelection)selection;
-			List pathsToSelect= new ArrayList();
+			List<TreePath> pathsToSelect= new ArrayList<TreePath>();
 			for (Iterator iter= toRestore.iterator(); iter.hasNext();) {
 				Object element= iter.next();
 				TreePath[] pathsToRestore= toRestore.getTreePaths(element);
@@ -651,9 +651,9 @@ public class PackageExplorerPart extends ViewPart
 					}
 				}
 			}
-			List toSelect= new ArrayList();
-			for (Iterator iter= pathsToSelect.iterator(); iter.hasNext();) {
-				TreePath path= (TreePath)iter.next();
+			List<Widget> toSelect= new ArrayList<Widget>();
+			for (Iterator<TreePath> iter= pathsToSelect.iterator(); iter.hasNext();) {
+				TreePath path= iter.next();
 				int size= path.getSegmentCount();
 				if (size == 0)
 					continue;
@@ -667,7 +667,7 @@ public class PackageExplorerPart extends ViewPart
 						toSelect.add(current);
 				}
 			}
-			getTree().setSelection((TreeItem[])toSelect.toArray(new TreeItem[toSelect.size()]));
+			getTree().setSelection(toSelect.toArray(new TreeItem[toSelect.size()]));
 		}
 	    private Widget internalFindChild(Widget parent, Object element) {
 	        Item[] items = getChildren(parent);
@@ -1451,7 +1451,7 @@ public class PackageExplorerPart extends ViewPart
 	protected void restoreExpansionState(IMemento memento) {
 		IMemento childMem= memento.getChild(TAG_EXPANDED);
 		if (childMem != null) {
-			ArrayList elements= new ArrayList();
+			ArrayList<Object> elements= new ArrayList<Object>();
 			IMemento[] elementMem= childMem.getChildren(TAG_ELEMENT);
 			for (int i= 0; i < elementMem.length; i++) {
 				Object element= JavaCore.create(elementMem[i].getString(TAG_PATH));

@@ -95,7 +95,7 @@ public class MultiElementListSelectionDialog extends AbstractElementListSelectio
 	 * @see Window#open()
 	 */
 	public int open() {
-		List selection= getInitialElementSelections();
+		List<Object[]> selection= getInitialElementSelections();
 		if (selection == null || selection.size() != fNumberOfPages) {
 			setInitialSelections(new Object[fNumberOfPages]);
 			selection= getInitialElementSelections();
@@ -230,7 +230,7 @@ public class MultiElementListSelectionDialog extends AbstractElementListSelectio
 
 		// store selection
 		Object[] selectedElements= getSelectedElements();
-		List list= getInitialElementSelections();
+		List<Object[]> list= getInitialElementSelections();
 		list.set(fCurrentPage, selectedElements);
 
 		// store result
@@ -283,7 +283,7 @@ public class MultiElementListSelectionDialog extends AbstractElementListSelectio
 	}
 		
 	private void initializeResult(int length) {
-		List result= new ArrayList(length);
+		List<Object> result= new ArrayList<Object>(length);
 		for (int i= 0; i != length; i++)
 			result.add(null);
 

@@ -118,13 +118,13 @@ class JavaBrowsingContentProvider extends StandardJavaElementContentProvider imp
 		}
 		else {
 			IClassFile[] classFiles= fragment.getClassFiles();
-			List topLevelClassFile= new ArrayList();
+			List<IClassFile> topLevelClassFile= new ArrayList<IClassFile>();
 			for (int i= 0; i < classFiles.length; i++) {
 				IType type= classFiles[i].getType();
 				if (type != null && type.getDeclaringType() == null && !type.isAnonymous() && !type.isLocal())
 					topLevelClassFile.add(classFiles[i]);
 			}
-			sourceRefs= (ISourceReference[])topLevelClassFile.toArray(new ISourceReference[topLevelClassFile.size()]);
+			sourceRefs= topLevelClassFile.toArray(new ISourceReference[topLevelClassFile.size()]);
 		}
 
 		Object[] result= new Object[0];
@@ -134,7 +134,7 @@ class JavaBrowsingContentProvider extends StandardJavaElementContentProvider imp
 	}
 
 	private Object[] removeImportAndPackageDeclarations(Object[] members) {
-		ArrayList tempResult= new ArrayList(members.length);
+		ArrayList<Object> tempResult= new ArrayList<Object>(members.length);
 		for (int i= 0; i < members.length; i++)
 			if (!(members[i] instanceof IImportContainer) && !(members[i] instanceof IPackageDeclaration))
 				tempResult.add(members[i]);
@@ -153,7 +153,7 @@ class JavaBrowsingContentProvider extends StandardJavaElementContentProvider imp
 
 		// Add import declarations
 		IJavaElement[] members= parent.getChildren();
-		ArrayList tempResult= new ArrayList(members.length);
+		ArrayList<IJavaElement> tempResult= new ArrayList<IJavaElement>(members.length);
 		for (int i= 0; i < members.length; i++)
 			if ((members[i] instanceof IImportContainer))
 				tempResult.add(members[i]);
@@ -432,7 +432,7 @@ class JavaBrowsingContentProvider extends StandardJavaElementContentProvider imp
 
 	private Object[] getNewElements(Object[] elements) {
 		int elementsLength= elements.length;
-		ArrayList result= new ArrayList(elementsLength);
+		ArrayList<Object> result= new ArrayList<Object>(elementsLength);
 		for (int i= 0; i < elementsLength; i++) {
 			Object element= elements[i];
 			if (fViewer.testFindItem(element) == null)

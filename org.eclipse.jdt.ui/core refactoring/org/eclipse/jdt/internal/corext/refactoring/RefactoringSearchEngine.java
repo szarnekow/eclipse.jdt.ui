@@ -56,7 +56,7 @@ public class RefactoringSearchEngine {
 		final boolean[] hasPotentialMatches= { false };
 		boolean hasNonCuMatches= false;
 		
-		final Set resources= new HashSet(5);
+		final Set<IResource> resources= new HashSet<IResource>(5);
 		SearchRequestor requestor = new SearchRequestor() {
 			private IResource fLastResource;
 			public void acceptSearchMatch(SearchMatch match) {
@@ -74,9 +74,9 @@ public class RefactoringSearchEngine {
 			throw new JavaModelException(e);
 		}
 
-		List result= new ArrayList(resources.size());
-		for (Iterator iter= resources.iterator(); iter.hasNext(); ) {
-			IResource resource= (IResource) iter.next();
+		List<IJavaElement> result= new ArrayList<IJavaElement>(resources.size());
+		for (Iterator<IResource> iter= resources.iterator(); iter.hasNext(); ) {
+			IResource resource= iter.next();
 			IJavaElement element= JavaCore.create(resource);
 			if (element instanceof ICompilationUnit) {
 				result.add(element);
@@ -85,7 +85,7 @@ public class RefactoringSearchEngine {
 			}
 		}
 		addStatusErrors(status, hasPotentialMatches[0], hasNonCuMatches);
-		return (ICompilationUnit[]) result.toArray(new ICompilationUnit[result.size()]);
+		return result.toArray(new ICompilationUnit[result.size()]);
 	}
 	
 	/**
@@ -143,22 +143,22 @@ public class RefactoringSearchEngine {
 	 * @param status the status to report errors.
 	 * @return a SearchResultGroup[], grouped by SearchMatch#getResource()
 	 */
-	public static SearchResultGroup[] groupByCu(List matchList, RefactoringStatus status) {
-		Map/*<IResource, List<SearchMatch>>*/ grouped= new HashMap();
+	public static SearchResultGroup[] groupByCu(List<SearchMatch> matchList, RefactoringStatus status) {
+		Map/*<IResource, List<SearchMatch>>*/<IResource, ArrayList> grouped= new HashMap<IResource, ArrayList>();
 		boolean hasPotentialMatches= false;
 		boolean hasNonCuMatches= false;
 		
-		for (Iterator iter= matchList.iterator(); iter.hasNext();) {
-			SearchMatch searchMatch= (SearchMatch) iter.next();
+		for (Iterator<SearchMatch> iter= matchList.iterator(); iter.hasNext();) {
+			SearchMatch searchMatch= iter.next();
 			if (searchMatch.getAccuracy() == SearchMatch.A_INACCURATE)
 				hasPotentialMatches= true;
 			if (! grouped.containsKey(searchMatch.getResource()))
 				grouped.put(searchMatch.getResource(), new ArrayList(1));
-			((List) grouped.get(searchMatch.getResource())).add(searchMatch);
+			grouped.get(searchMatch.getResource()).add(searchMatch);
 		}
 		
-		for (Iterator iter= grouped.keySet().iterator(); iter.hasNext();) {
-			IResource resource= (IResource) iter.next();
+		for (Iterator<IResource> iter= grouped.keySet().iterator(); iter.hasNext();) {
+			IResource resource= iter.next();
 			IJavaElement element= JavaCore.create(resource);
 			if (! (element instanceof ICompilationUnit)) {
 				iter.remove();
@@ -168,9 +168,9 @@ public class RefactoringSearchEngine {
 		
 		SearchResultGroup[] result= new SearchResultGroup[grouped.keySet().size()];
 		int i= 0;
-		for (Iterator iter= grouped.keySet().iterator(); iter.hasNext();) {
-			IResource resource= (IResource) iter.next();
-			List searchMatches= (List) grouped.get(resource);
+		for (Iterator<IResource> iter= grouped.keySet().iterator(); iter.hasNext();) {
+			IResource resource= iter.next();
+			List searchMatches= grouped.get(resource);
 			SearchMatch[] matchArray= (SearchMatch[]) searchMatches.toArray(new SearchMatch[searchMatches.size()]);
 			result[i]= new SearchResultGroup(resource, matchArray);
 			i++;
@@ -182,12 +182,12 @@ public class RefactoringSearchEngine {
 	public static SearchPattern createOrPattern(IJavaElement[] elements, int limitTo) {
 		if (elements == null || elements.length == 0)
 			return null;
-		Set set= new HashSet(Arrays.asList(elements));
-		Iterator iter= set.iterator();
-		IJavaElement first= (IJavaElement)iter.next();
+		Set<IJavaElement> set= new HashSet<IJavaElement>(Arrays.asList(elements));
+		Iterator<IJavaElement> iter= set.iterator();
+		IJavaElement first= iter.next();
 		SearchPattern pattern= SearchPattern.createPattern(first, limitTo, SearchUtils.GENERICS_AGNOSTIC_MATCH_RULE);
 		while(iter.hasNext()){
-			IJavaElement each= (IJavaElement)iter.next();
+			IJavaElement each= iter.next();
 			pattern= SearchPattern.createOrPattern(pattern, SearchPattern.createPattern(each, limitTo, SearchUtils.GENERICS_AGNOSTIC_MATCH_RULE));
 		}
 		return pattern;

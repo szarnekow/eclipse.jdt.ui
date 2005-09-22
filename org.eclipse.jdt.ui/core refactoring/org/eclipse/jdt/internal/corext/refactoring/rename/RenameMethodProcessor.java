@@ -32,6 +32,7 @@ import org.eclipse.ltk.core.refactoring.RefactoringDescriptor;
 import org.eclipse.ltk.core.refactoring.RefactoringStatus;
 import org.eclipse.ltk.core.refactoring.TextChange;
 import org.eclipse.ltk.core.refactoring.participants.CheckConditionsContext;
+import org.eclipse.ltk.core.refactoring.participants.RefactoringParticipant;
 import org.eclipse.ltk.core.refactoring.participants.RenameArguments;
 import org.eclipse.ltk.core.refactoring.participants.SharableParticipants;
 import org.eclipse.ltk.core.refactoring.participants.ValidateEditChecker;
@@ -86,7 +87,7 @@ public abstract class RenameMethodProcessor extends JavaRenameProcessor implemen
 	private SearchResultGroup[] fOccurrences;
 	private boolean fUpdateReferences;
 	private IMethod fMethod;
-	private Set/*<IMethod>*/ fMethodsToRename;
+	private Set/*<IMethod>*/<IMethod> fMethodsToRename;
 	private TextChangeManager fChangeManager;
 	private WorkingCopyOwner fWorkingCopyOwner;
 	
@@ -132,8 +133,8 @@ public abstract class RenameMethodProcessor extends JavaRenameProcessor implemen
 		return new Object[] {fMethod};
 	}
 
-	protected void loadDerivedParticipants(RefactoringStatus status, List result, String[] natures, SharableParticipants shared) throws CoreException {
-		Set derived= new HashSet(fMethodsToRename);
+	protected void loadDerivedParticipants(RefactoringStatus status, List<RefactoringParticipant> result, String[] natures, SharableParticipants shared) throws CoreException {
+		Set<IMethod> derived= new HashSet<IMethod>(fMethodsToRename);
 		derived.remove(fMethod);
 		loadDerivedParticipants(status, result, 
 			derived.toArray(), 
@@ -164,10 +165,10 @@ public abstract class RenameMethodProcessor extends JavaRenameProcessor implemen
 	}
 	
 	private void initializeMethodsToRename(IProgressMonitor pm) throws CoreException {
-		fMethodsToRename= new HashSet(Arrays.asList(RippleMethodFinder2.getRelatedMethods(fMethod, pm, null)));
+		fMethodsToRename= new HashSet<IMethod>(Arrays.asList(RippleMethodFinder2.getRelatedMethods(fMethod, pm, null)));
 	}
 	
-	protected Set getMethodsToRename() {
+	protected Set<IMethod> getMethodsToRename() {
 		return fMethodsToRename;
 	}
 	
@@ -288,7 +289,7 @@ public abstract class RenameMethodProcessor extends JavaRenameProcessor implemen
 	}
 	
 	private IType[] searchForOuterTypesOfReferences(IMethod[] newNameMethods, IProgressMonitor pm) throws CoreException {
-		final Set outerTypesOfReferences= new HashSet();
+		final Set<IType> outerTypesOfReferences= new HashSet<IType>();
 		SearchPattern pattern= RefactoringSearchEngine.createOrPattern(newNameMethods, IJavaSearchConstants.REFERENCES);
 		IJavaSearchScope scope= createRefactoringScope(getMethod());
 		SearchRequestor requestor= new SearchRequestor() {
@@ -304,11 +305,11 @@ public abstract class RenameMethodProcessor extends JavaRenameProcessor implemen
 		};
 		new SearchEngine().search(pattern, SearchUtils.getDefaultSearchParticipants(),
 				scope, requestor, pm);
-		return (IType[]) outerTypesOfReferences.toArray(new IType[outerTypesOfReferences.size()]);
+		return outerTypesOfReferences.toArray(new IType[outerTypesOfReferences.size()]);
 	}
 
 	private IMethod[] searchForDeclarationsOfClashingMethods(IProgressMonitor pm) throws CoreException {
-		final List results= new ArrayList();
+		final List<Object> results= new ArrayList<Object>();
 		SearchPattern pattern= createNewMethodPattern();
 		IJavaSearchScope scope= RefactoringScopeFactory.create(getMethod().getJavaProject());
 		SearchRequestor requestor= new SearchRequestor() {
@@ -321,7 +322,7 @@ public abstract class RenameMethodProcessor extends JavaRenameProcessor implemen
 			}
 		};
 		new SearchEngine().search(pattern, SearchUtils.getDefaultSearchParticipants(), scope, requestor, pm);
-		return (IMethod[]) results.toArray(new IMethod[results.size()]);
+		return results.toArray(new IMethod[results.size()]);
 	}
 	
 	private SearchPattern createNewMethodPattern() throws JavaModelException {
@@ -349,9 +350,9 @@ public abstract class RenameMethodProcessor extends JavaRenameProcessor implemen
 	
 	/** */
 	SearchPattern createOccurrenceSearchPattern() {
-		HashSet methods= new HashSet(fMethodsToRename);
+		HashSet<IMethod> methods= new HashSet<IMethod>(fMethodsToRename);
 		methods.add(fMethod);
-		IMethod[] ms= (IMethod[]) methods.toArray(new IMethod[methods.size()]);
+		IMethod[] ms= methods.toArray(new IMethod[methods.size()]);
 		return RefactoringSearchEngine.createOrPattern(ms, IJavaSearchConstants.ALL_OCCURRENCES);
 	}
 
@@ -370,8 +371,8 @@ public abstract class RenameMethodProcessor extends JavaRenameProcessor implemen
 
 	private RefactoringStatus checkRelatedMethods() throws CoreException { 
 		RefactoringStatus result= new RefactoringStatus();
-		for (Iterator iter= fMethodsToRename.iterator(); iter.hasNext(); ) {
-			IMethod method= (IMethod)iter.next();
+		for (Iterator<IMethod> iter= fMethodsToRename.iterator(); iter.hasNext(); ) {
+			IMethod method= iter.next();
 			
 			result.merge(Checks.checkIfConstructorName(method, getNewElementName(), method.getDeclaringType().getElementName()));
 			
@@ -417,8 +418,8 @@ public abstract class RenameMethodProcessor extends JavaRenameProcessor implemen
 			
 			IMethod[] newMethods= new IMethod[fMethodsToRename.size()];
 			int i= 0;
-			for (Iterator iter= fMethodsToRename.iterator(); iter.hasNext(); i++) {
-				IMethod method= (IMethod) iter.next();
+			for (Iterator<IMethod> iter= fMethodsToRename.iterator(); iter.hasNext(); i++) {
+				IMethod method= iter.next();
 				ICompilationUnit newCu= RenameAnalyzeUtil.findWorkingCopyForCu(newDeclarationWCs, method.getCompilationUnit());
 				newMethods[i]= getNewMethod(method, newCu);
 			}
@@ -480,8 +481,8 @@ public abstract class RenameMethodProcessor extends JavaRenameProcessor implemen
 		MethodOccurenceCollector requestor= new MethodOccurenceCollector(getNewElementName());
 		SearchEngine searchEngine= new SearchEngine(fWorkingCopyOwner);
 		
-		ArrayList needWCs= new ArrayList();
-		HashSet declaringCUs= new HashSet(newDeclarationWCs.length);
+		ArrayList<ICompilationUnit> needWCs= new ArrayList<ICompilationUnit>();
+		HashSet<ICompilationUnit> declaringCUs= new HashSet<ICompilationUnit>(newDeclarationWCs.length);
 		for (int i= 0; i < newDeclarationWCs.length; i++)
 			declaringCUs.add(newDeclarationWCs[i].getPrimary());
 		for (int i= 0; i < fOccurrences.length; i++) {
@@ -492,7 +493,7 @@ public abstract class RenameMethodProcessor extends JavaRenameProcessor implemen
 		ICompilationUnit[] otherWCs= null;
 		try {
 			otherWCs= RenameAnalyzeUtil.createNewWorkingCopies(
-					(ICompilationUnit[]) needWCs.toArray(new ICompilationUnit[needWCs.size()]),
+					needWCs.toArray(new ICompilationUnit[needWCs.size()]),
 					fChangeManager, fWorkingCopyOwner, new SubProgressMonitor(pm, 1));
 			searchEngine.search(refsPattern, searchParticipants, scope,	requestor, new SubProgressMonitor(pm, 1));
 		} finally {
@@ -508,12 +509,12 @@ public abstract class RenameMethodProcessor extends JavaRenameProcessor implemen
 	}
 	
 	private ICompilationUnit[] getDeclarationCUs() {
-		Set cus= new HashSet();
-		for (Iterator iter= fMethodsToRename.iterator(); iter.hasNext();) {
-			IMethod method= (IMethod) iter.next();
+		Set<ICompilationUnit> cus= new HashSet<ICompilationUnit>();
+		for (Iterator<IMethod> iter= fMethodsToRename.iterator(); iter.hasNext();) {
+			IMethod method= iter.next();
 			cus.add(method.getCompilationUnit());
 		}
-		return (ICompilationUnit[]) cus.toArray(new ICompilationUnit[cus.size()]);
+		return cus.toArray(new ICompilationUnit[cus.size()]);
 	}
 	
 	private IMethod getNewMethod(IMethod method, ICompilationUnit newWorkingCopyOfDeclaringCu) throws CoreException{
@@ -527,16 +528,16 @@ public abstract class RenameMethodProcessor extends JavaRenameProcessor implemen
 	}
 
 	//-------
-	private static IMethod[] classesDeclareMethodName(ITypeHierarchy hier, List classes, IMethod method, String newName)  throws CoreException {
-		Set result= new HashSet();
+	private static IMethod[] classesDeclareMethodName(ITypeHierarchy hier, List<IType> classes, IMethod method, String newName)  throws CoreException {
+		Set<IMethod> result= new HashSet<IMethod>();
 		IType type= method.getDeclaringType();
-		List subtypes= Arrays.asList(hier.getAllSubtypes(type));
+		List<IType> subtypes= Arrays.asList(hier.getAllSubtypes(type));
 		
 		int parameterCount= method.getParameterTypes().length;
 		boolean isMethodPrivate= JdtFlags.isPrivate(method);
 		
-		for (Iterator iter= classes.iterator(); iter.hasNext(); ){
-			IType clazz= (IType) iter.next();
+		for (Iterator<IType> iter= classes.iterator(); iter.hasNext(); ){
+			IType clazz= iter.next();
 			IMethod[] methods= clazz.getMethods();
 			boolean isSubclass= subtypes.contains(clazz);
 			for (int j= 0; j < methods.length; j++) {
@@ -549,11 +550,11 @@ public abstract class RenameMethodProcessor extends JavaRenameProcessor implemen
 					result.add(foundMethod);
 			}
 		}
-		return (IMethod[]) result.toArray(new IMethod[result.size()]);
+		return result.toArray(new IMethod[result.size()]);
 	}
 
 	final static IMethod[] hierarchyDeclaresMethodName(IProgressMonitor pm, ITypeHierarchy hierarchy, IMethod method, String newName) throws CoreException {
-		Set result= new HashSet();
+		Set<IMethod> result= new HashSet<IMethod>();
 		IType type= method.getDeclaringType();
 		IMethod foundMethod= Checks.findMethod(newName, method.getParameterTypes().length, false, type);
 		if (foundMethod != null) 
@@ -567,7 +568,7 @@ public abstract class RenameMethodProcessor extends JavaRenameProcessor implemen
 		IMethod[] foundInImplementingClasses= classesDeclareMethodName(hierarchy, Arrays.asList(implementingClasses), method, newName);
 		if (foundInImplementingClasses != null)
 			result.addAll(Arrays.asList(foundInImplementingClasses));
-		return (IMethod[]) result.toArray(new IMethod[result.size()]);	
+		return result.toArray(new IMethod[result.size()]);	
 	}
 				
 	//-------- changes -----
@@ -576,7 +577,7 @@ public abstract class RenameMethodProcessor extends JavaRenameProcessor implemen
 		try {
 			return new DynamicValidationStateChange(RefactoringCoreMessages.Change_javaChanges, fChangeManager.getAllChanges()) {
 				public RefactoringDescriptor getRefactoringDescriptor() {
-					final Map arguments= new HashMap();
+					final Map<String, String> arguments= new HashMap<String, String>();
 					arguments.put(ATTRIBUTE_HANDLE, fMethod.getHandleIdentifier());
 					arguments.put(ATTRIBUTE_NAME, getNewElementName());
 					arguments.put(ATTRIBUTE_REFERENCES, Boolean.valueOf(fUpdateReferences).toString());

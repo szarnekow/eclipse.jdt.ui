@@ -117,8 +117,8 @@ abstract class FlowAnalyzer extends GenericVisitor {
 
 	static protected class SwitchData {
 		private boolean fHasDefaultCase;
-		private List fRanges= new ArrayList(4);
-		private List fInfos= new ArrayList(4);
+		private List<IRegion> fRanges= new ArrayList<IRegion>(4);
+		private List<FlowInfo> fInfos= new ArrayList<FlowInfo>(4);
 		public void setHasDefaultCase() {
 			fHasDefaultCase= true;
 		}
@@ -130,17 +130,17 @@ abstract class FlowAnalyzer extends GenericVisitor {
 			fInfos.add(info);
 		}
 		public IRegion[] getRanges() {
-			return (IRegion[]) fRanges.toArray(new IRegion[fRanges.size()]);	
+			return fRanges.toArray(new IRegion[fRanges.size()]);	
 		}
 		public FlowInfo[] getInfos() {
-			return (FlowInfo[]) fInfos.toArray(new FlowInfo[fInfos.size()]);
+			return fInfos.toArray(new FlowInfo[fInfos.size()]);
 		}
 		public FlowInfo getInfo(int index) {
-			return (FlowInfo)fInfos.get(index);
+			return fInfos.get(index);
 		}
 	}
 
-	private HashMap fData = new HashMap(100);
+	private HashMap<ASTNode, FlowInfo> fData = new HashMap<ASTNode, FlowInfo>(100);
 	/* package */ FlowContext fFlowContext= null;
 
 	public FlowAnalyzer(FlowContext context) {
@@ -224,7 +224,7 @@ abstract class FlowAnalyzer extends GenericVisitor {
 	//---- Helpers to access flow analysis objects ----------------------------------------
 	
 	protected FlowInfo getFlowInfo(ASTNode node) {
-		return (FlowInfo)fData.remove(node);
+		return fData.remove(node);
 	}
 	
 	protected void setFlowInfo(ASTNode node, FlowInfo info) {
@@ -238,12 +238,12 @@ abstract class FlowAnalyzer extends GenericVisitor {
 	}
 	
 	protected FlowInfo accessFlowInfo(ASTNode node) {
-		return (FlowInfo)fData.get(node);
+		return fData.get(node);
 	}
 	
 	//---- Helpers to process sequential flow infos -------------------------------------
 	
-	protected GenericSequentialFlowInfo processSequential(ASTNode parent, List nodes) {
+	protected GenericSequentialFlowInfo processSequential(ASTNode parent, List<ASTNode> nodes) {
 		GenericSequentialFlowInfo result= createSequential(parent);
 		process(result, nodes);
 		return result;
@@ -271,7 +271,7 @@ abstract class FlowAnalyzer extends GenericVisitor {
 		return result;
 	}
 	
-	protected GenericSequentialFlowInfo createSequential(List nodes) {
+	protected GenericSequentialFlowInfo createSequential(List<ASTNode> nodes) {
 		GenericSequentialFlowInfo result= createSequential();
 		process(result, nodes);
 		return result;		
@@ -279,11 +279,11 @@ abstract class FlowAnalyzer extends GenericVisitor {
 	
 	//---- Generic merge methods --------------------------------------------------------
 	
-	protected void process(GenericSequentialFlowInfo info, List nodes) {
+	protected void process(GenericSequentialFlowInfo info, List<ASTNode> nodes) {
 		if (nodes == null)
 			return;
-		for (Iterator iter= nodes.iterator(); iter.hasNext();) {
-			info.merge(getFlowInfo((ASTNode)iter.next()), fFlowContext);
+		for (Iterator<ASTNode> iter= nodes.iterator(); iter.hasNext();) {
+			info.merge(getFlowInfo(iter.next()), fFlowContext);
 		}
 	}
 	
@@ -311,9 +311,9 @@ abstract class FlowAnalyzer extends GenericVisitor {
 			fFlowContext.pushExcptions(node);
 			node.getBody().accept(this);
 			fFlowContext.popExceptions();
-			List catchClauses= node.catchClauses();
-			for (Iterator iter= catchClauses.iterator(); iter.hasNext();) {
-				((CatchClause)iter.next()).accept(this);
+			List<CatchClause> catchClauses= node.catchClauses();
+			for (Iterator<CatchClause> iter= catchClauses.iterator(); iter.hasNext();) {
+				iter.next().accept(this);
 			}
 			Block finallyBlock= node.getFinally();
 			if (finallyBlock != null) {
@@ -857,8 +857,8 @@ abstract class FlowAnalyzer extends GenericVisitor {
 		setFlowInfo(node, info);
 		info.mergeTry(getFlowInfo(node.getBody()), fFlowContext);
 		info.removeExceptions(node);
-		for (Iterator iter= node.catchClauses().iterator(); iter.hasNext();) {
-			CatchClause element= (CatchClause)iter.next();
+		for (Iterator<CatchClause> iter= node.catchClauses().iterator(); iter.hasNext();) {
+			CatchClause element= iter.next();
 			info.mergeCatch(getFlowInfo(element), fFlowContext);
 		}
 		info.mergeFinally(getFlowInfo(node.getFinally()), fFlowContext);
@@ -938,12 +938,12 @@ abstract class FlowAnalyzer extends GenericVisitor {
 		assignFlowInfo(node, node.getBound());
 	}
 	
-	private void endVisitMethodInvocation(ASTNode node, ASTNode receiver, List arguments, IMethodBinding binding) {
+	private void endVisitMethodInvocation(ASTNode node, ASTNode receiver, List<ASTNode> arguments, IMethodBinding binding) {
 		if (skipNode(node))
 			return;
 		MessageSendFlowInfo info= createMessageSendFlowInfo();
 		setFlowInfo(node, info);
-		for (Iterator iter= arguments.iterator(); iter.hasNext();) {
+		for (Iterator<ASTNode> iter= arguments.iterator(); iter.hasNext();) {
 			Expression arg= (Expression) iter.next();
 			info.mergeArgument(getFlowInfo(arg), fFlowContext);
 		}

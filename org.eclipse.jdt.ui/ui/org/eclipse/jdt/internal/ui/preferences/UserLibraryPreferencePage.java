@@ -455,7 +455,7 @@ public class UserLibraryPreferencePage extends PreferencePage implements IWorkbe
 				String savedMessage= PreferencesMessages.UserLibraryPreferencePage_LoadSaveDialog_save_ok_message; 
 				MessageDialog.openInformation(getShell(), savedTitle, savedMessage);
 			} else {
-				HashSet map= new HashSet(fExistingLibraries.size());
+				HashSet<String> map= new HashSet<String>(fExistingLibraries.size());
 				for (int k= 0; k < fExistingLibraries.size(); k++) {
 					CPUserLibraryElement elem= (CPUserLibraryElement) fExistingLibraries.get(k);
 					map.add(elem.getName());
@@ -675,7 +675,7 @@ public class UserLibraryPreferencePage extends PreferencePage implements IWorkbe
 						NodeList ruleElements= ruleParentElement.getElementsByTagName(TAG_ACCESSRULE);
 						int nRuleElements= ruleElements.getLength();
 						if (nRuleElements > 0) {
-							ArrayList resultingRules= new ArrayList(nRuleElements);
+							ArrayList<IAccessRule> resultingRules= new ArrayList<IAccessRule>(nRuleElements);
 							for (int n= 0; n < nRuleElements; n++) {
 								Node node= ruleElements.item(n);
 								if (node instanceof Element) {
@@ -874,10 +874,10 @@ public class UserLibraryPreferencePage extends PreferencePage implements IWorkbe
 	
 	private void updateUserLibararies(IProgressMonitor monitor) throws CoreException {
 		List list= fLibraryList.getElements();
-		HashSet oldNames= new HashSet(Arrays.asList(JavaCore.getUserLibraryNames()));
+		HashSet<String> oldNames= new HashSet<String>(Arrays.asList(JavaCore.getUserLibraryNames()));
 		int nExisting= list.size();
 		
-		HashSet newEntries= new HashSet(list.size());
+		HashSet<CPUserLibraryElement> newEntries= new HashSet<CPUserLibraryElement>(list.size());
 		for (int i= 0; i < nExisting; i++) {
 			CPUserLibraryElement element= (CPUserLibraryElement) list.get(i);
 			boolean contained= oldNames.remove(element.getName());
@@ -913,9 +913,9 @@ public class UserLibraryPreferencePage extends PreferencePage implements IWorkbe
 		}
 		
 		containerInit[0]= null;
-		Iterator iter= oldNames.iterator();
+		Iterator<String> iter= oldNames.iterator();
 		while (iter.hasNext()) {
-			String name= (String) iter.next();
+			String name= iter.next();
 			
 			IPath path= new Path(JavaCore.USER_LIBRARY_CONTAINER_ID).append(name);
 			try {

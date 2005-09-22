@@ -108,14 +108,14 @@ public abstract class SuperTypeRefactoringProcessor extends RefactoringProcessor
 	protected boolean fInstanceOf= false;
 
 	/** The obsolete casts (element type: <code>&ltICompilationUnit, Collection&ltCastVariable2&gt&gt</code>) */
-	protected Map fObsoleteCasts= null;
+	protected Map<ICompilationUnit, Collection> fObsoleteCasts= null;
 
 	/** The working copy owner */
 	protected final WorkingCopyOwner fOwner= new WorkingCopyOwner() {
 	};
 
 	/** The type occurrences (element type: <code>&ltICompilationUnit, Collection&ltIDeclaredConstraintVariable&gt&gt</code>) */
-	protected Map fTypeOccurrences= null;
+	protected Map<ICompilationUnit, Collection> fTypeOccurrences= null;
 
 	/**
 	 * Creates the super type constraint solver to solve the model.
@@ -153,7 +153,7 @@ public abstract class SuperTypeRefactoringProcessor extends RefactoringProcessor
 	 * @param nodes the ast nodes representing the type occurrences
 	 * @throws JavaModelException if an error occurs
 	 */
-	protected final void getFieldReferencingCompilationUnits(final Map units, final ASTNode[] nodes) throws JavaModelException {
+	protected final void getFieldReferencingCompilationUnits(final Map<IJavaProject, Set> units, final ASTNode[] nodes) throws JavaModelException {
 		ASTNode node= null;
 		IField field= null;
 		IJavaProject project= null;
@@ -164,9 +164,9 @@ public abstract class SuperTypeRefactoringProcessor extends RefactoringProcessor
 				final List fields= getReferencingFields(node, project);
 				for (int offset= 0; offset < fields.size(); offset++) {
 					field= (IField) fields.get(offset);
-					Set set= (Set) units.get(project);
+					Set<ICompilationUnit> set= units.get(project);
 					if (set == null) {
-						set= new HashSet();
+						set= new HashSet<ICompilationUnit>();
 						units.put(project, set);
 					}
 					final ICompilationUnit unit= field.getCompilationUnit();
@@ -184,7 +184,7 @@ public abstract class SuperTypeRefactoringProcessor extends RefactoringProcessor
 	 * @param nodes the ast nodes representing the type occurrences
 	 * @throws JavaModelException if an error occurs
 	 */
-	protected final void getMethodReferencingCompilationUnits(final Map units, final ASTNode[] nodes) throws JavaModelException {
+	protected final void getMethodReferencingCompilationUnits(final Map<IJavaProject, Set> units, final ASTNode[] nodes) throws JavaModelException {
 		ASTNode node= null;
 		IMethod method= null;
 		IJavaProject project= null;
@@ -194,9 +194,9 @@ public abstract class SuperTypeRefactoringProcessor extends RefactoringProcessor
 			if (project != null) {
 				method= getReferencingMethod(node);
 				if (method != null) {
-					Set set= (Set) units.get(project);
+					Set<ICompilationUnit> set= units.get(project);
 					if (set == null) {
-						set= new HashSet();
+						set= new HashSet<ICompilationUnit>();
 						units.put(project, set);
 					}
 					final ICompilationUnit unit= method.getCompilationUnit();
@@ -216,7 +216,7 @@ public abstract class SuperTypeRefactoringProcessor extends RefactoringProcessor
 	 * @return the referenced compilation units (element type: <code>&ltIJavaProject, Collection&ltSearchResultGroup&gt&gt</code>)
 	 * @throws JavaModelException if an error occurs
 	 */
-	protected final Map getReferencingCompilationUnits(final IType type, final IProgressMonitor monitor, final RefactoringStatus status) throws JavaModelException {
+	protected final Map<IJavaProject, Set> getReferencingCompilationUnits(final IType type, final IProgressMonitor monitor, final RefactoringStatus status) throws JavaModelException {
 		try {
 			monitor.beginTask("", 1); //$NON-NLS-1$
 			monitor.setTaskName(RefactoringCoreMessages.SuperTypeRefactoringProcessor_creating);
@@ -246,10 +246,10 @@ public abstract class SuperTypeRefactoringProcessor extends RefactoringProcessor
 		if (node instanceof Type) {
 			final BodyDeclaration parent= (BodyDeclaration) ASTNodes.getParent(node, BodyDeclaration.class);
 			if (parent instanceof FieldDeclaration) {
-				final List fragments= ((FieldDeclaration) parent).fragments();
+				final List<ASTNode> fragments= ((FieldDeclaration) parent).fragments();
 				result= new ArrayList(fragments.size());
 				VariableDeclarationFragment fragment= null;
-				for (final Iterator iterator= fragments.iterator(); iterator.hasNext();) {
+				for (final Iterator<ASTNode> iterator= fragments.iterator(); iterator.hasNext();) {
 					fragment= (VariableDeclarationFragment) iterator.next();
 					final IField field= getCorrespondingField(fragment);
 					if (field != null)
@@ -301,10 +301,10 @@ public abstract class SuperTypeRefactoringProcessor extends RefactoringProcessor
 	 * @param unit the compilation unit of the subtype
 	 * @param node the compilation unit node of the subtype
 	 */
-	protected final void performFirstPass(final SuperTypeConstraintsCreator creator, final Map units, final Map groups, final ICompilationUnit unit, final CompilationUnit node) {
+	protected final void performFirstPass(final SuperTypeConstraintsCreator creator, final Map<IJavaProject, Set> units, final Map<ICompilationUnit, SearchResultGroup> groups, final ICompilationUnit unit, final CompilationUnit node) {
 		node.setProperty(RefactoringASTParser.SOURCE_PROPERTY, unit);
 		node.accept(creator);
-		final SearchResultGroup group= (SearchResultGroup) groups.get(unit);
+		final SearchResultGroup group= groups.get(unit);
 		if (group != null) {
 			final ASTNode[] nodes= ASTNodeSearchUtil.getAstNodes(group.getSearchResults(), node);
 			try {
@@ -471,19 +471,19 @@ public abstract class SuperTypeRefactoringProcessor extends RefactoringProcessor
 	 */
 	protected final void rewriteTypeOccurrences(final TextChangeManager manager, final ASTRequestor sourceRequestor, final CompilationUnitRewrite sourceRewrite, final ICompilationUnit subUnit, final CompilationUnit subNode, final Set replacements, final RefactoringStatus status, final IProgressMonitor monitor) {
 		if (fTypeOccurrences != null) {
-			final Set units= new HashSet(fTypeOccurrences.keySet());
+			final Set<ICompilationUnit> units= new HashSet<ICompilationUnit>(fTypeOccurrences.keySet());
 			if (subUnit != null)
 				units.remove(subUnit);
-			final Map projects= new HashMap();
-			Collection collection= null;
+			final Map<IJavaProject, Collection> projects= new HashMap<IJavaProject, Collection>();
+			Collection<ICompilationUnit> collection= null;
 			IJavaProject project= null;
 			ICompilationUnit current= null;
-			for (final Iterator iterator= units.iterator(); iterator.hasNext();) {
-				current= (ICompilationUnit) iterator.next();
+			for (final Iterator<ICompilationUnit> iterator= units.iterator(); iterator.hasNext();) {
+				current= iterator.next();
 				project= current.getJavaProject();
-				collection= (Collection) projects.get(project);
+				collection= projects.get(project);
 				if (collection == null) {
-					collection= new ArrayList();
+					collection= new ArrayList<ICompilationUnit>();
 					projects.put(project, collection);
 				}
 				collection.add(current);
@@ -491,12 +491,12 @@ public abstract class SuperTypeRefactoringProcessor extends RefactoringProcessor
 			final ASTParser parser= ASTParser.newParser(AST.JLS3);
 			final IProgressMonitor subMonitor= new SubProgressMonitor(monitor, 1);
 			try {
-				final Set keySet= projects.keySet();
+				final Set<IJavaProject> keySet= projects.keySet();
 				subMonitor.beginTask("", keySet.size()); //$NON-NLS-1$
 				subMonitor.setTaskName(RefactoringCoreMessages.SuperTypeRefactoringProcessor_creating);
-				for (final Iterator iterator= keySet.iterator(); iterator.hasNext();) {
-					project= (IJavaProject) iterator.next();
-					collection= (Collection) projects.get(project);
+				for (final Iterator<IJavaProject> iterator= keySet.iterator(); iterator.hasNext();) {
+					project= iterator.next();
+					collection= projects.get(project);
 					parser.setWorkingCopyOwner(fOwner);
 					parser.setResolveBindings(true);
 					parser.setProject(project);
@@ -505,7 +505,7 @@ public abstract class SuperTypeRefactoringProcessor extends RefactoringProcessor
 					try {
 						subsubMonitor.beginTask("", collection.size()); //$NON-NLS-1$
 						subsubMonitor.setTaskName(RefactoringCoreMessages.SuperTypeRefactoringProcessor_creating);
-						parser.createASTs((ICompilationUnit[]) collection.toArray(new ICompilationUnit[collection.size()]), new String[0], new ASTRequestor() {
+						parser.createASTs(collection.toArray(new ICompilationUnit[collection.size()]), new String[0], new ASTRequestor() {
 
 							public final void acceptAST(final ICompilationUnit unit, final CompilationUnit node) {
 								try {
@@ -571,8 +571,8 @@ public abstract class SuperTypeRefactoringProcessor extends RefactoringProcessor
 		try {
 			monitor.beginTask("", 3); //$NON-NLS-1$
 			monitor.setTaskName(RefactoringCoreMessages.SuperTypeRefactoringProcessor_creating);
-			final Map firstPass= getReferencingCompilationUnits(subType, new SubProgressMonitor(monitor, 1), status);
-			final Map secondPass= new HashMap();
+			final Map<IJavaProject, Set> firstPass= getReferencingCompilationUnits(subType, new SubProgressMonitor(monitor, 1), status);
+			final Map<IJavaProject, Set> secondPass= new HashMap<IJavaProject, Set>();
 			IJavaProject project= null;
 			Collection collection= null;
 			try {
@@ -581,12 +581,12 @@ public abstract class SuperTypeRefactoringProcessor extends RefactoringProcessor
 				ICompilationUnit current= null;
 				SearchResultGroup group= null;
 				SearchMatch[] matches= null;
-				final Map groups= new HashMap();
-				for (final Iterator outer= firstPass.keySet().iterator(); outer.hasNext();) {
-					project= (IJavaProject) outer.next();
+				final Map<ICompilationUnit, SearchResultGroup> groups= new HashMap<ICompilationUnit, SearchResultGroup>();
+				for (final Iterator<IJavaProject> outer= firstPass.keySet().iterator(); outer.hasNext();) {
+					project= outer.next();
 					if (level == 3 && !JavaModelUtil.is50OrHigher(project))
 						level= 2;
-					collection= (Collection) firstPass.get(project);
+					collection= firstPass.get(project);
 					if (collection != null) {
 						for (final Iterator inner= collection.iterator(); inner.hasNext();) {
 							group= (SearchResultGroup) inner.next();
@@ -602,21 +602,21 @@ public abstract class SuperTypeRefactoringProcessor extends RefactoringProcessor
 						}
 					}
 				}
-				Set units= null;
-				final Set processed= new HashSet();
+				Set<ICompilationUnit> units= null;
+				final Set<ICompilationUnit> processed= new HashSet<ICompilationUnit>();
 				if (subUnit != null)
 					processed.add(subUnit);
 				model.beginCreation();
 				IProgressMonitor subMonitor= new SubProgressMonitor(monitor, 1);
 				try {
-					final Set keySet= firstPass.keySet();
+					final Set<IJavaProject> keySet= firstPass.keySet();
 					subMonitor.beginTask("", keySet.size()); //$NON-NLS-1$
 					subMonitor.setTaskName(RefactoringCoreMessages.SuperTypeRefactoringProcessor_creating);
-					for (final Iterator outer= keySet.iterator(); outer.hasNext();) {
-						project= (IJavaProject) outer.next();
-						collection= (Collection) firstPass.get(project);
+					for (final Iterator<IJavaProject> outer= keySet.iterator(); outer.hasNext();) {
+						project= outer.next();
+						collection= firstPass.get(project);
 						if (collection != null) {
-							units= new HashSet(collection.size());
+							units= new HashSet<ICompilationUnit>(collection.size());
 							for (final Iterator inner= collection.iterator(); inner.hasNext();) {
 								group= (SearchResultGroup) inner.next();
 								matches= group.getSearchResults();
@@ -629,7 +629,7 @@ public abstract class SuperTypeRefactoringProcessor extends RefactoringProcessor
 									}
 								}
 							}
-							final List batches= new ArrayList(units);
+							final List<ICompilationUnit> batches= new ArrayList<ICompilationUnit>(units);
 							final int size= batches.size();
 							final int iterations= ((size - 1) / SIZE_BATCH) + 1;
 							final IProgressMonitor subsubMonitor= new SubProgressMonitor(subMonitor, 1);
@@ -637,7 +637,7 @@ public abstract class SuperTypeRefactoringProcessor extends RefactoringProcessor
 							subsubMonitor.setTaskName(RefactoringCoreMessages.SuperTypeRefactoringProcessor_creating);
 							final Map options= RefactoringASTParser.getCompilerOptions(project);
 							for (int index= 0; index < iterations; index++) {
-								final List iteration= batches.subList(index * SIZE_BATCH, Math.min(size, (index + 1) * SIZE_BATCH));
+								final List<ICompilationUnit> iteration= batches.subList(index * SIZE_BATCH, Math.min(size, (index + 1) * SIZE_BATCH));
 								parser.setWorkingCopyOwner(fOwner);
 								parser.setResolveBindings(true);
 								parser.setProject(project);
@@ -647,7 +647,7 @@ public abstract class SuperTypeRefactoringProcessor extends RefactoringProcessor
 									final int count= iteration.size();
 									subsubsubMonitor.beginTask("", count); //$NON-NLS-1$
 									subsubsubMonitor.setTaskName(RefactoringCoreMessages.SuperTypeRefactoringProcessor_creating);
-									parser.createASTs((ICompilationUnit[]) iteration.toArray(new ICompilationUnit[count]), new String[0], new ASTRequestor() {
+									parser.createASTs(iteration.toArray(new ICompilationUnit[count]), new String[0], new ASTRequestor() {
 
 										public final void acceptAST(final ICompilationUnit unit, final CompilationUnit node) {
 											try {
@@ -679,14 +679,14 @@ public abstract class SuperTypeRefactoringProcessor extends RefactoringProcessor
 					performFirstPass(creator, secondPass, groups, subUnit, subNode);
 				subMonitor= new SubProgressMonitor(monitor, 1);
 				try {
-					final Set keySet= secondPass.keySet();
+					final Set<IJavaProject> keySet= secondPass.keySet();
 					subMonitor.beginTask("", keySet.size()); //$NON-NLS-1$
 					subMonitor.setTaskName(RefactoringCoreMessages.SuperTypeRefactoringProcessor_creating);
-					for (final Iterator iterator= keySet.iterator(); iterator.hasNext();) {
-						project= (IJavaProject) iterator.next();
+					for (final Iterator<IJavaProject> iterator= keySet.iterator(); iterator.hasNext();) {
+						project= iterator.next();
 						if (level == 3 && !JavaModelUtil.is50OrHigher(project))
 							level= 2;
-						collection= (Collection) secondPass.get(project);
+						collection= secondPass.get(project);
 						if (collection != null) {
 							parser.setWorkingCopyOwner(fOwner);
 							parser.setResolveBindings(true);

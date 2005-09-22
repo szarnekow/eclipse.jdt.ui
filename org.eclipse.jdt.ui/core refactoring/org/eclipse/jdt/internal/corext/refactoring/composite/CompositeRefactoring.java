@@ -71,13 +71,13 @@ public class CompositeRefactoring extends Refactoring implements IInitializableR
 	 * The created changes (element type: &lt;<code>ICompilationUnit</code>,
 	 * <code>CompositeTextFileChange</code>&gt;)
 	 */
-	private final Map fChanges= new HashMap();
+	private final Map<ICompilationUnit, CompositeTextFileChange> fChanges= new HashMap<ICompilationUnit, CompositeTextFileChange>();
 
 	/** The set of custom changes (element type: <code>Change</code>) */
-	private final Set fCustomChanges= new HashSet();
+	private final Set<CompositeTextFileChange> fCustomChanges= new HashSet<CompositeTextFileChange>();
 
 	/** The set of disabled composable refactorings (element type: &lt;<code>Refactoring</code>&gt;) */
-	private final Set fDisabledRefactorings= new HashSet(2);
+	private final Set<Refactoring> fDisabledRefactorings= new HashSet<Refactoring>(2);
 
 	/** The global working copy owner */
 	private WorkingCopyOwner fGlobalOwner= null;
@@ -86,7 +86,7 @@ public class CompositeRefactoring extends Refactoring implements IInitializableR
 	 * The local working copy owners (element type: &lt;<code>Refactoring</code>,
 	 * <code>WorkingCopyOwner</code>&gt;)
 	 */
-	private final Map fLocalOwners= new HashMap();
+	private final Map<Refactoring, LocalWorkingCopyOwner> fLocalOwners= new HashMap<Refactoring, LocalWorkingCopyOwner>();
 
 	/** The name of the refactoring */
 	private final String fName;
@@ -101,7 +101,7 @@ public class CompositeRefactoring extends Refactoring implements IInitializableR
 	 * The refactoring setups (element type: &lt;<code>Refactoring</code>,
 	 * <code>RefactoringArguments</code>&gt;)
 	 */
-	private final Map fRefactoringArguments= new HashMap();
+	private final Map<Refactoring, RefactoringArguments> fRefactoringArguments= new HashMap<Refactoring, RefactoringArguments>();
 
 	/**
 	 * The composable refactorings (must all implement
@@ -113,7 +113,7 @@ public class CompositeRefactoring extends Refactoring implements IInitializableR
 	 * The working copies (element type: &lt;<code>ICompilationUnit</code>,
 	 * <code>ICompilationUnit</code>&gt;)
 	 */
-	private final Map fWorkingCopies= new HashMap();
+	private final Map<ICompilationUnit, ICompilationUnit> fWorkingCopies= new HashMap<ICompilationUnit, ICompilationUnit>();
 
 	/**
 	 * Creates a new composite refactoring.
@@ -186,7 +186,7 @@ public class CompositeRefactoring extends Refactoring implements IInitializableR
 				if (!fDisabledRefactorings.contains(refactoring)) {
 					final IComposableRefactoring composable= (IComposableRefactoring) refactoring;
 
-					final RefactoringArguments arguments= (RefactoringArguments) fRefactoringArguments.get(refactoring);
+					final RefactoringArguments arguments= fRefactoringArguments.get(refactoring);
 					if (arguments != null) {
 
 						if (!composable.initialize(arguments))
@@ -239,7 +239,7 @@ public class CompositeRefactoring extends Refactoring implements IInitializableR
 				if (!fDisabledRefactorings.contains(refactoring)) {
 					final IComposableRefactoring composable= (IComposableRefactoring) refactoring;
 
-					final RefactoringArguments arguments= (RefactoringArguments) fRefactoringArguments.get(refactoring);
+					final RefactoringArguments arguments= fRefactoringArguments.get(refactoring);
 					if (arguments != null) {
 
 						if (composable.initialize(arguments))
@@ -265,10 +265,10 @@ public class CompositeRefactoring extends Refactoring implements IInitializableR
 			monitor.beginTask("", 1); //$NON-NLS-1$
 			monitor.setTaskName(RefactoringCoreMessages.CompositeRefactoring_creating_change);
 
-			final Set changes= new HashSet(fChanges.values());
+			final Set<CompositeTextFileChange> changes= new HashSet<CompositeTextFileChange>(fChanges.values());
 			changes.addAll(fCustomChanges);
 
-			return new DynamicValidationStateChange(getName(), (Change[]) changes.toArray(new Change[changes.size()]));
+			return new DynamicValidationStateChange(getName(), changes.toArray(new Change[changes.size()]));
 
 		} finally {
 
@@ -277,13 +277,13 @@ public class CompositeRefactoring extends Refactoring implements IInitializableR
 			fGlobalOwner= null;
 			fLocalOwners.clear();
 
-			final Collection copies= fWorkingCopies.values();
+			final Collection<ICompilationUnit> copies= fWorkingCopies.values();
 
 			final IProgressMonitor subMonitor= new SubProgressMonitor(monitor, 1);
 			subMonitor.beginTask(RefactoringCoreMessages.CompositeRefactoring_creating_change, copies.size());
 
-			for (final Iterator iterator= copies.iterator(); iterator.hasNext();) {
-				((ICompilationUnit) iterator.next()).discardWorkingCopy();
+			for (final Iterator<ICompilationUnit> iterator= copies.iterator(); iterator.hasNext();) {
+				iterator.next().discardWorkingCopy();
 
 				subMonitor.worked(1);
 			}
@@ -326,7 +326,7 @@ public class CompositeRefactoring extends Refactoring implements IInitializableR
 	 */
 	public final WorkingCopyOwner getLocalWorkingCopyOwner(final Refactoring refactoring) {
 
-		final WorkingCopyOwner owner= (WorkingCopyOwner) fLocalOwners.get(refactoring);
+		final WorkingCopyOwner owner= fLocalOwners.get(refactoring);
 		if (owner != null)
 			return owner;
 
@@ -358,7 +358,7 @@ public class CompositeRefactoring extends Refactoring implements IInitializableR
 		if (fWorkingCopies.containsValue(original))
 			return original;
 
-		final ICompilationUnit cached= (ICompilationUnit) fWorkingCopies.get(original);
+		final ICompilationUnit cached= fWorkingCopies.get(original);
 		if (cached != null)
 			return cached;
 
@@ -423,7 +423,7 @@ public class CompositeRefactoring extends Refactoring implements IInitializableR
 
 		} else {
 
-			final CompositeTextFileChange existingChange= (CompositeTextFileChange) fChanges.get(unit);
+			final CompositeTextFileChange existingChange= fChanges.get(unit);
 			if (existingChange != null)
 				existingChange.addChange(change);
 		}

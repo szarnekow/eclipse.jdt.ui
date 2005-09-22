@@ -333,8 +333,8 @@ public class ExtractInterfaceWizard extends RefactoringWizard {
 		}
 		
 		private IMember[] getCheckedMembers() {
-			List checked= Arrays.asList(fTableViewer.getCheckedElements());
-			return (IMember[]) checked.toArray(new IMember[checked.size()]);
+			List<Object> checked= Arrays.asList(fTableViewer.getCheckedElements());
+			return checked.toArray(new IMember[checked.size()]);
 		}
 
 		/*

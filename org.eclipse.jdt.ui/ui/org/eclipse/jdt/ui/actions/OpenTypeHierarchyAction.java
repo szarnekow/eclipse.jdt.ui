@@ -142,13 +142,13 @@ public class OpenTypeHierarchyAction extends SelectionDispatchAction {
 		IJavaElement[] elements= SelectionConverter.codeResolveOrInputHandled(fEditor, getShell(), getDialogTitle());
 		if (elements == null)
 			return;
-		List candidates= new ArrayList(elements.length);
+		List<IJavaElement> candidates= new ArrayList<IJavaElement>(elements.length);
 		for (int i= 0; i < elements.length; i++) {
 			IJavaElement[] resolvedElements= OpenTypeHierarchyUtil.getCandidates(elements[i]);
 			if (resolvedElements != null)	
 				candidates.addAll(Arrays.asList(resolvedElements));
 		}
-		run((IJavaElement[])candidates.toArray(new IJavaElement[candidates.size()]));
+		run(candidates.toArray(new IJavaElement[candidates.size()]));
 	}
 	
 	/* (non-Javadoc)
@@ -175,10 +175,10 @@ public class OpenTypeHierarchyAction extends SelectionDispatchAction {
 		if (!ActionUtil.isProcessable(getShell(), element))
 			return;
 
-		List result= new ArrayList(1);
+		List<IJavaElement> result= new ArrayList<IJavaElement>(1);
 		IStatus status= compileCandidates(result, element);
 		if (status.isOK()) {
-			run((IJavaElement[]) result.toArray(new IJavaElement[result.size()]));
+			run(result.toArray(new IJavaElement[result.size()]));
 		} else {
 			ErrorDialog.openError(getShell(), getDialogTitle(), ActionMessages.OpenTypeHierarchyAction_messages_title, status); 
 		}
@@ -200,7 +200,7 @@ public class OpenTypeHierarchyAction extends SelectionDispatchAction {
 		return ActionMessages.OpenTypeHierarchyAction_dialog_title; 
 	}
 	
-	private static IStatus compileCandidates(List result, IJavaElement elem) {
+	private static IStatus compileCandidates(List<IJavaElement> result, IJavaElement elem) {
 		IStatus ok= new Status(IStatus.OK, JavaPlugin.getPluginId(), 0, "", null); //$NON-NLS-1$		
 		try {
 			switch (elem.getElementType()) {

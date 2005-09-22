@@ -62,12 +62,12 @@ public class CPUserLibraryElement {
 	
 	
 	private String fName;
-	private List fChildren;
+	private List<Object> fChildren;
 	private boolean fIsSystemLibrary;
 
 	public CPUserLibraryElement(String name, IClasspathContainer container, IJavaProject project) {
 		fName= name;
-		fChildren= new ArrayList();
+		fChildren= new ArrayList<Object>();
 		if (container != null) {
 			IClasspathEntry[] entries= container.getClasspathEntries();
 			CPListElement[] res= new CPListElement[entries.length];
@@ -86,7 +86,7 @@ public class CPUserLibraryElement {
 	
 	public CPUserLibraryElement(String name, boolean isSystemLibrary, CPListElement[] children) {
 		fName= name;
-		fChildren= new ArrayList();
+		fChildren= new ArrayList<Object>();
 		if (children != null) {
 			for (int i= 0; i < children.length; i++) {
 				fChildren.add(children[i]);
@@ -96,7 +96,7 @@ public class CPUserLibraryElement {
 	}
 	
 	public CPListElement[] getChildren() {
-		return (CPListElement[]) fChildren.toArray(new CPListElement[fChildren.size()]);
+		return fChildren.toArray(new CPListElement[fChildren.size()]);
 	}
 
 	public String getName() {
@@ -117,9 +117,9 @@ public class CPUserLibraryElement {
 		}
 	}
 		
-	private List moveUp(List elements, List move) {
+	private List<Object> moveUp(List<Object> elements, List move) {
 		int nElements= elements.size();
-		List res= new ArrayList(nElements);
+		List<Object> res= new ArrayList<Object>(nElements);
 		Object floating= null;
 		for (int i= 0; i < nElements; i++) {
 			Object curr= elements.get(i);

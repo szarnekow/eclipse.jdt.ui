@@ -143,7 +143,7 @@ public final class SerialVersionLaunchConfigurationDelegate extends AbstractJava
 			subMonitor.beginTask(CorrectionMessages.SerialVersionLaunchConfigurationDelegate_launching_vm, 2);
 			try {
 				subMonitor.subTask(CorrectionMessages.SerialVersionLaunchConfigurationDelegate_constructing_command_line);
-				final List arguments= new ArrayList();
+				final List<String> arguments= new ArrayList<String>();
 				arguments.add(getJavaExecutable(configuration));
 				final String[] vmArguments= combineVmArgs(configuration, fInstall);
 				for (int index= 0; index < vmArguments.length; index++)

@@ -121,7 +121,7 @@ public class ModifierRewrite {
 		}
 		// find last annotation
 		IExtendedModifier last= null;
-		List extendedList= fModifierRewrite.getRewrittenList();
+		List<ASTNode> extendedList= fModifierRewrite.getRewrittenList();
 		for (int i= 0; i < extendedList.size(); i++) {
 			IExtendedModifier curr= (IExtendedModifier) extendedList.get(i);
 			if (!curr.isAnnotation())

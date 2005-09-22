@@ -53,13 +53,13 @@ public class SpellCheckEngine implements ISpellCheckEngine, IPropertyChangeListe
 	 *
 	 * @return The available locales for this engine
 	 */
-	public static Set getAvailableLocales() {
+	public static Set<Object> getAvailableLocales() {
 
 		URL url= null;
 		Locale locale= null;
 		InputStream stream= null;
 
-		final Set result= new HashSet();
+		final Set<Object> result= new HashSet<Object>();
 		try {
 
 			final URL location= getDictionaryLocation();
@@ -134,7 +134,7 @@ public class SpellCheckEngine implements ISpellCheckEngine, IPropertyChangeListe
 	}
 
 	/** The registered locale insenitive dictionaries */
-	private final Set fGlobalDictionaries= new HashSet();
+	private final Set<ISpellDictionary> fGlobalDictionaries= new HashSet<ISpellDictionary>();
 
 	/** The current locale */
 	private Locale fLocale= null;
@@ -143,7 +143,7 @@ public class SpellCheckEngine implements ISpellCheckEngine, IPropertyChangeListe
 	private ISpellChecker fChecker= null;
 
 	/** The registered locale sensitive dictionaries */
-	private final Map fLocaleDictionaries= new HashMap();
+	private final Map<Locale, ISpellDictionary> fLocaleDictionaries= new HashMap<Locale, ISpellDictionary>();
 
 	/** The preference store where to listen */
 	private IPreferenceStore fPreferences= null;
@@ -165,7 +165,7 @@ public class SpellCheckEngine implements ISpellCheckEngine, IPropertyChangeListe
 			Locale locale= null;
 			final URL location= getDictionaryLocation();
 
-			for (final Iterator iterator= getAvailableLocales().iterator(); iterator.hasNext();) {
+			for (final Iterator<Object> iterator= getAvailableLocales().iterator(); iterator.hasNext();) {
 
 				locale= (Locale)iterator.next();
 				fLocaleDictionaries.put(locale, new SpellReconcileDictionary(locale, location));
@@ -192,9 +192,9 @@ public class SpellCheckEngine implements ISpellCheckEngine, IPropertyChangeListe
 			fPreferences= store;
 
 			ISpellDictionary dictionary= null;
-			for (Iterator iterator= fGlobalDictionaries.iterator(); iterator.hasNext();) {
+			for (Iterator<ISpellDictionary> iterator= fGlobalDictionaries.iterator(); iterator.hasNext();) {
 
-				dictionary= (ISpellDictionary)iterator.next();
+				dictionary= iterator.next();
 				fChecker.addDictionary(dictionary);
 			}
 		}
@@ -202,7 +202,7 @@ public class SpellCheckEngine implements ISpellCheckEngine, IPropertyChangeListe
 		ISpellDictionary dictionary= null;
 		if (fLocale != null) {
 
-			dictionary= (ISpellDictionary)fLocaleDictionaries.get(fLocale);
+			dictionary= fLocaleDictionaries.get(fLocale);
 			if (dictionary != null) {
 
 				fChecker.removeDictionary(dictionary);
@@ -211,7 +211,7 @@ public class SpellCheckEngine implements ISpellCheckEngine, IPropertyChangeListe
 		}
 		fLocale= locale;
 
-		dictionary= (ISpellDictionary)fLocaleDictionaries.get(locale);
+		dictionary= fLocaleDictionaries.get(locale);
 		if (dictionary == null) {
 
 			if (!getDefaultLocale().equals(locale)) {
@@ -304,15 +304,15 @@ public class SpellCheckEngine implements ISpellCheckEngine, IPropertyChangeListe
 	public synchronized final void unload() {
 
 		ISpellDictionary dictionary= null;
-		for (final Iterator iterator= fGlobalDictionaries.iterator(); iterator.hasNext();) {
+		for (final Iterator<ISpellDictionary> iterator= fGlobalDictionaries.iterator(); iterator.hasNext();) {
 
-			dictionary= (ISpellDictionary)iterator.next();
+			dictionary= iterator.next();
 			dictionary.unload();
 		}
 
-		for (final Iterator iterator= fLocaleDictionaries.values().iterator(); iterator.hasNext();) {
+		for (final Iterator<ISpellDictionary> iterator= fLocaleDictionaries.values().iterator(); iterator.hasNext();) {
 
-			dictionary= (ISpellDictionary)iterator.next();
+			dictionary= iterator.next();
 			dictionary.unload();
 		}
 

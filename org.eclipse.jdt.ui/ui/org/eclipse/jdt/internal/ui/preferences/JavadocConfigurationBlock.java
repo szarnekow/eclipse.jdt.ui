@@ -715,7 +715,7 @@ public class JavadocConfigurationBlock {
 		 */
 		public Object[] getChildren(Object element) {
 			List list= fProvider.getChildren(element);
-			ArrayList res= new ArrayList();
+			ArrayList<Object> res= new ArrayList<Object>();
 			if (list != null) {
 				for (int i= 0; i < list.size(); i++) {
 					Object curr= list.get(i);
