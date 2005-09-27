@@ -23,7 +23,7 @@ import org.eclipse.jdt.internal.ui.text.java.LazyJavaCompletionProposal;
  *
  * @since 3.1
  */
-public final class CompletionProposalComparator implements Comparator {
+public final class CompletionProposalComparator implements Comparator<ICompletionProposal> {
 
 	private boolean fOrderAlphabetically;
 
@@ -44,13 +44,11 @@ public final class CompletionProposalComparator implements Comparator {
 	public void setOrderAlphabetically(boolean orderAlphabetically) {
 		fOrderAlphabetically= orderAlphabetically;
 	}
-
+	
 	/*
-	 * @see Comparator#compare(Object, Object)
+	 * @see java.util.Comparator#compare(T, T)
 	 */
-	public int compare(Object o1, Object o2) {
-		ICompletionProposal p1= (ICompletionProposal) o1;
-		ICompletionProposal p2= (ICompletionProposal) o2;
+	public int compare(ICompletionProposal p1, ICompletionProposal p2) {
 
 		if (!fOrderAlphabetically) {
 			int r1= getRelevance(p1);

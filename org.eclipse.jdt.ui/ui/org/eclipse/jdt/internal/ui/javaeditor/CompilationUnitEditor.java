@@ -12,16 +12,12 @@
 package org.eclipse.jdt.internal.ui.javaeditor;
 
 
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
-
-import org.eclipse.core.commands.Command;
-import org.eclipse.core.commands.ParameterizedCommand;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -44,7 +40,6 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.IMenuManager;
-import org.eclipse.jface.bindings.TriggerSequence;
 import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.dialogs.IMessageProvider;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -69,9 +64,7 @@ import org.eclipse.jface.text.ITypedRegion;
 import org.eclipse.jface.text.IWidgetTokenKeeper;
 import org.eclipse.jface.text.Position;
 import org.eclipse.jface.text.TextUtilities;
-import org.eclipse.jface.text.contentassist.ContentAssistEvent;
 import org.eclipse.jface.text.contentassist.ContentAssistant;
-import org.eclipse.jface.text.contentassist.ICompletionListener;
 import org.eclipse.jface.text.contentassist.IContentAssistant;
 import org.eclipse.jface.text.formatter.FormattingContextProperties;
 import org.eclipse.jface.text.formatter.IFormattingContext;
@@ -95,9 +88,7 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.ActionContext;
 import org.eclipse.ui.actions.ActionGroup;
-import org.eclipse.ui.commands.ICommandService;
 import org.eclipse.ui.dialogs.SaveAsDialog;
-import org.eclipse.ui.keys.IBindingService;
 import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.ui.texteditor.AbstractDecoratedTextEditorPreferenceConstants;
 import org.eclipse.ui.texteditor.ContentAssistAction;
@@ -121,6 +112,7 @@ import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 
 import org.eclipse.jdt.internal.corext.util.CodeFormatterUtil;
+import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.Messages;
 
 import org.eclipse.jdt.ui.IWorkingCopyManager;
@@ -144,10 +136,7 @@ import org.eclipse.jdt.internal.ui.text.Symbols;
 import org.eclipse.jdt.internal.ui.text.comment.CommentFormattingContext;
 import org.eclipse.jdt.internal.ui.text.correction.CorrectionCommandInstaller;
 import org.eclipse.jdt.internal.ui.text.correction.JavaCorrectionAssistant;
-import org.eclipse.jdt.internal.ui.text.java.CompletionProposalCategory;
-import org.eclipse.jdt.internal.ui.text.java.CompletionProposalComputerRegistry;
 import org.eclipse.jdt.internal.ui.text.java.IJavaReconcilingListener;
-import org.eclipse.jdt.internal.ui.text.java.JavaCompletionProcessor;
 
 
 
@@ -190,6 +179,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 		/*
 		 * @see ITextOperationTarget#doOperation(int)
 		 */
+		@Override
 		public void doOperation(int operation) {
 
 			if (getTextWidget() == null)
@@ -227,6 +217,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 		/*
 		 * @see ITextOperationTarget#canDoOperation(int)
 		 */
+		@Override
 		public boolean canDoOperation(int operation) {
 			if (operation == CORRECTIONASSIST_PROPOSALS)
 				return isEditable();
@@ -238,6 +229,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 		 * @see org.eclipse.jface.text.source.ISourceViewerExtension2#unconfigure()
 		 * @since 3.0
 		 */
+		@Override
 		public void unconfigure() {
 			if (fCorrectionAssistant != null) {
 				fCorrectionAssistant.uninstall();
@@ -269,6 +261,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 		/*
 		 * @see TextViewer#customizeDocumentCommand(DocumentCommand)
 		 */
+		@Override
 		protected void customizeDocumentCommand(DocumentCommand command) {
 			super.customizeDocumentCommand(command);
 			if (!fIgnoreTextConverters && fTextConverters != null) {
@@ -291,6 +284,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 		/*
 		 * @see IWidgetTokenOwner#requestWidgetToken(IWidgetTokenKeeper)
 		 */
+		@Override
 		public boolean requestWidgetToken(IWidgetTokenKeeper requester) {
 			if (PlatformUI.getWorkbench().getHelpSystem().isContextHelpDisplayed())
 				return false;
@@ -301,6 +295,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 		 * @see IWidgetTokenOwnerExtension#requestWidgetToken(IWidgetTokenKeeper, int)
 		 * @since 3.0
 		 */
+		@Override
 		public boolean requestWidgetToken(IWidgetTokenKeeper requester, int priority) {
 			if (PlatformUI.getWorkbench().getHelpSystem().isContextHelpDisplayed())
 				return false;
@@ -310,72 +305,28 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 		/*
 		 * @see org.eclipse.jface.text.source.ISourceViewer#configure(org.eclipse.jface.text.source.SourceViewerConfiguration)
 		 */
+		@Override
 		public void configure(SourceViewerConfiguration configuration) {
 			super.configure(configuration);
 			fCorrectionAssistant= new JavaCorrectionAssistant(CompilationUnitEditor.this);
 			fCorrectionAssistant.install(this);
-			
-			IContentAssistant contentAssistant= getContentAssistant();
-			if (contentAssistant instanceof ContentAssistant) {
-				int nSeparateCategories= 0;
-				List categories= CompletionProposalComputerRegistry.getDefault().getProposalCategories();
-				for (Iterator it= categories.iterator(); it.hasNext();) {
-					CompletionProposalCategory category= (CompletionProposalCategory) it.next();
-					if (category.isSeparateCommand() && category.hasComputers())
-						nSeparateCategories++;
-				}
+		}
 				
-				if (nSeparateCategories > 0) {
-					ContentAssistant assistant= (ContentAssistant) contentAssistant;
-					final ParameterizedCommand command= getContentAssistCommand();
-					final MessageFormat format= new MessageFormat(JavaEditorMessages.CompilationUnitEditor_content_assist_toggle_affordance_update_message);
-					assistant.setMessage(""); //$NON-NLS-1$
-					assistant.addCompletionListener(new ICompletionListener() {
-						public void computingProposals(ContentAssistEvent event) {
-							JavaCompletionProcessor proc= (JavaCompletionProcessor) event.processor;
-							proc.setRepeatedInvocation(event.repetition);
-							String current= proc.getCurrentCategory();
-							String next= proc.getNextCategory();
-							String shortcut= getKeyboardShortcut(command);
-							String gesture= shortcut != null ? MessageFormat.format(JavaEditorMessages.CompilationUnitEditor_content_assist_toggle_affordance_press_gesture, new Object[] { shortcut }) : JavaEditorMessages.CompilationUnitEditor_content_assist_toggle_affordance_click_gesture;
-							Object[] args= { current, gesture, next };
-							String message= format.format(args);
-							event.assistant.setMessage(message);
-						}
-					});
-				}
-			}
-		}
-
-		private ParameterizedCommand getContentAssistCommand() {
-			final ICommandService commandSvc= (ICommandService) PlatformUI.getWorkbench().getAdapter(ICommandService.class);
-			final Command command= commandSvc.getCommand(ITextEditorActionDefinitionIds.CONTENT_ASSIST_PROPOSALS);
-			ParameterizedCommand pCmd= new ParameterizedCommand(command, null);
-			return pCmd;
-		}
-
-		private String getKeyboardShortcut(ParameterizedCommand command) {
-			final IBindingService bindingSvc= (IBindingService) PlatformUI.getWorkbench().getAdapter(IBindingService.class);
-			TriggerSequence[] triggers= bindingSvc.getActiveBindingsFor(command);
-			if (triggers.length > 0)
-				return triggers[0].format();
-			return null;
-		}
-		
 		/*
 		 * @see org.eclipse.jface.text.source.SourceViewer#createFormattingContext()
 		 * @since 3.0
 		 */
+		@Override
 		public IFormattingContext createFormattingContext() {
 			IFormattingContext context= new CommentFormattingContext();
 
-			Map preferences;
+			Map<String, String> preferences;
 			IJavaElement inputJavaElement= getInputJavaElement();
 			IJavaProject javaProject= inputJavaElement != null ? inputJavaElement.getJavaProject() : null;
 			if (javaProject == null)
-				preferences= new HashMap(JavaCore.getOptions());
+				preferences= new HashMap<String, String>(JavaCore.getOptions());
 			else
-				preferences= new HashMap(javaProject.getOptions(true));
+				preferences= new HashMap<String, String>(javaProject.getOptions(true));
 
 			context.setProperty(FormattingContextProperties.CONTEXT_PREFERENCES, preferences);
 
@@ -1166,10 +1117,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 
 			if (unit != null) {
 				try {
-
-					synchronized (unit) {
-						unit.reconcile(ICompilationUnit.NO_AST, false, null, null);
-					}
+					JavaModelUtil.reconcile(unit);
 					IJavaElement[] findings= unit.findElements(element);
 					if (findings != null && findings.length > 0)
 						return findings[0];
@@ -1253,6 +1201,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 	/*
 	 * @see AbstractTextEditor#createActions()
 	 */
+	@Override
 	protected void createActions() {
 
 		super.createActions();
@@ -1374,6 +1323,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 	/*
 	 * @see JavaEditor#getElementAt(int)
 	 */
+	@Override
 	protected IJavaElement getElementAt(int offset) {
 		return getElementAt(offset, true);
 	}
@@ -1388,6 +1338,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 	 * @param reconcile <code>true</code> if working copy should be reconciled
 	 * @return the most narrow element which includes the given offset
 	 */
+	@Override
 	protected IJavaElement getElementAt(int offset, boolean reconcile) {
 		IWorkingCopyManager manager= JavaPlugin.getDefault().getWorkingCopyManager();
 		ICompilationUnit unit= manager.getWorkingCopy(getEditorInput());
@@ -1395,9 +1346,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 		if (unit != null) {
 			try {
 				if (reconcile) {
-					synchronized (unit) {
-						unit.reconcile(ICompilationUnit.NO_AST, false, null, null);
-					}
+					JavaModelUtil.reconcile(unit);
 					return unit.getElementAt(offset);
 				} else if (unit.isConsistent())
 					return unit.getElementAt(offset);
@@ -1415,6 +1364,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 	/*
 	 * @see JavaEditor#getCorrespondingElement(IJavaElement)
 	 */
+	@Override
 	protected IJavaElement getCorrespondingElement(IJavaElement element) {
 		// TODO: With new working copy story: original == working copy.
 		// Note that the previous code could result in a reconcile as side effect. Should check if that
@@ -1425,6 +1375,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 	/*
 	 * @see org.eclipse.jdt.internal.ui.javaeditor.JavaEditor#getInputElement()
 	 */
+	@Override
 	protected IJavaElement getInputJavaElement() {
 		return JavaPlugin.getDefault().getWorkingCopyManager().getWorkingCopy(getEditorInput());
 	}
@@ -1432,6 +1383,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 	/*
 	 * @see AbstractTextEditor#editorContextMenuAboutToShow(IMenuManager)
 	 */
+	@Override
 	public void editorContextMenuAboutToShow(IMenuManager menu) {
 		super.editorContextMenuAboutToShow(menu);
 
@@ -1444,6 +1396,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 	/*
 	 * @see JavaEditor#setOutlinePageInput(JavaOutlinePage, IEditorInput)
 	 */
+	@Override
 	protected void setOutlinePageInput(JavaOutlinePage page, IEditorInput input) {
 		if (page != null) {
 			IWorkingCopyManager manager= JavaPlugin.getDefault().getWorkingCopyManager();
@@ -1454,6 +1407,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 	/*
 	 * @see org.eclipse.ui.texteditor.AbstractTextEditor#performSave(boolean, org.eclipse.core.runtime.IProgressMonitor)
 	 */
+	@Override
 	protected void performSave(boolean overwrite, IProgressMonitor progressMonitor) {
 		IDocumentProvider p= getDocumentProvider();
 		if (p instanceof ICompilationUnitDocumentProvider) {
@@ -1473,6 +1427,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 	/*
 	 * @see AbstractTextEditor#doSave(IProgressMonitor)
 	 */
+	@Override
 	public void doSave(IProgressMonitor progressMonitor) {
 
 		IDocumentProvider p= getDocumentProvider();
@@ -1521,6 +1476,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 		}
 	}
 
+	@Override
 	public boolean isSaveAsAllowed() {
 		return true;
 	}
@@ -1532,6 +1488,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 	 *
 	 * @param progressMonitor the progress monitor
 	 */
+	@Override
 	protected void performSaveAs(IProgressMonitor progressMonitor) {
 
 		Shell shell= getSite().getShell();
@@ -1599,6 +1556,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 	/*
 	 * @see AbstractTextEditor#doSetInput(IEditorInput)
 	 */
+	@Override
 	protected void doSetInput(IEditorInput input) throws CoreException {
 		super.doSetInput(input);
 		configureTabConverter();
@@ -1611,6 +1569,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 	 * @see org.eclipse.jdt.internal.ui.javaeditor.JavaEditor#installOverrideIndicator(boolean)
 	 * @since 3.0
 	 */
+	@Override
 	protected void installOverrideIndicator(boolean provideAST) {
 		super.installOverrideIndicator(provideAST);
 
@@ -1624,6 +1583,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 	 * @see org.eclipse.jdt.internal.ui.javaeditor.JavaEditor#uninstallOverrideIndicator()
 	 * @since 3.0
 	 */
+	@Override
 	protected void uninstallOverrideIndicator() {
 		if (fOverrideIndicatorManager != null)
 			removeReconcileListener(fOverrideIndicatorManager);
@@ -1693,6 +1653,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 		return JavaCore.SPACE.equals(option);
 	}
 
+	@Override
 	public void dispose() {
 
 		ISourceViewer sourceViewer= getSourceViewer();
@@ -1720,6 +1681,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 	/*
 	 * @see AbstractTextEditor#createPartControl(Composite)
 	 */
+	@Override
 	public void createPartControl(Composite parent) {
 
 		super.createPartControl(parent);
@@ -1786,6 +1748,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 	/*
 	 * @see AbstractTextEditor#handlePreferenceStoreChanged(PropertyChangeEvent)
 	 */
+	@Override
 	protected void handlePreferenceStoreChanged(PropertyChangeEvent event) {
 
 		try {
@@ -1845,6 +1808,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 	/*
 	 * @see org.eclipse.jdt.internal.ui.javaeditor.JavaEditor#createJavaSourceViewer(org.eclipse.swt.widgets.Composite, org.eclipse.jface.text.source.IVerticalRuler, org.eclipse.jface.text.source.IOverviewRuler, boolean, int)
 	 */
+	@Override
 	protected ISourceViewer createJavaSourceViewer(Composite parent, IVerticalRuler verticalRuler, IOverviewRuler overviewRuler, boolean isOverviewRulerVisible, int styles, IPreferenceStore store) {
 		return new AdaptedSourceViewer(parent, verticalRuler, overviewRuler, isOverviewRulerVisible, styles, store);
 	}
@@ -1932,6 +1896,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 		}
 	}
 
+	@Override
 	protected void updateStateDependentActions() {
 		super.updateStateDependentActions();
 		fGenerateActionGroup.editorStateChanged();
@@ -1940,6 +1905,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 	/*
 	 * @see AbstractTextEditor#rememberSelection()
 	 */
+	@Override
 	protected void rememberSelection() {
 		fRememberedSelection.remember();
 	}
@@ -1947,6 +1913,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 	/*
 	 * @see AbstractTextEditor#restoreSelection()
 	 */
+	@Override
 	protected void restoreSelection() {
 		fRememberedSelection.restore();
 	}
@@ -1954,6 +1921,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 	/*
 	 * @see AbstractTextEditor#canHandleMove(IEditorInput, IEditorInput)
 	 */
+	@Override
 	protected boolean canHandleMove(IEditorInput originalElement, IEditorInput movedElement) {
 
 		String oldExtension= ""; //$NON-NLS-1$
@@ -1979,6 +1947,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 	/*
 	 * @see org.eclipse.ui.texteditor.AbstractDecoratedTextEditor#isPrefQuickDiffAlwaysOn()
 	 */
+	@Override
 	protected boolean isPrefQuickDiffAlwaysOn() {
 		// reestablishes the behavior from AbstractDecoratedTextEditor which was hacked by JavaEditor
 		// to disable the change bar for the class file (attached source) java editor.
@@ -1989,6 +1958,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 	/*
 	 * @see org.eclipse.jdt.internal.ui.javaeditor.JavaEditor#getAdapter(java.lang.Class)
 	 */
+	@Override
 	public Object getAdapter(Class required) {
 		if (SmartBackspaceManager.class.equals(required)) {
 			if (getSourceViewer() instanceof JavaSourceViewer) {
@@ -2015,6 +1985,7 @@ public class CompilationUnitEditor extends JavaEditor implements IJavaReconcilin
 	/*
 	 * @see org.eclipse.jdt.internal.ui.javaeditor.JavaEditor#createNavigationActions()
 	 */
+	@Override
 	protected void createNavigationActions() {
 		super.createNavigationActions();
 

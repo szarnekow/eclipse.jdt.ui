@@ -13,7 +13,6 @@ package org.eclipse.jdt.internal.ui.text.java;
 import java.text.MessageFormat;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -29,7 +28,9 @@ import org.eclipse.core.runtime.Status;
 
 import org.eclipse.jface.text.Assert;
 import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.contentassist.ICompletionProposal;
 import org.eclipse.jface.text.contentassist.ICompletionProposalComputer;
+import org.eclipse.jface.text.contentassist.IContextInformation;
 import org.eclipse.jface.text.contentassist.TextContentAssistInvocationContext;
 
 import org.eclipse.jdt.ui.text.IJavaPartitions;
@@ -130,8 +131,8 @@ final class CompletionProposalComputerDescriptor {
 		if (children.length == 0) {
 			fPartitions= PARTITION_SET; // add to all partition types if no partition is configured
 		} else {
-			for (int i= 0; i < children.length; i++) {
-				String type= children[i].getAttributeAsIs(TYPE);
+			for (IConfigurationElement child : children) {
+				String type= child.getAttributeAsIs(TYPE);
 				checkNotNull(type, TYPE);
 				partitions.add(type);
 			}
@@ -148,8 +149,7 @@ final class CompletionProposalComputerDescriptor {
 		if (categoryId == null)
 			categoryId= DEFAULT_CATEGORY_ID;
 		CompletionProposalCategory category= null;
-		for (Iterator<CompletionProposalCategory> it= categories.iterator(); it.hasNext();) {
-			CompletionProposalCategory cat= it.next();
+		for (CompletionProposalCategory cat : categories) {
 			if (cat.getId().equals(categoryId)) {
 				category= cat;
 				break;
@@ -266,16 +266,17 @@ final class CompletionProposalComputerDescriptor {
 	 * @return the list of computed completion proposals (element type:
 	 *         {@link org.eclipse.jface.text.contentassist.ICompletionProposal})
 	 */
-	public List computeCompletionProposals(TextContentAssistInvocationContext context, IProgressMonitor monitor) {
+	public List<ICompletionProposal> computeCompletionProposals(TextContentAssistInvocationContext context, IProgressMonitor monitor) {
 		if (!isEnabled())
-			return Collections.EMPTY_LIST;
+			return Collections.emptyList();
 		
 		IStatus status;
 		try {
 			ICompletionProposalComputer computer= getComputer();
 			
 			PerformanceStats stats= startMeter(context, computer);
-			List proposals= computer.computeCompletionProposals(context, monitor);
+			@SuppressWarnings("unchecked") // ICompletionProposalComputer defined at jface.text level
+			List<ICompletionProposal> proposals= computer.computeCompletionProposals(context, monitor);
 			stopMeter(stats, COMPUTE_COMPLETION_PROPOSALS);
 			
 			if (proposals != null)
@@ -294,7 +295,7 @@ final class CompletionProposalComputerDescriptor {
 		
 		fRegistry.remove(this, status);
 
-		return Collections.EMPTY_LIST;
+		return Collections.emptyList();
 	}
 
 	/**
@@ -307,16 +308,17 @@ final class CompletionProposalComputerDescriptor {
 	 * @return the list of computed context information objects (element type:
 	 *         {@link org.eclipse.jface.text.contentassist.IContextInformation})
 	 */
-	public List computeContextInformation(TextContentAssistInvocationContext context, IProgressMonitor monitor) {
+	public List<IContextInformation> computeContextInformation(TextContentAssistInvocationContext context, IProgressMonitor monitor) {
 		if (!isEnabled())
-			return Collections.EMPTY_LIST;
+			return Collections.emptyList();
 		
 		IStatus status;
 		try {
 			ICompletionProposalComputer computer= getComputer();
 			
 			PerformanceStats stats= startMeter(context, computer);
-			List proposals= computer.computeContextInformation(context, monitor);
+			@SuppressWarnings("unchecked") // defined in jface-text
+			List<IContextInformation> proposals= computer.computeContextInformation(context, monitor);
 			stopMeter(stats, COMPUTE_CONTEXT_INFORMATION);
 			
 			if (proposals != null)
@@ -335,7 +337,7 @@ final class CompletionProposalComputerDescriptor {
 		
 		fRegistry.remove(this, status);
 		
-		return Collections.EMPTY_LIST;
+		return Collections.emptyList();
 	}
 	
 	private void stopMeter(final PerformanceStats stats, String operation) {

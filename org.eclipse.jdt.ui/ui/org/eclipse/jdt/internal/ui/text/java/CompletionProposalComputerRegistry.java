@@ -72,14 +72,14 @@ public class CompletionProposalComputerRegistry {
 	 * {@link String}, value type:
 	 * {@linkplain List List&lt;CompletionProposalComputerDescriptor&gt;}).
 	 */
-	private final Map<String, List> fDescriptorsByPartition= new HashMap<String, List>();
+	private final Map<String, List<CompletionProposalComputerDescriptor>> fDescriptorsByPartition= new HashMap<String, List<CompletionProposalComputerDescriptor>>();
 	/**
 	 * Unmodifiable versions of the sets stored in
 	 * <code>fDescriptorsByPartition</code> (key type: {@link String},
 	 * value type:
 	 * {@linkplain List List&lt;CompletionProposalComputerDescriptor&gt;}).
 	 */
-	private final Map<String, List> fPublicDescriptorsByPartition= new HashMap<String, List>();
+	private final Map<String, List<CompletionProposalComputerDescriptor>> fPublicDescriptorsByPartition= new HashMap<String, List<CompletionProposalComputerDescriptor>>();
 	/**
 	 * All descriptors (element type:
 	 * {@link CompletionProposalComputerDescriptor}).
@@ -127,10 +127,10 @@ public class CompletionProposalComputerRegistry {
 	 * @return the list of extensions to the <code>javaCompletionProposalComputer</code> extension
 	 *         point (element type: {@link CompletionProposalComputerDescriptor})
 	 */
-	List getProposalComputerDescriptors(String partition) {
+	List<CompletionProposalComputerDescriptor> getProposalComputerDescriptors(String partition) {
 		ensureExtensionPointRead();
-		List result= fPublicDescriptorsByPartition.get(partition);
-		return result != null ? result : Collections.EMPTY_LIST;
+		List<CompletionProposalComputerDescriptor> result= fPublicDescriptorsByPartition.get(partition);
+		return result != null ? result : Collections.<CompletionProposalComputerDescriptor>emptyList();
 	}
 
 	/**
@@ -197,17 +197,15 @@ public class CompletionProposalComputerRegistry {
 		IExtensionRegistry registry= Platform.getExtensionRegistry();
 		List<IConfigurationElement> elements= new ArrayList<IConfigurationElement>(Arrays.asList(registry.getConfigurationElementsFor(JavaPlugin.getPluginId(), EXTENSION_POINT)));
 		
-		Map<String, List> map= new HashMap<String, List>();
+		Map<String, List<CompletionProposalComputerDescriptor>> map= new HashMap<String, List<CompletionProposalComputerDescriptor>>();
 		List<CompletionProposalComputerDescriptor> all= new ArrayList<CompletionProposalComputerDescriptor>();
 		
 		List<CompletionProposalCategory> categories= getCategories(elements);
-		for (Iterator<IConfigurationElement> iter= elements.iterator(); iter.hasNext();) {
-			IConfigurationElement element= iter.next();
+		for (IConfigurationElement element : elements) {
 			try {
 				CompletionProposalComputerDescriptor desc= new CompletionProposalComputerDescriptor(element, this, categories);
 				Set<String> partitions= desc.getPartitions();
-				for (Iterator<String> it= partitions.iterator(); it.hasNext();) {
-					String partition= it.next();
+				for (String partition : partitions) {
 					List<CompletionProposalComputerDescriptor> list= map.get(partition);
 					if (list == null) {
 						list= new ArrayList<CompletionProposalComputerDescriptor>();
@@ -237,10 +235,9 @@ public class CompletionProposalComputerRegistry {
 			Set<String> partitions= map.keySet();
 			fDescriptorsByPartition.keySet().retainAll(partitions);
 			fPublicDescriptorsByPartition.keySet().retainAll(partitions);
-			for (Iterator<String> it= partitions.iterator(); it.hasNext();) {
-				String partition= it.next();
-				List old= fDescriptorsByPartition.get(partition);
-				List current= map.get(partition);
+			for (String partition : partitions) {
+				List<CompletionProposalComputerDescriptor> old= fDescriptorsByPartition.get(partition);
+				List<CompletionProposalComputerDescriptor> current= map.get(partition);
 				if (old != null) {
 					old.clear();
 					old.addAll(current);
@@ -315,8 +312,7 @@ public class CompletionProposalComputerRegistry {
 	 */
 	void remove(CompletionProposalComputerDescriptor descriptor, IStatus status) {
 		Set<String> partitions= descriptor.getPartitions();
-		for (Iterator<String> it= partitions.iterator(); it.hasNext();) {
-			String partition= it.next();
+		for (String partition : partitions) {
 			SortedSet descriptors= (SortedSet) fDescriptorsByPartition.get(partition);
 			if (descriptors != null) {
 				// use identity since TreeSet does not check equality

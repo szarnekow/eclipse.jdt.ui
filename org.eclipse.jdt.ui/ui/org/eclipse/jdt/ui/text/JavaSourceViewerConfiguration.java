@@ -120,6 +120,7 @@ public class JavaSourceViewerConfiguration extends TextSourceViewerConfiguration
 	 * @since 2.0
 	 * @deprecated As of 3.0, replaced by {@link AbstractDecoratedTextEditorPreferenceConstants#EDITOR_TAB_WIDTH}
 	 */
+	@Deprecated
 	public final static String PREFERENCE_TAB_WIDTH= PreferenceConstants.EDITOR_TAB_WIDTH;
 
 	/**
@@ -128,6 +129,7 @@ public class JavaSourceViewerConfiguration extends TextSourceViewerConfiguration
 	 * @since 2.0
 	 * @deprecated as of 3.1 use {@link org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants#FORMATTER_TAB_CHAR}
 	 */
+	@Deprecated
 	public final static String SPACES_FOR_TABS= PreferenceConstants.EDITOR_SPACES_FOR_TABS;
 
 
@@ -208,6 +210,7 @@ public class JavaSourceViewerConfiguration extends TextSourceViewerConfiguration
 	 * @see JavaTextTools
 	 * @deprecated As of 3.0, replaced by {@link JavaSourceViewerConfiguration#JavaSourceViewerConfiguration(IColorManager, IPreferenceStore, ITextEditor, String)}
 	 */
+	@Deprecated
 	public JavaSourceViewerConfiguration(JavaTextTools tools, ITextEditor editor) {
 		super(createPreferenceStore(tools));
 		fJavaTextTools= tools;
@@ -299,6 +302,7 @@ public class JavaSourceViewerConfiguration extends TextSourceViewerConfiguration
 	 * @since 2.0
 	 * @deprecated As of 3.0
 	 */
+	@Deprecated
 	protected IPreferenceStore getPreferenceStore() {
 		Assert.isTrue(!isNewSetup());
 		return fJavaTextTools.getPreferenceStore();
@@ -347,6 +351,7 @@ public class JavaSourceViewerConfiguration extends TextSourceViewerConfiguration
 	/*
 	 * @see SourceViewerConfiguration#getPresentationReconciler(ISourceViewer)
 	 */
+	@Override
 	public IPresentationReconciler getPresentationReconciler(ISourceViewer sourceViewer) {
 
 		PresentationReconciler reconciler= new JavaPresentationReconciler();
@@ -383,6 +388,7 @@ public class JavaSourceViewerConfiguration extends TextSourceViewerConfiguration
 	/*
 	 * @see SourceViewerConfiguration#getContentAssistant(ISourceViewer)
 	 */
+	@Override
 	public IContentAssistant getContentAssistant(ISourceViewer sourceViewer) {
 
 		if (getEditor() != null) {
@@ -392,19 +398,19 @@ public class JavaSourceViewerConfiguration extends TextSourceViewerConfiguration
 
 			assistant.setRestoreCompletionProposalSize(getSettings("completion_proposal_size")); //$NON-NLS-1$
 
-			IContentAssistProcessor javaProcessor= new JavaCompletionProcessor(getEditor(), IDocument.DEFAULT_CONTENT_TYPE);
+			IContentAssistProcessor javaProcessor= new JavaCompletionProcessor(getEditor(), assistant, IDocument.DEFAULT_CONTENT_TYPE);
 			assistant.setContentAssistProcessor(javaProcessor, IDocument.DEFAULT_CONTENT_TYPE);
 
-			ContentAssistProcessor singleLineProcessor= new JavaCompletionProcessor(getEditor(), IJavaPartitions.JAVA_SINGLE_LINE_COMMENT);
+			ContentAssistProcessor singleLineProcessor= new JavaCompletionProcessor(getEditor(), assistant, IJavaPartitions.JAVA_SINGLE_LINE_COMMENT);
 			assistant.setContentAssistProcessor(singleLineProcessor, IJavaPartitions.JAVA_SINGLE_LINE_COMMENT);
 
-			ContentAssistProcessor stringProcessor= new JavaCompletionProcessor(getEditor(), IJavaPartitions.JAVA_STRING);
+			ContentAssistProcessor stringProcessor= new JavaCompletionProcessor(getEditor(), assistant, IJavaPartitions.JAVA_STRING);
 			assistant.setContentAssistProcessor(stringProcessor, IJavaPartitions.JAVA_STRING);
 			
-			ContentAssistProcessor multiLineProcessor= new JavaCompletionProcessor(getEditor(), IJavaPartitions.JAVA_MULTI_LINE_COMMENT);
+			ContentAssistProcessor multiLineProcessor= new JavaCompletionProcessor(getEditor(), assistant, IJavaPartitions.JAVA_MULTI_LINE_COMMENT);
 			assistant.setContentAssistProcessor(multiLineProcessor, IJavaPartitions.JAVA_MULTI_LINE_COMMENT);
 
-			ContentAssistProcessor javadocProcessor= new JavadocCompletionProcessor(getEditor());
+			ContentAssistProcessor javadocProcessor= new JavadocCompletionProcessor(getEditor(), assistant);
 			assistant.setContentAssistProcessor(javadocProcessor, IJavaPartitions.JAVA_DOC);
 
 			ContentAssistPreference.configure(assistant, fPreferenceStore);
@@ -421,6 +427,7 @@ public class JavaSourceViewerConfiguration extends TextSourceViewerConfiguration
 	/*
 	 * @see SourceViewerConfiguration#getReconciler(ISourceViewer)
 	 */
+	@Override
 	public IReconciler getReconciler(ISourceViewer sourceViewer) {
 
 		final ITextEditor editor= getEditor();
@@ -440,6 +447,7 @@ public class JavaSourceViewerConfiguration extends TextSourceViewerConfiguration
 	/*
 	 * @see org.eclipse.jface.text.source.SourceViewerConfiguration#getAutoEditStrategies(org.eclipse.jface.text.source.ISourceViewer, java.lang.String)
 	 */
+	@Override
 	public IAutoEditStrategy[] getAutoEditStrategies(ISourceViewer sourceViewer, String contentType) {
 		String partitioning= getConfiguredDocumentPartitioning(sourceViewer);
 		if (IJavaPartitions.JAVA_DOC.equals(contentType) || IJavaPartitions.JAVA_MULTI_LINE_COMMENT.equals(contentType))
@@ -455,6 +463,7 @@ public class JavaSourceViewerConfiguration extends TextSourceViewerConfiguration
 	/*
 	 * @see SourceViewerConfiguration#getDoubleClickStrategy(ISourceViewer, String)
 	 */
+	@Override
 	public ITextDoubleClickStrategy getDoubleClickStrategy(ISourceViewer sourceViewer, String contentType) {
 		if (IJavaPartitions.JAVA_DOC.equals(contentType))
 			return new JavadocDoubleClickStrategy();
@@ -475,6 +484,7 @@ public class JavaSourceViewerConfiguration extends TextSourceViewerConfiguration
 	 * @see SourceViewerConfiguration#getDefaultPrefixes(ISourceViewer, String)
 	 * @since 2.0
 	 */
+	@Override
 	public String[] getDefaultPrefixes(ISourceViewer sourceViewer, String contentType) {
 		return new String[] { "//", "" }; //$NON-NLS-1$ //$NON-NLS-2$
 	}
@@ -482,6 +492,7 @@ public class JavaSourceViewerConfiguration extends TextSourceViewerConfiguration
 	/*
 	 * @see SourceViewerConfiguration#getIndentPrefixes(ISourceViewer, String)
 	 */
+	@Override
 	public String[] getIndentPrefixes(ISourceViewer sourceViewer, String contentType) {
 
 		Vector<String> vector= new Vector<String>();
@@ -548,6 +559,7 @@ public class JavaSourceViewerConfiguration extends TextSourceViewerConfiguration
 	/*
 	 * @see SourceViewerConfiguration#getTabWidth(ISourceViewer)
 	 */
+	@Override
 	public int getTabWidth(ISourceViewer sourceViewer) {
 		return CodeFormatterUtil.getTabWidth(getProject());
 	}
@@ -555,8 +567,10 @@ public class JavaSourceViewerConfiguration extends TextSourceViewerConfiguration
 	/*
 	 * @see SourceViewerConfiguration#getAnnotationHover(ISourceViewer)
 	 */
+	@Override
 	public IAnnotationHover getAnnotationHover(ISourceViewer sourceViewer) {
 		return new HTMLAnnotationHover() {
+			@Override
 			protected boolean isIncluded(Annotation annotation) {
 				return isShowInVerticalRuler(annotation);
 			}
@@ -567,8 +581,10 @@ public class JavaSourceViewerConfiguration extends TextSourceViewerConfiguration
 	 * @see SourceViewerConfiguration#getOverviewRulerAnnotationHover(ISourceViewer)
 	 * @since 3.0
 	 */
+	@Override
 	public IAnnotationHover getOverviewRulerAnnotationHover(ISourceViewer sourceViewer) {
 		return new HTMLAnnotationHover() {
+			@Override
 			protected boolean isIncluded(Annotation annotation) {
 				return isShowInOverviewRuler(annotation);
 			}
@@ -579,6 +595,7 @@ public class JavaSourceViewerConfiguration extends TextSourceViewerConfiguration
 	 * @see SourceViewerConfiguration#getConfiguredTextHoverStateMasks(ISourceViewer, String)
 	 * @since 2.1
 	 */
+	@Override
 	public int[] getConfiguredTextHoverStateMasks(ISourceViewer sourceViewer, String contentType) {
 		JavaEditorTextHoverDescriptor[] hoverDescs= JavaPlugin.getDefault().getJavaEditorTextHoverDescriptors();
 		int stateMasks[]= new int[hoverDescs.length];
@@ -608,6 +625,7 @@ public class JavaSourceViewerConfiguration extends TextSourceViewerConfiguration
 	 * @see SourceViewerConfiguration#getTextHover(ISourceViewer, String, int)
 	 * @since 2.1
 	 */
+	@Override
 	public ITextHover getTextHover(ISourceViewer sourceViewer, String contentType, int stateMask) {
 		JavaEditorTextHoverDescriptor[] hoverDescs= JavaPlugin.getDefault().getJavaEditorTextHoverDescriptors();
 		int i= 0;
@@ -623,6 +641,7 @@ public class JavaSourceViewerConfiguration extends TextSourceViewerConfiguration
 	/*
 	 * @see SourceViewerConfiguration#getTextHover(ISourceViewer, String)
 	 */
+	@Override
 	public ITextHover getTextHover(ISourceViewer sourceViewer, String contentType) {
 		return getTextHover(sourceViewer, contentType, ITextViewerExtension2.DEFAULT_HOVER_STATE_MASK);
 	}
@@ -630,6 +649,7 @@ public class JavaSourceViewerConfiguration extends TextSourceViewerConfiguration
 	/*
 	 * @see SourceViewerConfiguration#getConfiguredContentTypes(ISourceViewer)
 	 */
+	@Override
 	public String[] getConfiguredContentTypes(ISourceViewer sourceViewer) {
 		return new String[] {
 			IDocument.DEFAULT_CONTENT_TYPE,
@@ -645,6 +665,7 @@ public class JavaSourceViewerConfiguration extends TextSourceViewerConfiguration
 	 * @see org.eclipse.jface.text.source.SourceViewerConfiguration#getConfiguredDocumentPartitioning(org.eclipse.jface.text.source.ISourceViewer)
 	 * @since 3.0
 	 */
+	@Override
 	public String getConfiguredDocumentPartitioning(ISourceViewer sourceViewer) {
 		if (fDocumentPartitioning != null)
 			return fDocumentPartitioning;
@@ -654,6 +675,7 @@ public class JavaSourceViewerConfiguration extends TextSourceViewerConfiguration
 	/*
 	 * @see SourceViewerConfiguration#getContentFormatter(ISourceViewer)
 	 */
+	@Override
 	public IContentFormatter getContentFormatter(ISourceViewer sourceViewer) {
 		final MultiPassContentFormatter formatter= new MultiPassContentFormatter(getConfiguredDocumentPartitioning(sourceViewer), IDocument.DEFAULT_CONTENT_TYPE);
 
@@ -669,6 +691,7 @@ public class JavaSourceViewerConfiguration extends TextSourceViewerConfiguration
 	 * @see SourceViewerConfiguration#getInformationControlCreator(ISourceViewer)
 	 * @since 2.0
 	 */
+	@Override
 	public IInformationControlCreator getInformationControlCreator(ISourceViewer sourceViewer) {
 		return new IInformationControlCreator() {
 			public IInformationControl createInformationControl(Shell parent) {
@@ -730,6 +753,7 @@ public class JavaSourceViewerConfiguration extends TextSourceViewerConfiguration
 	 * @see SourceViewerConfiguration#getInformationPresenter(ISourceViewer)
 	 * @since 2.0
 	 */
+	@Override
 	public IInformationPresenter getInformationPresenter(ISourceViewer sourceViewer) {
 		InformationPresenter presenter= new InformationPresenter(getInformationPresenterControlCreator(sourceViewer));
 		presenter.setDocumentPartitioning(getConfiguredDocumentPartitioning(sourceViewer));
@@ -859,6 +883,7 @@ public class JavaSourceViewerConfiguration extends TextSourceViewerConfiguration
 	 * @see org.eclipse.jface.text.source.SourceViewerConfiguration#getHyperlinkDetectors(org.eclipse.jface.text.source.ISourceViewer)
 	 * @since 3.1
 	 */
+	@Override
 	public IHyperlinkDetector[] getHyperlinkDetectors(ISourceViewer sourceViewer) {
 		if (!fPreferenceStore.getBoolean(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_HYPERLINKS_ENABLED))
 			return null;

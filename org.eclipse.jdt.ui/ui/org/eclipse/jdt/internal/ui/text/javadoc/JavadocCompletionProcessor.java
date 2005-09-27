@@ -12,6 +12,7 @@ package org.eclipse.jdt.internal.ui.text.javadoc;
 
 
 import org.eclipse.jface.text.ITextViewer;
+import org.eclipse.jface.text.contentassist.ContentAssistant;
 import org.eclipse.jface.text.contentassist.IContentAssistProcessor;
 import org.eclipse.jface.text.contentassist.IContextInformationValidator;
 import org.eclipse.jface.text.contentassist.TextContentAssistInvocationContext;
@@ -30,8 +31,8 @@ public class JavadocCompletionProcessor extends JavaCompletionProcessor {
 
 	private int fSubProcessorFlags;
 
-	public JavadocCompletionProcessor(IEditorPart editor) {
-		super(editor, IJavaPartitions.JAVA_DOC);
+	public JavadocCompletionProcessor(IEditorPart editor, ContentAssistant assistant) {
+		super(editor, assistant, IJavaPartitions.JAVA_DOC);
 		fSubProcessorFlags= 0;
 	}
 
@@ -41,6 +42,7 @@ public class JavadocCompletionProcessor extends JavaCompletionProcessor {
 	 *
 	 * @param restrict <code>true</code> if proposals should be restricted
 	 */
+	@Override
 	public void restrictProposalsToMatchingCases(boolean restrict) {
 		fSubProcessorFlags= restrict ? IJavadocCompletionProcessor.RESTRICT_TO_MATCHING_CASE : 0;
 	}
@@ -48,6 +50,7 @@ public class JavadocCompletionProcessor extends JavaCompletionProcessor {
 	/**
 	 * @see IContentAssistProcessor#getContextInformationValidator()
 	 */
+	@Override
 	public IContextInformationValidator getContextInformationValidator() {
 		return null;
 	}
@@ -55,6 +58,7 @@ public class JavadocCompletionProcessor extends JavaCompletionProcessor {
 	/*
 	 * @see org.eclipse.jdt.internal.ui.text.java.JavaCompletionProcessor#createContext(org.eclipse.jface.text.ITextViewer, int)
 	 */
+	@Override
 	protected TextContentAssistInvocationContext createContext(ITextViewer viewer, int offset) {
 		return new JavadocContentAssistInvocationContext(viewer, offset, fEditor, fSubProcessorFlags);
 	}

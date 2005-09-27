@@ -22,8 +22,10 @@ import org.eclipse.core.runtime.IProgressMonitor;
 
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.ITextViewer;
+import org.eclipse.jface.text.contentassist.ContentAssistant;
 import org.eclipse.jface.text.contentassist.ICompletionProposal;
 import org.eclipse.jface.text.contentassist.ICompletionProposalExtension3;
+import org.eclipse.jface.text.contentassist.IContextInformation;
 import org.eclipse.jface.text.contentassist.IContextInformationValidator;
 import org.eclipse.jface.text.contentassist.TextContentAssistInvocationContext;
 
@@ -55,8 +57,8 @@ public class JavaCompletionProcessor extends ContentAssistProcessor {
 	protected final IEditorPart fEditor;
 	
 
-	public JavaCompletionProcessor(IEditorPart editor, String partition) {
-		super(partition);
+	public JavaCompletionProcessor(IEditorPart editor, ContentAssistant assistant, String partition) {
+		super(assistant, partition);
 		fEditor= editor;
 		fAlphaComparator= new CompletionProposalComparator();
 		fAlphaComparator.setOrderAlphabetically(true);
@@ -70,11 +72,11 @@ public class JavaCompletionProcessor extends ContentAssistProcessor {
 	 * @param restrict <code>true</code> if proposals should be restricted
 	 */
 	public void restrictProposalsToVisibility(boolean restrict) {
-		Hashtable options= JavaCore.getOptions();
-		Object value= options.get(VISIBILITY);
-		if (value instanceof String) {
+		Hashtable<String, String> options= JavaCore.getOptions();
+		String value= options.get(VISIBILITY);
+		if (value != null) {
 			String newValue= restrict ? ENABLED : DISABLED;
-			if ( !newValue.equals(value)) {
+			if (!newValue.equals(value)) {
 				options.put(VISIBILITY, newValue);
 				JavaCore.setOptions(options);
 			}
@@ -103,6 +105,7 @@ public class JavaCompletionProcessor extends ContentAssistProcessor {
 	/*
 	 * @see org.eclipse.jface.text.contentassist.IContentAssistProcessor#getErrorMessage()
 	 */
+	@Override
 	public String getErrorMessage() {
 		if (fNumberOfComputedResults == 0)
 			return JavaUIMessages.JavaEditor_codeassist_noCompletions;
@@ -112,6 +115,7 @@ public class JavaCompletionProcessor extends ContentAssistProcessor {
 	/*
 	 * @see org.eclipse.jface.text.contentassist.IContentAssistProcessor#getContextInformationValidator()
 	 */
+	@Override
 	public IContextInformationValidator getContextInformationValidator() {
 		if (fValidator == null)
 			fValidator= new JavaParameterListValidator();
@@ -121,14 +125,15 @@ public class JavaCompletionProcessor extends ContentAssistProcessor {
 	/*
 	 * @see org.eclipse.jdt.internal.ui.text.java.ContentAssistProcessor#filterAndSort(java.util.List, org.eclipse.core.runtime.IProgressMonitor)
 	 */
-	protected List filterAndSortProposals(List proposals, IProgressMonitor monitor, TextContentAssistInvocationContext context) {
+	@Override
+	protected List<ICompletionProposal> filterAndSortProposals(List<ICompletionProposal> proposals, TextContentAssistInvocationContext context, IProgressMonitor monitor) {
 		filter(proposals, context);
 		Collections.sort(proposals, fComparator);
 		fNumberOfComputedResults= proposals.size();
 		return proposals;
 	}
 
-	private void filter(List proposals, TextContentAssistInvocationContext context) {
+	private void filter(List<ICompletionProposal> proposals, TextContentAssistInvocationContext context) {
 
 		/*
 		 * TODO filtering is hard if the subjects come from multiple,
@@ -242,7 +247,8 @@ public class JavaCompletionProcessor extends ContentAssistProcessor {
 	/*
 	 * @see org.eclipse.jdt.internal.ui.text.java.ContentAssistProcessor#filterAndSortContextInformation(java.util.List, org.eclipse.core.runtime.IProgressMonitor)
 	 */
-	protected List filterAndSortContextInformation(List contexts, IProgressMonitor monitor) {
+	@Override
+	protected List<IContextInformation> filterAndSortContextInformation(List<IContextInformation> contexts, IProgressMonitor monitor) {
 		fNumberOfComputedResults= contexts.size();
 		return super.filterAndSortContextInformation(contexts, monitor);
 	}
@@ -250,6 +256,7 @@ public class JavaCompletionProcessor extends ContentAssistProcessor {
 	/*
 	 * @see org.eclipse.jdt.internal.ui.text.java.ContentAssistProcessor#createContext(org.eclipse.jface.text.ITextViewer, int)
 	 */
+	@Override
 	protected TextContentAssistInvocationContext createContext(ITextViewer viewer, int offset) {
 		return new JavaContentAssistInvocationContext(viewer, offset, fEditor);
 	}
