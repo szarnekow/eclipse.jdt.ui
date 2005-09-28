@@ -63,11 +63,9 @@ import org.eclipse.jdt.internal.corext.Assert;
 public class ContentAssistProcessor implements IContentAssistProcessor {
 
 	private static final Comparator<CompletionProposalCategory> ORDER_COMPARATOR= new Comparator<CompletionProposalCategory>() {
-
 		public int compare(CompletionProposalCategory d1, CompletionProposalCategory d2) {
 			return d1.getSortOrder() - d2.getSortOrder();
 		}
-		
 	};
 	
 	private final List<CompletionProposalCategory> fCategories;
@@ -156,15 +154,13 @@ public class ContentAssistProcessor implements IContentAssistProcessor {
 	}
 
 	/**
-	 * Filters and sorts the proposals. The passed list may be modified
-	 * and returned, or a new list may be created and returned.
+	 * Filters and sorts the proposals. The passed list may be modified and returned, or a new list
+	 * may be created and returned.
 	 * 
-	 * @param proposals the list of collected proposals (element type:
-	 *        {@link ICompletionProposal})
+	 * @param proposals the list of collected proposals
 	 * @param context the content assit context
 	 * @param monitor a progress monitor
-	 * @return the list of filtered and sorted proposals, ready for
-	 *         display (element type: {@link ICompletionProposal})
+	 * @return the list of filtered and sorted proposals, ready for display
 	 */
 	protected List<ICompletionProposal> filterAndSortProposals(List<ICompletionProposal> proposals, TextContentAssistInvocationContext context, IProgressMonitor monitor) {
 		return proposals;
@@ -200,15 +196,12 @@ public class ContentAssistProcessor implements IContentAssistProcessor {
 	}
 
 	/**
-	 * Filters and sorts the context information objects. The passed
-	 * list may be modified and returned, or a new list may be created
-	 * and returned.
+	 * Filters and sorts the context information objects. The passed list may be modified and
+	 * returned, or a new list may be created and returned.
 	 * 
-	 * @param contexts the list of collected proposals (element type:
-	 *        {@link IContextInformation})
+	 * @param contexts the list of collected proposals
 	 * @param monitor a progress monitor
-	 * @return the list of filtered and sorted proposals, ready for
-	 *         display (element type: {@link IContextInformation})
+	 * @return the list of filtered and sorted proposals, ready for display
 	 */
 	protected List<IContextInformation> filterAndSortContextInformation(List<IContextInformation> contexts, IProgressMonitor monitor) {
 		return contexts;
@@ -223,7 +216,6 @@ public class ContentAssistProcessor implements IContentAssistProcessor {
 	public final void setCompletionProposalAutoActivationCharacters(char[] activationSet) {
 		fCompletionAutoActivationCharacters= activationSet;
 	}
-
 
 	/*
 	 * @see org.eclipse.jface.text.contentassist.IContentAssistProcessor#getCompletionProposalAutoActivationCharacters()
