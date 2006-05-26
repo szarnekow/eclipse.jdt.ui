@@ -44,6 +44,11 @@ import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
+import org.eclipse.jdt.core.search.IJavaSearchConstants;
+import org.eclipse.jdt.core.search.IJavaSearchScope;
+import org.eclipse.jdt.core.search.SearchEngine;
+import org.eclipse.jdt.core.search.SearchPattern;
+import org.eclipse.jdt.core.search.TypeNameRequestor;
 import org.eclipse.jdt.internal.corext.codemanipulation.StubUtility;
 import org.eclipse.jdt.internal.corext.template.java.CodeTemplateContextType;
 import org.eclipse.jdt.testplugin.TestOptions;
@@ -69,7 +74,6 @@ public class AbstractCompletionTest extends TestCase {
 	private String fMembers;
 	private String fLocals;
 	private char fTrigger;
-	private boolean fWaitBeforeCompleting;
 	
 	protected void setUp() throws Exception {
 		Hashtable options= TestOptions.getDefaultOptions();
@@ -94,7 +98,6 @@ public class AbstractCompletionTest extends TestCase {
 		fMembers= "";
 		fLocals= "";
 		fTrigger= '\0';
-		fWaitBeforeCompleting= false;
 	}
 
 	protected void configureCoreOptions(Hashtable options) {
@@ -111,10 +114,6 @@ public class AbstractCompletionTest extends TestCase {
 		JavaCore.setOptions(options);
 	}
 	
-	protected void waitBeforeCompleting(boolean wait) {
-		fWaitBeforeCompleting= wait;
-	}
-
 	protected IPreferenceStore getJDTUIPrefs() {
 		IPreferenceStore store= JavaPlugin.getDefault().getPreferenceStore();
 		return store;
@@ -466,7 +465,7 @@ public class AbstractCompletionTest extends TestCase {
 	}
 
 	private ICompletionProposal[] collectProposals(ICompilationUnit cu, IRegion selection) throws JavaModelException, PartInitException {
-		waitBeforeCoreCompletion();
+		waitUntilIndexesReady();
 		ContentAssistant assistant= new ContentAssistant();
 		assistant.setDocumentPartitioning(IJavaPartitions.JAVA_PARTITIONING);
 		IContentAssistProcessor javaProcessor= new JavaCompletionProcessor(fEditor, assistant, getContentType());
@@ -476,7 +475,7 @@ public class AbstractCompletionTest extends TestCase {
 	}
 
 	private void incrementalAssist(ICompilationUnit cu, IRegion selection) throws JavaModelException, PartInitException {
-		waitBeforeCoreCompletion();
+		waitUntilIndexesReady();
 		ContentAssistant assistant= new ContentAssistant();
 		assistant.enableAutoInsert(true);
 		final ISourceViewer viewer= fEditor.getViewer();
@@ -489,22 +488,6 @@ public class AbstractCompletionTest extends TestCase {
 		assistant.completePrefix();
 		assistant.uninstall();
 	}
-
-	/**
-	 * Invokes {@link Thread#sleep(long)} if {@link #waitBeforeCompleting(boolean)} was set to
-	 * <code>true</code> or camel case completions are enabled. For some reasons, inner types and
-	 * camel case matches don't show up otherwise.
-	 * 
-	 * @since 3.2
-	 */
-	private void waitBeforeCoreCompletion() {
-	    if (fWaitBeforeCompleting || JavaCore.ENABLED.equals(JavaCore.getOption(JavaCore.CODEASSIST_CAMEL_CASE_MATCH))) {
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException x) {
-			}
-		}
-    }
 
 	protected String getContentType() {
 		return IDocument.DEFAULT_CONTENT_TYPE;
@@ -527,4 +510,33 @@ public class AbstractCompletionTest extends TestCase {
 			proposal.apply(doc);
 		}
 	}
+	
+	/**
+	 * Copied from AbstractJavaModelTests
+	 */
+	private static void waitUntilIndexesReady() {
+		// dummy query for waiting until the indexes are ready
+		SearchEngine engine = new SearchEngine();
+		IJavaSearchScope scope = SearchEngine.createWorkspaceScope();
+		try {
+			engine.searchAllTypeNames(
+				null,
+				"!@$#!@".toCharArray(),
+				SearchPattern.R_PATTERN_MATCH | SearchPattern.R_CASE_SENSITIVE,
+				IJavaSearchConstants.CLASS,
+				scope, 
+				new TypeNameRequestor() {
+					public void acceptType(
+						int modifiers,
+						char[] packageName,
+						char[] simpleTypeName,
+						char[][] enclosingTypeNames,
+						String path) {}
+				},
+				IJavaSearchConstants.WAIT_UNTIL_READY_TO_SEARCH,
+				null);
+		} catch (CoreException e) {
+		}
+	}
+
 }

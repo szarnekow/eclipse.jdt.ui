@@ -98,7 +98,6 @@ public class TypeCompletionTest extends AbstractCompletionTest {
 	}
 
 	public void testInnerImportedType() throws Exception {
-		waitBeforeCompleting(true);
 		addImport("java.security.KeyStore");
 		expectImport("java.security.KeyStore");
 		expectImport("java.security.KeyStore.Entry");
