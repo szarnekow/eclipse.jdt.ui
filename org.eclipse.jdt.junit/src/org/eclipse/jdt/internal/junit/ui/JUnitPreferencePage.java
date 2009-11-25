@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import java.util.StringTokenizer;
 
 import org.eclipse.osgi.util.TextProcessor;
 
@@ -40,7 +39,6 @@ import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 
-import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 
 import org.eclipse.jface.dialogs.Dialog;
@@ -427,7 +425,6 @@ public class JUnitPreferencePage extends PreferencePage implements IWorkbenchPre
 
 		fAddFilterButton= new Button(buttonContainer, SWT.PUSH);
 		fAddFilterButton.setText(JUnitMessages.JUnitPreferencePage_addfilterbutton_label);
-		fAddFilterButton.setToolTipText(JUnitMessages.JUnitPreferencePage_addfilterbutton_tooltip);
 		gd= new GridData(GridData.FILL_HORIZONTAL | GridData.VERTICAL_ALIGN_BEGINNING);
 		fAddFilterButton.setLayoutData(gd);
 		LayoutUtil.setButtonDimensionHint(fAddFilterButton);
@@ -439,7 +436,6 @@ public class JUnitPreferencePage extends PreferencePage implements IWorkbenchPre
 
 		fAddTypeButton= new Button(buttonContainer, SWT.PUSH);
 		fAddTypeButton.setText(JUnitMessages.JUnitPreferencePage_addtypebutton_label);
-		fAddTypeButton.setToolTipText(JUnitMessages.JUnitPreferencePage_addtypebutton_tooltip);
 		gd= getButtonGridData(fAddTypeButton);
 		fAddTypeButton.setLayoutData(gd);
 		LayoutUtil.setButtonDimensionHint(fAddTypeButton);
@@ -451,7 +447,6 @@ public class JUnitPreferencePage extends PreferencePage implements IWorkbenchPre
 
 		fAddPackageButton= new Button(buttonContainer, SWT.PUSH);
 		fAddPackageButton.setText(JUnitMessages.JUnitPreferencePage_addpackagebutton_label);
-		fAddPackageButton.setToolTipText(JUnitMessages.JUnitPreferencePage_addpackagebutton_tooltip);
 		gd= getButtonGridData(fAddPackageButton);
 		fAddPackageButton.setLayoutData(gd);
 		SWTUtil.setButtonDimensionHint(fAddPackageButton);
@@ -463,7 +458,6 @@ public class JUnitPreferencePage extends PreferencePage implements IWorkbenchPre
 
 		fRemoveFilterButton= new Button(buttonContainer, SWT.PUSH);
 		fRemoveFilterButton.setText(JUnitMessages.JUnitPreferencePage_removefilterbutton_label);
-		fRemoveFilterButton.setToolTipText(JUnitMessages.JUnitPreferencePage_removefilterbutton_tooltip);
 		gd= getButtonGridData(fRemoveFilterButton);
 		fRemoveFilterButton.setLayoutData(gd);
 		SWTUtil.setButtonDimensionHint(fRemoveFilterButton);
@@ -476,7 +470,6 @@ public class JUnitPreferencePage extends PreferencePage implements IWorkbenchPre
 
 		fEnableAllButton= new Button(buttonContainer, SWT.PUSH);
 		fEnableAllButton.setText(JUnitMessages.JUnitPreferencePage_enableallbutton_label);
-		fEnableAllButton.setToolTipText(JUnitMessages.JUnitPreferencePage_enableallbutton_tooltip);
 		gd= getButtonGridData(fEnableAllButton);
 		fEnableAllButton.setLayoutData(gd);
 		SWTUtil.setButtonDimensionHint(fEnableAllButton);
@@ -488,7 +481,6 @@ public class JUnitPreferencePage extends PreferencePage implements IWorkbenchPre
 
 		fDisableAllButton= new Button(buttonContainer, SWT.PUSH);
 		fDisableAllButton.setText(JUnitMessages.JUnitPreferencePage_disableallbutton_label);
-		fDisableAllButton.setToolTipText(JUnitMessages.JUnitPreferencePage_disableallbutton_tooltip);
 		gd= getButtonGridData(fDisableAllButton);
 		fDisableAllButton.setLayoutData(gd);
 		SWTUtil.setButtonDimensionHint(fDisableAllButton);
@@ -751,7 +743,7 @@ public class JUnitPreferencePage extends PreferencePage implements IWorkbenchPre
 	 * @return list
 	 */
 	protected List createActiveStackFiltersList() {
-		return Arrays.asList(getFilterPatterns());
+		return Arrays.asList(JUnitPreferencesConstants.getFilterPatterns());
 	}
 
 	/**
@@ -761,7 +753,7 @@ public class JUnitPreferencePage extends PreferencePage implements IWorkbenchPre
 	 */
 	protected List createInactiveStackFiltersList() {
 		String[] strings=
-			JUnitPreferencePage.parseList(getPreferenceStore().getString(JUnitPreferencesConstants.PREF_INACTIVE_FILTERS_LIST));
+			JUnitPreferencesConstants.parseList(getPreferenceStore().getString(JUnitPreferencesConstants.PREF_INACTIVE_FILTERS_LIST));
 		return Arrays.asList(strings);
 	}
 
@@ -772,28 +764,5 @@ public class JUnitPreferencePage extends PreferencePage implements IWorkbenchPre
 		boolean enabled= fFilterViewer.getTable().getItemCount() > 0;
 		fEnableAllButton.setEnabled(enabled);
 		fDisableAllButton.setEnabled(enabled);
-	}
-
-	public static String[] getFilterPatterns() {
-		return JUnitPreferencePage.parseList(Platform.getPreferencesService().getString(JUnitCorePlugin.CORE_PLUGIN_ID, JUnitPreferencesConstants.PREF_ACTIVE_FILTERS_LIST, null, null));
-	}
-
-	public static boolean getFilterStack() {
-		return Platform.getPreferencesService().getBoolean(JUnitCorePlugin.CORE_PLUGIN_ID, JUnitPreferencesConstants.DO_FILTER_STACK, true, null);
-	}
-
-	public static void setFilterStack(boolean filter) {
-		new InstanceScope().getNode(JUnitCorePlugin.CORE_PLUGIN_ID).putBoolean(JUnitPreferencesConstants.DO_FILTER_STACK, filter);
-	}
-
-	/*
-	 * Parses the comma separated string into an array of strings
-	 */
-	private static String[] parseList(String listString) {
-		List list= new ArrayList(10);
-		StringTokenizer tokenizer= new StringTokenizer(listString, ","); //$NON-NLS-1$
-		while (tokenizer.hasMoreTokens())
-			list.add(tokenizer.nextToken());
-		return (String[]) list.toArray(new String[list.size()]);
 	}
 }

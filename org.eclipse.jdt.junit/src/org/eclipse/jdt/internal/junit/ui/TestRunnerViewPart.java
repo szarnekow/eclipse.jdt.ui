@@ -13,6 +13,7 @@
  *     Brock Janiczak (brockj@tpg.com.au)
  *         - https://bugs.eclipse.org/bugs/show_bug.cgi?id=102236: [JUnit] display execution time next to each test
  *     Achim Demelt <a.demelt@exxcellent.de> - [junit] Separate UI from non-UI code - https://bugs.eclipse.org/bugs/show_bug.cgi?id=278844
+ *     Andrew Eisenberg <andrew@eisenberg.as> - [JUnit] Rerun failed first does not work with JUnit4 - https://bugs.eclipse.org/bugs/show_bug.cgi?id=140392
  *******************************************************************************/
 package org.eclipse.jdt.internal.junit.ui;
 
@@ -133,7 +134,6 @@ import org.eclipse.jdt.internal.junit.JUnitPreferencesConstants;
 import org.eclipse.jdt.internal.junit.Messages;
 import org.eclipse.jdt.internal.junit.launcher.ITestKind;
 import org.eclipse.jdt.internal.junit.launcher.JUnitLaunchConfigurationConstants;
-import org.eclipse.jdt.internal.junit.launcher.TestKindRegistry;
 import org.eclipse.jdt.internal.junit.model.ITestRunSessionListener;
 import org.eclipse.jdt.internal.junit.model.ITestSessionListener;
 import org.eclipse.jdt.internal.junit.model.JUnitModel;
@@ -410,7 +410,7 @@ public class TestRunnerViewPart extends ViewPart {
 		public String getText(Object element) {
 			TestRunSession session= (TestRunSession) element;
 			String testRunLabel= BasicElementLabels.getJavaElementName(session.getTestRunName());
-			if (session.getStartTime() == 0) {
+			if (session.getStartTime() <= 0) {
 				return testRunLabel;
 			} else {
 				String startTime= DateFormat.getDateTimeInstance().format(new Date(session.getStartTime()));
@@ -572,7 +572,7 @@ public class TestRunnerViewPart extends ViewPart {
 		private String getFileName() {
 			String testRunName= fTestRunSession.getTestRunName();
 			long startTime= fTestRunSession.getStartTime();
-			if (startTime == 0)
+			if (startTime <= 0)
 				return testRunName;
 
 			String isoTime= new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date(startTime)); //$NON-NLS-1$
@@ -1437,15 +1437,8 @@ action enablement
 	}
 
 	private void updateRerunFailedFirstAction() {
-		boolean state= isJUnit3() && hasErrorsOrFailures() && fTestRunSession.getLaunch() != null;
+		boolean state= hasErrorsOrFailures() && fTestRunSession.getLaunch() != null;
 	    fRerunFailedFirstAction.setEnabled(state);
-    }
-
-    private boolean isJUnit3() {
-	    if (fTestRunSession == null)
-	    	return true; // optimistic
-
-	    return TestKindRegistry.JUNIT3_TEST_KIND_ID.equals(fTestRunSession.getTestRunnerKind().getId());
     }
 
     /**
