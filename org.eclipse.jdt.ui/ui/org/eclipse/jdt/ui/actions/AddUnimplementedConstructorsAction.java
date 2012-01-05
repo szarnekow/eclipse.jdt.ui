@@ -7,6 +7,8 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
+ *     Sebastian Zarnekow <Sebastian.Zarnekow@itemis.de> - 
+ *         Add support for custom editor openers - https://bugs.eclipse.org/bugs/show_bug.cgi?id=364281
  *******************************************************************************/
 package org.eclipse.jdt.ui.actions;
 
@@ -71,7 +73,6 @@ import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.Messages;
 
 import org.eclipse.jdt.ui.JavaElementComparator;
-import org.eclipse.jdt.ui.JavaUI;
 
 import org.eclipse.jdt.internal.ui.IJavaHelpContextIds;
 import org.eclipse.jdt.internal.ui.JavaPlugin;
@@ -83,6 +84,7 @@ import org.eclipse.jdt.internal.ui.dialogs.SourceActionDialog;
 import org.eclipse.jdt.internal.ui.dialogs.StatusInfo;
 import org.eclipse.jdt.internal.ui.javaeditor.ASTProvider;
 import org.eclipse.jdt.internal.ui.javaeditor.CompilationUnitEditor;
+import org.eclipse.jdt.internal.ui.javaeditor.EditorUtility;
 import org.eclipse.jdt.internal.ui.preferences.JavaPreferencesSettings;
 import org.eclipse.jdt.internal.ui.refactoring.IVisibilityChangeListener;
 import org.eclipse.jdt.internal.ui.util.BusyIndicatorRunnableContext;
@@ -547,7 +549,7 @@ public class AddUnimplementedConstructorsAction extends SelectionDispatchAction 
 
 			CodeGenerationSettings settings= JavaPreferencesSettings.getCodeGenerationSettings(type.getJavaProject());
 			settings.createComments= dialog.getGenerateComment();
-			IEditorPart editor= JavaUI.openInEditor(type, true, false);
+			IEditorPart editor= EditorUtility.openInEditorImpl(type, true, false);
 			IRewriteTarget target= editor != null ? (IRewriteTarget) editor.getAdapter(IRewriteTarget.class) : null;
 			if (target != null)
 				target.beginCompoundChange();

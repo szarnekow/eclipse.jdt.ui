@@ -7,6 +7,8 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
+ *     Sebastian Zarnekow <Sebastian.Zarnekow@itemis.de> - 
+ *         Add support for custom editor openers - https://bugs.eclipse.org/bugs/show_bug.cgi?id=364281
  *******************************************************************************/
 package org.eclipse.jdt.internal.ui.text.correction;
 
@@ -51,7 +53,6 @@ import org.eclipse.jdt.core.compiler.IProblem;
 
 import org.eclipse.jdt.internal.corext.fix.CleanUpRefactoring.MultiFixTarget;
 
-import org.eclipse.jdt.ui.JavaUI;
 import org.eclipse.jdt.ui.cleanup.ICleanUp;
 import org.eclipse.jdt.ui.text.java.CompletionProposalComparator;
 import org.eclipse.jdt.ui.text.java.IInvocationContext;
@@ -107,7 +108,7 @@ public class CorrectionMarkerResolutionGenerator implements IMarkerResolutionGen
 			try {
 				IEditorPart part= EditorUtility.isOpenInEditor(fCompilationUnit);
 				if (part == null) {
-					part= JavaUI.openInEditor(fCompilationUnit, true, false);
+					part= EditorUtility.openInEditorImpl(fCompilationUnit, true, false);
 					if (part instanceof ITextEditor) {
 						((ITextEditor) part).selectAndReveal(fOffset, fLength);
 					}

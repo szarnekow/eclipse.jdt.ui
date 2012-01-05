@@ -7,6 +7,8 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
+ *     Sebastian Zarnekow <Sebastian.Zarnekow@itemis.de> - 
+ *         Add support for custom editor openers - https://bugs.eclipse.org/bugs/show_bug.cgi?id=364281
  *******************************************************************************/
 package org.eclipse.jdt.internal.ui.actions;
 
@@ -39,14 +41,13 @@ import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.search.IJavaSearchConstants;
 
-import org.eclipse.jdt.ui.JavaUI;
-
 import org.eclipse.jdt.internal.ui.IJavaHelpContextIds;
 import org.eclipse.jdt.internal.ui.IJavaStatusConstants;
 import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.internal.ui.JavaPluginImages;
 import org.eclipse.jdt.internal.ui.JavaUIMessages;
 import org.eclipse.jdt.internal.ui.dialogs.OpenTypeSelectionDialog;
+import org.eclipse.jdt.internal.ui.javaeditor.EditorUtility;
 import org.eclipse.jdt.internal.ui.util.ExceptionHandler;
 
 
@@ -87,7 +88,7 @@ public class OpenTypeAction extends Action implements IWorkbenchWindowActionDele
 
 		if (types.length == 1) {
 			try {
-				JavaUI.openInEditor((IJavaElement)types[0], true, true);
+				EditorUtility.openInEditor((IJavaElement)types[0], true, true, false);
 			} catch (CoreException x) {
 				ExceptionHandler.handle(x, JavaUIMessages.OpenTypeAction_errorTitle, JavaUIMessages.OpenTypeAction_errorMessage);
 			}
@@ -106,7 +107,7 @@ public class OpenTypeAction extends Action implements IWorkbenchWindowActionDele
 		for (int i= 0; i < types.length; i++) {
 			IType type= (IType)types[i];
 			try {
-				JavaUI.openInEditor(type, true, true);
+				EditorUtility.openInEditor(type, true, true, false);
 			} catch (CoreException x) {
 				multiStatus.merge(x.getStatus());
 			}

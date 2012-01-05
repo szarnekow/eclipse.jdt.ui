@@ -7,6 +7,8 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
+ *     Sebastian Zarnekow <Sebastian.Zarnekow@itemis.de> - 
+ *         Add support for custom editor openers - https://bugs.eclipse.org/bugs/show_bug.cgi?id=364281
  *******************************************************************************/
 package org.eclipse.jdt.ui.actions;
 
@@ -83,6 +85,20 @@ public class OpenEditorActionGroup extends ActionGroup {
 		initialize();
 		if (specialSelectionProvider != null)
 			fOpen.setSpecialSelectionProvider(specialSelectionProvider);
+	}
+	
+	/**
+	 * Creates a new <code>OpenActionGroup</code>. The group requires
+	 * that the selection provided by the part's selection provider is of type <code>
+	 * org.eclipse.jface.viewers.IStructuredSelection</code>.
+	 *
+	 * @param part the view part that owns this action group
+	 * @param forceJavaNavigation whether navigation should always go to a Java editor
+	 * @since 3.8
+	 */
+	public OpenEditorActionGroup(IViewPart part, boolean forceJavaNavigation) {
+		this(part.getSite(), null);
+		fOpen.setForceJavaNavigation(forceJavaNavigation);
 	}
 
 	/**

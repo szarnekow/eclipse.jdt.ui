@@ -8,6 +8,8 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *     Eric Rizzo - replaced Collapse All action with generic equivalent
+ *     Sebastian Zarnekow <Sebastian.Zarnekow@itemis.de> - 
+ *         Add support for custom editor openers - https://bugs.eclipse.org/bugs/show_bug.cgi?id=364281
  *******************************************************************************/
 
 package org.eclipse.jdt.internal.ui.packageview;
@@ -135,7 +137,7 @@ class PackageExplorerActionGroup extends CompositeActionGroup {
 		IWorkbenchPartSite site = fPart.getSite();
 		setGroups(new ActionGroup[] {
 			new NewWizardsActionGroup(site),
-			fNavigateActionGroup= new NavigateActionGroup(fPart),
+			fNavigateActionGroup= new NavigateActionGroup(fPart, true),
 			new CCPActionGroup(fPart),
             new GenerateBuildPathActionGroup(fPart),
 			new GenerateActionGroup(fPart),

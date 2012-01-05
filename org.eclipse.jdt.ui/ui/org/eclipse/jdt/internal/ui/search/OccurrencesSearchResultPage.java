@@ -7,6 +7,8 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
+ *     Sebastian Zarnekow <Sebastian.Zarnekow@itemis.de> - 
+ *         Add support for custom editor openers - https://bugs.eclipse.org/bugs/show_bug.cgi?id=364281
  *******************************************************************************/
 
 package org.eclipse.jdt.internal.ui.search;
@@ -54,6 +56,7 @@ import org.eclipse.jdt.ui.SharedASTProvider;
 
 import org.eclipse.jdt.internal.ui.JavaPlugin;
 import org.eclipse.jdt.internal.ui.actions.AbstractToggleLinkingAction;
+import org.eclipse.jdt.internal.ui.javaeditor.EditorUtility;
 import org.eclipse.jdt.internal.ui.viewsupport.ColoringLabelProvider;
 import org.eclipse.jdt.internal.ui.viewsupport.ISelectionListenerWithAST;
 import org.eclipse.jdt.internal.ui.viewsupport.SelectionListenerWithASTManager;
@@ -222,10 +225,7 @@ public class OccurrencesSearchResultPage extends AbstractTextSearchViewPage {
 		IJavaElement javaElement= element.getJavaElement();
 		try {
 			IEditorPart editor= JavaUI.openInEditor(javaElement, false, false);
-			if (editor instanceof ITextEditor) {
-				ITextEditor textEditor= (ITextEditor) editor;
-				textEditor.selectAndReveal(currentOffset, currentLength);
-			}
+			EditorUtility.revealInEditor(editor, currentOffset, currentLength);
 			// activating at the end avoids an outdated selection event from JavaUI.openInEditor(..):
 			if (editor != null && activate)
 				editor.getEditorSite().getPage().activate(editor);

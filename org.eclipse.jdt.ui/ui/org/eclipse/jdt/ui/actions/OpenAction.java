@@ -7,6 +7,8 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
+ *     Sebastian Zarnekow <Sebastian.Zarnekow@itemis.de> - 
+ *         Add support for custom editor openers - https://bugs.eclipse.org/bugs/show_bug.cgi?id=364281
  *******************************************************************************/
 package org.eclipse.jdt.ui.actions;
 
@@ -78,6 +80,7 @@ import org.eclipse.jdt.internal.ui.util.ExceptionHandler;
 public class OpenAction extends SelectionDispatchAction {
 
 	private JavaEditor fEditor;
+	private boolean forceJavaNavigation;
 
 	/**
 	 * Creates a new <code>OpenAction</code>. The action requires
@@ -246,7 +249,12 @@ public class OpenAction extends SelectionDispatchAction {
 			try {
 				element= getElementToOpen(element);
 				boolean activateOnOpen= fEditor != null ? true : OpenStrategy.activateOnOpen();
-				IEditorPart part= EditorUtility.openInEditor(element, activateOnOpen);
+				IEditorPart part = null;
+				if (isForceJavaNavigation()) {
+					part = EditorUtility.openInJavaEditor(element, activateOnOpen);
+				} else {
+					part = EditorUtility.openInEditor(element, activateOnOpen);
+				}
 				if (part != null && element instanceof IJavaElement)
 					JavaUI.revealInEditor(part, (IJavaElement)element);
 			} catch (PartInitException e) {
@@ -279,5 +287,17 @@ public class OpenAction extends SelectionDispatchAction {
 
 	private String getDialogTitle() {
 		return ActionMessages.OpenAction_error_title;
+	}
+
+	private boolean isForceJavaNavigation() {
+		return forceJavaNavigation;
+	}
+
+	/**
+	 * @param forceJavaNavigation whether the Java editor has to be used as navigation target.
+	 * @since 3.8 
+	 */
+	public void setForceJavaNavigation(boolean forceJavaNavigation) {
+		this.forceJavaNavigation = forceJavaNavigation;
 	}
 }

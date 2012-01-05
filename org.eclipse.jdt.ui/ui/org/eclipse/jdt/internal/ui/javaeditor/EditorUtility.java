@@ -7,6 +7,8 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
+ *     Sebastian Zarnekow <Sebastian.Zarnekow@itemis.de> - 
+ *         Add support for custom editor openers - https://bugs.eclipse.org/bugs/show_bug.cgi?id=364281
  *******************************************************************************/
 package org.eclipse.jdt.internal.ui.javaeditor;
 
@@ -94,6 +96,7 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.Messages;
 
+import org.eclipse.jdt.ui.IJavaElementEditorOpener;
 import org.eclipse.jdt.ui.JavaUI;
 import org.eclipse.jdt.ui.PreferenceConstants;
 
@@ -151,7 +154,9 @@ public class EditorUtility {
 
 	/**
 	 * Opens the editor currently associated with the given element (IJavaElement, IFile, IStorage...)
-	 *
+	 * If no editor was explicitly assigned, the registered {@link IJavaElementEditorOpener openers}
+	 * are queried to find the best editor.
+	 *  
 	 * @param inputElement the input element
 	 * @param activate <code>true</code> if the editor should be activated
 	 * @return an open editor or <code>null</code> if an external editor was opened
@@ -160,7 +165,24 @@ public class EditorUtility {
 	 * no editor input could be created for the given element.
 	 */
 	public static IEditorPart openInEditor(Object inputElement, boolean activate) throws PartInitException {
-
+		return openInEditorImpl(inputElement, activate, false);
+	}
+	
+	/**
+	 * Opens the editor currently associated with the given element (IJavaElement, IFile, IStorage...)
+	 * If no editor was explicitly assigned, the Java editor is used.
+	 * @param inputElement the input element
+	 * @param activate <code>true</code> if the editor should be activated
+	 * @return an open editor or <code>null</code> if an external editor was opened
+	 * @throws PartInitException if the editor could not be opened or the input element is not valid
+	 * Status code {@link IJavaStatusConstants#EDITOR_NO_EDITOR_INPUT} if opening the editor failed as
+	 * no editor input could be created for the given element.
+	 */
+	public static IEditorPart openInJavaEditor(Object inputElement, boolean activate) throws PartInitException {
+		return openInEditorImpl(inputElement, activate, true);
+	}
+	
+	private static IEditorPart openInEditorImpl(Object inputElement, boolean activate, boolean forceJavaEditor) throws PartInitException {
 		if (inputElement instanceof IFile) {
 			IFile file= (IFile) inputElement;
 			if (!isClassFile(file))
@@ -168,15 +190,102 @@ public class EditorUtility {
 			inputElement= JavaCore.createClassFileFrom(file);
 		}
 
-		IEditorPart editor= findEditor(inputElement, activate);
+		if (inputElement instanceof IJavaElement) {
+			if (forceJavaEditor)
+				return openInEditorImpl((IJavaElement) inputElement, activate, false);
+			return openInEditor((IJavaElement) inputElement, activate, false);
+		} else {
+			IEditorPart editor= findEditor(inputElement, activate);
+			if (editor != null)
+				return editor;
+	
+			IEditorInput input= getEditorInput(inputElement);
+			if (input == null)
+				throwPartInitException(JavaEditorMessages.EditorUtility_no_editorInput, IJavaStatusConstants.EDITOR_NO_EDITOR_INPUT);
+	
+			return openInEditor(input, getEditorID(input), activate);
+		}
+	}
+	
+	public static IEditorPart openInEditor(final IJavaElement element, final boolean activate, final boolean reveal) throws PartInitException {
+		return openInEditor(element, activate, reveal, true);
+	}
+	
+	public static IEditorPart openInEditor(final IJavaElement element, final boolean activate, final boolean reveal, boolean preferExisting) throws PartInitException {
+		if (preferExisting) {
+			IEditorPart activeEditor= findEditorIfActive(element);
+			if (activeEditor != null) {
+				if (reveal)
+					EditorUtility.revealInEditor(activeEditor, element);
+				return activeEditor;
+			}
+		}
+		final EditorOpenerDescriptor[] editorOpeners= EditorOpenerDescriptor.getEditorOpeners();
+		if (editorOpeners.length == 0) {
+			return openInEditorImpl(element, activate, reveal);
+		} else {
+			IJavaElementEditorOpener.IOpenableEditor activeHandle = null;
+			for(EditorOpenerDescriptor descriptor: editorOpeners) {
+				IJavaElementEditorOpener opener= descriptor.getEditorOpener();
+				if (opener != null) {
+					IJavaElementEditorOpener.IOpenableEditor handle = opener.openInEditor(element, activate, reveal);
+					if (handle != null) {
+						if (activeHandle == null) {
+							activeHandle = handle;
+						} else {
+							// TODO: logging
+							return openInEditorImpl(element, activate, reveal);
+						}
+					}
+				}
+			}
+			if (activeHandle != null) {
+				return activeHandle.open();
+			}
+			return openInEditorImpl(element, activate, reveal);
+		}
+	}
+
+	private static IEditorPart findEditorIfActive(final IJavaElement element) {
+		if (element != null) {
+			ICompilationUnit cu= (ICompilationUnit) element.getAncestor(IJavaElement.COMPILATION_UNIT);
+			if (cu != null) {
+				IWorkbenchPage page= JavaPlugin.getActivePage();
+				IEditorPart editor= page != null ? editor= page.getActiveEditor() : null;
+				if (editor != null) {
+					boolean isCompareEditorInput= isCompareEditorInput(editor.getEditorInput());
+					IEditorInput editorInput;
+					if (isCompareEditorInput)
+						editorInput= (IEditorInput)editor.getAdapter(IEditorInput.class);
+					else
+						editorInput= editor.getEditorInput();
+					IJavaElement editorCU= getEditorInputJavaElement(editorInput, false);
+					if (cu.equals(editorCU)) {
+						return editor;
+					}
+				}
+			}
+		}
+		return null;
+	}
+
+	public static IEditorPart openInEditorImpl(final IJavaElement element, final boolean activate, final boolean reveal) throws PartInitException {
+		if (!(element instanceof ISourceReference)) {
+			return null;
+		}
+		IEditorPart editor= findEditor(element, activate);
 		if (editor != null)
 			return editor;
 
-		IEditorInput input= getEditorInput(inputElement);
+		IEditorInput input= getEditorInput(element);
 		if (input == null)
 			throwPartInitException(JavaEditorMessages.EditorUtility_no_editorInput, IJavaStatusConstants.EDITOR_NO_EDITOR_INPUT);
 
-		return openInEditor(input, getEditorID(input), activate);
+		editor = openInEditor(input, getEditorID(input), activate);
+		if (reveal && editor != null) {
+			EditorUtility.revealInEditor(editor, element);
+		}
+		return editor;
 	}
 	
 	/**
@@ -244,7 +353,36 @@ public class EditorUtility {
 	 * @param part the editor part
 	 * @param element the Java element to reveal
 	 */
-	public static void revealInEditor(IEditorPart part, IJavaElement element) {
+	public static void revealInEditor(final IEditorPart part, final IJavaElement element) {
+		final EditorOpenerDescriptor[] editorOpeners= EditorOpenerDescriptor.getEditorOpeners();
+		if (editorOpeners.length == 0) {
+			revealInEditorImpl(part, element);
+		} else {
+			IJavaElementEditorOpener.IOpenableEditor activeHandle = null;
+			for(EditorOpenerDescriptor descriptor: editorOpeners) {
+				IJavaElementEditorOpener opener= descriptor.getEditorOpener();
+				if (opener != null) {
+					IJavaElementEditorOpener.IOpenableEditor handle= opener.revealInEditor(part, element);
+					if (handle != null) {
+						if (activeHandle == null) {
+							activeHandle = handle;
+						} else {
+							// TODO logging
+							revealInEditorImpl(part, element);
+							return;
+						}
+					}
+				}
+			}
+			if (activeHandle == null) {
+				revealInEditorImpl(part, element);
+			} else {
+				activeHandle.reveal();
+			}
+		}
+	}
+
+	private static void revealInEditorImpl(final IEditorPart part, final IJavaElement element) {
 		if (element == null)
 			return;
 
@@ -289,6 +427,35 @@ public class EditorUtility {
 	 * @param length the length
 	 */
 	public static void revealInEditor(IEditorPart editor, final int offset, final int length) {
+		final EditorOpenerDescriptor[] editorOpeners= EditorOpenerDescriptor.getEditorOpeners();
+		if (editorOpeners.length == 0) {
+			revealInEditorImpl(editor, offset, length);
+		} else {
+			IJavaElementEditorOpener.IOpenableEditor activeHandle = null;
+			for(EditorOpenerDescriptor descriptor: editorOpeners) {
+				IJavaElementEditorOpener opener= descriptor.getEditorOpener();
+				if (opener != null) {
+					IJavaElementEditorOpener.IOpenableEditor handle= opener.revealInEditor(editor, offset, length);
+					if (handle != null) {
+						if (activeHandle == null) {
+							activeHandle = handle;
+						} else {
+							// TODO logging
+							revealInEditorImpl(editor, offset, length);
+							return;
+						}
+					}
+				}
+			}
+			if (activeHandle == null) {
+				revealInEditorImpl(editor, offset, length);
+			} else {
+				activeHandle.reveal();
+			}
+		}
+	}
+	
+	public static void revealInEditorImpl(IEditorPart editor, final int offset, final int length) {
 		if (editor instanceof ITextEditor) {
 			((ITextEditor)editor).selectAndReveal(offset, length);
 			return;

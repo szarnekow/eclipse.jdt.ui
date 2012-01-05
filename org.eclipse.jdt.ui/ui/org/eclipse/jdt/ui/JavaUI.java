@@ -7,6 +7,8 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
+ *     Sebastian Zarnekow <Sebastian.Zarnekow@itemis.de> - 
+ *         Add support for custom editor openers - https://bugs.eclipse.org/bugs/show_bug.cgi?id=364281
  *******************************************************************************/
 package org.eclipse.jdt.ui;
 
@@ -686,14 +688,7 @@ public final class JavaUI {
 	 * @since 3.3
 	 */
 	public static IEditorPart openInEditor(IJavaElement element, boolean activate, boolean reveal) throws JavaModelException, PartInitException {
-		if (!(element instanceof ISourceReference)) {
-			return null;
-		}
-		IEditorPart part= EditorUtility.openInEditor(element, activate);
-		if (reveal && part != null) {
-			EditorUtility.revealInEditor(part, element);
-		}
-		return part;
+		return EditorUtility.openInEditor(element, activate, reveal);
 	}
 
 	/**

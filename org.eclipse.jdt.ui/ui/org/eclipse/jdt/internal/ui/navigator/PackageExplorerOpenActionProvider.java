@@ -7,6 +7,8 @@
  *
  * Contributors:
  * IBM Corporation - initial API and implementation
+ * Sebastian Zarnekow <Sebastian.Zarnekow@itemis.de> - 
+ *         Add support for custom editor openers - https://bugs.eclipse.org/bugs/show_bug.cgi?id=364281
  *******************************************************************************/
 package org.eclipse.jdt.internal.ui.navigator;
 
@@ -67,7 +69,7 @@ public class PackageExplorerOpenActionProvider extends CommonActionProvider {
 			if (workbenchSite.getPart() != null && workbenchSite.getPart() instanceof IViewPart) {
 				IViewPart viewPart = (IViewPart) workbenchSite.getPart();
 
-				fOpenGroup = new OpenEditorActionGroup(viewPart);
+				fOpenGroup = new OpenEditorActionGroup(viewPart, true);
 
 				if (site.getStructuredViewer() instanceof TreeViewer)
 					fOpenAndExpand = new OpenAndExpand(workbenchSite.getSite(), (OpenAction) fOpenGroup.getOpenAction(), (TreeViewer) site.getStructuredViewer());

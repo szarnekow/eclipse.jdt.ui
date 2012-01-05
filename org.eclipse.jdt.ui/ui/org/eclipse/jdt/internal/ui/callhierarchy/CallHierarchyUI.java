@@ -10,6 +10,8 @@
  * 			(report 36180: Callers/Callees view)
  *   Stephan Herrmann (stephan@cs.tu-berlin.de):
  *          - bug 75800: [call hierarchy] should allow searches for fields
+ *   Sebastian Zarnekow (Sebastian.Zarnekow@itemis.de):
+ *          - Add support for custom editor openers - https://bugs.eclipse.org/bugs/show_bug.cgi?id=364281
  *******************************************************************************/
 package org.eclipse.jdt.internal.ui.callhierarchy;
 
@@ -36,8 +38,6 @@ import org.eclipse.ui.IViewReference;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
-
-import org.eclipse.ui.texteditor.ITextEditor;
 
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IMember;
@@ -119,11 +119,7 @@ public class CallHierarchyUI {
     public static void jumpToLocation(CallLocation callLocation) {
         try {
             IEditorPart methodEditor = JavaUI.openInEditor(callLocation.getMember(), false, false);
-            if (methodEditor instanceof ITextEditor) {
-                ITextEditor editor = (ITextEditor) methodEditor;
-                editor.selectAndReveal(callLocation.getStart(),
-                    (callLocation.getEnd() - callLocation.getStart()));
-            }
+            EditorUtility.revealInEditor(methodEditor, callLocation.getStart(), (callLocation.getEnd() - callLocation.getStart()));
         } catch (JavaModelException e) {
             JavaPlugin.log(e);
         } catch (PartInitException e) {
@@ -166,10 +162,7 @@ public class CallHierarchyUI {
 	        }
 
 			IEditorPart methodEditor = JavaUI.openInEditor(enclosingMember, activateOnOpen, false);
-            if (methodEditor instanceof ITextEditor) {
-                ITextEditor editor = (ITextEditor) methodEditor;
-				editor.selectAndReveal(selectionStart, selectionLength);
-            }
+			EditorUtility.revealInEditor(methodEditor, selectionStart, selectionLength);
             return true;
         } catch (JavaModelException e) {
             JavaPlugin.log(new Status(IStatus.ERROR, JavaPlugin.getPluginId(),

@@ -11,10 +11,12 @@
 <!--     IBM Corporation - initial API and implementation                   -->
 <!--     Francis Upton IV, Oakland Software <francisu@ieee.org> - Add support for Go Into with the ProjectExplorer - https://bugs.eclipse.org/bugs/show_bug.cgi?id=262091 -->
 <!--     Troy Bishop <tjbishop@ca.ibm.com> - Add support for importing/exporting Java Code Style preferences - https://bugs.eclipse.org/bugs/show_bug.cgi?id=304395 -->
+<!--     Sebastian Zarnekow <Sebastian.Zarnekow@itemis.de> - Add support for custom editor openers - https://bugs.eclipse.org/bugs/show_bug.cgi?id=364281 -->
 <!-- ====================================================================== -->
 <plugin>
 
    <extension-point id="javaElementFilters" name="%elementFiltersName" schema="schema/javaElementFilters.exsd"/>
+   <extension-point id="javaElementOpeners" name="%elementOpenersName" schema="schema/javaElementOpeners.exsd"/>
    <extension-point id="javaEditorTextHovers" name="%javaEditorTextHoversName" schema="schema/javaEditorTextHovers.exsd"/>
    <extension-point id="javadocCompletionProcessor" name="%javadocCompletionProcessor" schema="schema/javadocCompletionProcessor.exsd"/>
    <extension-point id="quickFixProcessors" name="%quickFixProcessorExtensionPoint" schema="schema/quickFixProcessors.exsd"/>
