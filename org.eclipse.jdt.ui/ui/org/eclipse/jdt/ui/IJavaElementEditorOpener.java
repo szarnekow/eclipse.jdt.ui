@@ -26,8 +26,7 @@ public interface IJavaElementEditorOpener {
 
 	/**
 	 * An openable editor is a lightweight handle that allows to
-	 * obtain an {@link IEditorPart} or to {@link #reveal()} a certain
-	 * region in an editor.
+	 * obtain and open an {@link IEditorPart}.
 	 * 
 	 * Implementors should not lock resources on construction of the openable editor.
 	 */
@@ -38,6 +37,15 @@ public interface IJavaElementEditorOpener {
 		 * @throws PartInitException if the editor could not be initialized or no workbench page is active.
 		 */
 		IEditorPart open() throws PartInitException;
+	}
+	
+	/**
+	 * A revealable is a lightweight handle that allows to {@link #reveal()} a certain
+	 * region in an editor.
+	 * 
+	 * Implementors should not lock resources on construction of the revealable.
+	 */
+	interface IRevealable {
 		/**
 		 * Reveal the range in this editor as configured.
 		 */
@@ -63,7 +71,7 @@ public interface IJavaElementEditorOpener {
 	 * @return an {@link IOpenableEditor} or <code>null</code> if this editor opener is not
 	 *   responsible for the given part and element.
 	 */
-	IOpenableEditor revealInEditor(IEditorPart part, IJavaElement element);
+	IRevealable revealInEditor(IEditorPart part, IJavaElement element);
 	
 	/**
 	 * Returns an openable editor iff the given part can be handled by this editor opener.
@@ -76,6 +84,6 @@ public interface IJavaElementEditorOpener {
 	 * @return an {@link IOpenableEditor} or <code>null</code> if this editor opener is not
 	 *   responsible for the given part.
 	 */
-	IOpenableEditor revealInEditor(IEditorPart part, int offset, int length);
+	IRevealable revealInEditor(IEditorPart part, int offset, int length);
 	
 }

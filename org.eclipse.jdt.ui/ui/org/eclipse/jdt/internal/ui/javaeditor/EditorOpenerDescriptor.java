@@ -1,3 +1,14 @@
+/*******************************************************************************
+ * Copyright (c) 2011 itemis AG (http://www.itemis.eu) and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * Contributors:
+ *   Sebastian Zarnekow - Initial API and implementation
+ *******************************************************************************/
+
 package org.eclipse.jdt.internal.ui.javaeditor;
 
 import java.util.ArrayList;
@@ -24,18 +35,47 @@ public class EditorOpenerDescriptor {
 
 	private final IConfigurationElement configurationElement;
 	private IJavaElementEditorOpener editorOpener;
-	private Boolean active = Boolean.TRUE;
+	private boolean active = true;
+	
 
+	/**
+	 * Creates a new EditorOpenerDescriptor.
+	 * @param configurationElement - the configuration element
+	 */
 	public EditorOpenerDescriptor(IConfigurationElement configurationElement) {
 		this.configurationElement = configurationElement;
 	}
 
+	/**
+	 * Alters the active state of this descriptor.
+	 * A descriptors is usually set inactive if the provided {@link IJavaElementEditorOpener}
+	 * throws exceptions or conflicts with another {@link IJavaElementEditorOpener}.
+	 * 
+	 * @param active - whether the descriptor is active or not
+	 */
+	public void setActive(boolean active) {
+		this.active= active;
+	}
+	
+	/**
+	 * @return whether this descriptor is active or not
+	 */
+	public boolean isActive() {
+		return active;
+	}
+	
+	/**
+	 * @return the extension id of this descriptor
+	 */
 	public String getID() {
 		return configurationElement.getAttribute(ID);
 	}
 
+	/**
+	 * @return the {@link IJavaElementEditorOpener} contributed by this descriptor
+	 */
 	public IJavaElementEditorOpener getEditorOpener() {
-		if (active.booleanValue()) {
+		if (active) {
 			if (editorOpener == null) {
 				try {
 					Object extension= configurationElement.createExecutableExtension(CLASS);
@@ -45,12 +85,12 @@ public class EditorOpenerDescriptor {
 						String message= "Invalid extension to " + ATT_EXTENSION //$NON-NLS-1$
 							+ ". Must implement IJavaElementEditorOpener: " + getID(); //$NON-NLS-1$
 						JavaPlugin.log(new Status(IStatus.ERROR, JavaUI.ID_PLUGIN, message));
-						active = Boolean.FALSE;
+						setActive(false);
 						return null;
 					}
 				} catch (CoreException e) {
 					JavaPlugin.log(e);
-					active= Boolean.FALSE;
+					setActive(false);
 					return null;
 				}
 			}
@@ -59,6 +99,9 @@ public class EditorOpenerDescriptor {
 		return null;
 	}
 
+	/**
+	 * @return {@link EditorOpenerDescriptor} for all extensions of 'javaElementOpeners'
+	 */
 	static EditorOpenerDescriptor[] getEditorOpeners() {
 		if (contributedEditorOpeners == null) {
 			IConfigurationElement[] elements= Platform.getExtensionRegistry().getConfigurationElementsFor(JavaUI.ID_PLUGIN, ATT_EXTENSION);

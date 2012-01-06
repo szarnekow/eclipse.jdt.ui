@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.jdt.internal.ui;
 
+import org.eclipse.jdt.ui.IJavaElementEditorOpener;
+
 import org.eclipse.jdt.internal.ui.javaeditor.CompilationUnitDocumentProvider;
 import org.eclipse.jdt.internal.ui.javaeditor.EditorUtility;
 import org.eclipse.jdt.internal.ui.javaeditor.saveparticipant.IPostSaveListener;
@@ -75,5 +77,14 @@ public interface IJavaStatusConstants {
 	 * @since 3.4
 	 */
 	public static final int EDITOR_NO_EDITOR_INPUT= 10008;
+	
+	/**
+	 * Status constant indication that a multiple {@link IJavaElementEditorOpener} are registered for the same element.
+	 * See 
+	 * 	{@link EditorUtility#openInEditor(org.eclipse.jdt.core.IJavaElement, boolean, boolean, boolean)}
+	 * 	{@link EditorUtility#revealInEditor(org.eclipse.ui.IEditorPart, int, int)}
+	 * @since 3.4
+	 */
+	public static final int MULTIPLE_ELEMENT_OPENER= 10009;
 
  }

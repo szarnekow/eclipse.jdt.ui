@@ -225,22 +225,38 @@ public class EditorUtility {
 			return openInEditorImpl(element, activate, reveal);
 		} else {
 			IJavaElementEditorOpener.IOpenableEditor activeHandle = null;
+			EditorOpenerDescriptor activeDescriptor = null;
 			for(EditorOpenerDescriptor descriptor: editorOpeners) {
-				IJavaElementEditorOpener opener= descriptor.getEditorOpener();
+				final IJavaElementEditorOpener opener= descriptor.getEditorOpener();
 				if (opener != null) {
-					IJavaElementEditorOpener.IOpenableEditor handle = opener.openInEditor(element, activate, reveal);
-					if (handle != null) {
+					final IJavaElementEditorOpener.IOpenableEditor[] handle = new IJavaElementEditorOpener.IOpenableEditor[1];
+					SafeRunner.run(new SafeOpener(descriptor) {
+						public void run() throws Exception {
+							handle[0] = opener.openInEditor(element, activate, reveal);
+						}
+					});
+					if (handle[0] != null) {
 						if (activeHandle == null) {
-							activeHandle = handle;
+							activeHandle = handle[0];
+							activeDescriptor = descriptor;
 						} else {
-							// TODO: logging
+							logMultipleJavaElementOpener(element, activeDescriptor, descriptor);
 							return openInEditorImpl(element, activate, reveal);
 						}
 					}
 				}
 			}
 			if (activeHandle != null) {
-				return activeHandle.open();
+				final IEditorPart[] editorPart= new IEditorPart[1];
+				final IJavaElementEditorOpener.IOpenableEditor handle = activeHandle;
+				SafeRunner.run(new SafeOpener(activeDescriptor) {
+					public void run() throws Exception {
+						editorPart[0] = handle.open();
+					}
+				});
+				if (reveal && editorPart[0] != null)
+					EditorUtility.revealInEditor(editorPart[0], element);
+				return editorPart[0];
 			}
 			return openInEditorImpl(element, activate, reveal);
 		}
@@ -358,16 +374,23 @@ public class EditorUtility {
 		if (editorOpeners.length == 0) {
 			revealInEditorImpl(part, element);
 		} else {
-			IJavaElementEditorOpener.IOpenableEditor activeHandle = null;
-			for(EditorOpenerDescriptor descriptor: editorOpeners) {
-				IJavaElementEditorOpener opener= descriptor.getEditorOpener();
+			IJavaElementEditorOpener.IRevealable activeHandle = null;
+			EditorOpenerDescriptor activeDescriptor = null;
+			for(final EditorOpenerDescriptor descriptor: editorOpeners) {
+				final IJavaElementEditorOpener opener= descriptor.getEditorOpener();
 				if (opener != null) {
-					IJavaElementEditorOpener.IOpenableEditor handle= opener.revealInEditor(part, element);
-					if (handle != null) {
+					final IJavaElementEditorOpener.IRevealable[] handle= new IJavaElementEditorOpener.IRevealable[1];
+					SafeRunner.run(new SafeOpener(descriptor) {
+						public void run() throws Exception {
+							handle[0] = opener.revealInEditor(part, element);
+						}
+					});
+					if (handle[0] != null) {
 						if (activeHandle == null) {
-							activeHandle = handle;
+							activeHandle = handle[0];
+							activeDescriptor = descriptor;
 						} else {
-							// TODO logging
+							logMultipleJavaElementOpener(element, activeDescriptor, descriptor);
 							revealInEditorImpl(part, element);
 							return;
 						}
@@ -377,7 +400,12 @@ public class EditorUtility {
 			if (activeHandle == null) {
 				revealInEditorImpl(part, element);
 			} else {
-				activeHandle.reveal();
+				final IJavaElementEditorOpener.IRevealable handle = activeHandle;
+				SafeRunner.run(new SafeOpener(activeDescriptor) {
+					public void run() throws Exception {
+						handle.reveal();
+					}
+				});
 			}
 		}
 	}
@@ -426,21 +454,28 @@ public class EditorUtility {
 	 * @param offset the offset
 	 * @param length the length
 	 */
-	public static void revealInEditor(IEditorPart editor, final int offset, final int length) {
+	public static void revealInEditor(final IEditorPart editor, final int offset, final int length) {
 		final EditorOpenerDescriptor[] editorOpeners= EditorOpenerDescriptor.getEditorOpeners();
 		if (editorOpeners.length == 0) {
 			revealInEditorImpl(editor, offset, length);
 		} else {
-			IJavaElementEditorOpener.IOpenableEditor activeHandle = null;
-			for(EditorOpenerDescriptor descriptor: editorOpeners) {
-				IJavaElementEditorOpener opener= descriptor.getEditorOpener();
+			IJavaElementEditorOpener.IRevealable activeHandle = null;
+			EditorOpenerDescriptor activeDescriptor = null;
+			for(final EditorOpenerDescriptor descriptor: editorOpeners) {
+				final IJavaElementEditorOpener opener= descriptor.getEditorOpener();
 				if (opener != null) {
-					IJavaElementEditorOpener.IOpenableEditor handle= opener.revealInEditor(editor, offset, length);
-					if (handle != null) {
+					final IJavaElementEditorOpener.IRevealable[] handle= new IJavaElementEditorOpener.IRevealable[1]; 
+					SafeRunner.run(new SafeOpener(descriptor) {
+						public void run() throws Exception {
+							handle[0] = opener.revealInEditor(editor, offset, length);
+						}
+					});	
+					if (handle[0] != null) {
 						if (activeHandle == null) {
-							activeHandle = handle;
+							activeHandle = handle[0];
+							activeDescriptor = descriptor;
 						} else {
-							// TODO logging
+							logMultipleJavaElementOpener(editor, activeDescriptor, descriptor);
 							revealInEditorImpl(editor, offset, length);
 							return;
 						}
@@ -450,9 +485,38 @@ public class EditorUtility {
 			if (activeHandle == null) {
 				revealInEditorImpl(editor, offset, length);
 			} else {
-				activeHandle.reveal();
+				final IJavaElementEditorOpener.IRevealable handle = activeHandle;
+				SafeRunner.run(new SafeOpener(activeDescriptor) {
+					public void run() throws Exception {
+						handle.reveal();
+					}
+				});
 			}
 		}
+	}
+
+	private static void logMultipleJavaElementOpener(Object element, EditorOpenerDescriptor descriptor1, EditorOpenerDescriptor descriptor2) {
+		String msg = "Conflicting IJavaElementOpener " + descriptor1.getID() + " and " + descriptor2.getID() + " for " + element + " have been deactivated."; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+		JavaPlugin.log(new Status(IStatus.INFO, JavaUI.ID_PLUGIN, IJavaStatusConstants.MULTIPLE_ELEMENT_OPENER, msg, null));
+		descriptor1.setActive(false);
+		descriptor2.setActive(false);
+	}
+	
+	static abstract class SafeOpener implements ISafeRunnable {
+		
+		private EditorOpenerDescriptor descriptor;
+		
+		public SafeOpener(EditorOpenerDescriptor descriptor) {
+			Assert.isNotNull(descriptor);
+			this.descriptor = descriptor;
+		}
+		
+		public void handleException(Throwable exception) {
+			String msg = "IJavaElementOpener contributed by '" + descriptor.getID() + "' has been deactivated."; //$NON-NLS-1$ //$NON-NLS-2$
+			JavaPlugin.log(new Status(IStatus.ERROR, JavaUI.ID_PLUGIN, IJavaStatusConstants.INTERNAL_ERROR, msg, exception));
+			descriptor.setActive(false);
+		}
+
 	}
 	
 	public static void revealInEditorImpl(IEditorPart editor, final int offset, final int length) {
