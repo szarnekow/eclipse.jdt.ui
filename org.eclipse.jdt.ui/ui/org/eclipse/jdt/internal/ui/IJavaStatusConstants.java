@@ -80,10 +80,9 @@ public interface IJavaStatusConstants {
 	
 	/**
 	 * Status constant indication that a multiple {@link IJavaElementEditorOpener} are registered for the same element.
-	 * See 
-	 * 	{@link EditorUtility#openInEditor(org.eclipse.jdt.core.IJavaElement, boolean, boolean, boolean)}
-	 * 	{@link EditorUtility#revealInEditor(org.eclipse.ui.IEditorPart, int, int)}
-	 * @since 3.4
+	 * See {@link EditorUtility#openInEditor(org.eclipse.jdt.core.IJavaElement, boolean, boolean, boolean) openInEditor}
+	 * and {@link EditorUtility#revealInEditor(org.eclipse.ui.IEditorPart, int, int) revealInEditor}
+	 * @since 3.8
 	 */
 	public static final int MULTIPLE_ELEMENT_OPENER= 10009;
 
