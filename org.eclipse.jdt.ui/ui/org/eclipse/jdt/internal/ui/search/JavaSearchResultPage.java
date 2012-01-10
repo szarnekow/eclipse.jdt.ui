@@ -80,6 +80,7 @@ import org.eclipse.jdt.internal.ui.actions.CopyQualifiedNameAction;
 import org.eclipse.jdt.internal.ui.dnd.EditorInputTransferDragAdapter;
 import org.eclipse.jdt.internal.ui.dnd.JdtViewerDragAdapter;
 import org.eclipse.jdt.internal.ui.dnd.ResourceTransferDragAdapter;
+import org.eclipse.jdt.internal.ui.javaeditor.EditorUtility;
 import org.eclipse.jdt.internal.ui.packageview.SelectionTransferDragAdapter;
 import org.eclipse.jdt.internal.ui.util.ExceptionHandler;
 import org.eclipse.jdt.internal.ui.viewsupport.DecoratingJavaLabelProvider;
@@ -202,7 +203,7 @@ public class JavaSearchResultPage extends AbstractTextSearchViewPage implements 
 		Object element= match.getElement();
 		if (editor instanceof ITextEditor) {
 			ITextEditor textEditor= (ITextEditor) editor;
-			textEditor.selectAndReveal(offset, length);
+			EditorUtility.revealInEditor(textEditor, offset, length);
 		} else if (editor != null) {
 			if (element instanceof IFile) {
 				IFile file= (IFile) element;

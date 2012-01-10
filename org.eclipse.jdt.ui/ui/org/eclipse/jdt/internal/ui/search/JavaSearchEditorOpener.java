@@ -68,7 +68,7 @@ public class JavaSearchEditorOpener {
 	}
 
 	private IEditorPart showWithReuse(Object element, IWorkbenchPage wbPage) throws PartInitException {
-		IEditorInput input= EditorUtility.getEditorInput(element);
+		IEditorInput input= EditorUtility.getEditorInputForReusableEditorInSearchResult(element);
 		if (input == null)
 			return null;
 		String editorID= EditorUtility.getEditorID(input);

@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.jdt.ui;
 
+import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.PartInitException;
 
@@ -43,7 +44,7 @@ public interface IJavaElementEditorOpener {
 	 * A revealable is a lightweight handle that allows to {@link #reveal()} a certain
 	 * region in an editor.
 	 * 
-	 * Implementors should not lock resources on construction of the revealable.
+	 * Implementors should not lock resources on construction of the {@link IRevealable}.
 	 */
 	interface IRevealable {
 		/**
@@ -85,5 +86,14 @@ public interface IJavaElementEditorOpener {
 	 *   responsible for the given part.
 	 */
 	IRevealable revealInEditor(IEditorPart part, int offset, int length);
+
+	/**
+	 * Returns an editor input iff the given element is described and the original
+	 * source can be handled by this editor opener. Otherwise returns <code>null</code>.
+	 * @param element the element that should be be displayable in the returned editor input.
+	 * @return an {@link IEditorInput} or <code>null</code> if this editor opener is not
+	 *   responsible for the given element.
+	 */
+	IEditorInput getEditorInputForReusableEditorInSearchResult(IJavaElement element);
 	
 }

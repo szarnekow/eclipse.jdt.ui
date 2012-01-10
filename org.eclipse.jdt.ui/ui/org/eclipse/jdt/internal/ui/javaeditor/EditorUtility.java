@@ -719,6 +719,47 @@ public class EditorUtility {
 
 		return null;
 	}
+	
+	public static IEditorInput getEditorInputForReusableEditorInSearchResult(Object input) {
+		if (input instanceof IJavaElement) {
+			final IJavaElement element = (IJavaElement) input;
+			IEditorPart activeEditor= findEditorIfActive(element);
+			if (activeEditor != null) {
+				return activeEditor.getEditorInput();
+			}
+			final EditorOpenerDescriptor[] editorOpeners= EditorOpenerDescriptor.getEditorOpeners();
+			if (editorOpeners.length == 0) {
+				return getEditorInput(input);
+			} else {
+				IEditorInput activeHandle = null;
+				EditorOpenerDescriptor activeDescriptor = null;
+				for(EditorOpenerDescriptor descriptor: editorOpeners) {
+					final IJavaElementEditorOpener opener= descriptor.getEditorOpener();
+					if (opener != null) {
+						final IEditorInput[] handle = new IEditorInput[1];
+						SafeRunner.run(new SafeOpener(descriptor) {
+							public void run() throws Exception {
+								handle[0] = opener.getEditorInputForReusableEditorInSearchResult(element);
+							}
+						});
+						if (handle[0] != null) {
+							if (activeHandle == null) {
+								activeHandle = handle[0];
+								activeDescriptor = descriptor;
+							} else {
+								logMultipleJavaElementOpener(element, activeDescriptor, descriptor);
+								return getEditorInput(input);
+							}
+						}
+					}
+				}
+				if (activeHandle != null) {
+					return activeHandle;
+				}
+			}
+		}
+		return getEditorInput(input);
+	}
 
 	/**
 	 * Returns the Java element edited in the current active editor.
