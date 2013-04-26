@@ -216,6 +216,8 @@ public class TestRunnerViewPart extends ViewPart {
 	private IHandlerActivation fRerunFailedFirstActivation;
 
 	private Action fFailuresOnlyFilterAction;
+	private Action fIgnoredOnlyFilterAction;
+	private Action fSortByNameAction;
 	private ScrollLockAction fScrollLockAction;
 	private ToggleOrientationAction[] fToggleOrientationActions;
 	private ShowTestHierarchyAction fShowTestHierarchyAction;
@@ -270,6 +272,14 @@ public class TestRunnerViewPart extends ViewPart {
 	 * @since 3.2
 	 */
 	static final String TAG_FAILURES_ONLY= "failuresOnly"; //$NON-NLS-1$
+	/**
+	 * @since 3.8
+	 */
+	static final String TAG_IGNORED_ONLY= "ignoredOnly"; //$NON-NLS-1$
+	/**
+	 * @since 3.8
+	 */
+	static final String TAG_SORT_BY_NAME= "sortByName"; //$NON-NLS-1$
 	/**
 	 * @since 3.4
 	 */
@@ -1023,6 +1033,32 @@ public class TestRunnerViewPart extends ViewPart {
 		}
 	}
 
+	private class IgnoredOnlyFilterAction extends Action {
+		public IgnoredOnlyFilterAction() {
+			super(JUnitMessages.TestRunnerViewPart_show_ignored_only, AS_CHECK_BOX);
+			setToolTipText(JUnitMessages.TestRunnerViewPart_show_ignored_only);
+			setImageDescriptor(JUnitPlugin.getImageDescriptor("obj16/testignored.gif")); //$NON-NLS-1$
+		}
+
+		@Override
+		public void run() {
+			setShowIgnoredOnly(isChecked());
+		}
+	}
+	
+	private class SortByNameAction extends Action {
+		public SortByNameAction() {
+			super(JUnitMessages.TestRunnerViewPart_sort_by_name, AS_CHECK_BOX);
+			setToolTipText(JUnitMessages.TestRunnerViewPart_show_ignored_only);
+			setImageDescriptor(JUnitPlugin.getImageDescriptor("obj16/alphab_sort_co.gif")); //$NON-NLS-1$
+		}
+
+		@Override
+		public void run() {
+			setSortByName(isChecked());
+		}
+	}
+	
 	private class ShowTimeAction extends Action {
 
 		public ShowTimeAction() {
@@ -1138,6 +1174,8 @@ public class TestRunnerViewPart extends ViewPart {
 		memento.putInteger(TAG_ORIENTATION, fOrientation);
 
 		memento.putString(TAG_FAILURES_ONLY, fFailuresOnlyFilterAction.isChecked() ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
+		memento.putString(TAG_IGNORED_ONLY, fIgnoredOnlyFilterAction.isChecked() ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
+		memento.putString(TAG_SORT_BY_NAME, fSortByNameAction.isChecked() ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
 		memento.putInteger(TAG_LAYOUT, fLayout);
 		memento.putString(TAG_SHOW_TIME, fShowTimeAction.isChecked() ? "true" : "false"); //$NON-NLS-1$ //$NON-NLS-2$
 	}
@@ -1174,12 +1212,22 @@ public class TestRunnerViewPart extends ViewPart {
 		if (failuresOnly != null)
 			showFailuresOnly= failuresOnly.equals("true"); //$NON-NLS-1$
 
+		String ignoredOnly= memento.getString(TAG_IGNORED_ONLY);
+		boolean showIgnoredOnly= false;
+		if (ignoredOnly != null)
+			showIgnoredOnly= ignoredOnly.equals("true"); //$NON-NLS-1$
+		
+		String sortByNameValue = memento.getString(TAG_SORT_BY_NAME);
+		boolean sortByName = false;
+		if (sortByNameValue != null)
+			sortByName = sortByNameValue.equals("true");
+		
 		String time= memento.getString(TAG_SHOW_TIME);
 		boolean showTime= true;
 		if (time != null)
 			showTime= time.equals("true"); //$NON-NLS-1$
 
-		setFilterAndLayout(showFailuresOnly, layoutValue);
+		setFilterAndLayout(showFailuresOnly, showIgnoredOnly, layoutValue, sortByName);
 		setShowExecutionTime(showTime);
 	}
 
@@ -1757,7 +1805,7 @@ action enablement
 
 		getViewSite().getPage().addPartListener(fPartListener);
 
-		setFilterAndLayout(false, LAYOUT_HIERARCHICAL);
+		setFilterAndLayout(false, false, LAYOUT_HIERARCHICAL, true);
 		setShowExecutionTime(true);
 		if (fMemento != null) {
 			restoreLayoutState(fMemento);
@@ -1904,6 +1952,8 @@ action enablement
 		fRerunFailedFirstActivation= handlerService.activateHandler(RERUN_FAILED_FIRST_COMMAND, handler);
 
 		fFailuresOnlyFilterAction= new FailuresOnlyFilterAction();
+		fIgnoredOnlyFilterAction= new IgnoredOnlyFilterAction();
+		fSortByNameAction = new SortByNameAction();
 
 		fScrollLockAction= new ScrollLockAction(this);
 		fScrollLockAction.setChecked(!fAutoScroll);
@@ -1919,8 +1969,11 @@ action enablement
 
 		toolBar.add(fNextAction);
 		toolBar.add(fPreviousAction);
+		toolBar.add(fIgnoredOnlyFilterAction);
 		toolBar.add(fFailuresOnlyFilterAction);
 		toolBar.add(fScrollLockAction);
+		toolBar.add(new Separator());
+		toolBar.add(fSortByNameAction);
 		toolBar.add(new Separator());
 		toolBar.add(fRerunLastTestAction);
 		toolBar.add(fRerunFailedFirstAction);
@@ -1936,10 +1989,13 @@ action enablement
 		for (int i = 0; i < fToggleOrientationActions.length; ++i) {
 			layoutSubMenu.add(fToggleOrientationActions[i]);
 		}
+		layoutSubMenu.add(new Separator());
+		layoutSubMenu.add(fSortByNameAction);
 		viewMenu.add(layoutSubMenu);
 		viewMenu.add(new Separator());
 
 		viewMenu.add(fFailuresOnlyFilterAction);
+		viewMenu.add(fIgnoredOnlyFilterAction);
 
 
 		fActivateOnErrorAction= new ActivateOnErrorAction();
@@ -2141,18 +2197,28 @@ action enablement
 
 
 	void setShowFailuresOnly(boolean failuresOnly) {
-		setFilterAndLayout(failuresOnly, fLayout);
+		setFilterAndLayout(failuresOnly, false, fLayout, fSortByNameAction.isChecked());
+	}
+	
+	void setShowIgnoredOnly(boolean ignoredOnly) {
+		setFilterAndLayout(false, ignoredOnly, fLayout, fSortByNameAction.isChecked());
+	}
+	
+	void setSortByName(boolean sorted) {
+		setFilterAndLayout(fFailuresOnlyFilterAction.isChecked(), fIgnoredOnlyFilterAction.isChecked(), fLayout, sorted);
 	}
 
 	private void setLayoutMode(int mode) {
-		setFilterAndLayout(fFailuresOnlyFilterAction.isChecked(), mode);
+		setFilterAndLayout(fFailuresOnlyFilterAction.isChecked(), fIgnoredOnlyFilterAction.isChecked(), mode, fSortByNameAction.isChecked());
 	}
 
-	private void setFilterAndLayout(boolean failuresOnly, int layoutMode) {
+	private void setFilterAndLayout(boolean failuresOnly, boolean ignoredOnly, int layoutMode, boolean sortByName) {
 		fShowTestHierarchyAction.setChecked(layoutMode == LAYOUT_HIERARCHICAL);
 		fLayout= layoutMode;
 		fFailuresOnlyFilterAction.setChecked(failuresOnly);
-		fTestViewer.setShowFailuresOnly(failuresOnly, layoutMode);
+		fIgnoredOnlyFilterAction.setChecked(ignoredOnly);
+		fSortByNameAction.setChecked(sortByName);
+		fTestViewer.setShowFailuresOnly(failuresOnly, ignoredOnly, layoutMode, sortByName);
 	}
 
 	private void setShowExecutionTime(boolean showTime) {

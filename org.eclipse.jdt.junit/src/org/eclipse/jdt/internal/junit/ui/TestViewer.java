@@ -14,12 +14,17 @@
 package org.eclipse.jdt.internal.junit.ui;
 
 import java.util.AbstractList;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.eclipse.jdt.junit.model.ITestElement;
 
@@ -44,6 +49,7 @@ import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.jface.viewers.TableViewer;
+import org.eclipse.jface.viewers.TreePathViewerSorter;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerFilter;
@@ -96,7 +102,125 @@ public class TestViewer {
 				return ! fTestRunSession.isRunning() && status == Status.RUNNING;  // rerunning
 		}
 	}
+	
+	private final class IgnoredOnlyFilter extends ViewerFilter {
+		@Override
+		public boolean select(Viewer viewer, Object parentElement, Object element) {
+			return select(((TestElement) element));
+		}
 
+		public boolean select(TestElement testElement) {
+			if (isOrHasIgnored(testElement))
+				return true;
+			Status status= testElement.getStatus();
+			return !fTestRunSession.isRunning() && status == Status.RUNNING;  // rerunning
+		}
+		
+		private boolean isOrHasIgnored(ITestElement testElement) {
+			if (testElement instanceof TestCaseElement) {
+				return ((TestCaseElement) testElement).isIgnored();
+			}
+			TestSuiteElement suite = (TestSuiteElement) testElement;
+			for(ITestElement child: suite.getChildren()) {
+				if (isOrHasIgnored(child))
+					return true;
+			}
+			return false;
+		}
+	}
+	
+	private static final class TestByNameSorter extends TreePathViewerSorter  {
+		@SuppressWarnings("rawtypes")
+		@Override
+		protected Comparator getComparator() {
+			throw new UnsupportedOperationException();
+		}
+
+		public int compare(Viewer viewer, Object e1, Object e2) {
+	        int cat1 = category(e1);
+	        int cat2 = category(e2);
+
+	        if (cat1 != cat2) {
+				return cat1 - cat2;
+			}
+	        TestElement leftElement = (TestElement) e1;
+	        TestElement rightElement = (TestElement) e2;
+	        final String leftName;
+	        if (leftElement instanceof TestCaseElement) {
+	        	leftName = ((TestCaseElement) leftElement).getTestMethodName();
+	        } else {
+	        	leftName = leftElement.getTestName();
+	        }
+	        final String rightName;
+	        if (rightElement instanceof TestCaseElement) {
+	        	rightName = ((TestCaseElement) rightElement).getTestMethodName();
+	        } else {
+	        	rightName = rightElement.getTestName();
+	        }
+	        return compare(leftName, rightName);
+	    }
+		
+		public int compare(String s1, String s2) {
+			String[] splitted1 = s1.split("\\.");
+			String[] splitted2 = s2.split("\\.");
+			int min = Math.min(splitted1.length, splitted2.length);
+			for(int i = 0; i < min; i++) {
+				int result = compareSegment(splitted1[i], splitted2[i]);
+				if (result != 0) {
+					return result;
+				}
+			}
+			return (splitted1.length<splitted2.length ? -1 : (splitted1.length==splitted2.length ? 0 : 1));
+		}
+		
+		private static final Pattern pattern = Pattern.compile("(\\d+|\\D+)");
+		
+		public int compareSegment(String s1, String s2) {
+			List<String> splitted1 = split(s1);
+			List<String> splitted2 = split(s2);
+			int min = Math.min(splitted1.size(), splitted2.size());
+			for(int i = 0; i < min; i++) {
+				int result = compareStringOrNumber(splitted1.get(i), splitted2.get(i));
+				if (result != 0) {
+					return result;
+				}
+			}
+			return s1.compareTo(s2);
+		}
+		
+		private List<String> split(String s) {
+			Matcher matcher1 = pattern.matcher(s);
+			if (!matcher1.find()) {
+				return Collections.singletonList(s);
+			}
+			String first = matcher1.group();
+			if (matcher1.find()) {
+				List<String> result = new ArrayList<String>(3);
+				result.add(first);
+				do {
+					result.add(matcher1.group());
+				} while(matcher1.find());
+				return result;
+			} else {
+				return Collections.singletonList(s);
+			}
+		}
+
+		public int compareStringOrNumber(String s1, String s2) {
+			try {
+				int i1 = Integer.parseInt(s1);
+				int i2 = Integer.parseInt(s2);
+				if (i1 == i2) {
+					i1 = s1.length();
+					i2 = s2.length();
+				}
+				return (i1<i2 ? -1 : (i1==i2 ? 0 : 1));
+			} catch(NumberFormatException e) {
+				return s1.compareTo(s2);
+			}
+		}
+	}
+	
 	private static class ReverseList<E> extends AbstractList<E> {
 		private final List<E> fList;
 		public ReverseList(List<E> list) {
@@ -125,6 +249,8 @@ public class TestViewer {
 	}
 
 	private final FailuresOnlyFilter fFailuresOnlyFilter= new FailuresOnlyFilter();
+	private final IgnoredOnlyFilter fIgnoredOnlyFilter= new IgnoredOnlyFilter();
+	private final TestByNameSorter fTestByNameSorter = new TestByNameSorter();
 
 	private final TestRunnerViewPart fTestRunnerPart;
 	private final Clipboard fClipboard;
@@ -139,8 +265,10 @@ public class TestViewer {
 	private SelectionProviderMediator fSelectionProvider;
 
 	private int fLayoutMode;
-	private boolean fTreeHasFilter;
-	private boolean fTableHasFilter;
+	private boolean fTreeHasFailureFilter;
+	private boolean fTreeHasIgnoreFilter;
+	private boolean fTableHasFailureFilter;
+	private boolean fTableHasIgnoreFilter;
 
 	private TestRunSession fTestRunSession;
 
@@ -314,7 +442,7 @@ public class TestViewer {
 		}
 	}
 
-	public synchronized void setShowFailuresOnly(boolean failuresOnly, int layoutMode) {
+	public synchronized void setShowFailuresOnly(boolean failuresOnly, boolean ignoredOnly, int layoutMode, boolean sortByName) {
 		/*
 		 * Management of fTreeViewer and fTableViewer
 		 * ******************************************
@@ -346,20 +474,34 @@ public class TestViewer {
 			//avoid realizing all TableItems, especially in flat mode!
 			StructuredViewer viewer= getActiveViewer();
 			if (failuresOnly) {
-				if (! getActiveViewerHasFilter()) {
+				if (! getActiveViewerHasFilter(fFailuresOnlyFilter)) {
 					setActiveViewerNeedsRefresh(true);
-					setActiveViewerHasFilter(true);
+					setActiveViewerFilter(fFailuresOnlyFilter);
 					viewer.setInput(null);
+					viewer.removeFilter(fIgnoredOnlyFilter);
 					viewer.addFilter(fFailuresOnlyFilter);
 				}
-
+			} else if (ignoredOnly) {
+				if (! getActiveViewerHasFilter(fIgnoredOnlyFilter)) {
+					setActiveViewerNeedsRefresh(true);
+					setActiveViewerFilter(fIgnoredOnlyFilter);
+					viewer.setInput(null);
+					viewer.removeFilter(fFailuresOnlyFilter);
+					viewer.addFilter(fIgnoredOnlyFilter);
+				}
 			} else {
 				if (getActiveViewerHasFilter()) {
 					setActiveViewerNeedsRefresh(true);
-					setActiveViewerHasFilter(false);
+					setActiveViewerFilter(null);
 					viewer.setInput(null);
 					viewer.removeFilter(fFailuresOnlyFilter);
+					viewer.removeFilter(fIgnoredOnlyFilter);
 				}
+			}
+			if (sortByName) {
+				viewer.setComparator(fTestByNameSorter);
+			} else {
+				viewer.setComparator(null);
 			}
 			processChangesInUI();
 
@@ -377,16 +519,34 @@ public class TestViewer {
 
 	private boolean getActiveViewerHasFilter() {
 		if (fLayoutMode == TestRunnerViewPart.LAYOUT_HIERARCHICAL)
-			return fTreeHasFilter;
+			return fTreeHasFailureFilter || fTreeHasIgnoreFilter;
 		else
-			return fTableHasFilter;
+			return fTableHasFailureFilter || fTableHasIgnoreFilter;
+	}
+	
+	private boolean getActiveViewerHasFilter(ViewerFilter filter) {
+		if (fLayoutMode == TestRunnerViewPart.LAYOUT_HIERARCHICAL)
+			if (fTreeHasFailureFilter || fTreeHasIgnoreFilter) {
+				return Arrays.asList(fTreeViewer.getFilters()).contains(filter);
+			} else {
+				return false;
+			}
+		else
+			if (fTableHasFailureFilter || fTableHasIgnoreFilter) {
+				return Arrays.asList(fTableViewer.getFilters()).contains(filter);
+			} else {
+				return false;
+			}
 	}
 
-	private void setActiveViewerHasFilter(boolean filter) {
-		if (fLayoutMode == TestRunnerViewPart.LAYOUT_HIERARCHICAL)
-			fTreeHasFilter= filter;
-		else
-			fTableHasFilter= filter;
+	private void setActiveViewerFilter(ViewerFilter filter) {
+		if (fLayoutMode == TestRunnerViewPart.LAYOUT_HIERARCHICAL) {
+			fTreeHasFailureFilter= filter == fFailuresOnlyFilter;
+			fTreeHasIgnoreFilter= filter == fIgnoredOnlyFilter;
+		} else {
+			fTableHasFailureFilter= filter == fFailuresOnlyFilter;
+			fTableHasIgnoreFilter= filter == fIgnoredOnlyFilter;
+		}
 	}
 
 	private StructuredViewer getActiveViewer() {
@@ -439,7 +599,7 @@ public class TestViewer {
 				fNeedUpdate.clear();
 			}
 			if (! fTreeNeedsRefresh && toUpdate.length > 0) {
-				if (fTreeHasFilter)
+				if (fTreeHasFailureFilter || fTreeHasIgnoreFilter)
 					for (Object element : toUpdate)
 						updateElementInTree((TestElement) element);
 				else {
@@ -456,7 +616,7 @@ public class TestViewer {
 				}
 			}
 			if (! fTableNeedsRefresh && toUpdate.length > 0) {
-				if (fTableHasFilter)
+				if (fTableHasFailureFilter || fTableHasIgnoreFilter)
 					for (Object element : toUpdate)
 						updateElementInTable((TestElement) element);
 				else
@@ -467,7 +627,7 @@ public class TestViewer {
 	}
 
 	private void updateElementInTree(final TestElement testElement) {
-		if (isShown(testElement)) {
+		if (isShownInTree(testElement)) {
 			updateShownElementInTree(testElement);
 		} else {
 			TestElement current= testElement;
@@ -475,7 +635,7 @@ public class TestViewer {
 				if (fTreeViewer.testFindItem(current) != null)
 					fTreeViewer.remove(current);
 				current= current.getParent();
-			} while (! (current instanceof TestRoot) && ! isShown(current));
+			} while (! (current instanceof TestRoot) && ! isShownInTree(current));
 
 			while (current != null && ! (current instanceof TestRoot)) {
 				fTreeViewer.update(current, null);
@@ -499,7 +659,7 @@ public class TestViewer {
 	}
 
 	private void updateElementInTable(TestElement element) {
-		if (isShown(element)) {
+		if (isShownInTable(element)) {
 			if (fTableViewer.testFindItem(element) == null) {
 				TestElement previous= getNextFailure(element, false);
 				int insertionIndex= -1;
@@ -517,8 +677,14 @@ public class TestViewer {
 		}
 	}
 
-	private boolean isShown(TestElement current) {
-		return fFailuresOnlyFilter.select(current);
+	private boolean isShownInTable(TestElement current) {
+		return fTableHasFailureFilter && fFailuresOnlyFilter.select(current) || fTableHasIgnoreFilter && fIgnoredOnlyFilter.select(current) || 
+				!(fTableHasFailureFilter || fTableHasIgnoreFilter);
+	}
+	
+	private boolean isShownInTree(TestElement current) {
+		return fTreeHasFailureFilter && fFailuresOnlyFilter.select(current) || fTreeHasIgnoreFilter && fIgnoredOnlyFilter.select(current) || 
+				!(fTreeHasFailureFilter || fTreeHasIgnoreFilter);
 	}
 
 	private void autoScrollInUI() {
