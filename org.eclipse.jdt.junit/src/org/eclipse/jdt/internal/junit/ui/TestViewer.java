@@ -130,12 +130,12 @@ public class TestViewer {
 	}
 	
 	private static final class TestByNameSorter extends TreePathViewerSorter  {
-		@SuppressWarnings("rawtypes")
 		@Override
 		protected Comparator getComparator() {
 			throw new UnsupportedOperationException();
 		}
 
+		@Override
 		public int compare(Viewer viewer, Object e1, Object e2) {
 	        int cat1 = category(e1);
 	        int cat2 = category(e2);
@@ -161,8 +161,8 @@ public class TestViewer {
 	    }
 		
 		public int compare(String s1, String s2) {
-			String[] splitted1 = s1.split("\\.");
-			String[] splitted2 = s2.split("\\.");
+			String[] splitted1 = s1.split("\\."); //$NON-NLS-1$
+			String[] splitted2 = s2.split("\\."); //$NON-NLS-1$
 			int min = Math.min(splitted1.length, splitted2.length);
 			for(int i = 0; i < min; i++) {
 				int result = compareSegment(splitted1[i], splitted2[i]);
@@ -173,7 +173,7 @@ public class TestViewer {
 			return (splitted1.length<splitted2.length ? -1 : (splitted1.length==splitted2.length ? 0 : 1));
 		}
 		
-		private static final Pattern pattern = Pattern.compile("(\\d+|\\D+)");
+		private static final Pattern pattern = Pattern.compile("(\\d+|\\D+)"); //$NON-NLS-1$
 		
 		public int compareSegment(String s1, String s2) {
 			List<String> splitted1 = split(s1);
@@ -185,7 +185,10 @@ public class TestViewer {
 					return result;
 				}
 			}
-			return s1.compareTo(s2);
+			int result = s1.compareToIgnoreCase(s2);
+			if (result == 0)
+				result = s1.compareTo(s2);
+			return result;
 		}
 		
 		private List<String> split(String s) {
@@ -216,7 +219,7 @@ public class TestViewer {
 				}
 				return (i1<i2 ? -1 : (i1==i2 ? 0 : 1));
 			} catch(NumberFormatException e) {
-				return s1.compareTo(s2);
+				return s1.compareToIgnoreCase(s2);
 			}
 		}
 	}
