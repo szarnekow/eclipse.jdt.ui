@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -26,10 +26,12 @@ import org.eclipse.jdt.text.tests.templates.TemplatesTestSuite;
 public class JdtTextTestSuite {
 
 	public static Test suite() {
-		TestSuite suite = new TestSuite("JDT Text Test Suite"); //$NON-NLS-1$
+		TestSuite suite = new TestSuite(JdtTextTestSuite.class.getName());
 		//$JUnit-BEGIN$
 		suite.addTestSuite(CompilationUnitDocumentProviderTest.class);
 		suite.addTest(JavaHeuristicScannerTest.suite());
+		suite.addTest(JavaAutoIndentStrategyTest.suite());
+		suite.addTestSuite(JavaBreakIteratorTest.class);
 		suite.addTest(JavaParameterListValidatorTest.suite());
 		suite.addTest(JavaDoc2HTMLTextReaderTester.suite());
 		suite.addTest(JavaPairMatcherTest.suite());
@@ -48,7 +50,8 @@ public class JdtTextTestSuite {
 						"org.eclipse.core.filebuffers.tests",
 						"org.eclipse.core.variables",
 						"org.eclipse.jsch.core",
-						"org.eclipse.team.cvs.core"
+						"org.eclipse.team.cvs.core",
+						"org.eclipse.test.performance"
 				});
 		suite.addTest(BracketInserterTest.suite());
 		suite.addTest(SpellingTestSuite.suite());

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2011 IBM Corporation and others.
+ * Copyright (c) 2005, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -23,6 +23,7 @@ import org.eclipse.jface.text.contentassist.IContextInformation;
 import org.eclipse.jdt.core.CompletionProposal;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.Signature;
+import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.core.formatter.CodeFormatter;
 
 import org.eclipse.jdt.internal.corext.util.CodeFormatterUtil;
@@ -38,7 +39,7 @@ public class JavaMethodCompletionProposal extends LazyJavaCompletionProposal {
 	/** Triggers for method proposals without parameters. Do not modify. */
 	protected final static char[] METHOD_TRIGGERS= new char[] { ';', ',', '.', '\t', '[' };
 	/** Triggers for method proposals. Do not modify. */
-	protected final static char[] METHOD_WITH_ARGUMENTS_TRIGGERS= new char[] { '(', '-', ' ' };
+	protected final static char[] METHOD_WITH_ARGUMENTS_TRIGGERS= new char[] { ';', '(', '-', ' ' };
 	/** Triggers for method name proposals (static imports). Do not modify. */
 	protected final static char[] METHOD_NAME_TRIGGERS= new char[] { ';' };
 
@@ -57,6 +58,8 @@ public class JavaMethodCompletionProposal extends LazyJavaCompletionProposal {
 		super.apply(document, trigger, offset);
 		if (needsLinkedMode()) {
 			setUpLinkedMode(document, ')');
+		} else if (!fProposal.isConstructor() && getReplacementString().endsWith(";")) { //$NON-NLS-1$
+			setUpLinkedMode(document, ';');
 		}
 	}
 
@@ -91,7 +94,7 @@ public class JavaMethodCompletionProposal extends LazyJavaCompletionProposal {
 		// no context information for METHOD_NAME_REF proposals (e.g. for static imports)
 		// https://bugs.eclipse.org/bugs/show_bug.cgi?id=94654
 		if ((fProposal.getKind() == CompletionProposal.METHOD_REF || fProposal.getKind() == CompletionProposal.CONSTRUCTOR_INVOCATION) && hasParameters()
-				&& (getReplacementString().endsWith(RPAREN) || getReplacementString().length() == 0)) {
+				&& (getReplacementString().endsWith(RPAREN) || getReplacementString().endsWith(SEMICOLON) || getReplacementString().length() == 0)) {
 			ProposalContextInformation contextInformation= new ProposalContextInformation(fProposal);
 			if (fContextInformationPosition != 0 && fProposal.getCompletion().length == 0)
 				contextInformation.setContextInformationPosition(fContextInformationPosition);
@@ -124,6 +127,17 @@ public class JavaMethodCompletionProposal extends LazyJavaCompletionProposal {
 			fHasParameters= computeHasParameters();
 		}
 		return fHasParameters;
+	}
+
+	/**
+	 * Returns whether we automatically complete the method with a semicolon.
+	 * 
+	 * @return <code>true</code> if the return type of the method is void, <code>false</code>
+	 *         otherwise
+	 * @since 3.9
+	 */
+	protected final boolean canAutomaticallyAppendSemicolon() {
+		return !fProposal.isConstructor() && CharOperation.equals(new char[] { Signature.C_VOID }, Signature.getReturnType(fProposal.getSignature()));
 	}
 
 	private boolean computeHasParameters() throws IllegalArgumentException {
@@ -187,6 +201,9 @@ public class JavaMethodCompletionProposal extends LazyJavaCompletionProposal {
 		}
 
 		buffer.append(RPAREN);
+
+		if (canAutomaticallyAppendSemicolon())
+			buffer.append(SEMICOLON);
 
 		return buffer.toString();
 

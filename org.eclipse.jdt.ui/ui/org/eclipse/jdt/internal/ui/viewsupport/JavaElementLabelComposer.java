@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -375,7 +375,7 @@ public class JavaElementLabelComposer {
 			fBuffer.append(getElementName(method));
 
 			// constructor type arguments
-			if (getFlag(flags, JavaElementLabels.T_TYPE_PARAMETERS) && method.isConstructor()) {
+			if (getFlag(flags, JavaElementLabels.T_TYPE_PARAMETERS) && method.exists() && method.isConstructor()) {
 				if (resolvedSig != null && resolvedKey.isParameterizedType()) {
 					BindingKey declaringType= resolvedKey.getDeclaringType();
 					if (declaringType != null) {
@@ -1050,15 +1050,19 @@ public class JavaElementLabelComposer {
 	}
 
 	/**
-	 * Returns the string for rendering the {@link IJavaElement#getElementName() element name} of the given element.
-	 *
+	 * Returns the string for rendering the {@link IJavaElement#getElementName() element name} of
+	 * the given element.
+	 * <p>
+	 * <strong>Note:</strong> This class only calls this helper for those elements where (
+	 * {@link JavaElementLinks}) has the need to render the name differently.
+	 * </p>
+	 * 
 	 * @param element the element to render
 	 * @return the string for rendering the element name
 	 */
 	protected String getElementName(IJavaElement element) {
 		return element.getElementName();
 	}
-
 
 	/**
 	 * Appends the label for a import container, import or package declaration. Considers the D_* flags.
@@ -1077,7 +1081,7 @@ public class JavaElementLabelComposer {
 		if (declaration.getElementType() == IJavaElement.IMPORT_CONTAINER) {
 			fBuffer.append(JavaUIMessages.JavaElementLabels_import_container);
 		} else {
-			fBuffer.append(declaration.getElementName());
+			fBuffer.append(getElementName(declaration));
 		}
 		// post qualification
 		if (getFlag(flags, JavaElementLabels.D_POST_QUALIFIED)) {
@@ -1164,7 +1168,7 @@ public class JavaElementLabelComposer {
 			else
 				appendCompressedPackageFragment(pack);
 		} else {
-			fBuffer.append(pack.getElementName());
+			fBuffer.append(getElementName(pack));
 		}
 		if (getFlag(flags, JavaElementLabels.P_POST_QUALIFIED)) {
 			int offset= fBuffer.length();

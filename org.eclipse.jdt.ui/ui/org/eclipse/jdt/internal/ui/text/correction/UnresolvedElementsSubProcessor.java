@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -8,6 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *     Renaud Waldura &lt;renaud+eclipse@waldura.com&gt; - New class/interface with wizard
+ *     Rabea Gransberger <rgransberger@gmx.de> - [quick fix] Fix several visibility issues - https://bugs.eclipse.org/394692
  *******************************************************************************/
 package org.eclipse.jdt.internal.ui.text.correction;
 
@@ -80,6 +81,7 @@ import org.eclipse.jdt.core.dom.CastExpression;
 import org.eclipse.jdt.core.dom.ClassInstanceCreation;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.ConstructorInvocation;
+import org.eclipse.jdt.core.dom.EnhancedForStatement;
 import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.FieldAccess;
 import org.eclipse.jdt.core.dom.IBinding;
@@ -87,6 +89,7 @@ import org.eclipse.jdt.core.dom.IMethodBinding;
 import org.eclipse.jdt.core.dom.IPackageBinding;
 import org.eclipse.jdt.core.dom.ITypeBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
+import org.eclipse.jdt.core.dom.ImportDeclaration;
 import org.eclipse.jdt.core.dom.MemberValuePair;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
@@ -98,6 +101,7 @@ import org.eclipse.jdt.core.dom.QualifiedName;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.SimpleType;
 import org.eclipse.jdt.core.dom.SingleMemberAnnotation;
+import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.StructuralPropertyDescriptor;
 import org.eclipse.jdt.core.dom.SuperConstructorInvocation;
 import org.eclipse.jdt.core.dom.SuperFieldAccess;
@@ -294,7 +298,7 @@ public class UnresolvedElementsSubProcessor {
 		boolean isWriteAccess= ASTResolving.isWriteAccess(node);
 
 		// similar variables
-		addSimilarVariableProposals(cu, astRoot, binding, simpleName, isWriteAccess, proposals);
+		addSimilarVariableProposals(cu, astRoot, binding, resolvedField, simpleName, isWriteAccess, proposals);
 		
 		if (binding == null) {
 			addStaticImportFavoriteProposals(context, simpleName, false, proposals);
@@ -414,7 +418,7 @@ public class UnresolvedElementsSubProcessor {
 		}
 	}
 
-	private static void addSimilarVariableProposals(ICompilationUnit cu, CompilationUnit astRoot, ITypeBinding binding, SimpleName node, boolean isWriteAccess, Collection<ICommandAccess> proposals) {
+	private static void addSimilarVariableProposals(ICompilationUnit cu, CompilationUnit astRoot, ITypeBinding binding, IVariableBinding resolvedField, SimpleName node, boolean isWriteAccess, Collection<ICommandAccess> proposals) {
 		int kind= ScopeAnalyzer.VARIABLES | ScopeAnalyzer.CHECK_VISIBILITY;
 		if (!isWriteAccess) {
 			kind |= ScopeAnalyzer.METHODS; // also try to find similar methods
@@ -471,6 +475,9 @@ public class UnresolvedElementsSubProcessor {
 					IVariableBinding curr= (IVariableBinding) varOrMeth;
 					String currName= curr.getName();
 					if (currName.equals(otherNameInAssign)) {
+						continue loop;
+					}
+					if (resolvedField != null && Bindings.equals(resolvedField, curr)) {
 						continue loop;
 					}
 					boolean isFinal= Modifier.isFinal(curr.getModifiers());
@@ -590,6 +597,10 @@ public class UnresolvedElementsSubProcessor {
 		}
 
 		int kind= evauateTypeKind(selectedNode, cu.getJavaProject());
+		
+		if (kind == SimilarElementsRequestor.REF_TYPES) {
+			addEnhancedForWithoutTypeProposals(cu, selectedNode, proposals);
+		}
 
 		while (selectedNode.getLocationInParent() == QualifiedName.NAME_PROPERTY) {
 			selectedNode= selectedNode.getParent();
@@ -626,17 +637,37 @@ public class UnresolvedElementsSubProcessor {
 		}
 		addNewTypeProposals(cu, node, kind, IProposalRelevance.NEW_TYPE, proposals);
 		
-		if (kind == SimilarElementsRequestor.ANNOTATIONS)
-			addNullityAnnotationTypesProposals(cu, node, proposals);
-
 		ReorgCorrectionsSubProcessor.addProjectSetupFixProposal(context, problem, node.getFullyQualifiedName(), proposals);
 	}
 
+	private static void addEnhancedForWithoutTypeProposals(ICompilationUnit cu, ASTNode selectedNode, Collection<ICommandAccess> proposals) {
+		if (selectedNode instanceof SimpleName && selectedNode.getLocationInParent() == SimpleType.NAME_PROPERTY) {
+			ASTNode type= selectedNode.getParent();
+			if (type.getLocationInParent() == SingleVariableDeclaration.TYPE_PROPERTY) {
+				SingleVariableDeclaration svd= (SingleVariableDeclaration) type.getParent();
+				if (svd.getLocationInParent() == EnhancedForStatement.PARAMETER_PROPERTY) {
+					if (svd.getName().getLength() == 0) {
+						SimpleName simpleName= (SimpleName) selectedNode;
+						String name= simpleName.getIdentifier();
+						int relevance= StubUtility.hasLocalVariableName(cu.getJavaProject(), name) ? 10 : 7;
+						String label= Messages.format(CorrectionMessages.UnresolvedElementsSubProcessor_create_loop_variable_description, BasicElementLabels.getJavaElementName(name));
+						Image image= JavaPluginImages.get(JavaPluginImages.IMG_CORRECTION_LOCAL);
+						
+						proposals.add(new NewVariableCorrectionProposal(label, cu, NewVariableCorrectionProposal.LOCAL, simpleName, null, relevance, image));
+					}
+				}
+			}
+		}
+	}
+
 	private static void addNullityAnnotationTypesProposals(ICompilationUnit cu, Name node, Collection<ICommandAccess> proposals) throws CoreException {
-		if (!(node.getParent() instanceof Annotation))
-			return;
-		if (((Annotation) node.getParent()).getTypeNameProperty() != node.getLocationInParent())
-			return;
+		ASTNode parent= node.getParent();
+		boolean isAnnotationName= parent instanceof Annotation && ((Annotation) parent).getTypeNameProperty() == node.getLocationInParent();
+		if (!isAnnotationName) {
+			boolean isImportName= parent instanceof ImportDeclaration && ImportDeclaration.NAME_PROPERTY == node.getLocationInParent();
+			if (!isImportName)
+				return;
+		}
 		
 		final IJavaProject javaProject= cu.getJavaProject();
 		String name= node.getFullyQualifiedName();
@@ -925,7 +956,7 @@ public class UnresolvedElementsSubProcessor {
 		return false;
 	}
 
-	public static void addNewTypeProposals(ICompilationUnit cu, Name refNode, int kind, int relevance, Collection<ICommandAccess> proposals) throws JavaModelException {
+	public static void addNewTypeProposals(ICompilationUnit cu, Name refNode, int kind, int relevance, Collection<ICommandAccess> proposals) throws CoreException {
 		Name node= refNode;
 		do {
 			String typeName= ASTNodes.getSimpleNameIdentifier(node);
@@ -979,6 +1010,7 @@ public class UnresolvedElementsSubProcessor {
 					}
 					if ((kind & SimilarElementsRequestor.ANNOTATIONS) != 0) {
 						proposals.add(new NewCUUsingWizardProposal(cu, node, NewCUUsingWizardProposal.K_ANNOTATION, enclosing, rel + 1));
+						addNullityAnnotationTypesProposals(cu, node, proposals);
 					}
 				}
 			}

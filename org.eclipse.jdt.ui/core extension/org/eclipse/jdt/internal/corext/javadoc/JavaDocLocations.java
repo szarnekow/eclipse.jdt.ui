@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -12,6 +12,7 @@ package org.eclipse.jdt.internal.corext.javadoc;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,9 +21,12 @@ import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
+import java.net.ProtocolException;
+import java.net.SocketException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -67,6 +71,7 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IImportDeclaration;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IJavaModelStatusConstants;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMethod;
@@ -644,7 +649,7 @@ public class JavaDocLocations {
 	public static String getExplanationForMissingJavadoc(IJavaElement element, IPackageFragmentRoot root) {
 		String message= null;
 		try {
-			boolean isBinary= (root.getKind() == IPackageFragmentRoot.K_BINARY);
+			boolean isBinary= (root.exists() && root.getKind() == IPackageFragmentRoot.K_BINARY);
 			if (isBinary) {
 				boolean hasAttachedJavadoc= JavaDocLocations.getJavadocBaseLocation(element) != null;
 				boolean hasAttachedSource= root.getSourceAttachmentPath() != null;
@@ -667,6 +672,31 @@ public class JavaDocLocations {
 			JavaPlugin.log(e);
 		}
 		return message;
+	}
+
+	/**
+	 * Handles the exception thrown from JDT Core when the attached Javadoc
+	 * cannot be retrieved due to accessibility issues or location URL issue. This exception is not
+	 * logged but the exceptions occurred due to other reasons are logged.
+	 * 
+	 * @param e the exception thrown when retrieving the Javadoc fails
+	 * @return the String message for why the Javadoc could not be retrieved
+	 * @since 3.9
+	 */
+	public static String handleFailedJavadocFetch(CoreException e) {
+		IStatus status= e.getStatus();
+		if (JavaCore.PLUGIN_ID.equals(status.getPlugin())) {
+			Throwable cause= e.getCause();
+			int code= status.getCode();
+			// See bug 120559, bug 400060 and bug 400062
+			if (code == IJavaModelStatusConstants.CANNOT_RETRIEVE_ATTACHED_JAVADOC_TIMEOUT
+					|| (code == IJavaModelStatusConstants.CANNOT_RETRIEVE_ATTACHED_JAVADOC && (cause instanceof FileNotFoundException || cause instanceof SocketException
+							|| cause instanceof UnknownHostException
+							|| cause instanceof ProtocolException)))
+				return CorextMessages.JavaDocLocations_error_gettingAttachedJavadoc;
+		}
+		JavaPlugin.log(e);
+		return CorextMessages.JavaDocLocations_error_gettingJavadoc;
 	}
 
 	/**

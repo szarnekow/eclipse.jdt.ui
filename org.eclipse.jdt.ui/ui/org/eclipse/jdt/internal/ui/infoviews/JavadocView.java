@@ -13,14 +13,9 @@
  *******************************************************************************/
 package org.eclipse.jdt.internal.ui.infoviews;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
 import java.net.URL;
-
-import org.osgi.framework.Bundle;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.SWTError;
@@ -33,7 +28,6 @@ import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Color;
-import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Composite;
@@ -46,7 +40,6 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
-import org.eclipse.core.runtime.Platform;
 
 import org.eclipse.core.resources.IFile;
 
@@ -55,7 +48,6 @@ import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.Separator;
-import org.eclipse.jface.commands.ActionHandler;
 import org.eclipse.jface.dialogs.MessageDialogWithToggle;
 import org.eclipse.jface.internal.text.html.BrowserInput;
 import org.eclipse.jface.internal.text.html.HTMLPrinter;
@@ -98,7 +90,6 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.ActionFactory;
-import org.eclipse.ui.handlers.IHandlerService;
 
 import org.eclipse.ui.texteditor.AbstractDecoratedTextEditor;
 import org.eclipse.ui.texteditor.IAbstractTextEditorHelpContextIds;
@@ -129,14 +120,11 @@ import org.eclipse.jdt.core.dom.Expression;
 import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.NodeFinder;
-import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
-import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 
 import org.eclipse.jdt.internal.corext.javadoc.JavaDocLocations;
 import org.eclipse.jdt.internal.corext.refactoring.structure.ASTNodeSearchUtil;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
-import org.eclipse.jdt.internal.corext.util.JdtFlags;
 import org.eclipse.jdt.internal.corext.util.Messages;
 
 import org.eclipse.jdt.ui.IContextMenuConstants;
@@ -312,29 +300,6 @@ public class JavadocView extends AbstractInfoView {
 	}
 
 	/**
-	 * Action to toggle linking with selection.
-	 *
-	 * @since 3.4
-	 */
-	private class LinkAction extends Action {
-
-		public LinkAction() {
-			super(InfoViewMessages.JavadocView_action_toogleLinking_text, SWT.TOGGLE);
-			setToolTipText(InfoViewMessages.JavadocView_action_toggleLinking_toolTipText);
-			JavaPluginImages.setLocalImageDescriptors(this, "synced.gif"); //$NON-NLS-1$
-			setChecked(isLinkingEnabled());
-		}
-
-		/* (non-Javadoc)
-		 * @see org.eclipse.jface.action.Action#run()
-		 */
-		@Override
-		public void run() {
-			setLinkingEnabled(!isLinkingEnabled());
-		}
-	}
-
-	/**
 	 * Action to open the selection in an external browser. If the selection is a java element its
 	 * corresponding javadoc is shown if possible. If it is an URL the URL's content is shown.
 	 * 
@@ -469,13 +434,7 @@ public class JavadocView extends AbstractInfoView {
 	private ForthAction fForthAction;
 
 	/**
-	 * Action to enable and disable link with selection.
-	 * @since 3.4
-	 */
-	private LinkAction fToggleLinkAction;
-
-	/**
-	 * Action to open the attached Javadoc. 
+	 * Action to open the attached Javadoc.
 	 * @since 3.4
 	 */
 	private OpenInBrowserAction fOpenBrowserAction;
@@ -714,39 +673,9 @@ public class JavadocView extends AbstractInfoView {
 		if (fgStyleSheetLoaded)
 			return;
 		fgStyleSheetLoaded= true;
-		fgStyleSheet= loadStyleSheet();
+		fgStyleSheet= JavadocHover.loadStyleSheet("/JavadocViewStyleSheet.css"); //$NON-NLS-1$
 	}
 
-	private static String loadStyleSheet() {
-		Bundle bundle= Platform.getBundle(JavaPlugin.getPluginId());
-		URL styleSheetURL= bundle.getEntry("/JavadocViewStyleSheet.css"); //$NON-NLS-1$
-		if (styleSheetURL == null)
-			return null;
-
-		BufferedReader reader= null;
-		try {
-			reader= new BufferedReader(new InputStreamReader(styleSheetURL.openStream()));
-			StringBuffer buffer= new StringBuffer(1500);
-			String line= reader.readLine();
-			while (line != null) {
-				buffer.append(line);
-				buffer.append('\n');
-				line= reader.readLine();
-			}
-
-			FontData fontData= JFaceResources.getFontRegistry().getFontData(PreferenceConstants.APPEARANCE_JAVADOC_FONT)[0];
-			return HTMLPrinter.convertTopLevelFont(buffer.toString(), fontData);
-		} catch (IOException ex) {
-			JavaPlugin.log(ex);
-			return null;
-		} finally {
-			try {
-				if (reader != null)
-					reader.close();
-			} catch (IOException e) {
-			}
-		}
-	}
 
 	/*
 	 * @see AbstractInfoView#createActions()
@@ -761,9 +690,6 @@ public class JavadocView extends AbstractInfoView {
 		fForthAction= new ForthAction();
 		fForthAction.setActionDefinitionId(IWorkbenchCommandConstants.NAVIGATE_FORWARD);
 
-		fToggleLinkAction= new LinkAction();
-		fToggleLinkAction.setActionDefinitionId(IWorkbenchCommandConstants.NAVIGATE_TOGGLE_LINK_WITH_EDITOR);
-
 		fInputSelectionProvider= new SimpleSelectionProvider();
 		fOpenBrowserAction= new OpenInBrowserAction(getSite());
 		fOpenBrowserAction.setSpecialSelectionProvider(fInputSelectionProvider);
@@ -772,7 +698,7 @@ public class JavadocView extends AbstractInfoView {
 		fOpenBrowserAction.setActionDefinitionId(IJavaEditorActionDefinitionIds.OPEN_ATTACHED_JAVADOC);
 		fInputSelectionProvider.addSelectionChangedListener(fOpenBrowserAction);
 
-		IJavaElement input= getInput();
+		IJavaElement input= getOrignalInput();
 		StructuredSelection selection;
 		if (input != null) {
 			selection= new StructuredSelection(input);
@@ -799,8 +725,6 @@ public class JavadocView extends AbstractInfoView {
 			}
 		});
 
-		IHandlerService handlerService= (IHandlerService) getSite().getService(IHandlerService.class);
-		handlerService.activateHandler(IWorkbenchCommandConstants.NAVIGATE_TOGGLE_LINK_WITH_EDITOR, new ActionHandler(fToggleLinkAction));
 	}
 
 	/* (non-Javadoc)
@@ -813,7 +737,6 @@ public class JavadocView extends AbstractInfoView {
 		tbm.add(fForthAction);
 		tbm.add(new Separator());
 
-		tbm.add(fToggleLinkAction);
 		super.fillToolBar(tbm);
 		tbm.add(fOpenBrowserAction);
 	}
@@ -882,7 +805,7 @@ public class JavadocView extends AbstractInfoView {
 	 * @since 3.3
 	 */
 	private void refresh() {
-		doSetInput(computeInput(getInput()));
+		doSetInput(computeInput(getOrignalInput()));
 	}
 
 	/*
@@ -966,7 +889,7 @@ public class JavadocView extends AbstractInfoView {
 			case IJavaElement.COMPILATION_UNIT:
 				try {
 					IType[] types= ((ICompilationUnit) input).getTypes();
-					if (types.length == 0 && JavaModelUtil.PACKAGE_INFO_JAVA.equals(input.getElementName())) {
+					if (types.length == 0 && JavaModelUtil.isPackageInfo((ICompilationUnit) input)) {
 						javadocHtml= getJavadocHtml(new IJavaElement[] { input.getParent() }, part, selection, monitor);
 					} else {
 						javadocHtml= getJavadocHtml(types, part, selection, monitor);
@@ -1039,10 +962,13 @@ public class JavadocView extends AbstractInfoView {
 		fOriginalInput= javadocHtml;
 
 		if (fInputSelectionProvider != null) {
-			IJavaElement inputElement= getInput();
+			IJavaElement inputElement= getOrignalInput();
 			StructuredSelection selection= inputElement == null ? StructuredSelection.EMPTY : new StructuredSelection(inputElement);
 			fInputSelectionProvider.setSelection(selection);
 		}
+
+		if (fOpenBrowserAction != null)
+			fOpenBrowserAction.setEnabled(input != null);
 
 		if (fIsUsingBrowserWidget) {
 			if (javadocHtml != null && javadocHtml.length() > 0) {
@@ -1104,13 +1030,24 @@ public class JavadocView extends AbstractInfoView {
 				String content= null;
 				try {
 					if (curr instanceof IPackageDeclaration) {
+						try {
+							ISourceRange nameRange= ((IPackageDeclaration) curr).getNameRange();
+							if (SourceRange.isAvailable(nameRange)) {
+								ITypeRoot typeRoot= (ITypeRoot) ((IPackageDeclaration) curr).getParent();
+								Region hoverRegion= new Region(nameRange.getOffset(), nameRange.getLength());
+								JavadocHover.addAnnotations(buffer, typeRoot.getParent(), typeRoot, hoverRegion);
+							}
+						} catch (JavaModelException e) {
+							// no annotations this time...
+						}
+
 						content= JavadocContentAccess2.getHTMLContent((IPackageDeclaration) curr);
 					} else if (curr instanceof IPackageFragment) {
+						JavadocHover.addAnnotations(buffer, curr, null, null);
 						content= JavadocContentAccess2.getHTMLContent((IPackageFragment) curr);
 					}
 				} catch (CoreException e) {
-					reader= new StringReader(InfoViewMessages.JavadocView_error_gettingJavadoc);
-					JavaPlugin.log(e);
+					reader= new StringReader(JavaDocLocations.handleFailedJavadocFetch(e));
 				}
 				IPackageFragmentRoot root= (IPackageFragmentRoot) curr.getAncestor(IJavaElement.PACKAGE_FRAGMENT_ROOT);
 				try {
@@ -1118,7 +1055,7 @@ public class JavadocView extends AbstractInfoView {
 					if (content != null) {
 						base= JavaDocLocations.getBaseURL(curr, isBinary);
 						reader= new StringReader(content);
-					} else {
+					} else if (reader == null) {
 						String explanationForMissingJavadoc= JavaDocLocations.getExplanationForMissingJavadoc(curr, root);
 						if (explanationForMissingJavadoc != null) {
 							reader= new StringReader(explanationForMissingJavadoc);
@@ -1169,8 +1106,7 @@ public class JavadocView extends AbstractInfoView {
 						}
 					}
 				} catch (JavaModelException ex) {
-					reader= new StringReader(InfoViewMessages.JavadocView_error_gettingJavadoc);
-					JavaPlugin.log(ex.getStatus());
+					reader= new StringReader(JavaDocLocations.handleFailedJavadocFetch(ex));
 				}
 				if (reader != null) {
 					HTMLPrinter.addParagraph(buffer, reader);
@@ -1200,6 +1136,7 @@ public class JavadocView extends AbstractInfoView {
 		return buffer.toString();
 	}
 
+
 	/**
 	 * Gets the label for the given member.
 	 * 
@@ -1213,18 +1150,7 @@ public class JavadocView extends AbstractInfoView {
 		if (member.getElementType() == IJavaElement.FIELD && constantValue != null) {
 			label.append(constantValue);
 		}
-
-		String imageName= null;
-		if (allowImage) {
-			URL imageUrl= JavaPlugin.getDefault().getImagesOnFSRegistry().getImageURL(member);
-			if (imageUrl != null) {
-				imageName= imageUrl.toExternalForm();
-			}
-		}
-
-		StringBuffer buf= new StringBuffer();
-		JavadocHover.addImageAndLabel(buf, member, imageName, 16, 16, label.toString(), 20, 2);
-		return buf.toString();
+		return JavadocHover.getImageAndLabel(member, allowImage, label.toString());
 	}
 
 
@@ -1280,7 +1206,7 @@ public class JavadocView extends AbstractInfoView {
 	@Override
 	protected IJavaElement findSelectedJavaElement(IWorkbenchPart part, ISelection selection) {
 		IJavaElement element= super.findSelectedJavaElement(part, selection);
-		try {			
+		try {
 			//update the Javadoc view when package.html is selected in project explorer view
 			if (element == null && selection instanceof IStructuredSelection) {
 				Object selectedElement= ((IStructuredSelection) selection).getFirstElement();
@@ -1370,7 +1296,7 @@ public class JavadocView extends AbstractInfoView {
 	 */
 	private String computeFieldConstant(IWorkbenchPart activePart, ISelection selection, IField resolvedField, IProgressMonitor monitor) {
 
-		if (!isStaticFinal(resolvedField))
+		if (!JavadocHover.isStaticFinal(resolvedField))
 			return null;
 
 		Object constantValue;
@@ -1389,7 +1315,7 @@ public class JavadocView extends AbstractInfoView {
 		}
 
 		if (constantValue != null)
-			return getFormattedAssignmentOperator(preferenceProject) + formatCompilerConstantValue(constantValue);
+			return JavadocHover.getFormattedAssignmentOperator(preferenceProject) + formatCompilerConstantValue(constantValue);
 
 		return null;
 	}
@@ -1445,67 +1371,30 @@ public class JavadocView extends AbstractInfoView {
 	}
 
 	/**
-	 * Tells whether the given member is static final.
-	 * <p>
-	 * XXX: Copied from {@link JavadocHover}.
-	 * </p>
-	 * @param member the member to test
-	 * @return <code>true</code> if static final
-	 * @since 3.4
-	 */
-	private static boolean isStaticFinal(IJavaElement member) {
-		if (member.getElementType() != IJavaElement.FIELD)
-			return false;
-
-		IField field= (IField)member;
-		try {
-			return JdtFlags.isFinal(field) && JdtFlags.isStatic(field);
-		} catch (JavaModelException e) {
-			JavaPlugin.log(e);
-			return false;
-		}
-	}
-
-	/**
-	 * Returns the constant value for a field that is referenced by the currently active type.
-	 * This method does may not run in the main UI thread.
-	 * <p>
-	 * XXX: This method was part of the JavadocHover#getConstantValue(IField field, IRegion hoverRegion)
-	 * 		method (lines 299-314).
-	 * </p>
+	 * Returns the constant value for a field that is referenced by the currently active type. This
+	 * method does may not run in the main UI thread.
+	 * 
 	 * @param activeType the type that is currently active
-	 * @param field the field that is being referenced (usually not declared in <code>activeType</code>)
+	 * @param field the field that is being referenced (usually not declared in
+	 *            <code>activeType</code>)
 	 * @param selection the region in <code>activeType</code> that contains the field reference
 	 * @param monitor a progress monitor
-	 *
+	 * 
 	 * @return the constant value for the given field or <code>null</code> if none
 	 * @since 3.4
 	 */
 	private static Object getConstantValueFromActiveEditor(ITypeRoot activeType, IField field, ITextSelection selection, IProgressMonitor monitor) {
-		Object constantValue= null;
-
 		CompilationUnit unit= SharedASTProvider.getAST(activeType, SharedASTProvider.WAIT_ACTIVE_ONLY, monitor);
 		if (unit == null)
 			return null;
 
 		ASTNode node= NodeFinder.perform(unit, selection.getOffset(), selection.getLength());
-		if (node != null && node.getNodeType() == ASTNode.SIMPLE_NAME) {
-			IBinding binding= ((SimpleName)node).resolveBinding();
-			if (binding != null && binding.getKind() == IBinding.VARIABLE) {
-				IVariableBinding variableBinding= (IVariableBinding)binding;
-				if (field.equals(variableBinding.getJavaElement())) {
-					constantValue= variableBinding.getConstantValue();
-				}
-			}
-		}
-		return constantValue;
+		return JavadocHover.getVariableBindingConstValue(node, field);
 	}
 
 	/**
 	 * Returns the string representation of the given constant value.
-	 * <p>
-	 * XXX: In {@link JavadocHover} this method was part of JavadocHover#getConstantValue lines 318-361.
-	 * </p>
+	 *
 	 * @param constantValue the constant value
 	 * @return the string representation of the given constant value.
 	 * @since 3.4
@@ -1524,73 +1413,11 @@ public class JavadocView extends AbstractInfoView {
 			result.append('"');
 			return result.toString();
 
-		} else if (constantValue instanceof Character) {
-			String constantResult= '\'' + constantValue.toString() + '\'';
-
-			char charValue= ((Character) constantValue).charValue();
-			String hexString= Integer.toHexString(charValue);
-			StringBuffer hexResult= new StringBuffer("\\u"); //$NON-NLS-1$
-			for (int i= hexString.length(); i < 4; i++) {
-				hexResult.append('0');
-			}
-			hexResult.append(hexString);
-			return formatWithHexValue(constantResult, hexResult.toString());
-
-		} else if (constantValue instanceof Byte) {
-			int byteValue= ((Byte) constantValue).intValue() & 0xFF;
-			return formatWithHexValue(constantValue, "0x" + Integer.toHexString(byteValue)); //$NON-NLS-1$
-
-		} else if (constantValue instanceof Short) {
-			int shortValue= ((Short) constantValue).shortValue() & 0xFFFF;
-			return formatWithHexValue(constantValue, "0x" + Integer.toHexString(shortValue)); //$NON-NLS-1$
-
-		} else if (constantValue instanceof Integer) {
-			int intValue= ((Integer) constantValue).intValue();
-			return formatWithHexValue(constantValue, "0x" + Integer.toHexString(intValue)); //$NON-NLS-1$
-
-		} else if (constantValue instanceof Long) {
-			long longValue= ((Long) constantValue).longValue();
-			return formatWithHexValue(constantValue, "0x" + Long.toHexString(longValue)); //$NON-NLS-1$
-
 		} else {
-			return constantValue.toString();
+			return JavadocHover.getHexConstantValue(constantValue);
 		}
 	}
 
-	/**
-	 * Creates and returns a formatted message for the given
-	 * constant with its hex value.
-	 * <p>
-	 * XXX: Copied from {@link JavadocHover}.
-	 * </p>
-	 *
-	 * @param constantValue the constant value
-	 * @param hexValue the hex value
-	 * @return a formatted string with constant and hex values
-	 * @since 3.4
-	 */
-	private static String formatWithHexValue(Object constantValue, String hexValue) {
-		return Messages.format(InfoViewMessages.JavadocView_constantValue_hexValue, new String[] { constantValue.toString(), hexValue });
-	}
-
-	/**
-	 * Returns the assignment operator string with the project's formatting applied to it.
-	 * <p>
-	 * XXX: This method was extracted from JavadocHover#getInfoText method.
-	 * </p>
-	 * @param javaProject the Java project whose formatting options will be used.
-	 * @return the formatted assignment operator string.
-	 * @since 3.4
-	 */
-	private static String getFormattedAssignmentOperator(IJavaProject javaProject) {
-		StringBuffer buffer= new StringBuffer();
-		if (JavaCore.INSERT.equals(javaProject.getOption(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_ASSIGNMENT_OPERATOR, true)))
-			buffer.append(' ');
-		buffer.append('=');
-		if (JavaCore.INSERT.equals(javaProject.getOption(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_ASSIGNMENT_OPERATOR, true)))
-			buffer.append(' ');
-		return buffer.toString();
-	}
 
 	/**
 	 * see also org.eclipse.jdt.internal.ui.text.java.hover.JavadocHover.addLinkListener(BrowserInformationControl)
@@ -1607,7 +1434,7 @@ public class JavadocView extends AbstractInfoView {
 			 */
 			public void handleDeclarationLink(IJavaElement target) {
 				try {
-					JavaUI.openInEditor(target);
+					JavadocHover.openDeclaration(target);
 				} catch (PartInitException e) {
 					JavaPlugin.log(e);
 				} catch (JavaModelException e) {
@@ -1619,7 +1446,9 @@ public class JavadocView extends AbstractInfoView {
 			 * @see org.eclipse.jdt.internal.ui.viewsupport.JavaElementLinks.ILinkHandler#handleExternalLink(java.net.URL, org.eclipse.swt.widgets.Display)
 			 */
 			public boolean handleExternalLink(final URL url, Display display) {
-				if (fCurrent == null || (fCurrent.getInputElement() instanceof URL && !url.toExternalForm().equals(((URL) fCurrent.getInputElement()).toExternalForm()))) {
+				if (fCurrent == null ||
+						!(fCurrent.getInputElement() instanceof URL
+								&& url.toExternalForm().equals(((URL) fCurrent.getInputElement()).toExternalForm()))) {
 					fCurrent= new URLBrowserInput(fCurrent, url);
 
 					if (fBackAction != null) {
@@ -1653,7 +1482,7 @@ public class JavadocView extends AbstractInfoView {
 			 * @see org.eclipse.jdt.internal.ui.viewsupport.JavaElementLinks.ILinkHandler#handleTextSet()
 			 */
 			public void handleTextSet() {
-				IJavaElement input= getInput();
+				IJavaElement input= getOrignalInput();
 				if (input == null)
 					return;
 

@@ -30,6 +30,8 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Platform;
 
+import org.eclipse.core.resources.IFile;
+
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.ToolBarManager;
 import org.eclipse.jface.internal.text.html.BrowserInformationControl;
@@ -58,10 +60,13 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.editors.text.EditorsUI;
 
 import org.eclipse.jdt.core.IAnnotatable;
+import org.eclipse.jdt.core.IClassFile;
+import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.IMember;
+import org.eclipse.jdt.core.IPackageDeclaration;
 import org.eclipse.jdt.core.IPackageFragment;
 import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.ITypeRoot;
@@ -90,6 +95,7 @@ import org.eclipse.jdt.core.formatter.DefaultCodeFormatterConstants;
 
 import org.eclipse.jdt.internal.corext.dom.ASTNodes;
 import org.eclipse.jdt.internal.corext.javadoc.JavaDocLocations;
+import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 import org.eclipse.jdt.internal.corext.util.JdtFlags;
 import org.eclipse.jdt.internal.corext.util.Messages;
 
@@ -105,6 +111,8 @@ import org.eclipse.jdt.internal.ui.actions.OpenBrowserUtil;
 import org.eclipse.jdt.internal.ui.actions.SimpleSelectionProvider;
 import org.eclipse.jdt.internal.ui.infoviews.JavadocView;
 import org.eclipse.jdt.internal.ui.javaeditor.ASTProvider;
+import org.eclipse.jdt.internal.ui.javaeditor.EditorUtility;
+import org.eclipse.jdt.internal.ui.packageview.PackageExplorerPart;
 import org.eclipse.jdt.internal.ui.text.javadoc.JavadocContentAccess2;
 import org.eclipse.jdt.internal.ui.viewsupport.BasicElementLabels;
 import org.eclipse.jdt.internal.ui.viewsupport.JavaElementLinks;
@@ -252,7 +260,7 @@ public class JavadocHover extends AbstractJavaEditorTextHover {
 
 			try {
 				//FIXME: add hover location to editor navigation history?
-				JavaUI.openInEditor(infoInput.getElement());
+				openDeclaration(infoInput.getElement());
 			} catch (PartInitException e) {
 				JavaPlugin.log(e);
 			} catch (JavaModelException e) {
@@ -425,6 +433,7 @@ public class JavadocHover extends AbstractJavaEditorTextHover {
 		| JavaElementLabels.USE_RESOLVED;
 	private static final long LOCAL_VARIABLE_FLAGS= LABEL_FLAGS & ~JavaElementLabels.F_FULLY_QUALIFIED | JavaElementLabels.F_POST_QUALIFIED;
 	private static final long TYPE_PARAMETER_FLAGS= LABEL_FLAGS | JavaElementLabels.TP_POST_QUALIFIED;
+	private static final long PACKAGE_FLAGS= LABEL_FLAGS & ~JavaElementLabels.ALL_FULLY_QUALIFIED;
 
 	/**
 	 * The style sheet (css).
@@ -480,6 +489,42 @@ public class JavadocHover extends AbstractJavaEditorTextHover {
 		return fHoverControlCreator;
 	}
 
+
+	public static IEditorPart openDeclaration(IJavaElement element) throws PartInitException, JavaModelException {
+		if (!(element instanceof IPackageFragment)) {
+			return JavaUI.openInEditor(element);
+		}
+		
+		IPackageFragment packageFragment= (IPackageFragment) element;
+		ITypeRoot typeRoot;
+		IPackageFragmentRoot root= (IPackageFragmentRoot) packageFragment.getAncestor(IJavaElement.PACKAGE_FRAGMENT_ROOT);
+		if (root.getKind() == IPackageFragmentRoot.K_BINARY) {
+			typeRoot= packageFragment.getClassFile(JavaModelUtil.PACKAGE_INFO_CLASS);
+		} else {
+			typeRoot= packageFragment.getCompilationUnit(JavaModelUtil.PACKAGE_INFO_JAVA);
+		}
+
+		// open the package-info file in editor if one exists
+		if (typeRoot.exists())
+			return JavaUI.openInEditor(typeRoot);
+
+		// open the package.html file in editor if one exists
+		Object[] nonJavaResources= packageFragment.getNonJavaResources();
+		for (Object nonJavaResource : nonJavaResources) {
+			if (nonJavaResource instanceof IFile) {
+				IFile file= (IFile) nonJavaResource;
+				if (file.exists() && JavaModelUtil.PACKAGE_HTML.equals(file.getName())) {
+					return EditorUtility.openInEditor(file, true);
+				}
+			}
+		}
+
+		// select the package in the Package Explorer if there is no associated package Javadoc file
+		PackageExplorerPart view= (PackageExplorerPart) JavaPlugin.getActivePage().showView(JavaUI.ID_PACKAGES);
+		view.tryToReveal(packageFragment);
+		return null;
+	}
+	
 	private static void addLinkListener(final BrowserInformationControl control) {
 		control.addLocationListener(JavaElementLinks.createLocationListener(new JavaElementLinks.ILinkHandler() {
 			/* (non-Javadoc)
@@ -516,7 +561,7 @@ public class JavadocHover extends AbstractJavaEditorTextHover {
 				control.dispose(); //FIXME: should have protocol to hide, rather than dispose
 				try {
 					//FIXME: add hover location to editor navigation history?
-					JavaUI.openInEditor(linkTarget);
+					openDeclaration(linkTarget);
 				} catch (PartInitException e) {
 					JavaPlugin.log(e);
 				} catch (JavaModelException e) {
@@ -568,6 +613,37 @@ public class JavadocHover extends AbstractJavaEditorTextHover {
 	}
 
 	/**
+	 * Returns the first package with a valid Javadoc when there are multiple packages with the same
+	 * name in the project. If no package could be found with a valid Javadoc then returns the first
+	 * package in the array. If the array does not contain package, then return the array unaltered.
+	 * 
+	 * @param elements array from which to filter duplicate packages
+	 * @return the first package with a valid Javadoc. If no package is found with a valid Javadoc
+	 *         then return the first element in the array if the element is of type
+	 *         IPackageFragment, else return the elements array unaltered
+	 * @since 3.9
+	 */
+	private static IJavaElement[] filterDuplicatePackages(IJavaElement[] elements) {
+		if (elements.length <= 1 || !(elements[0] instanceof IPackageFragment)) {
+			return elements;
+		}
+
+		for (int i= 0; i < elements.length; i++) {
+			try {
+				if (elements[i] instanceof IPackageFragment) {
+					IPackageFragment packageFragment= (IPackageFragment) elements[i];
+					if (JavadocContentAccess2.getHTMLContent(packageFragment) != null)
+						return new IJavaElement[] { packageFragment };
+				}
+			} catch (CoreException e) {
+				//ignore the exception and consider the next element to process
+			}
+		}
+
+		return new IJavaElement[] { elements[0] };
+	}
+
+	/**
 	 * Computes the hover info.
 	 *
 	 * @param elements the resolved elements
@@ -577,20 +653,20 @@ public class JavadocHover extends AbstractJavaEditorTextHover {
 	 * @return the HTML hover info for the given element(s) or <code>null</code> if no information is available
 	 * @since 3.4
 	 */
-	private static JavadocBrowserInformationControlInput getHoverInfo(IJavaElement[] elements, ITypeRoot editorInputElement, IRegion hoverRegion, JavadocBrowserInformationControlInput previousInput) {
-		int nResults= elements.length;
+	public static JavadocBrowserInformationControlInput getHoverInfo(IJavaElement[] elements, ITypeRoot editorInputElement, IRegion hoverRegion, JavadocBrowserInformationControlInput previousInput) {
 		StringBuffer buffer= new StringBuffer();
 		boolean hasContents= false;
 		String base= null;
 		IJavaElement element= null;
-
 		int leadingImageWidth= 0;
 
-		if (nResults > 1) {
+		elements= filterDuplicatePackages(elements);
+		
+		if (elements.length > 1) {
 			for (int i= 0; i < elements.length; i++) {
 				HTMLPrinter.startBulletList(buffer);
 				IJavaElement curr= elements[i];
-				if (curr instanceof IMember || curr instanceof IPackageFragment || curr.getElementType() == IJavaElement.LOCAL_VARIABLE) {
+				if (curr instanceof IMember || curr.getElementType() == IJavaElement.LOCAL_VARIABLE) {
 					String label= JavaElementLabels.getElementLabel(curr, getHeaderFlags(curr));
 					String link;
 					try {
@@ -605,58 +681,33 @@ public class JavadocHover extends AbstractJavaEditorTextHover {
 				}
 				HTMLPrinter.endBulletList(buffer);
 			}
-
 		} else {
-
 			element= elements[0];
-			if(element instanceof IPackageFragment){
-				HTMLPrinter.addSmallHeader(buffer, getInfoText(element, editorInputElement, hoverRegion, true));
-				buffer.append("<br>"); //$NON-NLS-1$
-				IPackageFragment packge = (IPackageFragment)element;
-				Reader reader= null;
-				try {
-					String content= JavadocContentAccess2.getHTMLContent(packge);
-					IPackageFragmentRoot root= (IPackageFragmentRoot) packge.getAncestor(IJavaElement.PACKAGE_FRAGMENT_ROOT);
-					boolean isBinary= (root.getKind() == IPackageFragmentRoot.K_BINARY);
-					if (content != null) {
-						base= JavaDocLocations.getBaseURL(element, isBinary);
-						reader= new StringReader(content);
-					} else {
-						String explanationForMissingJavadoc= JavaDocLocations.getExplanationForMissingJavadoc(element, root);
-						if(explanationForMissingJavadoc != null)
-							reader= new StringReader(explanationForMissingJavadoc);
-					}
-				} catch (CoreException e) {
-					reader= new StringReader(JavaHoverMessages.JavadocHover_error_gettingJavadoc);
-					JavaPlugin.log(e);
-				}
-				if(reader != null){
-					HTMLPrinter.addParagraph(buffer, reader);
-				}
-				hasContents= true;
-			} else if (element instanceof IMember) {
+			
+			if (element instanceof IPackageFragment || element instanceof IMember) {
 				HTMLPrinter.addSmallHeader(buffer, getInfoText(element, editorInputElement, hoverRegion, true));
 				buffer.append("<br>"); //$NON-NLS-1$
 				addAnnotations(buffer, element, editorInputElement, hoverRegion);
-				IMember member= (IMember) element;
 				Reader reader= null;
 				try {
-					IPackageFragmentRoot root= (IPackageFragmentRoot) member.getAncestor(IJavaElement.PACKAGE_FRAGMENT_ROOT);
-					String content= JavadocContentAccess2.getHTMLContent(member, true);
-					boolean isBinary= member.isBinary();
+					String content= element instanceof IMember
+							? JavadocContentAccess2.getHTMLContent((IMember) element, true)
+							: JavadocContentAccess2.getHTMLContent((IPackageFragment) element);
+					IPackageFragmentRoot root= (IPackageFragmentRoot) element.getAncestor(IJavaElement.PACKAGE_FRAGMENT_ROOT);
+					boolean isBinary= root.exists() && root.getKind() == IPackageFragmentRoot.K_BINARY;
 					if (content != null) {
 						base= JavaDocLocations.getBaseURL(element, isBinary);
 						reader= new StringReader(content);
 					} else {
 						String explanationForMissingJavadoc= JavaDocLocations.getExplanationForMissingJavadoc(element, root);
-						if(explanationForMissingJavadoc != null)
+						if (explanationForMissingJavadoc != null)
 							reader= new StringReader(explanationForMissingJavadoc);
 					}
-				} catch (JavaModelException ex) {
-					reader= new StringReader(JavaHoverMessages.JavadocHover_error_gettingJavadoc);
-					JavaPlugin.log(ex);
+				} catch (CoreException ex) {
+					reader= new StringReader(JavaDocLocations.handleFailedJavadocFetch(ex));
 				}
-				if(reader != null){
+
+				if (reader != null) {
 					HTMLPrinter.addParagraph(buffer, reader);
 				}
 				hasContents= true;
@@ -664,6 +715,7 @@ public class JavadocHover extends AbstractJavaEditorTextHover {
 			} else if (element.getElementType() == IJavaElement.LOCAL_VARIABLE || element.getElementType() == IJavaElement.TYPE_PARAMETER) {
 				addAnnotations(buffer, element, editorInputElement, hoverRegion);
 				HTMLPrinter.addSmallHeader(buffer, getInfoText(element, editorInputElement, hoverRegion, true));
+				// could add info from @param tag here...
 				hasContents= true;
 			}
 			leadingImageWidth= 20;
@@ -694,31 +746,27 @@ public class JavadocHover extends AbstractJavaEditorTextHover {
 			if (constantValue != null) {
 				constantValue= HTMLPrinter.convertToHTMLContentWithWhitespace(constantValue);
 				IJavaProject javaProject= element.getJavaProject();
-				if (JavaCore.INSERT.equals(javaProject.getOption(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_ASSIGNMENT_OPERATOR, true)))
-					label.append(' ');
-				label.append('=');
-				if (JavaCore.INSERT.equals(javaProject.getOption(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_ASSIGNMENT_OPERATOR, true)))
-					label.append(' ');
+				label.append(getFormattedAssignmentOperator(javaProject));
 				label.append(constantValue);
 			}
 		}
-		
+
 //		if (element.getElementType() == IJavaElement.METHOD) {
 //			IMethod method= (IMethod)element;
 //			//TODO: add default value for annotation type members, see https://bugs.eclipse.org/bugs/show_bug.cgi?id=249016
 //		}
 
+		return getImageAndLabel(element, allowImage, label.toString());
+	}
+	
+	private static String getImageURL(IJavaElement element) {
 		String imageName= null;
-		if (allowImage) {
-			URL imageUrl= JavaPlugin.getDefault().getImagesOnFSRegistry().getImageURL(element);
-			if (imageUrl != null) {
-				imageName= imageUrl.toExternalForm();
-			}
+		URL imageUrl= JavaPlugin.getDefault().getImagesOnFSRegistry().getImageURL(element);
+		if (imageUrl != null) {
+			imageName= imageUrl.toExternalForm();
 		}
 
-		StringBuffer buf= new StringBuffer();
-		addImageAndLabel(buf, element, imageName, 16, 16, label.toString(), 20, 2);
-		return buf.toString();
+		return imageName;
 	}
 
 	private static long getHeaderFlags(IJavaElement element) {
@@ -728,16 +776,20 @@ public class JavadocHover extends AbstractJavaEditorTextHover {
 			case IJavaElement.TYPE_PARAMETER:
 				return TYPE_PARAMETER_FLAGS;
 			case IJavaElement.PACKAGE_FRAGMENT:
-				return LABEL_FLAGS ^ JavaElementLabels.ALL_FULLY_QUALIFIED;
+				return PACKAGE_FLAGS;
 			default:
 				return LABEL_FLAGS;
 		}
 	}
 
-	/*
+	/**
+	 * Tells whether the given field is static final.
+	 * 
+	 * @param field the member to test
+	 * @return <code>true</code> if static final
 	 * @since 3.4
 	 */
-	private static boolean isStaticFinal(IField field) {
+	public static boolean isStaticFinal(IField field) {
 		try {
 			return JdtFlags.isFinal(field) && JdtFlags.isStatic(field);
 		} catch (JavaModelException e) {
@@ -762,53 +814,15 @@ public class JavadocHover extends AbstractJavaEditorTextHover {
 		ASTNode node= getHoveredASTNode(editorInputElement, hoverRegion);
 		if (node == null)
 			return null;
-		
-		Object constantValue= null;
-		if (node.getNodeType() == ASTNode.SIMPLE_NAME) {
-			IBinding binding= ((SimpleName)node).resolveBinding();
-			if (binding != null && binding.getKind() == IBinding.VARIABLE) {
-				IVariableBinding variableBinding= (IVariableBinding)binding;
-				if (field.equals(variableBinding.getJavaElement())) {
-					constantValue= variableBinding.getConstantValue();
-				}
-			}
-		}
+
+		Object constantValue= getVariableBindingConstValue(node, field);
 		if (constantValue == null)
 			return null;
 
 		if (constantValue instanceof String) {
 			return ASTNodes.getEscapedStringLiteral((String) constantValue);
-
-		} else if (constantValue instanceof Character) {
-			String constantResult= ASTNodes.getEscapedCharacterLiteral(((Character) constantValue).charValue());
-
-			char charValue= ((Character) constantValue).charValue();
-			String hexString= Integer.toHexString(charValue);
-			StringBuffer hexResult= new StringBuffer("\\u"); //$NON-NLS-1$
-			for (int i= hexString.length(); i < 4; i++) {
-				hexResult.append('0');
-			}
-			hexResult.append(hexString);
-			return formatWithHexValue(constantResult, hexResult.toString());
-
-		} else if (constantValue instanceof Byte) {
-			int byteValue= ((Byte) constantValue).intValue() & 0xFF;
-			return formatWithHexValue(constantValue, "0x" + Integer.toHexString(byteValue)); //$NON-NLS-1$
-
-		} else if (constantValue instanceof Short) {
-			int shortValue= ((Short) constantValue).shortValue() & 0xFFFF;
-			return formatWithHexValue(constantValue, "0x" + Integer.toHexString(shortValue)); //$NON-NLS-1$
-
-		} else if (constantValue instanceof Integer) {
-			int intValue= ((Integer) constantValue).intValue();
-			return formatWithHexValue(constantValue, "0x" + Integer.toHexString(intValue)); //$NON-NLS-1$
-
-		} else if (constantValue instanceof Long) {
-			long longValue= ((Long) constantValue).longValue();
-			return formatWithHexValue(constantValue, "0x" + Long.toHexString(longValue)); //$NON-NLS-1$
-
 		} else {
-			return constantValue.toString();
+			return getHexConstantValue(constantValue);
 		}
 	}
 
@@ -842,8 +856,9 @@ public class JavadocHover extends AbstractJavaEditorTextHover {
 	 * @since 3.4
 	 */
 	private static String getStyleSheet() {
-		if (fgStyleSheet == null)
-			fgStyleSheet= loadStyleSheet();
+		if (fgStyleSheet == null) {
+			fgStyleSheet= loadStyleSheet("/JavadocHoverStyleSheet.css"); //$NON-NLS-1$
+		}
 		String css= fgStyleSheet;
 		if (css != null) {
 			FontData fontData= JFaceResources.getFontRegistry().getFontData(PreferenceConstants.APPEARANCE_JAVADOC_FONT)[0];
@@ -854,42 +869,54 @@ public class JavadocHover extends AbstractJavaEditorTextHover {
 	}
 
 	/**
-	 * Loads and returns the Javadoc hover style sheet.
+	 * Loads and returns the style sheet associated with either Javadoc hover or the view.
+	 * 
+	 * @param styleSheetName the style sheet name of either the Javadoc hover or the view
 	 * @return the style sheet, or <code>null</code> if unable to load
 	 * @since 3.4
 	 */
-	private static String loadStyleSheet() {
+	public static String loadStyleSheet(String styleSheetName) {
 		Bundle bundle= Platform.getBundle(JavaPlugin.getPluginId());
-		URL styleSheetURL= bundle.getEntry("/JavadocHoverStyleSheet.css"); //$NON-NLS-1$
-		if (styleSheetURL != null) {
-			BufferedReader reader= null;
+		URL styleSheetURL= bundle.getEntry(styleSheetName);
+		if (styleSheetURL == null)
+			return null;
+
+		BufferedReader reader= null;
+		try {
+			reader= new BufferedReader(new InputStreamReader(styleSheetURL.openStream()));
+			StringBuffer buffer= new StringBuffer(1500);
+			String line= reader.readLine();
+			while (line != null) {
+				buffer.append(line);
+				buffer.append('\n');
+				line= reader.readLine();
+			}
+
+			FontData fontData= JFaceResources.getFontRegistry().getFontData(PreferenceConstants.APPEARANCE_JAVADOC_FONT)[0];
+			return HTMLPrinter.convertTopLevelFont(buffer.toString(), fontData);
+		} catch (IOException ex) {
+			JavaPlugin.log(ex);
+			return ""; //$NON-NLS-1$
+		} finally {
 			try {
-				reader= new BufferedReader(new InputStreamReader(styleSheetURL.openStream()));
-				StringBuffer buffer= new StringBuffer(1500);
-				String line= reader.readLine();
-				while (line != null) {
-					buffer.append(line);
-					buffer.append('\n');
-					line= reader.readLine();
-				}
-				return buffer.toString();
-			} catch (IOException ex) {
-				JavaPlugin.log(ex);
-				return ""; //$NON-NLS-1$
-			} finally {
-				try {
-					if (reader != null)
-						reader.close();
-				} catch (IOException e) {
-				}
+				if (reader != null)
+					reader.close();
+			} catch (IOException e) {
+				//ignore
 			}
 		}
-		return null;
 	}
 
-	public static void addImageAndLabel(StringBuffer buf, IJavaElement element, String imageSrcPath, int imageWidth, int imageHeight, String label, int labelLeft, int labelTop) {
+	public static String getImageAndLabel(IJavaElement element, boolean allowImage, String label) {
+		StringBuffer buf= new StringBuffer();
+		int imageWidth= 16;
+		int imageHeight= 16;
+		int labelLeft= 20;
+		int labelTop= 2;
+
 		buf.append("<div style='word-wrap: break-word; position: relative; "); //$NON-NLS-1$
 		
+		String imageSrcPath= allowImage ? getImageURL(element) : null;
 		if (imageSrcPath != null) {
 			buf.append("margin-left: ").append(labelLeft).append("px; "); //$NON-NLS-1$ //$NON-NLS-2$
 			buf.append("padding-top: ").append(labelTop).append("px; "); //$NON-NLS-1$ //$NON-NLS-2$
@@ -931,33 +958,50 @@ public class JavadocHover extends AbstractJavaEditorTextHover {
 		buf.append(label);
 		
 		buf.append("</div>"); //$NON-NLS-1$
+		return buf.toString();
 	}
 
 	public static void addAnnotations(StringBuffer buf, IJavaElement element, ITypeRoot editorInputElement, IRegion hoverRegion) {
-		if (element instanceof IAnnotatable) {
-			try {
+		try {
+			if (element instanceof IAnnotatable) {
 				String annotationString= getAnnotations(element, editorInputElement, hoverRegion);
 				if (annotationString != null) {
 					buf.append("<div style='margin-bottom: 5px;'>"); //$NON-NLS-1$
 					buf.append(annotationString);
 					buf.append("</div>"); //$NON-NLS-1$
 				}
-			} catch (JavaModelException e) {
-				// no annotations this time...
-				buf.append("<br>"); //$NON-NLS-1$
-			} catch (URISyntaxException e) {
-				// no annotations this time...
-				buf.append("<br>"); //$NON-NLS-1$
+			} else if (element instanceof IPackageFragment) {
+				IPackageFragment pack= (IPackageFragment) element;
+				ICompilationUnit cu= pack.getCompilationUnit(JavaModelUtil.PACKAGE_INFO_JAVA);
+				if (cu.exists()) {
+					IPackageDeclaration[] packDecls= cu.getPackageDeclarations();
+					if (packDecls.length > 0) {
+						addAnnotations(buf, packDecls[0], null, null);
+					}
+				} else {
+					IClassFile classFile= pack.getClassFile(JavaModelUtil.PACKAGE_INFO_CLASS);
+					if (classFile.exists()) {
+						addAnnotations(buf, classFile.getType(), null, null);
+					}
+				}
 			}
+		} catch (JavaModelException e) {
+			// no annotations this time...
+			buf.append("<br>"); //$NON-NLS-1$
+		} catch (URISyntaxException e) {
+			// no annotations this time...
+			buf.append("<br>"); //$NON-NLS-1$
 		}
 	}
 
 	private static String getAnnotations(IJavaElement element, ITypeRoot editorInputElement, IRegion hoverRegion) throws URISyntaxException, JavaModelException {
-		if (!(element instanceof IAnnotatable))
-			return null;
-		
-		if (((IAnnotatable)element).getAnnotations().length == 0)
-			return null;
+		if (!(element instanceof IPackageFragment)) {
+			if (!(element instanceof IAnnotatable))
+				return null;
+			
+			if (((IAnnotatable)element).getAnnotations().length == 0)
+				return null;
+		}
 		
 		IBinding binding;
 		ASTNode node= getHoveredASTNode(editorInputElement, hoverRegion);
@@ -965,6 +1009,7 @@ public class JavadocHover extends AbstractJavaEditorTextHover {
 		if (node == null) {
 			ASTParser p= ASTParser.newParser(ASTProvider.SHARED_AST_LEVEL);
 			p.setProject(element.getJavaProject());
+			p.setBindingsRecovery(true);
 			try {
 				binding= p.createBindings(new IJavaElement[] { element }, null)[0];
 			} catch (OperationCanceledException e) {
@@ -1105,4 +1150,72 @@ public class JavadocHover extends AbstractJavaEditorTextHover {
 	private static StringBuffer addLink(StringBuffer buf, String uri, String label) {
 		return buf.append(JavaElementLinks.createLink(uri, label));
 	}
+		
+	/**
+	 * Returns the assignment operator string with the project's formatting applied to it.
+	 * 
+	 * @param javaProject the Java project whose formatting options will be used.
+	 * @return the formatted assignment operator string.
+	 * @since 3.4
+	 */
+	public static String getFormattedAssignmentOperator(IJavaProject javaProject) {
+		StringBuffer buffer= new StringBuffer();
+		if (JavaCore.INSERT.equals(javaProject.getOption(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_BEFORE_ASSIGNMENT_OPERATOR, true)))
+			buffer.append(' ');
+		buffer.append('=');
+		if (JavaCore.INSERT.equals(javaProject.getOption(DefaultCodeFormatterConstants.FORMATTER_INSERT_SPACE_AFTER_ASSIGNMENT_OPERATOR, true)))
+			buffer.append(' ');
+		return buffer.toString();
+	}
+
+	
+	
+	public static String getHexConstantValue(Object constantValue) {
+		if (constantValue instanceof Character) {
+			String constantResult= '\'' + constantValue.toString() + '\'';
+
+			char charValue= ((Character) constantValue).charValue();
+			String hexString= Integer.toHexString(charValue);
+			StringBuffer hexResult= new StringBuffer("\\u"); //$NON-NLS-1$
+			for (int i= hexString.length(); i < 4; i++) {
+				hexResult.append('0');
+			}
+			hexResult.append(hexString);
+			return formatWithHexValue(constantResult, hexResult.toString());
+
+		} else if (constantValue instanceof Byte) {
+			int byteValue= ((Byte) constantValue).intValue() & 0xFF;
+			return formatWithHexValue(constantValue, "0x" + Integer.toHexString(byteValue)); //$NON-NLS-1$
+
+		} else if (constantValue instanceof Short) {
+			int shortValue= ((Short) constantValue).shortValue() & 0xFFFF;
+			return formatWithHexValue(constantValue, "0x" + Integer.toHexString(shortValue)); //$NON-NLS-1$
+
+		} else if (constantValue instanceof Integer) {
+			int intValue= ((Integer) constantValue).intValue();
+			return formatWithHexValue(constantValue, "0x" + Integer.toHexString(intValue)); //$NON-NLS-1$
+
+		} else if (constantValue instanceof Long) {
+			long longValue= ((Long) constantValue).longValue();
+			return formatWithHexValue(constantValue, "0x" + Long.toHexString(longValue)); //$NON-NLS-1$
+
+		} else {
+			return constantValue.toString();
+		}
+	}
+
+	public static Object getVariableBindingConstValue(ASTNode node, IField field) {
+		if (node != null && node.getNodeType() == ASTNode.SIMPLE_NAME) {
+			IBinding binding= ((SimpleName) node).resolveBinding();
+			if (binding != null && binding.getKind() == IBinding.VARIABLE) {
+				IVariableBinding variableBinding= (IVariableBinding) binding;
+				if (field.equals(variableBinding.getJavaElement())) {
+					return variableBinding.getConstantValue();
+				}
+			}
+		}
+		return null;
+	}
+
+
 }

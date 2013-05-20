@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -8,8 +8,8 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *     Andre Soereng <andreis@fast.no> - [syntax highlighting] highlight numbers - https://bugs.eclipse.org/bugs/show_bug.cgi?id=63573
- *     Björn Michael <b.michael@gmx.de> - [syntax highlighting] Syntax coloring for abstract classes - https://bugs.eclipse.org/331311
- *     Björn Michael <b.michael@gmx.de> - [syntax highlighting] Add highlight for inherited fields - https://bugs.eclipse.org/348368
+ *     BjÃ¶rn Michael <b.michael@gmx.de> - [syntax highlighting] Syntax coloring for abstract classes - https://bugs.eclipse.org/331311
+ *     BjÃ¶rn Michael <b.michael@gmx.de> - [syntax highlighting] Add highlight for inherited fields - https://bugs.eclipse.org/348368
  *******************************************************************************/
 package org.eclipse.jdt.internal.ui.preferences;
 
@@ -86,6 +86,7 @@ import org.eclipse.jdt.internal.ui.preferences.OverlayPreferenceStore.OverlayKey
 import org.eclipse.jdt.internal.ui.text.JavaColorManager;
 import org.eclipse.jdt.internal.ui.text.PreferencesAdapter;
 import org.eclipse.jdt.internal.ui.text.SimpleJavaSourceViewerConfiguration;
+import org.eclipse.jdt.internal.ui.wizards.dialogfields.LayoutUtil;
 
 
 /**
@@ -642,7 +643,7 @@ class JavaEditorColoringConfigurationBlock extends AbstractConfigurationBlock {
 		fColorEditorLabel= new Label(stylesComposite, SWT.LEFT);
 		fColorEditorLabel.setText(PreferencesMessages.JavaEditorPreferencePage_color);
 		gd= new GridData(GridData.HORIZONTAL_ALIGN_BEGINNING);
-		gd.horizontalIndent= 20;
+		gd.horizontalIndent= LayoutUtil.getIndent();
 		fColorEditorLabel.setLayoutData(gd);
 
 		fSyntaxForegroundColorEditor= new ColorSelector(stylesComposite);
@@ -653,28 +654,28 @@ class JavaEditorColoringConfigurationBlock extends AbstractConfigurationBlock {
 		fBoldCheckBox= new Button(stylesComposite, SWT.CHECK);
 		fBoldCheckBox.setText(PreferencesMessages.JavaEditorPreferencePage_bold);
 		gd= new GridData(GridData.HORIZONTAL_ALIGN_BEGINNING);
-		gd.horizontalIndent= 20;
+		gd.horizontalIndent= LayoutUtil.getIndent();
 		gd.horizontalSpan= 2;
 		fBoldCheckBox.setLayoutData(gd);
 
 		fItalicCheckBox= new Button(stylesComposite, SWT.CHECK);
 		fItalicCheckBox.setText(PreferencesMessages.JavaEditorPreferencePage_italic);
 		gd= new GridData(GridData.HORIZONTAL_ALIGN_BEGINNING);
-		gd.horizontalIndent= 20;
+		gd.horizontalIndent= LayoutUtil.getIndent();
 		gd.horizontalSpan= 2;
 		fItalicCheckBox.setLayoutData(gd);
 
 		fStrikethroughCheckBox= new Button(stylesComposite, SWT.CHECK);
 		fStrikethroughCheckBox.setText(PreferencesMessages.JavaEditorPreferencePage_strikethrough);
 		gd= new GridData(GridData.HORIZONTAL_ALIGN_BEGINNING);
-		gd.horizontalIndent= 20;
+		gd.horizontalIndent= LayoutUtil.getIndent();
 		gd.horizontalSpan= 2;
 		fStrikethroughCheckBox.setLayoutData(gd);
 
 		fUnderlineCheckBox= new Button(stylesComposite, SWT.CHECK);
 		fUnderlineCheckBox.setText(PreferencesMessages.JavaEditorPreferencePage_underline);
 		gd= new GridData(GridData.HORIZONTAL_ALIGN_BEGINNING);
-		gd.horizontalIndent= 20;
+		gd.horizontalIndent= LayoutUtil.getIndent();
 		gd.horizontalSpan= 2;
 		fUnderlineCheckBox.setLayoutData(gd);
 

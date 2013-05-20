@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -22,6 +22,8 @@ import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipFile;
+
+import org.eclipse.equinox.bidi.StructuredTextTypeHandlerFactory;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.BusyIndicator;
@@ -46,6 +48,7 @@ import org.eclipse.core.resources.ResourcesPlugin;
 
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.PixelConverter;
+import org.eclipse.jface.util.BidiUtils;
 import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.LabelProvider;
@@ -195,6 +198,7 @@ public class JavadocConfigurationBlock {
 		fURLField.doFillIntoGrid(topComp, 2);
 		LayoutUtil.setWidthHint(fURLField.getTextControl(null), converter.convertWidthInCharsToPixels(43));
 		LayoutUtil.setHorizontalGrabbing(fURLField.getTextControl(null));
+		BidiUtils.applyBidiProcessing(fURLField.getTextControl(null), StructuredTextTypeHandlerFactory.URL);
 
 		fBrowseFolder.doFillIntoGrid(topComp, 1);
 
@@ -224,6 +228,7 @@ public class JavadocConfigurationBlock {
 			fArchiveField.doFillIntoGrid(topComp, 2);
 			LayoutUtil.setWidthHint(fArchiveField.getTextControl(null), converter.convertWidthInCharsToPixels(43));
 			LayoutUtil.setHorizontalGrabbing(fArchiveField.getTextControl(null));
+			BidiUtils.applyBidiProcessing(fArchiveField.getTextControl(null), StructuredTextTypeHandlerFactory.FILE);
 
 			fBrowseArchive.doFillIntoGrid(topComp, 1);
 
@@ -231,16 +236,16 @@ public class JavadocConfigurationBlock {
 			fArchivePathField.doFillIntoGrid(topComp, 2);
 			LayoutUtil.setWidthHint(fArchivePathField.getTextControl(null), converter.convertWidthInCharsToPixels(43));
 			LayoutUtil.setHorizontalGrabbing(fArchivePathField.getTextControl(null));
+			BidiUtils.applyBidiProcessing(fArchivePathField.getTextControl(null), StructuredTextTypeHandlerFactory.FILE);
 
 			fBrowseArchivePath.doFillIntoGrid(topComp, 1);
 
 			DialogField.createEmptySpace(topComp, 2);
 			fValidateArchiveButton.doFillIntoGrid(topComp, 1);
 
-			int indent= converter.convertWidthInCharsToPixels(2);
-			LayoutUtil.setHorizontalIndent(fArchiveField.getLabelControl(null), indent);
-			LayoutUtil.setHorizontalIndent(fArchivePathField.getLabelControl(null), indent);
-			LayoutUtil.setHorizontalIndent(fURLField.getLabelControl(null), indent);
+			LayoutUtil.setHorizontalIndent(fArchiveField.getLabelControl(null));
+			LayoutUtil.setHorizontalIndent(fArchivePathField.getLabelControl(null));
+			LayoutUtil.setHorizontalIndent(fURLField.getLabelControl(null));
 
 			fURLRadioButton.attachDialogFields(new DialogField[] {fURLField,  fBrowseFolder, fValidateURLButton });
 			fArchiveRadioButton.attachDialogFields(new DialogField[] {fArchiveField,  fBrowseArchive, fExternalRadio, fWorkspaceRadio, fArchivePathField, fBrowseArchivePath, fValidateArchiveButton });

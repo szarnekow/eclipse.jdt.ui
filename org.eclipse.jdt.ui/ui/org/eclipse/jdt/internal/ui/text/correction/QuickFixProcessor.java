@@ -8,6 +8,11 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *     Benjamin Muskalla <b.muskalla@gmx.net> - [quick fix] Quick fix for missing synchronized modifier - https://bugs.eclipse.org/bugs/show_bug.cgi?id=245250
+ *     Stephan Herrmann - Contributions for
+ *								[quick fix] Add quick fixes for null annotations - https://bugs.eclipse.org/337977
+ *								[quick fix] The fix change parameter type to @Nonnull generated a null change - https://bugs.eclipse.org/400668 
+ *								[quick fix] don't propose null annotations when those are disabled - https://bugs.eclipse.org/405086
+ *								[quickfix] Update null annotation quick fixes for bug 388281 - https://bugs.eclipse.org/395555
  *******************************************************************************/
 package org.eclipse.jdt.internal.ui.text.correction;
 
@@ -19,10 +24,12 @@ import org.eclipse.core.runtime.CoreException;
 
 import org.eclipse.jdt.core.IBuffer;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.compiler.IProblem;
 
+import org.eclipse.jdt.internal.corext.fix.NullAnnotationsRewriteOperations.ChangeKind;
 import org.eclipse.jdt.internal.corext.util.JavaModelUtil;
 
 import org.eclipse.jdt.ui.text.java.IInvocationContext;
@@ -206,6 +213,7 @@ public class QuickFixProcessor implements IQuickFixProcessor {
 			case IProblem.UnnecessaryNLSTag:
 			case IProblem.AssignmentHasNoEffect:
 			case IProblem.UnsafeTypeConversion:
+			case IProblem.UnsafeElementTypeConversion:
 			case IProblem.RawTypeReference:
 			case IProblem.UnsafeRawMethodInvocation:
 			case IProblem.RedundantSpecificationOfTypeArguments:
@@ -246,10 +254,13 @@ public class QuickFixProcessor implements IQuickFixProcessor {
 			case IProblem.IllegalDefinitionToNonNullParameter:
 			case IProblem.ParameterLackingNonNullAnnotation:
 			case IProblem.ParameterLackingNullableAnnotation:
-			case IProblem.NonNullLocalVariableComparisonYieldsFalse:
-			case IProblem.RedundantNullCheckOnNonNullLocalVariable:
+			case IProblem.SpecdNonNullLocalVariableComparisonYieldsFalse:
+			case IProblem.RedundantNullCheckOnSpecdNonNullLocalVariable:
 			case IProblem.RedundantNullAnnotation:
 			case IProblem.UnusedTypeParameter:
+			case IProblem.NullableFieldReference:
+			case IProblem.ConflictingNullAnnotations:
+			case IProblem.ConflictingInheritedNullAnnotations:
 				return true;
 			default:
 				return SuppressWarningsSubProcessor.hasSuppressWarningsProposal(cu.getJavaProject(), problemId);
@@ -635,6 +646,8 @@ public class QuickFixProcessor implements IQuickFixProcessor {
 			case IProblem.RawTypeReference:
 			case IProblem.UnsafeRawMethodInvocation:
 				LocalCorrectionsSubProcessor.addDeprecatedFieldsToMethodsProposals(context, problem, proposals);
+				//$FALL-THROUGH$
+			case IProblem.UnsafeElementTypeConversion:
 				LocalCorrectionsSubProcessor.addTypePrametersToRawTypeReference(context, problem, proposals);
 				break;
 			case IProblem.RedundantSpecificationOfTypeArguments:
@@ -683,18 +696,27 @@ public class QuickFixProcessor implements IQuickFixProcessor {
 			case IProblem.IllegalReturnNullityRedefinition:
 			case IProblem.IllegalDefinitionToNonNullParameter:
 			case IProblem.IllegalRedefinitionToNonNullParameter:
-				NullAnnotationsCorrectionProcessor.addNullAnnotationInSignatureProposal(context, problem, proposals, false, true);
-				NullAnnotationsCorrectionProcessor.addNullAnnotationInSignatureProposal(context, problem, proposals, true, true);
+				boolean isArgProblem = id != IProblem.IllegalReturnNullityRedefinition;
+				NullAnnotationsCorrectionProcessor.addNullAnnotationInSignatureProposal(context, problem, proposals, ChangeKind.LOCAL, isArgProblem);
+				NullAnnotationsCorrectionProcessor.addNullAnnotationInSignatureProposal(context, problem, proposals, ChangeKind.OVERRIDDEN, isArgProblem);
 				break;
+			case IProblem.RequiredNonNullButProvidedSpecdNullable:
+			case IProblem.RequiredNonNullButProvidedUnknown:
+				NullAnnotationsCorrectionProcessor.addExtractCheckedLocalProposal(context, problem, proposals);
+				//$FALL-THROUGH$
 			case IProblem.RequiredNonNullButProvidedNull:
 			case IProblem.RequiredNonNullButProvidedPotentialNull:
-			case IProblem.RequiredNonNullButProvidedUnknown:
 			case IProblem.ParameterLackingNonNullAnnotation:
 			case IProblem.ParameterLackingNullableAnnotation:
-			case IProblem.NonNullLocalVariableComparisonYieldsFalse:
-			case IProblem.RedundantNullCheckOnNonNullLocalVariable:
-			case IProblem.RequiredNonNullButProvidedSpecdNullable:
-				NullAnnotationsCorrectionProcessor.addReturnAndArgumentTypeProposal(context, problem, proposals);
+				NullAnnotationsCorrectionProcessor.addReturnAndArgumentTypeProposal(context, problem, ChangeKind.LOCAL, proposals);
+				NullAnnotationsCorrectionProcessor.addReturnAndArgumentTypeProposal(context, problem, ChangeKind.TARGET, proposals);
+				break;
+			case IProblem.SpecdNonNullLocalVariableComparisonYieldsFalse:
+			case IProblem.RedundantNullCheckOnSpecdNonNullLocalVariable:
+				IJavaProject prj = context.getCompilationUnit().getJavaProject();
+				if (prj != null && JavaCore.ENABLED.equals(prj.getOption(JavaCore.COMPILER_ANNOTATION_NULL_ANALYSIS, true))) {
+					NullAnnotationsCorrectionProcessor.addReturnAndArgumentTypeProposal(context, problem, ChangeKind.LOCAL, proposals);
+				}
 				break;
 			case IProblem.RedundantNullAnnotation:
 			case IProblem.RedundantNullDefaultAnnotationPackage:
@@ -704,6 +726,14 @@ public class QuickFixProcessor implements IQuickFixProcessor {
 				break;
 			case IProblem.UnusedTypeParameter:
 				LocalCorrectionsSubProcessor.addUnusedTypeParameterProposal(context, problem, proposals);
+				break;
+			case IProblem.NullableFieldReference:
+				NullAnnotationsCorrectionProcessor.addExtractCheckedLocalProposal(context, problem, proposals);
+				break;
+			case IProblem.ConflictingNullAnnotations:
+			case IProblem.ConflictingInheritedNullAnnotations:
+				NullAnnotationsCorrectionProcessor.addReturnAndArgumentTypeProposal(context, problem, ChangeKind.LOCAL, proposals);
+				NullAnnotationsCorrectionProcessor.addReturnAndArgumentTypeProposal(context, problem, ChangeKind.INVERSE, proposals);
 				break;
 			default:
 		}

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2012 IBM Corporation and others.
+ * Copyright (c) 2008, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -26,9 +26,13 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.IAnnotation;
 import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IJavaElement;
+import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.ILocalVariable;
 import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMethod;
+import org.eclipse.jdt.core.IPackageDeclaration;
+import org.eclipse.jdt.core.IPackageFragment;
+import org.eclipse.jdt.core.IPackageFragmentRoot;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeHierarchy;
 import org.eclipse.jdt.core.ITypeParameter;
@@ -101,12 +105,24 @@ public class JavaElementLinks {
 
 		public JavaElementLinkedLabelComposer(IJavaElement member, StringBuffer buf) {
 			super(buf);
-			fElement= member;
+			if (member instanceof IPackageDeclaration) {
+				fElement= member.getAncestor(IJavaElement.PACKAGE_FRAGMENT);
+			} else {
+				fElement= member;
+			}
 		}
 
 		@Override
 		public String getElementName(IJavaElement element) {
+			if (element instanceof IPackageFragment || element instanceof IPackageDeclaration) {
+				return getPackageFragmentElementName(element);
+			}
+
 			String elementName= element.getElementName();
+			return getElementName(element, elementName);
+		}
+
+		private String getElementName(IJavaElement element, String elementName) {
 			if (element.equals(fElement)) { // linking to the member itself would be a no-op
 				return elementName;
 			}
@@ -120,6 +136,28 @@ public class JavaElementLinks {
 				JavaPlugin.log(e);
 				return elementName;
 			}
+		}
+
+		private String getPackageFragmentElementName(IJavaElement javaElement) {
+			IPackageFragmentRoot root= (IPackageFragmentRoot) javaElement.getAncestor(IJavaElement.PACKAGE_FRAGMENT_ROOT);
+			String javaElementName= javaElement.getElementName();
+			String[] individualSegmentNames= javaElementName.split("\\."); //$NON-NLS-1$
+			String packageName= null;
+			StringBuffer strBuffer= new StringBuffer();
+
+			for (int i= 0; i < individualSegmentNames.length; i++) {
+				String lastSegmentName= individualSegmentNames[i];
+				if (packageName != null) {
+					strBuffer.append('.');
+					packageName= packageName + '.' + lastSegmentName;
+				} else {
+					packageName= lastSegmentName;
+				}
+				IPackageFragment subFragment= root.getPackageFragment(packageName);
+				strBuffer.append(getElementName(subFragment, lastSegmentName));
+			}
+
+			return strBuffer.toString();
 		}
 
 		@Override
@@ -327,7 +365,7 @@ public class JavaElementLinks {
 			String refTypeName= segments[2];
 			if (refTypeName.indexOf('.') == -1) {
 				try {
-					IJavaElement resolvedTypeVariable= resolveTypeVariable(element, refTypeName);
+					ITypeParameter resolvedTypeVariable= resolveTypeVariable(element, refTypeName);
 					if (resolvedTypeVariable != null)
 						return resolvedTypeVariable;
 				} catch (JavaModelException e) {
@@ -339,18 +377,32 @@ public class JavaElementLinks {
 			}
 			
 			if (element instanceof ILocalVariable) {
-				element= ((ILocalVariable)element).getDeclaringMember();
+				element= ((ILocalVariable) element).getDeclaringMember();
 			} else if (element instanceof ITypeParameter) {
-				element= ((ITypeParameter)element).getDeclaringMember();
+				element= ((ITypeParameter) element).getDeclaringMember();
 			}
 			if (element instanceof IMember && !(element instanceof IType)) {
 				element= ((IMember) element).getDeclaringType();
 			}
+			
+			if (element instanceof IPackageFragment) {
+				try {
+					element= resolvePackageInfoType((IPackageFragment) element, refTypeName);
+				} catch (JavaModelException e) {
+					JavaPlugin.log(e);
+				}
+			}
+			
 			if (element instanceof IType) {
 				try {
 					IType type= (IType) element;
 					if (refTypeName.length() > 0) {
 						type= resolveType(type, refTypeName);
+						if (type == null) {
+							IPackageFragment pack= JavaModelUtil.getPackageFragmentRoot(element).getPackageFragment(refTypeName);
+							if (pack.exists())
+								return pack;
+						}
 					}
 					if (type != null) {
 						element= type;
@@ -411,7 +463,86 @@ public class JavaElementLinks {
 		return element;
 	}
 
-	private static IJavaElement resolveTypeVariable(IJavaElement baseElement, String typeVariableName) throws JavaModelException {
+	private static IType resolvePackageInfoType(IPackageFragment pack, String refTypeName) throws JavaModelException {
+		// Note: The scoping rules of JLS7 6.3 are broken for package-info.java, see https://bugs.eclipse.org/216451#c4
+		// We follow the javadoc tool's implementation and only support fully-qualified type references:
+		IJavaProject javaProject= pack.getJavaProject();
+		return javaProject.findType(refTypeName, (IProgressMonitor) null);
+		
+		// This implementation would make sense, but the javadoc tool doesn't support it:
+//		IClassFile classFile= pack.getClassFile(JavaModelUtil.PACKAGE_INFO_CLASS);
+//		if (classFile.exists()) {
+//			return resolveType(classFile.getType(), refTypeName);
+//		}
+//		
+//		// check if refTypeName is a qualified name
+//		int firstDot= refTypeName.indexOf('.');
+//		if (firstDot != -1) {
+//			String typeNameRest= refTypeName.substring(firstDot + 1);
+//			String simpleTypeName= refTypeName.substring(0, firstDot);
+//			IType simpleType= resolvePackageInfoType(pack, simpleTypeName);
+//			if (simpleType != null) {
+//				// a type-qualified name
+//				return resolveType(simpleType, typeNameRest);
+//			} else {
+//				// a fully-qualified name
+//				return javaProject.findType(refTypeName, (IProgressMonitor) null);
+//			}
+//		}
+//		
+//		ICompilationUnit cu= pack.getCompilationUnit(JavaModelUtil.PACKAGE_INFO_JAVA);
+//		if (! cu.exists()) {
+//			// refTypeName is a simple name in the package-info.java from the source attachment. Sorry, we give up here...
+//			return null;
+//		}
+//		
+//		// refTypeName is a simple name in a CU. Let's play the shadowing rules of JLS7 6.4.1:
+//		// 1) single-type import
+//		// 2) enclosing package
+//		// 3) java.lang.* (JLS7 7.3)
+//		// 4) on-demand import
+//		IImportDeclaration[] imports= cu.getImports();
+//		for (int i= 0; i < imports.length; i++) {
+//			IImportDeclaration importDecl= imports[i];
+//			String name= importDecl.getElementName();
+//			if (Flags.isStatic(importDecl.getFlags())) {
+//				imports[i]= null;
+//			} else 	if (! importDecl.isOnDemand()) {
+//				if (name.endsWith('.' + refTypeName)) {
+//					// 1) single-type import
+//					IType type= javaProject.findType(name, (IProgressMonitor) null);
+//					if (type != null)
+//						return type;
+//				}
+//				imports[i]= null;
+//			}
+//		}
+//		
+//		// 2) enclosing package
+//		IType type= javaProject.findType(pack.getElementName() + '.' + refTypeName, (IProgressMonitor) null);
+//		if (type != null)
+//			return type;
+//		
+//		// 3) java.lang.* (JLS7 7.3)
+//		type= javaProject.findType("java.lang." + refTypeName, (IProgressMonitor) null); //$NON-NLS-1$
+//		if (type != null)
+//			return type;
+//		
+//		// 4) on-demand import
+//		for (int i= 0; i < imports.length; i++) {
+//			IImportDeclaration importDecl= imports[i];
+//			if (importDecl != null) {
+//				String name= importDecl.getElementName();
+//				name= name.substring(0, name.length() - 1); //remove the *
+//				type= javaProject.findType(name + refTypeName, (IProgressMonitor) null);
+//				if (type != null)
+//					return type;
+//			}
+//		}
+//		return null;
+	}
+
+	private static ITypeParameter resolveTypeVariable(IJavaElement baseElement, String typeVariableName) throws JavaModelException {
 		while (baseElement != null) {
 			switch (baseElement.getElementType()) {
 				case IJavaElement.METHOD:

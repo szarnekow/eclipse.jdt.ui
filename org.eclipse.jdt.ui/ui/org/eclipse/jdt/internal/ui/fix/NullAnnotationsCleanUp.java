@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 GK Software AG and others.
+ * Copyright (c) 2011, 2013 GK Software AG and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     Stephan Herrmann <stephan@cs.tu-berlin.de> - [quick fix] Add quick fixes for null annotations - https://bugs.eclipse.org/337977
+ *     Stephan Herrmann - [quick fix] Add quick fixes for null annotations - https://bugs.eclipse.org/337977
  *     IBM Corporation - bug fixes
  *******************************************************************************/
 package org.eclipse.jdt.internal.ui.fix;
@@ -86,6 +86,7 @@ public class NullAnnotationsCleanUp extends AbstractMultiFix {
 		result.put(JavaCore.COMPILER_PB_NULL_SPECIFICATION_VIOLATION, JavaCore.WARNING);
 		result.put(JavaCore.COMPILER_PB_REDUNDANT_NULL_CHECK, JavaCore.WARNING);
 		result.put(JavaCore.COMPILER_PB_REDUNDANT_NULL_ANNOTATION, JavaCore.WARNING);
+		result.put(JavaCore.COMPILER_PB_NONNULL_PARAMETER_ANNOTATION_DROPPED, JavaCore.WARNING);
 		result.put(JavaCore.COMPILER_PB_NULL_ANNOTATION_INFERENCE_CONFLICT, JavaCore.WARNING);
 		result.put(JavaCore.COMPILER_PB_NULL_UNCHECKED_CONVERSION, JavaCore.WARNING);
 		result.put(JavaCore.COMPILER_PB_MISSING_NONNULL_BY_DEFAULT_ANNOTATION, JavaCore.WARNING);
@@ -105,11 +106,11 @@ public class NullAnnotationsCleanUp extends AbstractMultiFix {
 			case IProblem.RequiredNonNullButProvidedPotentialNull:
 			case IProblem.RequiredNonNullButProvidedSpecdNullable:
 			case IProblem.RequiredNonNullButProvidedUnknown:
+			case IProblem.IllegalDefinitionToNonNullParameter:
+			case IProblem.IllegalRedefinitionToNonNullParameter:
 			case IProblem.ParameterLackingNullableAnnotation:
 				result.add(MultiFixMessages.NullAnnotationsCleanUp_add_nullable_annotation);
 				break;
-			case IProblem.IllegalDefinitionToNonNullParameter:
-			case IProblem.IllegalRedefinitionToNonNullParameter:
 			case IProblem.ParameterLackingNonNullAnnotation:
 				result.add(MultiFixMessages.NullAnnotationsCleanUp_add_nonnull_annotation);
 				break;

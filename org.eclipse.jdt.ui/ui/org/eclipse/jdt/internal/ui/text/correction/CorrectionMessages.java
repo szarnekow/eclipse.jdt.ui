@@ -118,6 +118,7 @@ public final class CorrectionMessages extends NLS {
 	public static String TypeMismatchSubProcessor_changereturntype_description;
 	public static String TypeMismatchSubProcessor_changereturnofoverridden_description;
 	public static String TypeMismatchSubProcessor_changereturnofimplemented_description;
+	public static String TypeMismatchSubProcessor_create_loop_variable_description;
 	public static String TypeMismatchSubProcessor_removeexceptions_description;
 	public static String TypeMismatchSubProcessor_addexceptions_description;
 	public static String TypeMismatchSubProcessor_incompatible_for_each_type_description;
@@ -173,6 +174,7 @@ public final class CorrectionMessages extends NLS {
 	public static String UnresolvedElementsSubProcessor_changemethod_description;
 	public static String UnresolvedElementsSubProcessor_changetoouter_description;
 	public static String UnresolvedElementsSubProcessor_changetomethod_description;
+	public static String UnresolvedElementsSubProcessor_create_loop_variable_description;
 	public static String UnresolvedElementsSubProcessor_createmethod_description;
 	public static String UnresolvedElementsSubProcessor_createmethod_other_description;
 	public static String UnresolvedElementsSubProcessor_createconstructor_description;
@@ -296,6 +298,7 @@ public final class CorrectionMessages extends NLS {
 	public static String TypeChangeCompletionProposal_method_name;
 	public static String ImplementInterfaceProposal_name;
 	public static String AddUnimplementedMethodsOperation_AddMissingMethod_group;
+	public static String AdvancedQuickAssistProcessor_convertToIfReturn;
 	public static String AdvancedQuickAssistProcessor_combineSelectedStrings;
 	public static String AdvancedQuickAssistProcessor_convertToIfElse_description;
 	public static String AdvancedQuickAssistProcessor_inverseIf_description;

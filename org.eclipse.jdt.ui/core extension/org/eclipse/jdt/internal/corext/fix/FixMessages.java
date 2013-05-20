@@ -7,6 +7,9 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
+ *     Stephan Herrmann - Contributions for
+ *								[quick fix] Add quick fixes for null annotations - https://bugs.eclipse.org/337977
+ *								[quick fix] The fix change parameter type to @Nonnull generated a null change - https://bugs.eclipse.org/400668 
  *******************************************************************************/
 package org.eclipse.jdt.internal.corext.fix;
 
@@ -120,10 +123,15 @@ public final class FixMessages extends NLS {
 
 	public static String NullAnnotationsFix_add_annotation_change_name;
 	public static String NullAnnotationsRewriteOperations_change_method_parameter_nullness;
+	public static String NullAnnotationsRewriteOperations_change_target_method_parameter_nullness;
 	public static String NullAnnotationsRewriteOperations_change_method_return_nullness;
 	public static String NullAnnotationsRewriteOperations_change_overridden_parameter_nullness;
 	public static String NullAnnotationsRewriteOperations_change_overridden_return_nullness;
 	public static String NullAnnotationsRewriteOperations_remove_redundant_nullness_annotation;
+
+	public static String ExtractToNullCheckedLocalProposal_extractCheckedLocal_editName;
+	public static String ExtractToNullCheckedLocalProposal_extractToCheckedLocal_proposalName;
+	public static String ExtractToNullCheckedLocalProposal_todoHandleNullDescription;
 
 	static {
 		// initialize resource bundle

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -274,6 +274,8 @@ public class ProblemSeveritiesConfigurationBlock extends OptionsConfigurationBlo
 	
 	private static final Key PREF_ANNOTATION_NULL_ANALYSIS= getJDTCoreKey(JavaCore.COMPILER_ANNOTATION_NULL_ANALYSIS);
 	
+	private static final Key PREF_PB_SYNTACTIC_NULL_ANLYSIS_FOR_FIELDS= getJDTCoreKey(JavaCore.COMPILER_PB_SYNTACTIC_NULL_ANALYSIS_FOR_FIELDS);
+
 	private static final Key PREF_INHERIT_NULL_ANNOTATIONS= getJDTCoreKey(JavaCore.COMPILER_INHERIT_NULL_ANNOTATIONS);
 
 	/**
@@ -295,7 +297,8 @@ public class ProblemSeveritiesConfigurationBlock extends OptionsConfigurationBlo
 	private static final Key PREF_PB_NULL_SPECIFICATION_VIOLATION= getJDTCoreKey(JavaCore.COMPILER_PB_NULL_SPECIFICATION_VIOLATION);
 	private static final Key PREF_PB_POTENTIAL_NULL_ANNOTATION_INFERENCE_CONFLICT= getJDTCoreKey(JavaCore.COMPILER_PB_NULL_ANNOTATION_INFERENCE_CONFLICT);
 	private static final Key PREF_PB_NULL_UNCHECKED_CONVERSION= getJDTCoreKey(JavaCore.COMPILER_PB_NULL_UNCHECKED_CONVERSION);
-	private static final Key PREF_PB_REDUNDANT_NULL_ANNOTATION= getJDTCoreKey(JavaCore.COMPILER_PB_REDUNDANT_NULL_ANNOTATION);	
+	private static final Key PREF_PB_REDUNDANT_NULL_ANNOTATION= getJDTCoreKey(JavaCore.COMPILER_PB_REDUNDANT_NULL_ANNOTATION);
+	private static final Key PREF_PB_NONNULL_PARAMETER_ANNOTATION_DROPPED= getJDTCoreKey(JavaCore.COMPILER_PB_NONNULL_PARAMETER_ANNOTATION_DROPPED);
 
 	private static final Key PREF_PB_REDUNDANT_NULL_CHECK= getJDTCoreKey(JavaCore.COMPILER_PB_REDUNDANT_NULL_CHECK);
 
@@ -384,8 +387,10 @@ public class ProblemSeveritiesConfigurationBlock extends OptionsConfigurationBlo
 				PREF_PB_NULL_SPECIFICATION_VIOLATION,
 				PREF_PB_POTENTIAL_NULL_ANNOTATION_INFERENCE_CONFLICT,
 				PREF_PB_NULL_UNCHECKED_CONVERSION,
-				PREF_PB_REDUNDANT_NULL_ANNOTATION,	
+				PREF_PB_REDUNDANT_NULL_ANNOTATION,
+				PREF_PB_NONNULL_PARAMETER_ANNOTATION_DROPPED,
 				PREF_PB_REDUNDANT_NULL_CHECK, PREF_PB_INCLUDE_ASSERTS_IN_NULL_ANALYSIS,
+				PREF_PB_SYNTACTIC_NULL_ANLYSIS_FOR_FIELDS,
 				PREF_INHERIT_NULL_ANNOTATIONS,
 				PREF_PB_UNCLOSED_CLOSEABLE, PREF_PB_POTENTIALLY_UNCLOSED_CLOSEABLE, PREF_PB_EXPLICITLY_CLOSED_AUTOCLOSEABLE,
 				PREF_PB_FALLTHROUGH_CASE, PREF_PB_REDUNDANT_SUPERINTERFACE, PREF_PB_UNUSED_WARNING_TOKEN,
@@ -464,10 +469,9 @@ public class ProblemSeveritiesConfigurationBlock extends OptionsConfigurationBlo
 		layout.marginWidth= 0;
 		composite.setLayout(layout);
 
-		int indentStep=  fPixelConverter.convertWidthInCharsToPixels(1);
+		final int defaultIndent= 0;
+		final int extraIndent= LayoutUtil.getIndent();
 
-		int defaultIndent= indentStep * 0;
-		int extraIndent= indentStep * 3;
 		String label;
 		ExpandableComposite excomposite;
 		Composite inner;
@@ -665,11 +669,11 @@ public class ProblemSeveritiesConfigurationBlock extends OptionsConfigurationBlo
 		label= PreferencesMessages.ProblemSeveritiesConfigurationBlock_pb_signal_param_in_overriding_label;
 		fFilteredPrefTree.addCheckBox(inner, label, PREF_PB_SIGNAL_PARAMETER_IN_OVERRIDING, disabledEnabled, extraIndent, node);
 
-		label= PreferencesMessages.ProblemSeveritiesConfigurationBlock_ignore_documented_unused_parameters;
-		fFilteredPrefTree.addCheckBox(inner, label, PREF_PB_UNUSED_PARAMETER_INCLUDE_DOC_COMMENT_REFERENCE, enabledDisabled, extraIndent, node);
-
 		label= PreferencesMessages.ProblemSeveritiesConfigurationBlock_pb_unused_type_parameter;
 		fFilteredPrefTree.addComboBox(inner, label, PREF_PB_UNUSED_TYPE_PARAMETER, errorWarningIgnore, errorWarningIgnoreLabels, defaultIndent, section);
+		
+		label= PreferencesMessages.ProblemSeveritiesConfigurationBlock_ignore_documented_unused_parameters;
+		fFilteredPrefTree.addCheckBox(inner, label, PREF_PB_UNUSED_PARAMETER_INCLUDE_DOC_COMMENT_REFERENCE, enabledDisabled, defaultIndent, node);
 		
 		label= PreferencesMessages.ProblemSeveritiesConfigurationBlock_pb_unused_imports_label;
 		fFilteredPrefTree.addComboBox(inner, label, PREF_PB_UNUSED_IMPORT, errorWarningIgnore, errorWarningIgnoreLabels, defaultIndent, section);
@@ -777,7 +781,7 @@ public class ProblemSeveritiesConfigurationBlock extends OptionsConfigurationBlo
 		fFilteredPrefTree.addComboBox(inner, label, PREF_PB_REDUNDANT_NULL_CHECK, errorWarningIgnore, errorWarningIgnoreLabels, defaultIndent, section);
 
 		label= PreferencesMessages.ProblemSeveritiesConfigurationBlock_include_assert_in_null_analysis;
-		fFilteredPrefTree.addCheckBox(inner, label, PREF_PB_INCLUDE_ASSERTS_IN_NULL_ANALYSIS, enabledDisabled, defaultIndent, section);		
+		fFilteredPrefTree.addCheckBox(inner, label, PREF_PB_INCLUDE_ASSERTS_IN_NULL_ANALYSIS, enabledDisabled, defaultIndent, section);
 		
 		// --- annotation-based nulll analysis
 		
@@ -796,6 +800,9 @@ public class ProblemSeveritiesConfigurationBlock extends OptionsConfigurationBlo
 		label= PreferencesMessages.ProblemSeveritiesConfigurationBlock_pb_redundant_null_annotation;
 		fFilteredPrefTree.addComboBox(inner, label, PREF_PB_REDUNDANT_NULL_ANNOTATION, errorWarningIgnore, errorWarningIgnoreLabels, extraIndent, node);
 		
+		label= PreferencesMessages.ProblemSeveritiesConfigurationBlock_pb_nonnull_parameter_annotation_dropped;
+		fFilteredPrefTree.addComboBox(inner, label, PREF_PB_NONNULL_PARAMETER_ANNOTATION_DROPPED, errorWarningIgnore, errorWarningIgnoreLabels, extraIndent, node);
+
 		label= PreferencesMessages.ProblemSeveritiesConfigurationBlock_missing_nonnull_by_default_annotation;
 		fFilteredPrefTree.addComboBox(inner, label, PREF_MISSING_NONNULL_BY_DEFAULT_ANNOTATION, errorWarningIgnore, errorWarningIgnoreLabels, extraIndent, node);
 		
@@ -810,6 +817,9 @@ public class ProblemSeveritiesConfigurationBlock extends OptionsConfigurationBlo
 		
 		label= PreferencesMessages.ProblemSeveritiesConfigurationBlock_inherit_null_annotations;
 		fFilteredPrefTree.addCheckBox(inner, label, PREF_INHERIT_NULL_ANNOTATIONS, enabledDisabled, extraIndent, node);
+		
+		label= PreferencesMessages.ProblemSeveritiesConfigurationBlock_enable_syntactic_null_analysis_for_fields;
+		fFilteredPrefTree.addCheckBox(inner, label, PREF_PB_SYNTACTIC_NULL_ANLYSIS_FOR_FIELDS, enabledDisabled, extraIndent, node);
 		
 		// --- global
 		
@@ -966,7 +976,6 @@ public class ProblemSeveritiesConfigurationBlock extends OptionsConfigurationBlo
 	private void updateEnableStates() {
 		boolean enableUnusedParams= !checkValue(PREF_PB_UNUSED_PARAMETER, IGNORE);
 		getCheckBox(PREF_PB_SIGNAL_PARAMETER_IN_OVERRIDING).setEnabled(enableUnusedParams);
-		getCheckBox(PREF_PB_UNUSED_PARAMETER_INCLUDE_DOC_COMMENT_REFERENCE).setEnabled(enableUnusedParams);
 
 		boolean enableDeprecation= !checkValue(PREF_PB_DEPRECATION, IGNORE);
 		getCheckBox(PREF_PB_DEPRECATION_IN_DEPRECATED_CODE).setEnabled(enableDeprecation);
@@ -994,8 +1003,10 @@ public class ProblemSeveritiesConfigurationBlock extends OptionsConfigurationBlo
 		setComboEnabled(PREF_PB_POTENTIAL_NULL_ANNOTATION_INFERENCE_CONFLICT, enableAnnotationNullAnalysis);
 		setComboEnabled(PREF_PB_NULL_UNCHECKED_CONVERSION, enableAnnotationNullAnalysis);
 		setComboEnabled(PREF_PB_REDUNDANT_NULL_ANNOTATION, enableAnnotationNullAnalysis);
+		setComboEnabled(PREF_PB_NONNULL_PARAMETER_ANNOTATION_DROPPED, enableAnnotationNullAnalysis);
 		setComboEnabled(PREF_MISSING_NONNULL_BY_DEFAULT_ANNOTATION, enableAnnotationNullAnalysis);
 		getCheckBox(PREF_INHERIT_NULL_ANNOTATIONS).setEnabled(enableAnnotationNullAnalysis);
+		getCheckBox(PREF_PB_SYNTACTIC_NULL_ANLYSIS_FOR_FIELDS).setEnabled(enableAnnotationNullAnalysis);
 	}
 
 	private IStatus validateNullnessAnnotation(String value, String errorMessage) {
