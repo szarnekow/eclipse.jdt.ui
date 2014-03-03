@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 IBM Corporation and others.
+ * Copyright (c) 2007, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,6 +7,8 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
+ *     Nikolay Metchev <nikolaymetchev@gmail.com> - [extract class] Extract class refactoring on a field in an inner non-static class yields compilation error - https://bugs.eclipse.org/394547
+ *     Samrat Dhillon samrat.dhillon@gmail.com - [extract class] Extract class on a field with generic type yields compilation error  - https://bugs.eclipse.org/bugs/show_bug.cgi?id=394548
  *******************************************************************************/
 package org.eclipse.jdt.ui.tests.refactoring;
 
@@ -404,4 +406,39 @@ public class ExtractClassTests extends RefactoringTest {
 		}
 	}
 
+	public void testComment() throws Exception {
+		fDescriptor.setType(setupType());
+		fDescriptor.setCreateTopLevel(false);
+		runRefactoring(false);
+	}
+	
+	// see bug 394547
+	public void testNested1() throws Exception {
+		IType outer= setupType();
+		IType inner= outer.getType("Inner");
+		assertTrue(inner.exists());
+		fDescriptor.setType(inner);
+		fDescriptor.setClassName("Extracted");
+		fDescriptor.setCreateTopLevel(false);
+		runRefactoring(false);
+	}
+
+	// see bug 394547
+	public void testNested2() throws Exception {
+		IType outer= setupType();
+		IType inner= outer.getType("Inner");
+		assertTrue(inner.exists());
+		fDescriptor.setType(inner);
+		fDescriptor.setClassName("Extracted");
+		fDescriptor.setCreateTopLevel(false);
+		runRefactoring(false);
+	}
+	// see bug 394548
+	public void testTypeParameter() throws Exception {
+		fDescriptor.setType(setupType());
+		fDescriptor.setCreateTopLevel(false);
+		fDescriptor.setFieldName("data");
+		fDescriptor.setClassName("FooParameter");
+		runRefactoring(false);
+	}
 }

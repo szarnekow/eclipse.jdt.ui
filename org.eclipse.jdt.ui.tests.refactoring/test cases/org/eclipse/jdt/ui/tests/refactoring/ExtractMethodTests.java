@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2012 IBM Corporation and others.
+ * Copyright (c) 2000, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -13,6 +13,8 @@
  *     Benjamin Muskalla <bmuskalla@eclipsesource.com> - [extract method] Extract method and continue https://bugs.eclipse.org/bugs/show_bug.cgi?id=48056
  *     Benjamin Muskalla <bmuskalla@eclipsesource.com> - [extract method] should declare method static if extracted from anonymous in static method - https://bugs.eclipse.org/bugs/show_bug.cgi?id=152004
  *     Benjamin Muskalla <bmuskalla@eclipsesource.com> - [extract method] extracting return value results in compile error - https://bugs.eclipse.org/bugs/show_bug.cgi?id=264606
+ *     Samrat Dhillon <samrat.dhillon@gmail.com> -  [extract method] Extracted method should be declared static if extracted expression is also used in another static method https://bugs.eclipse.org/bugs/show_bug.cgi?id=393098
+ *     Samrat Dhillon <samrat.dhillon@gmail.com> -  [extract method] Extracting expression of parameterized type that is passed as argument to this constructor yields compilation error https://bugs.eclipse.org/bugs/show_bug.cgi?id=394030
  *******************************************************************************/
 package org.eclipse.jdt.ui.tests.refactoring;
 
@@ -1747,6 +1749,10 @@ public class ExtractMethodTests extends AbstractSelectionTestCase {
 		errorTest();
 	}
 
+	public void test804() throws Exception {
+		errorTest();
+	}
+
 	//---- Test parameter name changes
 
 	private void invalidParameterNameTest(String[] newNames) throws Exception {
@@ -1910,6 +1916,14 @@ public class ExtractMethodTests extends AbstractSelectionTestCase {
 	public void test987() throws Exception {
 		duplicatesTest(); // for https://bugs.eclipse.org/bugs/show_bug.cgi?id=264606
 	}
+	
+	public void test988() throws Exception{
+		duplicatesTest();
+	}
+	
+	public void test989() throws Exception{
+		duplicatesTest();
+	}
 
 	//---- Test code in initializers -----------------------------------------------
 
@@ -2058,6 +2072,14 @@ public class ExtractMethodTests extends AbstractSelectionTestCase {
 
 	public void test1120() throws Exception {
 		genericTest(); //https://bugs.eclipse.org/bugs/show_bug.cgi?id=369295
+	}
+	
+	public void test1121() throws Exception {
+		genericTest();
+	}
+	
+	public void test1122() throws Exception {
+		genericTest();
 	}
 
 	//---- Test enums ---------------------------------
